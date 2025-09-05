@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## File Synchronization Requirement
+
+⚠️ **IMPORTANT**: Whenever updating this file, you **MUST** also update `CLAUDE_ZH.md` to ensure both files remain consistent and up-to-date.
+
 ## Development Commands
 
 ### Core Development
@@ -145,11 +149,45 @@ src/
 
 #### Routing System
 
-- Hybrid routing: static routes + dynamic permission-based routes
-- Route guards for authentication and authorization
-- Support for both frontend and backend permission modes
-- Progressive route registration with loading states
-- Menu-driven route generation
+- **Hybrid routing**: static routes + dynamic permission-based routes
+- **Route guards**: authentication and authorization with loading states
+- **Two permission modes**: Frontend (static config) vs Backend (dynamic API)
+- **Progressive route registration**: dynamic routes added on-demand
+- **Menu-driven navigation**: routes generated from menu structure
+
+**Core Router Architecture:**
+
+```
+src/router/
+├── index.ts                    # Router instance and initialization
+├── routes/
+│   ├── staticRoutes.ts         # Public routes (login, register, 404, etc.)
+│   └── asyncRoutes.ts          # Permission-based routes with role filtering
+├── guards/
+│   ├── beforeEach.ts           # Authentication and route registration logic
+│   └── afterEach.ts           # Loading state and progress management
+├── utils/
+│   ├── registerRoutes.ts       # Dynamic route registration with component loading
+│   ├── menuToRouter.ts         # Menu-to-route conversion utilities
+│   └── utils.ts                # Router helper functions
+└── routesAlias.ts              # Route path aliases for easy navigation
+```
+
+**Route Registration Process:**
+
+1. **Static Routes**: Always available (login, register, error pages)
+2. **Dynamic Routes**: Registered after user authentication based on permissions
+3. **Role Filtering**: Routes filtered by user roles in frontend mode
+4. **Component Loading**: Dynamic imports with automatic path resolution
+5. **Iframe Support**: External links rendered in iframe containers
+
+**Route Features:**
+
+- **Meta Information**: `title`, `icon`, `roles`, `keepAlive`, `isHide`, `authList`
+- **Tab Management**: Route-based tab creation with persistence
+- **Navigation Guards**: Login checks, permission validation, theme application
+- **Error Handling**: 404/500 handling with graceful fallbacks
+- **Progress Indicators**: NProgress integration for route transitions
 
 #### HTTP Layer
 
@@ -166,9 +204,96 @@ src/
 - Type definitions auto-generated in `src/types/components.d.ts`
 - Global directives for permissions and UI effects
 
-#### Internationalization
+## Component Library
 
-- Vue I18n integration with Element Plus locale
+⚠️ **IMPORTANT**: When working with UI components, building new features, or modifying existing component functionality, **ALWAYS read `COMPONENT_LIBRARY.md` first** for comprehensive documentation.
+
+### Quick Overview
+
+The project features a comprehensive component library with 50+ components divided into:
+
+- **Core Components** (`src/components/core/`) - System components across 12 categories
+- **Custom Components** (`src/components/custom/`) - Developer-specific components
+
+### Key Component Categories
+
+1. **Layout Components** - Application structure and navigation
+2. **Chart Components** - Advanced ECharts data visualizations
+3. **Form Components** - Enhanced form controls and validation
+4. **Table Components** - Data tables with advanced features
+5. **Card Components** - Data display and statistics
+6. **Media Components** - Video, image, and media handling
+7. **Text Effect Components** - Animated text displays
+8. **Menu Components** - Navigation systems
+
+### When to Read Component Library Documentation
+
+**Read `COMPONENT_LIBRARY.md` when:**
+
+- Building new UI features or pages
+- Modifying existing component behavior
+- Creating new components
+- Debugging component-related issues
+- Needing detailed prop information
+- Working with charts or advanced components
+- Implementing responsive design
+- Adding accessibility features
+- Optimizing component performance
+
+**Component library documentation includes:**
+
+- Complete prop interfaces and default values
+- Advanced functionality and integration details
+- Performance considerations and best practices
+- TypeScript usage patterns
+- Theme integration guidelines
+- Responsive design implementation
+- Accessibility requirements
+- Troubleshooting common issues
+
+### Component Features
+
+#### Auto-Import System
+
+- All components are automatically imported and available globally
+- TypeScript definitions auto-generated
+- No manual import statements required
+- Tree-shaking optimized
+
+#### Theme Integration
+
+- All components support light/dark themes
+- CSS custom properties for dynamic theming
+- Consistent design system
+- Responsive breakpoints
+
+#### TypeScript Support
+
+- Full type definitions for all props
+- Generic type support where applicable
+- Auto-completion in IDEs
+- Runtime type checking
+
+#### Accessibility
+
+- ARIA labels and attributes
+- Keyboard navigation support
+- Screen reader compatibility
+- Focus management
+
+#### Performance Optimizations
+
+- Lazy loading for heavy components
+- Virtual scrolling for large lists
+- Debounced event handlers
+- Efficient re-rendering
+
+#### Responsive Design
+
+- Mobile-first approach
+- Breakpoint-based layouts
+- Touch-friendly interactions
+- Adaptive component sizing
 - Language files in `src/locales/langs/`
 - Dynamic locale switching with persisted preferences
 
