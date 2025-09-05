@@ -118,10 +118,14 @@ export const useMaterialStore = defineStore('material', () => {
     }
   }
 
-  function updateMaterial(id: string, updates: Partial<Material>) {
-    const index = state.value.materials.findIndex((m) => m.id === id)
+  async function updateMaterial(updates: Partial<Material> & { id: string }) {
+    const index = state.value.materials.findIndex((m) => m.id === updates.id)
     if (index > -1) {
-      state.value.materials[index] = { ...state.value.materials[index], ...updates }
+      state.value.materials[index] = {
+        ...state.value.materials[index],
+        ...updates,
+        updatedAt: new Date()
+      }
     }
   }
 

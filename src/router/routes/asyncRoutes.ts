@@ -722,6 +722,23 @@ export const asyncRoutes: AppRouteRecord[] = [
             }
           ]
         }
+      },
+      {
+        path: 'edit/:id',
+        name: 'MaterialEdit',
+        component: RoutesAlias.MaterialEdit,
+        meta: {
+          title: 'menus.material.edit',
+          keepAlive: true,
+          isHide: true,
+          activePath: '/material/management',
+          authList: [
+            {
+              title: '编辑',
+              authMark: 'edit'
+            }
+          ]
+        }
       }
     ]
   }

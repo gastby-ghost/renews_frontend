@@ -55,6 +55,7 @@
         </div>
         <div class="art-material-card__actions">
           <el-button size="small" type="primary" @click.stop="handlePreview"> 预览 </el-button>
+          <el-button size="small" @click.stop="handleEdit"> 编辑 </el-button>
           <el-button size="small" @click.stop="handleDownload" :disabled="!material.url">
             下载
           </el-button>
@@ -85,6 +86,7 @@
     (e: 'select', id: string): void
     (e: 'preview', material: Material): void
     (e: 'download', material: Material): void
+    (e: 'edit', material: Material): void
     (e: 'click', material: Material): void
   }
 
@@ -137,6 +139,10 @@
 
   function handleDownload() {
     emit('download', props.material)
+  }
+
+  function handleEdit() {
+    emit('edit', props.material)
   }
 </script>
 

@@ -299,7 +299,8 @@
     "material": {
       "title": "Material Library",
       "fetch": "Fetch Materials",
-      "management": "Material Management"
+      "management": "Material Management",
+      "edit": "Edit Material"
     },
     "help": {
       "title": "Help Center",

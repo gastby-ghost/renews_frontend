@@ -57,5 +57,6 @@ export enum RoutesAlias {
   ExamplesSearchBar = '/examples/forms/search-bar', // 搜索表单示例
   MaterialLibrary = '/material/library', // 素材库
   MaterialFetch = '/material/fetch', // 抓取素材
-  MaterialManagement = '/material/management' // 素材管理
+  MaterialManagement = '/material/management', // 素材管理
+  MaterialEdit = '/material/edit' // 素材编辑
 }

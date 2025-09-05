@@ -7,7 +7,9 @@ export interface Material {
   type: 'image' | 'video' | 'text' | 'audio' | 'other'
   url?: string
   thumbnail?: string
+  content?: string
   createdAt: Date
+  updatedAt?: Date
   selected?: boolean
 }
 
