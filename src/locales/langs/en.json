@@ -296,6 +296,11 @@
       "title": "Version Plan",
       "log": "Change Log"
     },
+    "material": {
+      "title": "Material Library",
+      "fetch": "Fetch Materials",
+      "management": "Material Management"
+    },
     "help": {
       "title": "Help Center",
       "document": "Document"

@@ -678,5 +678,51 @@ export const asyncRoutes: AppRouteRecord[] = [
       icon: '&#xe712;',
       keepAlive: false
     }
+  },
+  {
+    path: '/material',
+    name: 'Material',
+    component: RoutesAlias.Layout,
+    meta: {
+      title: 'menus.material.title',
+      icon: '&#xe651;',
+      showTextBadge: 'New'
+    },
+    children: [
+      {
+        path: 'fetch',
+        name: 'MaterialFetch',
+        component: RoutesAlias.MaterialFetch,
+        meta: {
+          title: 'menus.material.fetch',
+          keepAlive: true,
+          authList: [
+            {
+              title: '抓取',
+              authMark: 'fetch'
+            }
+          ]
+        }
+      },
+      {
+        path: 'management',
+        name: 'MaterialManagement',
+        component: RoutesAlias.MaterialManagement,
+        meta: {
+          title: 'menus.material.management',
+          keepAlive: true,
+          authList: [
+            {
+              title: '管理',
+              authMark: 'manage'
+            },
+            {
+              title: '删除',
+              authMark: 'delete'
+            }
+          ]
+        }
+      }
+    ]
   }
 ]
