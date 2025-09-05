@@ -229,12 +229,7 @@
 
 <style scoped lang="scss">
   .art-search-progress {
-    max-width: 600px;
-    padding: 20px;
-    margin: 0 auto;
-    background: var(--el-bg-color);
-    border: 1px solid var(--el-border-color);
-    border-radius: 8px;
+    width: 100%;
 
     &__header {
       display: flex;

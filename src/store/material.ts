@@ -10,34 +10,22 @@ export const useMaterialStore = defineStore('material', () => {
     searchHistory: [],
     providers: [
       {
-        id: 'google',
-        name: 'Google Search',
+        id: 'tavily',
+        name: 'Tavily',
         type: 'api',
-        apiEndpoint: '/api/search/google'
+        apiEndpoint: '/api/search/tavily'
       },
       {
-        id: 'bing',
-        name: 'Bing Search',
+        id: 'bocha',
+        name: '博查',
         type: 'api',
-        apiEndpoint: '/api/search/bing'
+        apiEndpoint: '/api/search/bocha'
       },
       {
-        id: 'unsplash',
-        name: 'Unsplash',
-        type: 'api',
-        apiEndpoint: '/api/search/unsplash'
-      },
-      {
-        id: 'openai',
-        name: 'OpenAI',
+        id: 'deepseek',
+        name: 'DeepSeek',
         type: 'ai',
-        apiEndpoint: '/api/ai/openai'
-      },
-      {
-        id: 'claude',
-        name: 'Claude',
-        type: 'ai',
-        apiEndpoint: '/api/ai/claude'
+        apiEndpoint: '/api/ai/deepseek'
       }
     ],
     loading: false,

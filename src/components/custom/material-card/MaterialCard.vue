@@ -11,33 +11,16 @@
       <el-checkbox :model-value="isSelected" @change="handleSelectionChange" @click.stop />
     </div>
 
-    <div class="art-material-card__media">
-      <img
-        v-if="material.thumbnail"
-        :src="material.thumbnail"
-        :alt="material.title"
-        class="art-material-card__image"
-        @error="handleImageError"
-      />
-      <div v-else class="art-material-card__placeholder">
-        <el-icon><Picture /></el-icon>
-      </div>
-      <div class="art-material-card__type">
-        <el-tag size="small" :type="getTypeTagType">
-          {{ getTypeLabel }}
-        </el-tag>
-      </div>
+    <div class="art-material-card__type" v-if="showType">
+      <el-tag size="small" :type="getTypeTagType">
+        {{ getTypeLabel }}
+      </el-tag>
     </div>
 
     <div class="art-material-card__content">
       <h3 class="art-material-card__title" :title="material.title">
         {{ material.title }}
       </h3>
-
-      <div class="art-material-card__source">
-        <el-icon><Location /></el-icon>
-        <span>{{ material.source }}</span>
-      </div>
 
       <p class="art-material-card__summary">
         {{ material.summary }}
@@ -57,11 +40,25 @@
         </el-tag>
       </div>
 
-      <div class="art-material-card__actions">
-        <el-button size="small" type="primary" @click.stop="handlePreview"> 预览 </el-button>
-        <el-button size="small" @click.stop="handleDownload" :disabled="!material.url">
-          下载
-        </el-button>
+      <div class="art-material-card__footer">
+        <div class="art-material-card__source">
+          <el-icon><Location /></el-icon>
+          <a
+            :href="material.url"
+            target="_blank"
+            rel="noopener noreferrer"
+            @click.stop
+            class="art-material-card__source-link"
+          >
+            {{ material.source }}
+          </a>
+        </div>
+        <div class="art-material-card__actions">
+          <el-button size="small" type="primary" @click.stop="handlePreview"> 预览 </el-button>
+          <el-button size="small" @click.stop="handleDownload" :disabled="!material.url">
+            下载
+          </el-button>
+        </div>
       </div>
     </div>
 
@@ -74,13 +71,14 @@
 <script setup lang="ts">
   import { computed } from 'vue'
   import type { Material } from '@/types/material'
-  import { Picture, Location, Loading } from '@element-plus/icons-vue'
+  import { Location, Loading } from '@element-plus/icons-vue'
 
   interface Props {
     material: Material
     selected?: boolean
     loading?: boolean
     showSelection?: boolean
+    showType?: boolean
   }
 
   interface Emits {
@@ -93,7 +91,8 @@
   const props = withDefaults(defineProps<Props>(), {
     selected: false,
     loading: false,
-    showSelection: true
+    showSelection: true,
+    showType: false
   })
 
   const emit = defineEmits<Emits>()
@@ -139,11 +138,6 @@
   function handleDownload() {
     emit('download', props.material)
   }
-
-  function handleImageError(event: Event) {
-    const img = event.target as HTMLImageElement
-    img.style.display = 'none'
-  }
 </script>
 
 <style scoped lang="scss">
@@ -182,43 +176,6 @@
       border-radius: 4px;
     }
 
-    &__media {
-      position: relative;
-      width: 100%;
-      height: 200px;
-      overflow: hidden;
-      background: var(--el-fill-color-light);
-
-      &::before {
-        position: absolute;
-        inset: 0;
-        pointer-events: none;
-        content: '';
-        background: linear-gradient(to bottom, transparent 0%, rgb(0 0 0 / 10%) 100%);
-      }
-    }
-
-    &__image {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transition: transform 0.3s ease;
-
-      .art-material-card:hover & {
-        transform: scale(1.05);
-      }
-    }
-
-    &__placeholder {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      height: 100%;
-      font-size: 48px;
-      color: var(--el-text-color-secondary);
-    }
-
     &__type {
       position: absolute;
       top: 8px;
@@ -241,16 +198,42 @@
       white-space: nowrap;
     }
 
+    &__footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 12px;
+      margin-top: 12px;
+      border-top: 1px solid var(--el-border-color-lighter);
+    }
+
     &__source {
       display: flex;
+      flex: 1;
       gap: 4px;
       align-items: center;
-      margin-bottom: 8px;
+      min-width: 0;
       font-size: 12px;
       color: var(--el-text-color-secondary);
 
       .el-icon {
+        flex-shrink: 0;
         font-size: 14px;
+      }
+    }
+
+    &__source-link {
+      flex: 1;
+      overflow: hidden;
+      color: var(--el-color-primary);
+      text-decoration: none;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      transition: color 0.3s ease;
+
+      &:hover {
+        color: var(--el-color-primary-light-3);
+        text-decoration: underline;
       }
     }
 
@@ -300,10 +283,6 @@
 
   @media (width <= 768px) {
     .art-material-card {
-      &__media {
-        height: 150px;
-      }
-
       &__content {
         padding: 12px;
       }
@@ -317,12 +296,23 @@
         -webkit-line-clamp: 1;
       }
 
-      &__actions {
+      &__footer {
         flex-direction: column;
-        gap: 4px;
+        gap: 8px;
+        align-items: flex-start;
+      }
+
+      &__source {
+        width: 100%;
+      }
+
+      &__actions {
+        flex-direction: row;
+        gap: 8px;
+        width: 100%;
 
         .el-button {
-          width: 100%;
+          flex: 1;
         }
       }
     }

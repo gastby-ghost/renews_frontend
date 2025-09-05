@@ -1,7 +1,7 @@
 <template>
   <div class="material-fetch">
     <!-- 搜索配置区域 -->
-    <el-card class="material-fetch__config" v-if="!isSearching">
+    <el-card class="material-fetch__config">
       <template #header>
         <div class="material-fetch__config-header">
           <h3>素材搜索配置</h3>
@@ -50,28 +50,64 @@
             />
           </el-select>
         </el-form-item>
-
-        <el-form-item label="素材类型">
-          <el-checkbox-group v-model="searchConfig.filters.type">
-            <el-checkbox label="image">图片</el-checkbox>
-            <el-checkbox label="video">视频</el-checkbox>
-            <el-checkbox label="audio">音频</el-checkbox>
-            <el-checkbox label="text">文本</el-checkbox>
-          </el-checkbox-group>
-        </el-form-item>
       </el-form>
     </el-card>
 
+    <!-- AI检索需求确认表单 -->
+    <el-dialog
+      v-model="showConfirmDialog"
+      title="AI检索需求确认"
+      width="600px"
+      :before-close="closeConfirmDialog"
+    >
+      <el-form :model="confirmForm" label-width="120px">
+        <el-form-item label="检索关键词">
+          <el-input v-model="confirmForm.keywords" readonly />
+        </el-form-item>
+        <el-form-item label="检索范围">
+          <el-input
+            v-model="confirmForm.searchScope"
+            type="textarea"
+            :rows="4"
+            placeholder="请编辑AI理解的检索范围描述"
+          />
+        </el-form-item>
+        <el-form-item label="搜索源">
+          <div class="confirm-providers">
+            <el-tag
+              v-for="provider in selectedProviders"
+              :key="provider.id"
+              size="small"
+              :type="provider.type === 'ai' ? 'warning' : 'success'"
+            >
+              {{ provider.name }}
+            </el-tag>
+          </div>
+        </el-form-item>
+        <el-form-item label="AI提供商">
+          <el-tag v-if="selectedAIProvider" type="warning" size="small">
+            {{ selectedAIProvider?.name }}
+          </el-tag>
+          <span v-else style="color: var(--el-text-color-secondary)">未选择</span>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="closeConfirmDialog">取消</el-button>
+        <el-button type="primary" @click="confirmSearch">确认检索</el-button>
+      </template>
+    </el-dialog>
+
     <!-- 搜索进度区域 -->
-    <SearchProgress
-      v-if="isSearching"
-      :progress="searchProgress"
-      :config="searchConfig"
-      :providers="providers"
-      :is-active="isSearching"
-      @cancel="cancelSearch"
-      @update:config="updateSearchConfig"
-    />
+    <el-card class="material-fetch__progress" v-if="isSearching">
+      <SearchProgress
+        :progress="searchProgress"
+        :config="searchConfig"
+        :providers="providers"
+        :is-active="isSearching"
+        @cancel="cancelSearch"
+        @update:config="updateSearchConfig"
+      />
+    </el-card>
 
     <!-- 搜索结果区域 -->
     <div class="material-fetch__results" v-if="materials.length > 0">
@@ -97,6 +133,7 @@
           :material="material"
           :selected="selectedMaterials.includes(material.id)"
           :loading="loadingMaterials.includes(material.id)"
+          :show-type="false"
           @select="toggleMaterialSelection"
           @preview="showPreview"
           @download="downloadMaterial"
@@ -113,20 +150,9 @@
       :before-close="closePreview"
     >
       <div class="material-fetch__preview" v-if="previewMaterial">
-        <div class="material-fetch__preview-media">
-          <img
-            v-if="previewMaterial.thumbnail"
-            :src="previewMaterial.thumbnail"
-            :alt="previewMaterial.title"
-          />
-          <div v-else class="material-fetch__preview-placeholder">
-            <el-icon><Picture /></el-icon>
-          </div>
-        </div>
         <div class="material-fetch__preview-info">
           <h4>{{ previewMaterial.title }}</h4>
           <p><strong>来源：</strong>{{ previewMaterial.source }}</p>
-          <p><strong>类型：</strong>{{ getTypeLabel(previewMaterial.type) }}</p>
           <p><strong>总结：</strong>{{ previewMaterial.summary }}</p>
           <p
             ><strong>标签：</strong>
@@ -149,7 +175,6 @@
 <script setup lang="ts">
   import { ref, computed, onMounted } from 'vue'
   import { ElMessage, ElMessageBox } from 'element-plus'
-  import { Picture } from '@element-plus/icons-vue'
   import MaterialCard from '@/components/custom/material-card/MaterialCard.vue'
   import SearchProgress from '@/components/custom/search-progress/SearchProgress.vue'
   import { useMaterialStore } from '@/store/material'
@@ -163,7 +188,7 @@
     providers: [],
     searchScope: '',
     filters: {
-      type: []
+      type: ['text']
     }
   })
 
@@ -177,9 +202,16 @@
 
   // 状态
   const isSearching = ref(false)
+  const showConfirmDialog = ref(false)
   const previewVisible = ref(false)
   const previewMaterial = ref<Material | null>(null)
   const loadingMaterials = ref<string[]>([])
+
+  // 确认表单
+  const confirmForm = ref({
+    keywords: '',
+    searchScope: ''
+  })
 
   // 计算属性
   const materials = computed(() => materialStore.materials)
@@ -187,6 +219,15 @@
   const providers = computed(() => materialStore.providers)
 
   const aiProviders = computed(() => providers.value.filter((provider) => provider.type === 'ai'))
+
+  const selectedProviders = computed(() => {
+    return providers.value.filter((provider) => searchConfig.value.providers.includes(provider.id))
+  })
+
+  const selectedAIProvider = computed(() => {
+    if (!searchConfig.value.aiProvider) return null
+    return providers.value.find((provider) => provider.id === searchConfig.value.aiProvider)
+  })
 
   const canStartSearch = computed(() => {
     return searchConfig.value.keywords.trim() !== '' && searchConfig.value.providers.length > 0
@@ -199,6 +240,28 @@
       return
     }
 
+    // 设置确认表单数据
+    confirmForm.value = {
+      keywords: searchConfig.value.keywords,
+      searchScope: searchConfig.value.searchScope
+    }
+
+    // 显示确认对话框
+    showConfirmDialog.value = true
+  }
+
+  function closeConfirmDialog() {
+    showConfirmDialog.value = false
+  }
+
+  function confirmSearch() {
+    // 更新搜索配置中的检索范围
+    searchConfig.value.searchScope = confirmForm.value.searchScope
+
+    // 关闭确认对话框
+    showConfirmDialog.value = false
+
+    // 开始搜索
     isSearching.value = true
     searchProgress.value = {
       stage: 'config',
@@ -344,17 +407,6 @@
     }
   }
 
-  function getTypeLabel(type: Material['type']) {
-    const typeLabels = {
-      image: '图片',
-      video: '视频',
-      audio: '音频',
-      text: '文本',
-      other: '其他'
-    }
-    return typeLabels[type] || '其他'
-  }
-
   function formatDate(date: Date) {
     return new Intl.DateTimeFormat('zh-CN', {
       year: 'numeric',
@@ -367,8 +419,9 @@
 
   // 生命周期
   onMounted(() => {
-    // 默认选择一些搜索源
-    searchConfig.value.providers = ['google', 'unsplash']
+    // 默认选择博查和deepseek
+    searchConfig.value.providers = ['bocha']
+    searchConfig.value.aiProvider = 'deepseek'
   })
 </script>
 
@@ -377,6 +430,10 @@
     padding: 20px;
 
     &__config {
+      margin-bottom: 20px;
+    }
+
+    &__progress {
       margin-bottom: 20px;
     }
 
@@ -421,35 +478,7 @@
     }
 
     &__preview {
-      display: flex;
-      gap: 20px;
-
-      &-media {
-        flex: 1;
-        max-width: 400px;
-
-        img {
-          width: 100%;
-          height: auto;
-          border-radius: 8px;
-        }
-      }
-
-      &-placeholder {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-        height: 300px;
-        font-size: 48px;
-        color: var(--el-text-color-secondary);
-        background: var(--el-fill-color-light);
-        border-radius: 8px;
-      }
-
       &-info {
-        flex: 1;
-
         h4 {
           margin: 0 0 16px;
           font-size: 20px;
@@ -471,14 +500,12 @@
       &__grid {
         grid-template-columns: 1fr;
       }
-
-      &__preview {
-        flex-direction: column;
-
-        &-media {
-          max-width: none;
-        }
-      }
     }
+  }
+
+  .confirm-providers {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
   }
 </style>
