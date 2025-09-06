@@ -1,15 +1,34 @@
 <template>
   <div class="project-list-container">
-    <ArtTableHeader
-      title="AI创作项目列表"
-      :actions="headerActions"
-      :show-search="true"
-      search-placeholder="搜索项目名称"
-    />
+    <div class="page-header">
+      <div class="header-content">
+        <div class="header-left">
+          <h1 class="page-title">AI创作项目列表</h1>
+          <p class="page-subtitle">管理和创建您的AI文档创作项目</p>
+        </div>
+        <div class="header-right">
+          <el-input
+            v-model="searchKeyword"
+            placeholder="搜索项目名称"
+            style="width: 250px; margin-right: 12px"
+            clearable
+            @input="handleSearch"
+          >
+            <template #prefix>
+              <i class="iconfont-sys">&#xe710;</i>
+            </template>
+          </el-input>
+          <el-button type="primary" @click="dialogVisible = true">
+            <i class="iconfont-sys" style="margin-right: 4px">&#xe6e0;</i>
+            创建项目
+          </el-button>
+        </div>
+      </div>
+    </div>
 
     <div class="project-grid">
       <div
-        v-for="project in projectList"
+        v-for="project in filteredProjectList"
         :key="project.id"
         class="project-card"
         @click="goToProject(project)"
@@ -143,6 +162,8 @@
   ]
 
   const projectList = ref<Project[]>([])
+  const searchKeyword = ref('')
+  const filteredProjectList = ref<Project[]>([])
 
   // Mock data
   const mockProjects: Project[] = [
@@ -191,20 +212,23 @@
     }
   ]
 
-  const headerActions = [
-    {
-      label: '创建项目',
-      type: 'primary',
-      icon: 'el-icon-plus',
-      handler: () => {
-        dialogVisible.value = true
-      }
+  const handleSearch = () => {
+    const keyword = searchKeyword.value.toLowerCase().trim()
+    if (!keyword) {
+      filteredProjectList.value = [...projectList.value]
+    } else {
+      filteredProjectList.value = projectList.value.filter(
+        (project) =>
+          project.name.toLowerCase().includes(keyword) ||
+          project.description.toLowerCase().includes(keyword)
+      )
     }
-  ]
+  }
 
   onMounted(() => {
     // Load mock data
     projectList.value = mockProjects
+    filteredProjectList.value = [...mockProjects]
   })
 
   const getStatusType = (status: string) => {
@@ -384,12 +408,14 @@
 
   .project-description {
     display: -webkit-box;
+    display: box;
     margin-bottom: 12px;
     overflow: hidden;
     font-size: 14px;
     line-height: 1.5;
     color: var(--el-text-color-regular);
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
   }
 
@@ -490,6 +516,61 @@
 
     .project-actions {
       flex-wrap: wrap;
+    }
+  }
+
+  .page-header {
+    padding: 20px 0;
+    margin-bottom: 20px;
+    background: var(--el-bg-color);
+    border-radius: 8px;
+
+    .header-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+    }
+
+    .header-left {
+      flex: 1;
+
+      .page-title {
+        margin: 0 0 8px;
+        font-size: 24px;
+        font-weight: 600;
+        color: var(--el-text-color-primary);
+      }
+
+      .page-subtitle {
+        margin: 0;
+        font-size: 14px;
+        color: var(--el-text-color-secondary);
+      }
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+    }
+  }
+
+  @media (width <= 768px) {
+    .page-header {
+      .header-content {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+      }
+
+      .header-right {
+        width: 100%;
+
+        .el-input {
+          flex: 1;
+          margin-right: 8px !important;
+        }
+      }
     }
   }
 </style>
