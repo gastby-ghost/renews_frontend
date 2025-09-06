@@ -305,6 +305,13 @@
     "help": {
       "title": "Help Center",
       "document": "Document"
+    },
+    "documentGeneration": {
+      "title": "AI Generation",
+      "projectList": "Project List",
+      "requirements": "Requirements Analysis",
+      "outline": "Document Outline",
+      "content": "Document Content"
     }
   },
   "table": {

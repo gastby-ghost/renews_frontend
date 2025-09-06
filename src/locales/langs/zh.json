@@ -297,6 +297,13 @@
     "help": {
       "title": "帮助中心",
       "document": "官方文档"
+    },
+    "documentGeneration": {
+      "title": "AI创作",
+      "projectList": "项目列表",
+      "requirements": "需求分析",
+      "outline": "文档大纲",
+      "content": "文档内容"
     }
   },
   "table": {
