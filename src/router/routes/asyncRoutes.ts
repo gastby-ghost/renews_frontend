@@ -741,5 +741,70 @@ export const asyncRoutes: AppRouteRecord[] = [
         }
       }
     ]
+  },
+  {
+    path: '/document-generation',
+    name: 'DocumentGeneration',
+    component: RoutesAlias.Layout,
+    meta: {
+      title: 'menus.documentGeneration.title',
+      icon: '&#xe8a8;',
+      showTextBadge: 'AI'
+    },
+    children: [
+      {
+        path: 'project-list',
+        name: 'DocumentProjectList',
+        component: RoutesAlias.DocumentGeneration,
+        meta: {
+          title: 'menus.documentGeneration.projectList',
+          keepAlive: true
+        }
+      },
+      {
+        path: 'requirements/:projectId',
+        name: 'DocumentRequirements',
+        component: RoutesAlias.DocumentRequirements,
+        meta: {
+          title: 'menus.documentGeneration.requirements',
+          keepAlive: true,
+          isHide: true,
+          activePath: '/document-generation/project-list'
+        }
+      },
+      {
+        path: 'title/:projectId',
+        name: 'DocumentTitle',
+        component: RoutesAlias.DocumentTitle,
+        meta: {
+          title: 'menus.documentGeneration.title',
+          keepAlive: true,
+          isHide: true,
+          activePath: '/document-generation/project-list'
+        }
+      },
+      {
+        path: 'outline/:projectId',
+        name: 'DocumentOutline',
+        component: RoutesAlias.DocumentOutline,
+        meta: {
+          title: 'menus.documentGeneration.outline',
+          keepAlive: true,
+          isHide: true,
+          activePath: '/document-generation/project-list'
+        }
+      },
+      {
+        path: 'content/:projectId',
+        name: 'DocumentContent',
+        component: RoutesAlias.DocumentContent,
+        meta: {
+          title: 'menus.documentGeneration.content',
+          keepAlive: true,
+          isHide: true,
+          activePath: '/document-generation/project-list'
+        }
+      }
+    ]
   }
 ]
