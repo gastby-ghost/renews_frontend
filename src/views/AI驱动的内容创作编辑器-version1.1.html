@@ -1,0 +1,2626 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI驱动的内容创作编辑器</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@400;600&family=Source+Code+Pro:wght@400&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      :root {
+        --primary-color: #2c3e50;
+        --secondary-color: #3498db;
+        --accent-color: #e67e22;
+        --bg-color: #f5f7fa;
+        --text-color: #34495e;
+        --secondary-text-color: #7f8c8d;
+        --component-requirement: #3498db;
+        --component-title: #9b59b6;
+        --component-outline: #2ecc71;
+        --component-content: #e67e22;
+        --component-material: #e74c3c;
+        --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        --transition-speed: 0.3s;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Open Sans', sans-serif;
+        color: var(--text-color);
+        background-color: var(--bg-color);
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      /* 顶部导航栏 */
+      .top-nav {
+        height: 60px;
+        background-color: white;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 20px;
+        z-index: 100;
+      }
+
+      .logo {
+        font-family: 'Montserrat', sans-serif;
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--primary-color);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .logo i {
+        color: var(--accent-color);
+      }
+
+      .nav-actions {
+        display: flex;
+        gap: 15px;
+      }
+
+      .nav-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background-color: var(--bg-color);
+        border: none;
+        color: var(--text-color);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all var(--transition-speed);
+      }
+
+      .nav-btn:hover {
+        background-color: var(--secondary-color);
+        color: white;
+        transform: translateY(-2px);
+      }
+
+      /* 主容器 */
+      .main-container {
+        display: flex;
+        height: calc(100vh - 90px);
+      }
+
+      /* 左侧栏 */
+      .left-sidebar {
+        width: 280px;
+        background-color: white;
+        border-right: 1px solid #e0e0e0;
+        display: flex;
+        flex-direction: column;
+        transition: width var(--transition-speed);
+        overflow: hidden;
+      }
+
+      .left-sidebar.collapsed {
+        width: 60px;
+      }
+
+      .sidebar-header {
+        padding: 20px;
+        border-bottom: 1px solid #e0e0e0;
+      }
+
+      .sidebar-title {
+        font-family: 'Montserrat', sans-serif;
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--primary-color);
+        margin-bottom: 15px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .search-box {
+        position: relative;
+        margin-bottom: 15px;
+      }
+
+      .search-box input {
+        width: 100%;
+        padding: 8px 12px 8px 36px;
+        border: 1px solid #e0e0e0;
+        border-radius: 20px;
+        font-size: 14px;
+        transition: border-color var(--transition-speed);
+      }
+
+      .search-box input:focus {
+        outline: none;
+        border-color: var(--secondary-color);
+      }
+
+      .search-box i {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--secondary-text-color);
+      }
+
+      .filter-tags {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 15px;
+      }
+
+      .filter-tag {
+        padding: 4px 12px;
+        background-color: var(--bg-color);
+        border-radius: 16px;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all var(--transition-speed);
+      }
+
+      .filter-tag:hover {
+        background-color: var(--secondary-color);
+        color: white;
+      }
+
+      .filter-tag.active {
+        background-color: var(--primary-color);
+        color: white;
+      }
+
+      .project-list {
+        flex: 1;
+        overflow-y: auto;
+        padding: 10px;
+      }
+
+      .project-item {
+        background-color: var(--bg-color);
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 10px;
+        cursor: pointer;
+        transition: all var(--transition-speed);
+      }
+
+      .project-item:hover {
+        background-color: #e8eef5;
+        transform: translateX(5px);
+      }
+
+      .project-item.active {
+        background-color: var(--secondary-color);
+        color: white;
+      }
+
+      .project-title {
+        font-weight: 600;
+        margin-bottom: 5px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .project-meta {
+        font-size: 12px;
+        color: var(--secondary-text-color);
+      }
+
+      .project-item.active .project-meta {
+        color: rgba(255, 255, 255, 0.8);
+      }
+
+      .status-indicator {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 5px;
+      }
+
+      .status-draft {
+        background-color: #95a5a6;
+      }
+      .status-editing {
+        background-color: #f39c12;
+      }
+      .status-completed {
+        background-color: #27ae60;
+      }
+
+      .project-components {
+        margin-top: 10px;
+        padding-left: 20px;
+        display: none;
+      }
+
+      .project-item.expanded .project-components {
+        display: block;
+      }
+
+      .component-item {
+        padding: 5px 0;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+      }
+
+      .component-item:hover {
+        color: var(--secondary-color);
+      }
+
+      .project-item.active .component-item:hover {
+        color: rgba(255, 255, 255, 0.9);
+      }
+
+      .create-project-btn {
+        margin: 20px;
+        padding: 12px;
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: all var(--transition-speed);
+      }
+
+      .create-project-btn:hover {
+        background-color: #1a252f;
+        transform: translateY(-2px);
+      }
+
+      /* 中间栏 */
+      .main-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background-color: var(--bg-color);
+        min-width: 640px;
+      }
+
+      /* 组件导航区 */
+      .component-nav {
+        background-color: white;
+        padding: 15px 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        display: flex;
+        gap: 15px;
+        overflow-x: auto;
+        scrollbar-width: thin;
+      }
+
+      .component-card {
+        min-width: 120px;
+        padding: 12px 16px;
+        background-color: var(--bg-color);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all var(--transition-speed);
+        text-align: center;
+        opacity: 0.7;
+        position: relative;
+      }
+
+      .component-card:hover {
+        transform: translateY(-3px);
+        opacity: 1;
+      }
+
+      .component-card.active {
+        opacity: 1;
+        transform: scale(1.2);
+        box-shadow: var(--card-shadow);
+      }
+
+      .component-card.requirement {
+        border-top: 3px solid var(--component-requirement);
+      }
+
+      .component-card.requirement.active {
+        background-color: rgba(52, 152, 219, 0.1);
+      }
+
+      .component-card.title {
+        border-top: 3px solid var(--component-title);
+      }
+
+      .component-card.title.active {
+        background-color: rgba(155, 89, 182, 0.1);
+      }
+
+      .component-card.outline {
+        border-top: 3px solid var(--component-outline);
+      }
+
+      .component-card.outline.active {
+        background-color: rgba(46, 204, 113, 0.1);
+      }
+
+      .component-card.content {
+        border-top: 3px solid var(--component-content);
+      }
+
+      .component-card.content.active {
+        background-color: rgba(230, 126, 34, 0.1);
+      }
+
+      .component-card.material {
+        border-top: 3px solid var(--component-material);
+      }
+
+      .component-card.material.active {
+        background-color: rgba(231, 76, 60, 0.1);
+      }
+
+      .component-icon {
+        font-size: 24px;
+        margin-bottom: 5px;
+      }
+
+      .component-name {
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      /* 编辑区 */
+      .editor-area {
+        flex: 1;
+        padding: 20px;
+        overflow-y: auto;
+      }
+
+      .editor-panel {
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: var(--card-shadow);
+        padding: 20px;
+        display: none;
+        animation: fadeIn var(--transition-speed);
+      }
+
+      .editor-panel.active {
+        display: block;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #e0e0e0;
+      }
+
+      .panel-title {
+        font-family: 'Montserrat', sans-serif;
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--primary-color);
+      }
+
+      /* 需求定义区 */
+      .requirement-form {
+        display: grid;
+        gap: 20px;
+      }
+
+      .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .form-label {
+        font-weight: 600;
+        font-size: 14px;
+      }
+
+      .form-input,
+      .form-select,
+      .form-textarea {
+        padding: 10px 12px;
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+        font-size: 14px;
+        transition: border-color var(--transition-speed);
+      }
+
+      .form-input:focus,
+      .form-select:focus,
+      .form-textarea:focus {
+        outline: none;
+        border-color: var(--secondary-color);
+      }
+
+      .form-textarea {
+        resize: vertical;
+        min-height: 100px;
+      }
+
+      .keyword-input {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 8px;
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+        min-height: 42px;
+      }
+
+      .keyword-tag {
+        background-color: var(--secondary-color);
+        color: white;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .keyword-tag i {
+        cursor: pointer;
+        font-size: 12px;
+      }
+
+      .keyword-input input {
+        border: none;
+        outline: none;
+        flex: 1;
+        min-width: 100px;
+      }
+
+      .range-slider {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
+
+      .range-slider input[type='range'] {
+        flex: 1;
+      }
+
+      .range-value {
+        min-width: 60px;
+        text-align: center;
+        font-weight: 600;
+        color: var(--secondary-color);
+      }
+
+      .form-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        margin-top: 20px;
+      }
+
+      .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all var(--transition-speed);
+      }
+
+      .btn-primary {
+        background-color: var(--primary-color);
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background-color: #1a252f;
+        transform: translateY(-2px);
+      }
+
+      .btn-secondary {
+        background-color: white;
+        color: var(--primary-color);
+        border: 1px solid var(--primary-color);
+      }
+
+      .btn-secondary:hover {
+        background-color: var(--bg-color);
+      }
+
+      /* 标题生成区 */
+      .title-mode-tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+
+      .mode-tab {
+        padding: 8px 16px;
+        background-color: var(--bg-color);
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all var(--transition-speed);
+      }
+
+      .mode-tab.active {
+        background-color: var(--component-title);
+        color: white;
+      }
+
+      .material-selection {
+        background-color: var(--bg-color);
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+      }
+
+      .bound-materials {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 10px;
+      }
+
+      .bound-material-item {
+        background-color: white;
+        padding: 8px 12px;
+        border-radius: 4px;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+
+      .bound-material-item i {
+        color: var(--secondary-text-color);
+        cursor: pointer;
+      }
+
+      .title-options {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+      }
+
+      .title-option {
+        background-color: var(--bg-color);
+        padding: 15px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all var(--transition-speed);
+        border: 2px solid transparent;
+      }
+
+      .title-option:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--card-shadow);
+      }
+
+      .title-option.selected {
+        border-color: var(--component-title);
+        background-color: rgba(155, 89, 182, 0.1);
+      }
+
+      .title-text {
+        font-weight: 600;
+        margin-bottom: 8px;
+      }
+
+      .title-meta {
+        font-size: 12px;
+        color: var(--secondary-text-color);
+      }
+
+      /* 大纲结构区 */
+      .outline-container {
+        position: relative;
+      }
+
+      .outline-view-toggle {
+        position: absolute;
+        top: 0;
+        right: 0;
+        display: flex;
+        gap: 5px;
+      }
+
+      .view-toggle-btn {
+        width: 32px;
+        height: 32px;
+        border: 1px solid #e0e0e0;
+        background-color: white;
+        border-radius: 4px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all var(--transition-speed);
+      }
+
+      .view-toggle-btn:hover {
+        background-color: var(--bg-color);
+      }
+
+      .view-toggle-btn.active {
+        background-color: var(--component-outline);
+        color: white;
+        border-color: var(--component-outline);
+      }
+
+      .outline-tree {
+        margin-top: 40px;
+      }
+
+      .outline-item {
+        margin-bottom: 5px;
+        position: relative;
+      }
+
+      .outline-item-content {
+        display: flex;
+        align-items: center;
+        padding: 8px 12px;
+        background-color: var(--bg-color);
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all var(--transition-speed);
+      }
+
+      .outline-item-content:hover {
+        background-color: #e8f5e9;
+      }
+
+      .outline-item-tools {
+        opacity: 0;
+        display: flex;
+        gap: 5px;
+        margin-left: auto;
+        transition: opacity var(--transition-speed);
+      }
+
+      .outline-item-content:hover .outline-item-tools {
+        opacity: 1;
+      }
+
+      .outline-tool-btn {
+        width: 24px;
+        height: 24px;
+        border: none;
+        background-color: transparent;
+        color: var(--secondary-text-color);
+        cursor: pointer;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all var(--transition-speed);
+      }
+
+      .outline-tool-btn:hover {
+        background-color: var(--component-outline);
+        color: white;
+      }
+
+      .outline-children {
+        margin-left: 30px;
+        margin-top: 5px;
+      }
+
+      .outline-item.dragging {
+        opacity: 0.5;
+      }
+
+      .outline-item.drag-over {
+        background-color: rgba(46, 204, 113, 0.2);
+      }
+
+      /* 正文编辑区 */
+      .editor-toolbar {
+        background-color: var(--bg-color);
+        padding: 10px;
+        border-radius: 4px 4px 0 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        border: 1px solid #e0e0e0;
+        border-bottom: none;
+      }
+
+      .toolbar-btn {
+        width: 32px;
+        height: 32px;
+        border: none;
+        background-color: transparent;
+        color: var(--text-color);
+        cursor: pointer;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all var(--transition-speed);
+      }
+
+      .toolbar-btn:hover {
+        background-color: var(--secondary-color);
+        color: white;
+      }
+
+      .toolbar-separator {
+        width: 1px;
+        background-color: #e0e0e0;
+        margin: 0 5px;
+      }
+
+      .editor-content {
+        min-height: 400px;
+        padding: 20px;
+        border: 1px solid #e0e0e0;
+        border-radius: 0 0 4px 4px;
+        background-color: white;
+        line-height: 1.6;
+      }
+
+      .editor-content:focus {
+        outline: none;
+        border-color: var(--secondary-color);
+      }
+
+      .ai-assistant {
+        position: fixed;
+        bottom: 30px;
+        right: 400px;
+        width: 60px;
+        height: 60px;
+        background-color: var(--accent-color);
+        border-radius: 50%;
+        border: none;
+        color: white;
+        font-size: 24px;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        transition: all var(--transition-speed);
+        z-index: 50;
+      }
+
+      .ai-assistant:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+      }
+
+      /* 素材管理区 */
+      .material-view {
+        display: flex;
+        gap: 20px;
+      }
+
+      .material-library {
+        flex: 1;
+      }
+
+      .material-filters {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+      }
+
+      .filter-chip {
+        padding: 6px 12px;
+        background-color: var(--bg-color);
+        border: 1px solid #e0e0e0;
+        border-radius: 16px;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all var(--transition-speed);
+      }
+
+      .filter-chip:hover {
+        background-color: var(--component-material);
+        color: white;
+        border-color: var(--component-material);
+      }
+
+      .material-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 15px;
+      }
+
+      .material-card {
+        background-color: white;
+        border-radius: 8px;
+        padding: 15px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: all var(--transition-speed);
+        cursor: pointer;
+      }
+
+      .material-card:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--card-shadow);
+      }
+
+      .material-card.selected {
+        border: 2px solid var(--component-material);
+      }
+
+      .material-title {
+        font-weight: 600;
+        margin-bottom: 8px;
+        font-size: 14px;
+      }
+
+      .material-summary {
+        font-size: 12px;
+        color: var(--secondary-text-color);
+        line-height: 1.4;
+        margin-bottom: 10px;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      .material-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 12px;
+        color: var(--secondary-text-color);
+      }
+
+      .material-rating {
+        color: #f39c12;
+      }
+
+      /* 右侧栏 */
+      .right-sidebar {
+        width: 360px;
+        background-color: white;
+        border-left: 1px solid #e0e0e0;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .sidebar-tabs {
+        display: flex;
+        border-bottom: 1px solid #e0e0e0;
+      }
+
+      .sidebar-tab {
+        flex: 1;
+        padding: 15px;
+        text-align: center;
+        cursor: pointer;
+        transition: all var(--transition-speed);
+        border-bottom: 3px solid transparent;
+      }
+
+      .sidebar-tab:hover {
+        background-color: var(--bg-color);
+      }
+
+      .sidebar-tab.active {
+        border-bottom-color: var(--secondary-color);
+        color: var(--secondary-color);
+      }
+
+      .sidebar-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+      }
+
+      .sidebar-panel {
+        display: none;
+      }
+
+      .sidebar-panel.active {
+        display: block;
+        animation: fadeIn var(--transition-speed);
+      }
+
+      /* 素材区 */
+      .material-list {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+      }
+
+      .material-item {
+        background-color: var(--bg-color);
+        border-radius: 8px;
+        padding: 15px;
+        transition: all var(--transition-speed);
+        cursor: pointer;
+        border: 1px solid transparent;
+      }
+
+      .material-item:hover {
+        transform: translateX(-5px);
+        border-color: var(--secondary-color);
+      }
+
+      .material-item.bound {
+        border-color: var(--accent-color);
+        background-color: rgba(230, 126, 34, 0.05);
+      }
+
+      .material-item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 8px;
+      }
+
+      .material-item-title {
+        font-weight: 600;
+        font-size: 14px;
+        flex: 1;
+      }
+
+      .material-item-actions {
+        display: flex;
+        gap: 5px;
+      }
+
+      .material-action-btn {
+        width: 24px;
+        height: 24px;
+        border: none;
+        background-color: transparent;
+        color: var(--secondary-text-color);
+        cursor: pointer;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all var(--transition-speed);
+      }
+
+      .material-action-btn:hover {
+        background-color: var(--secondary-color);
+        color: white;
+      }
+
+      .material-item-summary {
+        font-size: 13px;
+        color: var(--secondary-text-color);
+        line-height: 1.4;
+        margin-bottom: 10px;
+      }
+
+      .material-item-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 12px;
+      }
+
+      .bound-indicator {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        color: var(--accent-color);
+      }
+
+      /* AI建议区 */
+      .suggestion-list {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+      }
+
+      .suggestion-item {
+        background-color: var(--bg-color);
+        border-radius: 8px;
+        padding: 15px;
+        border-left: 4px solid var(--secondary-color);
+        transition: all var(--transition-speed);
+      }
+
+      .suggestion-item.high-priority {
+        border-left-color: #e74c3c;
+      }
+
+      .suggestion-item.medium-priority {
+        border-left-color: #f39c12;
+      }
+
+      .suggestion-item.low-priority {
+        border-left-color: var(--secondary-color);
+      }
+
+      .suggestion-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+
+      .suggestion-type {
+        font-weight: 600;
+        font-size: 14px;
+      }
+
+      .suggestion-priority {
+        font-size: 12px;
+        padding: 2px 8px;
+        border-radius: 12px;
+        background-color: var(--secondary-color);
+        color: white;
+      }
+
+      .suggestion-item.high-priority .suggestion-priority {
+        background-color: #e74c3c;
+      }
+
+      .suggestion-item.medium-priority .suggestion-priority {
+        background-color: #f39c12;
+      }
+
+      .suggestion-content {
+        font-size: 13px;
+        line-height: 1.5;
+        margin-bottom: 10px;
+      }
+
+      .suggestion-actions {
+        display: flex;
+        gap: 10px;
+      }
+
+      .suggestion-btn {
+        padding: 6px 12px;
+        border: none;
+        border-radius: 4px;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all var(--transition-speed);
+      }
+
+      .suggestion-btn.apply {
+        background-color: var(--secondary-color);
+        color: white;
+      }
+
+      .suggestion-btn.apply:hover {
+        background-color: #2980b9;
+      }
+
+      .suggestion-btn.ignore {
+        background-color: transparent;
+        color: var(--secondary-text-color);
+        border: 1px solid #e0e0e0;
+      }
+
+      .suggestion-btn.ignore:hover {
+        background-color: var(--bg-color);
+      }
+
+      /* 写作统计区 */
+      .stats-overview {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+        margin-bottom: 20px;
+      }
+
+      .stat-card {
+        background-color: var(--bg-color);
+        border-radius: 8px;
+        padding: 15px;
+        text-align: center;
+      }
+
+      .stat-value {
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--primary-color);
+        margin-bottom: 5px;
+      }
+
+      .stat-label {
+        font-size: 13px;
+        color: var(--secondary-text-color);
+      }
+
+      .progress-ring {
+        width: 120px;
+        height: 120px;
+        margin: 0 auto 20px;
+        position: relative;
+      }
+
+      .progress-ring svg {
+        transform: rotate(-90deg);
+      }
+
+      .progress-ring-circle {
+        fill: none;
+        stroke: #e0e0e0;
+        stroke-width: 8;
+      }
+
+      .progress-ring-progress {
+        fill: none;
+        stroke: var(--secondary-color);
+        stroke-width: 8;
+        stroke-linecap: round;
+        transition: stroke-dashoffset var(--transition-speed);
+      }
+
+      .progress-ring-text {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--primary-color);
+      }
+
+      .component-stats {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .component-stat-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px;
+        background-color: var(--bg-color);
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all var(--transition-speed);
+      }
+
+      .component-stat-item:hover {
+        background-color: #e8eef5;
+      }
+
+      .component-stat-name {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 600;
+        font-size: 14px;
+      }
+
+      .component-stat-value {
+        font-weight: 600;
+        color: var(--secondary-color);
+      }
+
+      /* 状态栏 */
+      .status-bar {
+        height: 30px;
+        background-color: var(--primary-color);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 20px;
+        font-size: 12px;
+      }
+
+      .status-left,
+      .status-right {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
+
+      .status-item {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .status-indicator-small {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background-color: #27ae60;
+      }
+
+      /* 响应式设计 */
+      @media (max-width: 1200px) {
+        .left-sidebar {
+          width: 60px;
+        }
+
+        .left-sidebar.expanded {
+          width: 280px;
+        }
+
+        .sidebar-title,
+        .search-box,
+        .filter-tags,
+        .project-title span,
+        .project-meta {
+          display: none;
+        }
+
+        .left-sidebar.expanded .sidebar-title,
+        .left-sidebar.expanded .search-box,
+        .left-sidebar.expanded .filter-tags,
+        .left-sidebar.expanded .project-title span,
+        .left-sidebar.expanded .project-meta {
+          display: block;
+        }
+
+        .component-card {
+          min-width: 80px;
+          padding: 8px 12px;
+        }
+
+        .component-name {
+          font-size: 11px;
+        }
+
+        .component-icon {
+          font-size: 20px;
+        }
+
+        .right-sidebar {
+          width: 300px;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .main-container {
+          flex-direction: column;
+        }
+
+        .left-sidebar,
+        .right-sidebar {
+          width: 100%;
+          height: auto;
+        }
+
+        .left-sidebar {
+          border-right: none;
+          border-bottom: 1px solid #e0e0e0;
+        }
+
+        .right-sidebar {
+          border-left: none;
+          border-top: 1px solid #e0e0e0;
+        }
+
+        .component-nav {
+          padding: 10px;
+          gap: 8px;
+        }
+
+        .component-card {
+          min-width: 60px;
+          padding: 6px 8px;
+        }
+
+        .component-name {
+          display: none;
+        }
+
+        .material-view {
+          flex-direction: column;
+        }
+
+        .stats-overview {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      /* 加载动画 */
+      .loading {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: white;
+        animation: spin 1s ease-in-out infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* 工具提示 */
+      .tooltip {
+        position: relative;
+      }
+
+      .tooltip::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 5px 10px;
+        border-radius: 4px;
+        font-size: 12px;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity var(--transition-speed);
+      }
+
+      .tooltip:hover::after {
+        opacity: 1;
+      }
+
+      /* 拖拽样式 */
+      .dragging {
+        opacity: 0.5;
+      }
+
+      .drag-over {
+        background-color: rgba(52, 152, 219, 0.1);
+        border: 2px dashed var(--secondary-color);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 顶部导航栏 -->
+    <nav class="top-nav">
+      <div class="logo">
+        <i class="fas fa-feather-alt"></i>
+        <span>AI创作编辑器</span>
+      </div>
+      <div class="nav-actions">
+        <button class="nav-btn tooltip" data-tooltip="设置">
+          <i class="fas fa-cog"></i>
+        </button>
+        <button class="nav-btn tooltip" data-tooltip="帮助">
+          <i class="fas fa-question-circle"></i>
+        </button>
+        <button class="nav-btn tooltip" data-tooltip="用户">
+          <i class="fas fa-user"></i>
+        </button>
+      </div>
+    </nav>
+
+    <!-- 主容器 -->
+    <div class="main-container">
+      <!-- 左侧栏 -->
+      <aside class="left-sidebar" id="leftSidebar">
+        <div class="sidebar-header">
+          <h2 class="sidebar-title">项目管理</h2>
+          <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" placeholder="搜索项目..." />
+          </div>
+          <div class="filter-tags">
+            <span class="filter-tag active">全部</span>
+            <span class="filter-tag">草稿</span>
+            <span class="filter-tag">编辑中</span>
+            <span class="filter-tag">已完成</span>
+          </div>
+        </div>
+        <div class="project-list">
+          <div class="project-item active expanded" data-project-id="1">
+            <div class="project-title">
+              <span>人工智能发展趋势分析</span>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="project-meta">
+              <span><span class="status-indicator status-editing"></span>编辑中</span>
+              <span>最后修改: 2小时前</span>
+            </div>
+            <div class="project-components">
+              <div class="component-item" data-component="requirement">
+                <i class="fas fa-clipboard-check"></i>
+                <span>需求定义</span>
+              </div>
+              <div class="component-item" data-component="title">
+                <i class="fas fa-heading"></i>
+                <span>标题生成</span>
+              </div>
+              <div class="component-item" data-component="outline">
+                <i class="fas fa-list"></i>
+                <span>大纲结构</span>
+              </div>
+              <div class="component-item" data-component="content">
+                <i class="fas fa-file-alt"></i>
+                <span>正文编辑</span>
+              </div>
+              <div class="component-item" data-component="material">
+                <i class="fas fa-folder"></i>
+                <span>素材管理</span>
+              </div>
+            </div>
+          </div>
+          <div class="project-item" data-project-id="2">
+            <div class="project-title">
+              <span>区块链技术应用研究</span>
+              <i class="fas fa-chevron-right"></i>
+            </div>
+            <div class="project-meta">
+              <span><span class="status-indicator status-draft"></span>草稿</span>
+              <span>最后修改: 1天前</span>
+            </div>
+          </div>
+          <div class="project-item" data-project-id="3">
+            <div class="project-title">
+              <span>可持续发展战略报告</span>
+              <i class="fas fa-chevron-right"></i>
+            </div>
+            <div class="project-meta">
+              <span><span class="status-indicator status-completed"></span>已完成</span>
+              <span>最后修改: 3天前</span>
+            </div>
+          </div>
+        </div>
+        <button class="create-project-btn">
+          <i class="fas fa-plus"></i>
+          <span>创建新项目</span>
+        </button>
+      </aside>
+
+      <!-- 中间栏 -->
+      <main class="main-content">
+        <!-- 组件导航区 -->
+        <div class="component-nav">
+          <div class="component-card requirement active" data-component="requirement">
+            <div class="component-icon">
+              <i class="fas fa-clipboard-check"></i>
+            </div>
+            <div class="component-name">需求定义</div>
+          </div>
+          <div class="component-card title" data-component="title">
+            <div class="component-icon">
+              <i class="fas fa-heading"></i>
+            </div>
+            <div class="component-name">标题生成</div>
+          </div>
+          <div class="component-card outline" data-component="outline">
+            <div class="component-icon">
+              <i class="fas fa-list"></i>
+            </div>
+            <div class="component-name">大纲结构</div>
+          </div>
+          <div class="component-card content" data-component="content">
+            <div class="component-icon">
+              <i class="fas fa-file-alt"></i>
+            </div>
+            <div class="component-name">正文编辑</div>
+          </div>
+          <div class="component-card material" data-component="material">
+            <div class="component-icon">
+              <i class="fas fa-folder"></i>
+            </div>
+            <div class="component-name">素材管理</div>
+          </div>
+        </div>
+
+        <!-- 编辑区 -->
+        <div class="editor-area">
+          <!-- 需求定义区 -->
+          <div class="editor-panel active" id="requirementPanel">
+            <div class="panel-header">
+              <h3 class="panel-title">需求定义</h3>
+              <div class="panel-actions">
+                <button class="btn btn-secondary">取消</button>
+                <button class="btn btn-primary">确认需求</button>
+              </div>
+            </div>
+            <form class="requirement-form">
+              <div class="form-group">
+                <label class="form-label">写作目标</label>
+                <select class="form-select">
+                  <option>博客文章</option>
+                  <option>营销文案</option>
+                  <option>学术论文</option>
+                  <option>技术报告</option>
+                  <option>产品介绍</option>
+                  <option>自定义</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">目标受众</label>
+                <div class="filter-tags">
+                  <span class="filter-tag">专业人士</span>
+                  <span class="filter-tag">普通大众</span>
+                  <span class="filter-tag">学生</span>
+                  <span class="filter-tag">投资者</span>
+                </div>
+                <textarea class="form-textarea" placeholder="描述您的目标受众..."></textarea>
+              </div>
+              <div class="form-group">
+                <label class="form-label">写作风格</label>
+                <div class="range-slider">
+                  <span>正式</span>
+                  <input type="range" min="0" max="100" value="50" />
+                  <span>轻松</span>
+                  <span class="range-value">50</span>
+                </div>
+                <textarea class="form-textarea" placeholder="描述期望的写作风格..."></textarea>
+              </div>
+              <div class="form-group">
+                <label class="form-label">关键词</label>
+                <div class="keyword-input">
+                  <span class="keyword-tag">人工智能 <i class="fas fa-times"></i></span>
+                  <span class="keyword-tag">机器学习 <i class="fas fa-times"></i></span>
+                  <span class="keyword-tag">深度学习 <i class="fas fa-times"></i></span>
+                  <input type="text" placeholder="添加关键词..." />
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">字数要求</label>
+                <div class="range-slider">
+                  <input type="range" min="500" max="5000" value="2000" step="100" />
+                  <span class="range-value">2000字</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">特殊要求</label>
+                <textarea
+                  class="form-textarea"
+                  placeholder="描述任何特殊要求或注意事项..."
+                ></textarea>
+              </div>
+            </form>
+          </div>
+
+          <!-- 标题生成区 -->
+          <div class="editor-panel" id="titlePanel">
+            <div class="panel-header">
+              <h3 class="panel-title">标题生成</h3>
+              <div class="panel-actions">
+                <button class="btn btn-secondary">返回</button>
+              </div>
+            </div>
+            <div class="title-mode-tabs">
+              <button class="mode-tab active">基于素材生成</button>
+              <button class="mode-tab">直接生成</button>
+            </div>
+            <div class="material-selection">
+              <div style="display: flex; justify-content: space-between; align-items: center">
+                <span><strong>已选择3个素材用于标题生成</strong></span>
+                <button class="btn btn-secondary">管理选择素材</button>
+              </div>
+              <div class="bound-materials">
+                <div class="bound-material-item">
+                  <span>AI技术发展报告</span>
+                  <i class="fas fa-times"></i>
+                </div>
+                <div class="bound-material-item">
+                  <span>机器学习应用案例</span>
+                  <i class="fas fa-times"></i>
+                </div>
+                <div class="bound-material-item">
+                  <span>深度学习最新进展</span>
+                  <i class="fas fa-times"></i>
+                </div>
+              </div>
+              <div style="margin-top: 15px">
+                <label class="form-label">素材权重调整</label>
+                <div class="range-slider">
+                  <input type="range" min="0" max="100" value="70" />
+                  <span class="range-value">70%</span>
+                </div>
+              </div>
+            </div>
+            <div style="margin-bottom: 20px">
+              <label class="form-label">标题风格</label>
+              <select class="form-select">
+                <option>正式</option>
+                <option>轻松</option>
+                <option>创意</option>
+                <option>专业</option>
+              </select>
+            </div>
+            <div style="margin-bottom: 20px">
+              <label class="form-label">标题长度</label>
+              <div class="range-slider">
+                <input type="range" min="10" max="50" value="25" />
+                <span class="range-value">25字</span>
+              </div>
+            </div>
+            <div class="title-options">
+              <div class="title-option selected">
+                <div class="title-text">人工智能：重塑未来的技术革命</div>
+                <div class="title-meta">基于3个素材生成</div>
+              </div>
+              <div class="title-option">
+                <div class="title-text">深度学习如何改变我们的世界</div>
+                <div class="title-meta">基于2个素材生成</div>
+              </div>
+              <div class="title-option">
+                <div class="title-text">AI技术的现状与未来展望</div>
+                <div class="title-meta">基于3个素材生成</div>
+              </div>
+              <div class="title-option">
+                <div class="title-text">机器学习：从理论到实践</div>
+                <div class="title-meta">基于1个素材生成</div>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button class="btn btn-secondary">生成更多选项</button>
+              <button class="btn btn-primary">确认标题</button>
+            </div>
+          </div>
+
+          <!-- 大纲结构区 -->
+          <div class="editor-panel" id="outlinePanel">
+            <div class="panel-header">
+              <h3 class="panel-title">大纲结构</h3>
+              <div class="outline-view-toggle">
+                <button class="view-toggle-btn active" title="树形视图">
+                  <i class="fas fa-list"></i>
+                </button>
+                <button class="view-toggle-btn" title="图形视图">
+                  <i class="fas fa-project-diagram"></i>
+                </button>
+              </div>
+            </div>
+            <div class="outline-tree">
+              <div class="outline-item" draggable="true">
+                <div class="outline-item-content">
+                  <i class="fas fa-grip-vertical" style="margin-right: 8px; color: #bdc3c7"></i>
+                  <i class="fas fa-chevron-right" style="margin-right: 8px; color: #bdc3c7"></i>
+                  <span>引言：人工智能的发展背景</span>
+                  <div class="outline-item-tools">
+                    <button class="outline-tool-btn" title="重写">
+                      <i class="fas fa-redo"></i>
+                    </button>
+                    <button class="outline-tool-btn" title="扩展">
+                      <i class="fas fa-expand-arrows-alt"></i>
+                    </button>
+                    <button class="outline-tool-btn" title="优化">
+                      <i class="fas fa-magic"></i>
+                    </button>
+                  </div>
+                </div>
+                <div class="outline-children">
+                  <div class="outline-item" draggable="true">
+                    <div class="outline-item-content">
+                      <i class="fas fa-grip-vertical" style="margin-right: 8px; color: #bdc3c7"></i>
+                      <span>1.1 人工智能的定义与范畴</span>
+                      <div class="outline-item-tools">
+                        <button class="outline-tool-btn" title="重写">
+                          <i class="fas fa-redo"></i>
+                        </button>
+                        <button class="outline-tool-btn" title="扩展">
+                          <i class="fas fa-expand-arrows-alt"></i>
+                        </button>
+                        <button class="outline-tool-btn" title="优化">
+                          <i class="fas fa-magic"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="outline-item" draggable="true">
+                    <div class="outline-item-content">
+                      <i class="fas fa-grip-vertical" style="margin-right: 8px; color: #bdc3c7"></i>
+                      <span>1.2 历史发展脉络</span>
+                      <div class="outline-item-tools">
+                        <button class="outline-tool-btn" title="重写">
+                          <i class="fas fa-redo"></i>
+                        </button>
+                        <button class="outline-tool-btn" title="扩展">
+                          <i class="fas fa-expand-arrows-alt"></i>
+                        </button>
+                        <button class="outline-tool-btn" title="优化">
+                          <i class="fas fa-magic"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="outline-item" draggable="true">
+                <div class="outline-item-content">
+                  <i class="fas fa-grip-vertical" style="margin-right: 8px; color: #bdc3c7"></i>
+                  <i class="fas fa-chevron-right" style="margin-right: 8px; color: #bdc3c7"></i>
+                  <span>核心技术分析</span>
+                  <div class="outline-item-tools">
+                    <button class="outline-tool-btn" title="重写">
+                      <i class="fas fa-redo"></i>
+                    </button>
+                    <button class="outline-tool-btn" title="扩展">
+                      <i class="fas fa-expand-arrows-alt"></i>
+                    </button>
+                    <button class="outline-tool-btn" title="优化">
+                      <i class="fas fa-magic"></i>
+                    </button>
+                  </div>
+                </div>
+                <div class="outline-children">
+                  <div class="outline-item" draggable="true">
+                    <div class="outline-item-content">
+                      <i class="fas fa-grip-vertical" style="margin-right: 8px; color: #bdc3c7"></i>
+                      <span>2.1 机器学习算法</span>
+                      <div class="outline-item-tools">
+                        <button class="outline-tool-btn" title="重写">
+                          <i class="fas fa-redo"></i>
+                        </button>
+                        <button class="outline-tool-btn" title="扩展">
+                          <i class="fas fa-expand-arrows-alt"></i>
+                        </button>
+                        <button class="outline-tool-btn" title="优化">
+                          <i class="fas fa-magic"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="outline-item" draggable="true">
+                    <div class="outline-item-content">
+                      <i class="fas fa-grip-vertical" style="margin-right: 8px; color: #bdc3c7"></i>
+                      <span>2.2 深度学习网络</span>
+                      <div class="outline-item-tools">
+                        <button class="outline-tool-btn" title="重写">
+                          <i class="fas fa-redo"></i>
+                        </button>
+                        <button class="outline-tool-btn" title="扩展">
+                          <i class="fas fa-expand-arrows-alt"></i>
+                        </button>
+                        <button class="outline-tool-btn" title="优化">
+                          <i class="fas fa-magic"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="outline-item" draggable="true">
+                <div class="outline-item-content">
+                  <i class="fas fa-grip-vertical" style="margin-right: 8px; color: #bdc3c7"></i>
+                  <i class="fas fa-chevron-right" style="margin-right: 8px; color: #bdc3c7"></i>
+                  <span>应用领域与案例</span>
+                  <div class="outline-item-tools">
+                    <button class="outline-tool-btn" title="重写">
+                      <i class="fas fa-redo"></i>
+                    </button>
+                    <button class="outline-tool-btn" title="扩展">
+                      <i class="fas fa-expand-arrows-alt"></i>
+                    </button>
+                    <button class="outline-tool-btn" title="优化">
+                      <i class="fas fa-magic"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="outline-item" draggable="true">
+                <div class="outline-item-content">
+                  <i class="fas fa-grip-vertical" style="margin-right: 8px; color: #bdc3c7"></i>
+                  <i class="fas fa-chevron-right" style="margin-right: 8px; color: #bdc3c7"></i>
+                  <span>未来发展趋势</span>
+                  <div class="outline-item-tools">
+                    <button class="outline-tool-btn" title="重写">
+                      <i class="fas fa-redo"></i>
+                    </button>
+                    <button class="outline-tool-btn" title="扩展">
+                      <i class="fas fa-expand-arrows-alt"></i>
+                    </button>
+                    <button class="outline-tool-btn" title="优化">
+                      <i class="fas fa-magic"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="outline-item" draggable="true">
+                <div class="outline-item-content">
+                  <i class="fas fa-grip-vertical" style="margin-right: 8px; color: #bdc3c7"></i>
+                  <span>结论与展望</span>
+                  <div class="outline-item-tools">
+                    <button class="outline-tool-btn" title="重写">
+                      <i class="fas fa-redo"></i>
+                    </button>
+                    <button class="outline-tool-btn" title="扩展">
+                      <i class="fas fa-expand-arrows-alt"></i>
+                    </button>
+                    <button class="outline-tool-btn" title="优化">
+                      <i class="fas fa-magic"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="form-actions" style="margin-top: 20px">
+              <button class="btn btn-secondary">添加章节</button>
+              <button class="btn btn-secondary">AI优化大纲</button>
+              <button class="btn btn-primary">生成初稿</button>
+            </div>
+          </div>
+
+          <!-- 正文编辑区 -->
+          <div class="editor-panel" id="contentPanel">
+            <div class="panel-header">
+              <h3 class="panel-title">正文编辑</h3>
+              <div class="panel-actions">
+                <button class="btn btn-secondary">保存</button>
+                <button class="btn btn-primary">导出</button>
+              </div>
+            </div>
+            <div class="editor-toolbar">
+              <button class="toolbar-btn" title="撤销">
+                <i class="fas fa-undo"></i>
+              </button>
+              <button class="toolbar-btn" title="重做">
+                <i class="fas fa-redo"></i>
+              </button>
+              <div class="toolbar-separator"></div>
+              <button class="toolbar-btn" title="加粗">
+                <i class="fas fa-bold"></i>
+              </button>
+              <button class="toolbar-btn" title="斜体">
+                <i class="fas fa-italic"></i>
+              </button>
+              <button class="toolbar-btn" title="下划线">
+                <i class="fas fa-underline"></i>
+              </button>
+              <div class="toolbar-separator"></div>
+              <button class="toolbar-btn" title="标题1"> H1 </button>
+              <button class="toolbar-btn" title="标题2"> H2 </button>
+              <button class="toolbar-btn" title="段落"> P </button>
+              <div class="toolbar-separator"></div>
+              <button class="toolbar-btn" title="无序列表">
+                <i class="fas fa-list-ul"></i>
+              </button>
+              <button class="toolbar-btn" title="有序列表">
+                <i class="fas fa-list-ol"></i>
+              </button>
+              <div class="toolbar-separator"></div>
+              <button class="toolbar-btn" title="插入链接">
+                <i class="fas fa-link"></i>
+              </button>
+              <button class="toolbar-btn" title="插入图片">
+                <i class="fas fa-image"></i>
+              </button>
+              <button class="toolbar-btn" title="插入表格">
+                <i class="fas fa-table"></i>
+              </button>
+              <div class="toolbar-separator"></div>
+              <button class="toolbar-btn" title="插入大纲引用">
+                <i class="fas fa-quote-right"></i>
+              </button>
+              <button class="toolbar-btn" title="插入素材引用">
+                <i class="fas fa-paperclip"></i>
+              </button>
+            </div>
+            <div class="editor-content" contenteditable="true">
+              <h1>人工智能：重塑未来的技术革命</h1>
+              <p
+                >人工智能（Artificial
+                Intelligence，AI）作为21世纪最具革命性的技术之一，正在深刻改变着我们的生活、工作和社会结构。从智能手机中的语音助手到自动驾驶汽车，从医疗诊断到金融分析，AI技术的应用已经渗透到各个领域。</p
+              >
+              <h2>引言：人工智能的发展背景</h2>
+              <p
+                >人工智能的概念最早可以追溯到20世纪50年代，当时计算机科学家们开始探索是否可以创造出能够模拟人类智能的机器。经过几十年的发展，特别是近年来计算能力的飞速提升和大数据的普及，AI技术取得了突破性进展。</p
+              >
+              <h2>核心技术分析</h2>
+              <h3>机器学习算法</h3>
+              <p
+                >机器学习是人工智能的核心技术之一，它使计算机系统能够从数据中学习并改进性能，而无需明确编程。常见的机器学习算法包括监督学习、无监督学习和强化学习等。</p
+              >
+              <h3>深度学习网络</h3>
+              <p
+                >深度学习是机器学习的一个子集，它使用多层神经网络来模拟人脑的工作方式。深度学习在图像识别、自然语言处理和语音识别等领域取得了显著成果。</p
+              >
+              <h2>应用领域与案例</h2>
+              <p
+                >人工智能的应用领域非常广泛，包括医疗健康、金融服务、交通运输、教育培训、制造业等。在医疗领域，AI可以帮助医生进行疾病诊断和药物研发；在金融领域，AI可以用于风险评估和欺诈检测；在交通领域，自动驾驶技术正在逐步成熟。</p
+              >
+              <h2>未来发展趋势</h2>
+              <p
+                >展望未来，人工智能技术将继续快速发展，并呈现出以下几个趋势：首先，AI将更加普及，成为各行各业的标配技术；其次，AI将更加注重可解释性和透明度；再次，AI将与其他新兴技术如区块链、物联网等深度融合；最后，AI伦理和治理将成为重要议题。</p
+              >
+              <h2>结论与展望</h2>
+              <p
+                >人工智能作为一项颠覆性技术，正在重塑我们的世界。虽然AI带来了巨大的机遇，但也面临着技术、伦理和社会等方面的挑战。我们需要在推动AI技术发展的同时，加强对其潜在风险的管控，确保AI技术能够造福人类社会。</p
+              >
+            </div>
+          </div>
+
+          <!-- 素材管理区 -->
+          <div class="editor-panel" id="materialPanel">
+            <div class="panel-header">
+              <h3 class="panel-title">素材管理</h3>
+              <div class="panel-actions">
+                <button class="btn btn-secondary">上传素材</button>
+                <button class="btn btn-primary">AI抓取素材</button>
+              </div>
+            </div>
+            <div class="material-view">
+              <div class="material-library">
+                <div class="material-filters">
+                  <span class="filter-chip">全部</span>
+                  <span class="filter-chip">文章</span>
+                  <span class="filter-chip">报告</span>
+                  <span class="filter-chip">数据</span>
+                  <span class="filter-chip">图片</span>
+                  <span class="filter-chip">视频</span>
+                </div>
+                <div class="material-grid">
+                  <div class="material-card selected">
+                    <div class="material-title">AI技术发展报告2023</div>
+                    <div class="material-summary"
+                      >本报告全面分析了2023年人工智能技术的发展现状，包括机器学习、深度学习、自然语言处理等领域的最新进展...</div
+                    >
+                    <div class="material-meta">
+                      <span class="material-rating">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="far fa-star"></i>
+                      </span>
+                      <span>报告</span>
+                    </div>
+                  </div>
+                  <div class="material-card">
+                    <div class="material-title">机器学习应用案例集</div>
+                    <div class="material-summary"
+                      >收集了机器学习在各行业的典型应用案例，包括金融、医疗、教育、制造等领域的实际应用...</div
+                    >
+                    <div class="material-meta">
+                      <span class="material-rating">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                      </span>
+                      <span>文章</span>
+                    </div>
+                  </div>
+                  <div class="material-card">
+                    <div class="material-title">深度学习最新进展</div>
+                    <div class="material-summary"
+                      >综述了深度学习领域的最新研究进展，包括新型神经网络架构、训练方法优化、应用场景拓展等...</div
+                    >
+                    <div class="material-meta">
+                      <span class="material-rating">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="far fa-star"></i>
+                      </span>
+                      <span>文章</span>
+                    </div>
+                  </div>
+                  <div class="material-card">
+                    <div class="material-title">AI市场规模数据</div>
+                    <div class="material-summary"
+                      >提供了全球人工智能市场的详细数据，包括市场规模、增长率、细分领域占比、区域分布等...</div
+                    >
+                    <div class="material-meta">
+                      <span class="material-rating">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="far fa-star"></i>
+                        <i class="far fa-star"></i>
+                      </span>
+                      <span>数据</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI助手按钮 -->
+        <button class="ai-assistant">
+          <i class="fas fa-robot"></i>
+        </button>
+      </main>
+
+      <!-- 右侧栏 -->
+      <aside class="right-sidebar">
+        <div class="sidebar-tabs">
+          <div class="sidebar-tab active" data-tab="materials">素材</div>
+          <div class="sidebar-tab" data-tab="suggestions">AI建议</div>
+          <div class="sidebar-tab" data-tab="statistics">统计</div>
+        </div>
+        <div class="sidebar-content">
+          <!-- 素材区 -->
+          <div class="sidebar-panel active" id="materialsPanel">
+            <div class="material-list">
+              <div class="material-item bound">
+                <div class="material-item-header">
+                  <div class="material-item-title">AI技术发展报告2023</div>
+                  <div class="material-item-actions">
+                    <button class="material-action-btn" title="查看">
+                      <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="material-action-btn" title="编辑">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                  </div>
+                </div>
+                <div class="material-item-summary"
+                  >本报告全面分析了2023年人工智能技术的发展现状，包括机器学习、深度学习、自然语言处理等领域的最新进展...</div
+                >
+                <div class="material-item-footer">
+                  <span>报告 · 2小时前</span>
+                  <div class="bound-indicator">
+                    <i class="fas fa-link"></i>
+                    <span>已绑定到标题</span>
+                  </div>
+                </div>
+              </div>
+              <div class="material-item bound">
+                <div class="material-item-header">
+                  <div class="material-item-title">机器学习应用案例集</div>
+                  <div class="material-item-actions">
+                    <button class="material-action-btn" title="查看">
+                      <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="material-action-btn" title="编辑">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                  </div>
+                </div>
+                <div class="material-item-summary"
+                  >收集了机器学习在各行业的典型应用案例，包括金融、医疗、教育、制造等领域的实际应用...</div
+                >
+                <div class="material-item-footer">
+                  <span>文章 · 5小时前</span>
+                  <div class="bound-indicator">
+                    <i class="fas fa-link"></i>
+                    <span>已绑定到标题</span>
+                  </div>
+                </div>
+              </div>
+              <div class="material-item">
+                <div class="material-item-header">
+                  <div class="material-item-title">深度学习最新进展</div>
+                  <div class="material-item-actions">
+                    <button class="material-action-btn" title="查看">
+                      <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="material-action-btn" title="编辑">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                  </div>
+                </div>
+                <div class="material-item-summary"
+                  >综述了深度学习领域的最新研究进展，包括新型神经网络架构、训练方法优化、应用场景拓展等...</div
+                >
+                <div class="material-item-footer">
+                  <span>文章 · 1天前</span>
+                </div>
+              </div>
+              <div class="material-item">
+                <div class="material-item-header">
+                  <div class="material-item-title">AI市场规模数据</div>
+                  <div class="material-item-actions">
+                    <button class="material-action-btn" title="查看">
+                      <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="material-action-btn" title="编辑">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                  </div>
+                </div>
+                <div class="material-item-summary"
+                  >提供了全球人工智能市场的详细数据，包括市场规模、增长率、细分领域占比、区域分布等...</div
+                >
+                <div class="material-item-footer">
+                  <span>数据 · 2天前</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- AI建议区 -->
+          <div class="sidebar-panel" id="suggestionsPanel">
+            <div class="suggestion-list">
+              <div class="suggestion-item high-priority">
+                <div class="suggestion-header">
+                  <div class="suggestion-type">需求定义</div>
+                  <div class="suggestion-priority">高优先级</div>
+                </div>
+                <div class="suggestion-content">
+                  建议在需求定义中明确目标受众的具体特征，这将有助于AI生成更精准的内容。
+                </div>
+                <div class="suggestion-actions">
+                  <button class="suggestion-btn apply">应用</button>
+                  <button class="suggestion-btn ignore">忽略</button>
+                </div>
+              </div>
+              <div class="suggestion-item medium-priority">
+                <div class="suggestion-header">
+                  <div class="suggestion-type">标题优化</div>
+                  <div class="suggestion-priority">中优先级</div>
+                </div>
+                <div class="suggestion-content">
+                  当前标题较长，建议缩短至20字以内以提高点击率。
+                </div>
+                <div class="suggestion-actions">
+                  <button class="suggestion-btn apply">应用</button>
+                  <button class="suggestion-btn ignore">忽略</button>
+                </div>
+              </div>
+              <div class="suggestion-item low-priority">
+                <div class="suggestion-header">
+                  <div class="suggestion-type">大纲结构</div>
+                  <div class="suggestion-priority">低优先级</div>
+                </div>
+                <div class="suggestion-content">
+                  建议在"核心技术分析"章节中增加"自然语言处理"子章节，以保持内容完整性。
+                </div>
+                <div class="suggestion-actions">
+                  <button class="suggestion-btn apply">应用</button>
+                  <button class="suggestion-btn ignore">忽略</button>
+                </div>
+              </div>
+              <div class="suggestion-item medium-priority">
+                <div class="suggestion-header">
+                  <div class="suggestion-type">内容质量</div>
+                  <div class="suggestion-priority">中优先级</div>
+                </div>
+                <div class="suggestion-content">
+                  正文第二段缺少具体数据支持，建议添加相关统计数据增强说服力。
+                </div>
+                <div class="suggestion-actions">
+                  <button class="suggestion-btn apply">应用</button>
+                  <button class="suggestion-btn ignore">忽略</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 写作统计区 -->
+          <div class="sidebar-panel" id="statisticsPanel">
+            <div class="progress-ring">
+              <svg width="120" height="120">
+                <circle class="progress-ring-circle" cx="60" cy="60" r="52"></circle>
+                <circle
+                  class="progress-ring-progress"
+                  cx="60"
+                  cy="60"
+                  r="52"
+                  stroke-dasharray="326.73"
+                  stroke-dashoffset="98.02"
+                ></circle>
+              </svg>
+              <div class="progress-ring-text">70%</div>
+            </div>
+            <div class="stats-overview">
+              <div class="stat-card">
+                <div class="stat-value">1,856</div>
+                <div class="stat-label">总字数</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-value">12</div>
+                <div class="stat-label">章节数</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-value">4</div>
+                <div class="stat-label">素材数</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-value">85%</div>
+                <div class="stat-label">可读性评分</div>
+              </div>
+            </div>
+            <div class="component-stats">
+              <div class="component-stat-item">
+                <div class="component-stat-name">
+                  <i class="fas fa-clipboard-check" style="color: var(--component-requirement)"></i>
+                  <span>需求定义</span>
+                </div>
+                <div class="component-stat-value">100%</div>
+              </div>
+              <div class="component-stat-item">
+                <div class="component-stat-name">
+                  <i class="fas fa-heading" style="color: var(--component-title)"></i>
+                  <span>标题生成</span>
+                </div>
+                <div class="component-stat-value">100%</div>
+              </div>
+              <div class="component-stat-item">
+                <div class="component-stat-name">
+                  <i class="fas fa-list" style="color: var(--component-outline)"></i>
+                  <span>大纲结构</span>
+                </div>
+                <div class="component-stat-value">90%</div>
+              </div>
+              <div class="component-stat-item">
+                <div class="component-stat-name">
+                  <i class="fas fa-file-alt" style="color: var(--component-content)"></i>
+                  <span>正文编辑</span>
+                </div>
+                <div class="component-stat-value">60%</div>
+              </div>
+              <div class="component-stat-item">
+                <div class="component-stat-name">
+                  <i class="fas fa-folder" style="color: var(--component-material)"></i>
+                  <span>素材管理</span>
+                </div>
+                <div class="component-stat-value">80%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- 状态栏 -->
+    <div class="status-bar">
+      <div class="status-left">
+        <div class="status-item">
+          <span class="status-indicator-small"></span>
+          <span>已保存</span>
+        </div>
+        <div class="status-item">
+          <i class="fas fa-file-word"></i>
+          <span>1,856 字</span>
+        </div>
+        <div class="status-item">
+          <i class="fas fa-clock"></i>
+          <span>预计阅读时间: 8分钟</span>
+        </div>
+      </div>
+      <div class="status-right">
+        <div class="status-item">
+          <i class="fas fa-spell-check"></i>
+          <span>拼写检查: 开启</span>
+        </div>
+        <div class="status-item">
+          <i class="fas fa-sync-alt"></i>
+          <span>自动同步: 开启</span>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // 组件切换功能
+      document.querySelectorAll('.component-card').forEach((card) => {
+        card.addEventListener('click', function () {
+          const component = this.dataset.component
+
+          // 更新组件卡片状态
+          document.querySelectorAll('.component-card').forEach((c) => c.classList.remove('active'))
+          this.classList.add('active')
+
+          // 更新编辑面板
+          document
+            .querySelectorAll('.editor-panel')
+            .forEach((panel) => panel.classList.remove('active'))
+          document.getElementById(component + 'Panel').classList.add('active')
+        })
+      })
+
+      // 项目展开/折叠功能
+      document.querySelectorAll('.project-title').forEach((title) => {
+        title.addEventListener('click', function (e) {
+          e.stopPropagation()
+          const projectItem = this.closest('.project-item')
+          const chevron = this.querySelector('.fa-chevron-right, .fa-chevron-down')
+
+          projectItem.classList.toggle('expanded')
+
+          if (chevron.classList.contains('fa-chevron-right')) {
+            chevron.classList.remove('fa-chevron-right')
+            chevron.classList.add('fa-chevron-down')
+          } else {
+            chevron.classList.remove('fa-chevron-down')
+            chevron.classList.add('fa-chevron-right')
+          }
+        })
+      })
+
+      // 项目选择功能
+      document.querySelectorAll('.project-item').forEach((item) => {
+        item.addEventListener('click', function (e) {
+          if (e.target.closest('.project-title')) return
+
+          document.querySelectorAll('.project-item').forEach((p) => p.classList.remove('active'))
+          this.classList.add('active')
+        })
+      })
+
+      // 组件项点击功能
+      document.querySelectorAll('.component-item').forEach((item) => {
+        item.addEventListener('click', function (e) {
+          e.stopPropagation()
+          const component = this.dataset.component
+
+          // 切换到对应组件
+          document.querySelectorAll('.component-card').forEach((c) => c.classList.remove('active'))
+          document
+            .querySelector(`.component-card[data-component="${component}"]`)
+            .classList.add('active')
+
+          // 更新编辑面板
+          document
+            .querySelectorAll('.editor-panel')
+            .forEach((panel) => panel.classList.remove('active'))
+          document.getElementById(component + 'Panel').classList.add('active')
+        })
+      })
+
+      // 右侧栏标签切换
+      document.querySelectorAll('.sidebar-tab').forEach((tab) => {
+        tab.addEventListener('click', function () {
+          const tabName = this.dataset.tab
+
+          // 更新标签状态
+          document.querySelectorAll('.sidebar-tab').forEach((t) => t.classList.remove('active'))
+          this.classList.add('active')
+
+          // 更新面板
+          document
+            .querySelectorAll('.sidebar-panel')
+            .forEach((panel) => panel.classList.remove('active'))
+          document.getElementById(tabName + 'Panel').classList.add('active')
+        })
+      })
+
+      // 关键词输入功能
+      const keywordInput = document.querySelector('.keyword-input input')
+      if (keywordInput) {
+        keywordInput.addEventListener('keypress', function (e) {
+          if (e.key === 'Enter' && this.value.trim()) {
+            const keywordTag = document.createElement('span')
+            keywordTag.className = 'keyword-tag'
+            keywordTag.innerHTML = `${this.value.trim()} <i class="fas fa-times"></i>`
+
+            keywordTag.querySelector('i').addEventListener('click', function () {
+              keywordTag.remove()
+            })
+
+            this.parentNode.insertBefore(keywordTag, this)
+            this.value = ''
+          }
+        })
+      }
+
+      // 关键词删除功能
+      document.querySelectorAll('.keyword-tag i').forEach((icon) => {
+        icon.addEventListener('click', function () {
+          this.closest('.keyword-tag').remove()
+        })
+      })
+
+      // 范围滑块更新
+      document.querySelectorAll('input[type="range"]').forEach((slider) => {
+        slider.addEventListener('input', function () {
+          const valueDisplay = this.parentNode.querySelector('.range-value')
+          if (valueDisplay) {
+            let value = this.value
+            if (this.max == 100 && this.min == 0) {
+              valueDisplay.textContent = value + '%'
+            } else if (this.max == 5000 && this.min == 500) {
+              valueDisplay.textContent = value + '字'
+            } else if (this.max == 50 && this.min == 10) {
+              valueDisplay.textContent = value + '字'
+            } else {
+              valueDisplay.textContent = value
+            }
+          }
+        })
+      })
+
+      // 标题选项选择
+      document.querySelectorAll('.title-option').forEach((option) => {
+        option.addEventListener('click', function () {
+          document.querySelectorAll('.title-option').forEach((o) => o.classList.remove('selected'))
+          this.classList.add('selected')
+        })
+      })
+
+      // 大纲项展开/折叠
+      document.querySelectorAll('.outline-item-content').forEach((content) => {
+        content.addEventListener('click', function (e) {
+          if (e.target.closest('.outline-item-tools')) return
+
+          const outlineItem = this.closest('.outline-item')
+          const chevron = this.querySelector('.fa-chevron-right, .fa-chevron-down')
+          const children = outlineItem.querySelector('.outline-children')
+
+          if (children) {
+            children.style.display = children.style.display === 'none' ? 'block' : 'none'
+
+            if (chevron.classList.contains('fa-chevron-right')) {
+              chevron.classList.remove('fa-chevron-right')
+              chevron.classList.add('fa-chevron-down')
+            } else {
+              chevron.classList.remove('fa-chevron-down')
+              chevron.classList.add('fa-chevron-right')
+            }
+          }
+        })
+      })
+
+      // 拖拽功能
+      let draggedElement = null
+
+      document.querySelectorAll('.outline-item').forEach((item) => {
+        item.addEventListener('dragstart', function (e) {
+          draggedElement = this
+          this.classList.add('dragging')
+        })
+
+        item.addEventListener('dragend', function (e) {
+          this.classList.remove('dragging')
+        })
+
+        item.addEventListener('dragover', function (e) {
+          e.preventDefault()
+          this.classList.add('drag-over')
+        })
+
+        item.addEventListener('dragleave', function (e) {
+          this.classList.remove('drag-over')
+        })
+
+        item.addEventListener('drop', function (e) {
+          e.preventDefault()
+          this.classList.remove('drag-over')
+
+          if (draggedElement !== this) {
+            const parent = this.parentNode
+            const allItems = [...parent.querySelectorAll('.outline-item')]
+            const draggedIndex = allItems.indexOf(draggedElement)
+            const targetIndex = allItems.indexOf(this)
+
+            if (draggedIndex < targetIndex) {
+              parent.insertBefore(draggedElement, this.nextSibling)
+            } else {
+              parent.insertBefore(draggedElement, this)
+            }
+          }
+        })
+      })
+
+      // 素材卡片选择
+      document.querySelectorAll('.material-card').forEach((card) => {
+        card.addEventListener('click', function () {
+          this.classList.toggle('selected')
+        })
+      })
+
+      // AI建议操作
+      document.querySelectorAll('.suggestion-btn.apply').forEach((btn) => {
+        btn.addEventListener('click', function () {
+          const suggestionItem = this.closest('.suggestion-item')
+          suggestionItem.style.opacity = '0.5'
+          this.textContent = '已应用'
+          this.disabled = true
+        })
+      })
+
+      document.querySelectorAll('.suggestion-btn.ignore').forEach((btn) => {
+        btn.addEventListener('click', function () {
+          const suggestionItem = this.closest('.suggestion-item')
+          suggestionItem.style.display = 'none'
+        })
+      })
+
+      // 左侧栏折叠/展开
+      const leftSidebar = document.getElementById('leftSidebar')
+      const sidebarToggle = document.createElement('button')
+      sidebarToggle.className = 'nav-btn'
+      sidebarToggle.style.position = 'absolute'
+      sidebarToggle.style.left = '10px'
+      sidebarToggle.style.top = '70px'
+      sidebarToggle.style.zIndex = '101'
+      sidebarToggle.innerHTML = '<i class="fas fa-bars"></i>'
+      document.body.appendChild(sidebarToggle)
+
+      sidebarToggle.addEventListener('click', function () {
+        leftSidebar.classList.toggle('collapsed')
+      })
+
+      // 统计项点击
+      document.querySelectorAll('.component-stat-item').forEach((item) => {
+        item.addEventListener('click', function () {
+          const componentName = this.querySelector('span').textContent
+          let component = ''
+
+          switch (componentName) {
+            case '需求定义':
+              component = 'requirement'
+              break
+            case '标题生成':
+              component = 'title'
+              break
+            case '大纲结构':
+              component = 'outline'
+              break
+            case '正文编辑':
+              component = 'content'
+              break
+            case '素材管理':
+              component = 'material'
+              break
+          }
+
+          if (component) {
+            // 切换到对应组件
+            document
+              .querySelectorAll('.component-card')
+              .forEach((c) => c.classList.remove('active'))
+            document
+              .querySelector(`.component-card[data-component="${component}"]`)
+              .classList.add('active')
+
+            // 更新编辑面板
+            document
+              .querySelectorAll('.editor-panel')
+              .forEach((panel) => panel.classList.remove('active'))
+            document.getElementById(component + 'Panel').classList.add('active')
+          }
+        })
+      })
+
+      // 模拟自动保存
+      setInterval(() => {
+        const statusIndicator = document.querySelector('.status-indicator-small')
+        const statusText = statusIndicator.nextElementSibling
+
+        statusIndicator.style.backgroundColor = '#f39c12'
+        statusText.textContent = '正在保存...'
+
+        setTimeout(() => {
+          statusIndicator.style.backgroundColor = '#27ae60'
+          statusText.textContent = '已保存'
+        }, 1000)
+      }, 30000)
+
+      // AI助手按钮点击
+      document.querySelector('.ai-assistant').addEventListener('click', function () {
+        alert('AI助手功能正在开发中...')
+      })
+
+      // 过滤标签点击
+      document.querySelectorAll('.filter-tag, .filter-chip').forEach((tag) => {
+        tag.addEventListener('click', function () {
+          const parent = this.parentNode
+          parent
+            .querySelectorAll('.filter-tag, .filter-chip')
+            .forEach((t) => t.classList.remove('active'))
+          this.classList.add('active')
+        })
+      })
+    </script>
+  </body>
+</html>
