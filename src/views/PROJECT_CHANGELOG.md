@@ -43,6 +43,18 @@ src/views/
 
 ## 📈 变更历史
 
+#### 🔧 2025-09-11 - 修复问题: 修复变更跟踪系统和编译错误
+
+**提交哈希**: `c13c9dc7`  
+**提交者**: mcy  
+**影响文件**:
+
+- `src/views/CHANGELOG_GUIDE.md`
+- `src/views/PROJECT_CHANGELOG.md`
+- `src/views/material/fetch/external.vue`
+- `src/views/material/fetch/index.vue`
+- `src/views/material/fetch/mainstream.vue`
+
 #### ✅ 2025-09-11 - 新增功能: 添加 AI 设计系统界面
 
 **提交哈希**: `e8373132`  
