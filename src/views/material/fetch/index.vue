@@ -195,18 +195,18 @@
     }
   }
 
-  // 保存最近使用的素材源（暂时未使用，预留功能）
+  // 保存最近使用的素材源（暂时未使用，但保留以备将来扩展）
   // function saveRecentSource(source: string) {
   //   const sources = [...recentSources.value]
   //   const index = sources.indexOf(source)
-
+  //
   //   if (index > -1) {
   //     sources.splice(index, 1)
   //   }
-
+  //
   //   sources.unshift(source)
   //   sources.splice(5) // 只保留最近5个
-
+  //
   //   recentSources.value = sources
   //   localStorage.setItem('recent_material_sources', JSON.stringify(sources))
   // }
