@@ -705,6 +705,21 @@ export const asyncRoutes: AppRouteRecord[] = [
         }
       },
       {
+        path: 'upload',
+        name: 'MaterialUpload',
+        component: RoutesAlias.MaterialUpload,
+        meta: {
+          title: 'menus.material.upload',
+          keepAlive: true,
+          authList: [
+            {
+              title: '上传',
+              authMark: 'upload'
+            }
+          ]
+        }
+      },
+      {
         path: 'management',
         name: 'MaterialManagement',
         component: RoutesAlias.MaterialManagement,

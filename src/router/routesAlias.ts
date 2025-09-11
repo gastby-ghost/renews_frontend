@@ -55,14 +55,10 @@ export enum RoutesAlias {
   ExamplesTables = '/examples/tables', // 高级表格示例
   ExamplesTablesTree = '/examples/tables/tree', // 左右布局表格示例
   ExamplesSearchBar = '/examples/forms/search-bar', // 搜索表单示例
-  MaterialLibrary = '/material/library', // 素材库
+
+  // 素材管理相关路由
   MaterialFetch = '/material/fetch', // 抓取素材
+  MaterialUpload = '/material/upload', // 上传素材
   MaterialManagement = '/material/management', // 素材管理
-  MaterialEdit = '/material/edit', // 素材编辑
-  // 文档生成 - AI创作
-  DocumentGeneration = '/document-generation/project-list', // 项目列表
-  DocumentRequirements = '/document-generation/requirements', // 需求表单
-  DocumentTitle = '/document-generation/title', // 标题选择
-  DocumentOutline = '/document-generation/outline', // 大纲
-  DocumentContent = '/document-generation/content' // 正文
+  MaterialEdit = '/material/edit' // 素材编辑
 }

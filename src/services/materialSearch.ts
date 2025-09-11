@@ -66,13 +66,26 @@ class MaterialSearchService {
 
   async removeFromLibrary(materialIds: string[]): Promise<void> {
     try {
-      await http.delete(`${this.baseUrl}/remove-from-library`, {
-        data: { materialIds }
-      })
+      // 首先尝试从后端API删除
+      // await http.delete(`${this.baseUrl}/remove-from-library`, {
+      //   data: { materialIds }
+      // })
+
+      // 临时方案：从localStorage删除
+      this.removeFromLocalStorage(materialIds)
     } catch (error) {
       console.error('Remove from library error:', error)
-      throw new Error('从素材库删除失败')
+      // 如果API失败，回退到localStorage删除
+      this.removeFromLocalStorage(materialIds)
     }
+  }
+
+  private removeFromLocalStorage(materialIds: string[]): void {
+    const storedMaterials = JSON.parse(localStorage.getItem('materials') || '[]')
+    const filteredMaterials = storedMaterials.filter(
+      (material: any) => !materialIds.includes(material.id)
+    )
+    localStorage.setItem('materials', JSON.stringify(filteredMaterials))
   }
 
   async getLibraryMaterials(params?: {
@@ -84,11 +97,92 @@ class MaterialSearchService {
     pageSize?: number
   }): Promise<SearchResult> {
     try {
-      const response = await http.get(`${this.baseUrl}/library`, { params })
-      return response.data
+      // 首先尝试从后端API获取
+      // const response = await http.get(`${this.baseUrl}/library`, { params })
+      // return response.data
+
+      // 临时方案：从localStorage读取上传的素材
+      return this.getLocalLibraryMaterials(params)
     } catch (error) {
       console.error('Get library materials error:', error)
-      throw new Error('获取素材库失败')
+      // 如果API失败，回退到localStorage
+      return this.getLocalLibraryMaterials(params)
+    }
+  }
+
+  private getLocalLibraryMaterials(params?: {
+    type?: Material['type']
+    source?: string
+    tags?: string[]
+    search?: string
+    page?: number
+    pageSize?: number
+  }): SearchResult {
+    // 从localStorage读取素材
+    const storedMaterials = JSON.parse(localStorage.getItem('materials') || '[]')
+
+    // 转换为Material格式
+    let materials: Material[] = storedMaterials.map((item: any) => ({
+      id: item.id || `local-${Date.now()}`,
+      title: item.name || item.title || '未命名素材',
+      source: '本地',
+      summary: item.content ? item.content.substring(0, 200) + '...' : '本地上传的素材文件',
+      tags: item.tags || ['本地'],
+      type: 'text' as Material['type'],
+      content: item.content,
+      createdAt: new Date(item.uploadTime || Date.now()),
+      updatedAt: new Date(item.uploadTime || Date.now()),
+      selected: false
+    }))
+
+    // 应用筛选条件
+    if (params) {
+      const { type, source, tags, search, page = 1, pageSize = 20 } = params
+
+      materials = materials.filter((material) => {
+        // 类型筛选
+        if (type && material.type !== type) return false
+
+        // 来源筛选
+        if (source && material.source !== source) return false
+
+        // 标签筛选
+        if (tags && tags.length > 0) {
+          const hasMatchingTag = tags.some((tag) => material.tags.includes(tag))
+          if (!hasMatchingTag) return false
+        }
+
+        // 搜索筛选
+        if (search) {
+          const searchLower = search.toLowerCase()
+          const matchesTitle = material.title.toLowerCase().includes(searchLower)
+          const matchesSummary = material.summary.toLowerCase().includes(searchLower)
+          const matchesTags = material.tags.some((tag) => tag.toLowerCase().includes(searchLower))
+
+          if (!matchesTitle && !matchesSummary && !matchesTags) return false
+        }
+
+        return true
+      })
+
+      // 分页
+      const startIndex = (page - 1) * pageSize
+      const endIndex = startIndex + pageSize
+      const paginatedMaterials = materials.slice(startIndex, endIndex)
+
+      return {
+        materials: paginatedMaterials,
+        total: materials.length,
+        page,
+        pageSize
+      }
+    }
+
+    return {
+      materials,
+      total: materials.length,
+      page: 1,
+      pageSize: materials.length
     }
   }
 

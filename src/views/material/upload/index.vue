@@ -1,0 +1,682 @@
+<template>
+  <div class="material-upload">
+    <!-- 上传配置区域 -->
+    <el-card class="material-upload__config">
+      <template #header>
+        <div class="material-upload__config-header">
+          <h3>本地素材上传</h3>
+          <el-button
+            type="primary"
+            @click="triggerFileUpload"
+            :disabled="uploading"
+            :loading="uploading"
+          >
+            <el-icon><Upload /></el-icon>
+            选择文件
+          </el-button>
+        </div>
+      </template>
+
+      <div class="material-upload__content">
+        <!-- 拖拽上传区域 -->
+        <el-upload
+          ref="uploadRef"
+          class="material-upload__drag-area"
+          drag
+          :multiple="true"
+          :show-file-list="false"
+          :before-upload="beforeUpload"
+          :on-change="handleFileChange"
+          :auto-upload="false"
+          accept=".md"
+        >
+          <el-icon class="el-icon--upload"><upload-filled /></el-icon>
+          <div class="el-upload__text"> 将 <em>MD 文件</em> 拖到此处，或 <em>点击选择</em> </div>
+          <template #tip>
+            <div class="el-upload__tip">
+              支持 .md 格式文件，单个文件大小不超过 100MB，支持多文件同时上传
+            </div>
+          </template>
+        </el-upload>
+
+        <!-- 文件列表 -->
+        <div v-if="fileList.length > 0" class="material-upload__file-list">
+          <h4>待上传文件 ({{ fileList.length }})</h4>
+          <div class="file-list">
+            <div
+              v-for="(file, index) in fileList"
+              :key="index"
+              class="file-item"
+              :class="{ error: file.error, success: file.success }"
+            >
+              <div class="file-info">
+                <el-icon class="file-icon">
+                  <Document />
+                </el-icon>
+                <div class="file-details">
+                  <div class="file-name">{{ file.name }}</div>
+                  <div class="file-size">{{ formatFileSize(file.size) }}</div>
+                </div>
+              </div>
+
+              <div class="file-status">
+                <el-tag v-if="file.error" type="danger" size="small">
+                  {{ file.error }}
+                </el-tag>
+                <el-tag v-else-if="file.success" type="success" size="small"> 上传成功 </el-tag>
+                <el-progress
+                  v-else-if="file.uploading"
+                  :percentage="file.progress"
+                  :stroke-width="4"
+                  status="active"
+                />
+                <el-tag v-else type="info" size="small">待上传</el-tag>
+              </div>
+
+              <el-button
+                v-if="!file.uploading && !file.success"
+                type="danger"
+                size="small"
+                text
+                @click="removeFile(index)"
+              >
+                <el-icon><Delete /></el-icon>
+              </el-button>
+            </div>
+          </div>
+
+          <!-- 标签设置 -->
+          <el-form :model="uploadConfig" label-width="100px" class="upload-form">
+            <el-form-item label="素材标签">
+              <el-select
+                v-model="uploadConfig.tags"
+                multiple
+                filterable
+                allow-create
+                default-first-option
+                placeholder="为素材添加标签（可选）"
+                style="width: 100%"
+              >
+                <el-option v-for="tag in predefinedTags" :key="tag" :label="tag" :value="tag" />
+              </el-select>
+              <template #extra>
+                <div class="form-tip">所有上传的文件将自动添加"本地"标签</div>
+              </template>
+            </el-form-item>
+          </el-form>
+
+          <!-- 操作按钮 -->
+          <div class="upload-actions">
+            <el-button @click="clearAll" :disabled="uploading">清空列表</el-button>
+            <el-button
+              type="primary"
+              @click="startUpload"
+              :disabled="uploading || fileList.length === 0"
+              :loading="uploading"
+            >
+              开始上传 ({{ fileList.filter((f) => !f.success && !f.error).length }})
+            </el-button>
+          </div>
+        </div>
+      </div>
+    </el-card>
+
+    <!-- 上传进度统计 -->
+    <el-card v-if="uploadStats.total > 0" class="material-upload__stats">
+      <template #header>
+        <h4>上传统计</h4>
+      </template>
+      <div class="stats-content">
+        <div class="stats-item">
+          <span class="label">总文件数：</span>
+          <span class="value">{{ uploadStats.total }}</span>
+        </div>
+        <div class="stats-item">
+          <span class="label">成功：</span>
+          <span class="value success">{{ uploadStats.success }}</span>
+        </div>
+        <div class="stats-item">
+          <span class="label">失败：</span>
+          <span class="value error">{{ uploadStats.error }}</span>
+        </div>
+        <div class="stats-item">
+          <span class="label">待上传：</span>
+          <span class="value pending">{{ uploadStats.pending }}</span>
+        </div>
+      </div>
+    </el-card>
+
+    <!-- 最近上传的素材预览 -->
+    <el-card v-if="recentUploads.length > 0" class="material-upload__recent">
+      <template #header>
+        <div class="recent-header">
+          <h4>最近上传的素材</h4>
+          <el-button type="primary" text @click="goToMaterialManagement">
+            查看全部 <el-icon><ArrowRight /></el-icon>
+          </el-button>
+        </div>
+      </template>
+      <div class="recent-list">
+        <div v-for="material in recentUploads" :key="material.id" class="recent-item">
+          <div class="material-info">
+            <div class="material-name">{{ material.name }}</div>
+            <div class="material-meta">
+              <el-tag size="small">本地</el-tag>
+              <el-tag v-for="tag in material.tags" :key="tag" size="small" type="info">
+                {{ tag }}
+              </el-tag>
+              <span class="upload-time">{{ formatTime(material.uploadTime) }}</span>
+            </div>
+          </div>
+          <el-button size="small" text @click="previewMaterial(material)"> 预览 </el-button>
+        </div>
+      </div>
+    </el-card>
+  </div>
+</template>
+
+<script setup lang="ts">
+  import { ref, reactive, computed, onMounted } from 'vue'
+  import { ElMessage, ElMessageBox } from 'element-plus'
+  import { Upload, UploadFilled, Document, Delete, ArrowRight } from '@element-plus/icons-vue'
+  import { useRouter } from 'vue-router'
+
+  // 类型定义
+  interface UploadFile {
+    name: string
+    size: number
+    file: File
+    error?: string
+    success?: boolean
+    uploading?: boolean
+    progress?: number
+    id?: string
+  }
+
+  interface Material {
+    id: string
+    name: string
+    tags: string[]
+    uploadTime: Date
+    content?: string
+  }
+
+  interface UploadConfig {
+    tags: string[]
+  }
+
+  // 响应式数据
+  const router = useRouter()
+  const uploadRef = ref()
+  const fileList = ref<UploadFile[]>([])
+  const uploading = ref(false)
+  const recentUploads = ref<Material[]>([])
+
+  const uploadConfig = reactive<UploadConfig>({
+    tags: []
+  })
+
+  // 预定义标签
+  const predefinedTags = [
+    '技术文档',
+    '设计规范',
+    '需求文档',
+    '用户手册',
+    'API文档',
+    '架构设计',
+    '测试用例',
+    '会议纪要'
+  ]
+
+  // 上传统计
+  const uploadStats = computed(() => {
+    const total = fileList.value.length
+    const success = fileList.value.filter((f) => f.success).length
+    const error = fileList.value.filter((f) => f.error).length
+    const pending = total - success - error
+
+    return { total, success, error, pending }
+  })
+
+  // 方法
+  const triggerFileUpload = () => {
+    uploadRef.value?.$el.querySelector('input[type="file"]')?.click()
+  }
+
+  const beforeUpload = (file: File) => {
+    // 文件类型检查
+    if (!file.name.toLowerCase().endsWith('.md')) {
+      ElMessage.error('只支持上传 .md 格式的文件')
+      return false
+    }
+
+    // 文件大小检查（100MB）
+    const maxSize = 100 * 1024 * 1024
+    if (file.size > maxSize) {
+      ElMessage.error('文件大小不能超过 100MB')
+      return false
+    }
+
+    return false // 阻止自动上传
+  }
+
+  const handleFileChange = (file: any) => {
+    if (file.raw) {
+      const uploadFile: UploadFile = {
+        name: file.raw.name,
+        size: file.raw.size,
+        file: file.raw
+      }
+
+      // 检查是否已存在同名文件
+      if (fileList.value.some((f) => f.name === uploadFile.name)) {
+        ElMessage.warning(`文件 "${uploadFile.name}" 已存在于列表中`)
+        return
+      }
+
+      fileList.value.push(uploadFile)
+      ElMessage.success(`已添加文件：${uploadFile.name}`)
+    }
+  }
+
+  const removeFile = (index: number) => {
+    fileList.value.splice(index, 1)
+    ElMessage.success('已移除文件')
+  }
+
+  const clearAll = async () => {
+    if (fileList.value.length === 0) return
+
+    try {
+      await ElMessageBox.confirm('确定要清空所有文件吗？', '确认操作', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      })
+
+      fileList.value = []
+      ElMessage.success('已清空文件列表')
+    } catch {
+      // 用户取消
+    }
+  }
+
+  const startUpload = async () => {
+    const pendingFiles = fileList.value.filter((f) => !f.success && !f.error)
+
+    if (pendingFiles.length === 0) {
+      ElMessage.warning('没有需要上传的文件')
+      return
+    }
+
+    uploading.value = true
+
+    try {
+      for (const file of pendingFiles) {
+        await uploadSingleFile(file)
+      }
+
+      ElMessage.success(
+        `上传完成！成功：${uploadStats.value.success}，失败：${uploadStats.value.error}`
+      )
+
+      // 刷新最近上传列表
+      await loadRecentUploads()
+    } catch (error) {
+      ElMessage.error('上传过程中发生错误')
+      console.error('Upload error:', error)
+    } finally {
+      uploading.value = false
+    }
+  }
+
+  const uploadSingleFile = async (uploadFile: UploadFile): Promise<void> => {
+    uploadFile.uploading = true
+    uploadFile.progress = 0
+
+    try {
+      // 读取文件内容
+      const content = await readFileContent(uploadFile.file)
+
+      // 模拟上传进度
+      for (let i = 10; i <= 90; i += 10) {
+        uploadFile.progress = i
+        await new Promise((resolve) => setTimeout(resolve, 100))
+      }
+
+      // 创建素材对象
+      const material: Material = {
+        id: generateId(),
+        name: uploadFile.name.replace('.md', ''),
+        tags: ['本地', ...uploadConfig.tags],
+        uploadTime: new Date(),
+        content
+      }
+
+      // 这里应该调用API保存到后端
+      await saveMaterialToStorage(material)
+
+      uploadFile.progress = 100
+      uploadFile.success = true
+      uploadFile.uploading = false
+      uploadFile.id = material.id
+    } catch (error) {
+      uploadFile.uploading = false
+      uploadFile.error = '上传失败'
+      console.error('File upload error:', error)
+    }
+  }
+
+  const readFileContent = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = (e) => resolve(e.target?.result as string)
+      reader.onerror = reject
+      reader.readAsText(file, 'UTF-8')
+    })
+  }
+
+  const saveMaterialToStorage = async (material: Material): Promise<void> => {
+    // 这里应该调用实际的API
+    // 现在先保存到localStorage作为演示
+    const existingMaterials = JSON.parse(localStorage.getItem('materials') || '[]')
+    existingMaterials.unshift(material)
+    localStorage.setItem('materials', JSON.stringify(existingMaterials))
+
+    // 模拟API延迟
+    await new Promise((resolve) => setTimeout(resolve, 500))
+  }
+
+  const loadRecentUploads = async () => {
+    // 从存储中加载最近上传的素材
+    const materials = JSON.parse(localStorage.getItem('materials') || '[]')
+    recentUploads.value = materials
+      .filter((m: Material) => m.tags.includes('本地'))
+      .slice(0, 5)
+      .map((m: Material) => ({
+        ...m,
+        uploadTime: new Date(m.uploadTime)
+      }))
+  }
+
+  const goToMaterialManagement = () => {
+    router.push('/material/management')
+  }
+
+  const previewMaterial = (material: Material) => {
+    // 这里可以打开预览对话框或跳转到编辑页面
+    ElMessage.info(`预览素材：${material.name}`)
+  }
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 B'
+
+    const k = 1024
+    const sizes = ['B', 'KB', 'MB', 'GB']
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+  }
+
+  const formatTime = (date: Date): string => {
+    const now = new Date()
+    const diff = now.getTime() - date.getTime()
+    const minutes = Math.floor(diff / 60000)
+
+    if (minutes < 1) return '刚刚'
+    if (minutes < 60) return `${minutes}分钟前`
+    if (minutes < 1440) return `${Math.floor(minutes / 60)}小时前`
+
+    return date.toLocaleDateString('zh-CN')
+  }
+
+  const generateId = (): string => {
+    return Date.now().toString(36) + Math.random().toString(36).substr(2)
+  }
+
+  // 生命周期
+  onMounted(() => {
+    loadRecentUploads()
+  })
+</script>
+
+<style scoped lang="scss">
+  .material-upload {
+    padding: 20px;
+
+    &__config {
+      margin-bottom: 20px;
+
+      &-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        h3 {
+          margin: 0;
+          color: var(--el-text-color-primary);
+        }
+      }
+    }
+
+    &__content {
+      .material-upload__drag-area {
+        margin-bottom: 20px;
+
+        :deep(.el-upload-dragger) {
+          width: 100%;
+          height: 180px;
+          background-color: var(--el-fill-color-blank);
+          border: 2px dashed var(--el-border-color-light);
+          border-radius: 8px;
+          transition: all 0.3s;
+
+          &:hover {
+            border-color: var(--el-color-primary);
+          }
+        }
+
+        :deep(.el-icon--upload) {
+          margin-bottom: 16px;
+          font-size: 48px;
+          color: var(--el-text-color-placeholder);
+        }
+
+        :deep(.el-upload__text) {
+          font-size: 14px;
+          color: var(--el-text-color-regular);
+
+          em {
+            font-style: normal;
+            color: var(--el-color-primary);
+          }
+        }
+
+        :deep(.el-upload__tip) {
+          margin-top: 8px;
+          font-size: 12px;
+          color: var(--el-text-color-placeholder);
+        }
+      }
+    }
+
+    &__file-list {
+      margin-top: 20px;
+
+      h4 {
+        margin: 0 0 16px;
+        color: var(--el-text-color-primary);
+      }
+
+      .file-list {
+        overflow: hidden;
+        border: 1px solid var(--el-border-color-light);
+        border-radius: 8px;
+      }
+
+      .file-item {
+        display: flex;
+        align-items: center;
+        padding: 12px 16px;
+        background-color: var(--el-fill-color-blank);
+        border-bottom: 1px solid var(--el-border-color-lighter);
+        transition: all 0.3s;
+
+        &:last-child {
+          border-bottom: none;
+        }
+
+        &:hover {
+          background-color: var(--el-fill-color-light);
+        }
+
+        &.success {
+          background-color: var(--el-color-success-light-9);
+          border-left: 4px solid var(--el-color-success);
+        }
+
+        &.error {
+          background-color: var(--el-color-danger-light-9);
+          border-left: 4px solid var(--el-color-danger);
+        }
+
+        .file-info {
+          display: flex;
+          flex: 1;
+          align-items: center;
+
+          .file-icon {
+            margin-right: 12px;
+            font-size: 24px;
+            color: var(--el-color-primary);
+          }
+
+          .file-details {
+            .file-name {
+              margin-bottom: 4px;
+              font-weight: 500;
+              color: var(--el-text-color-primary);
+            }
+
+            .file-size {
+              font-size: 12px;
+              color: var(--el-text-color-placeholder);
+            }
+          }
+        }
+
+        .file-status {
+          flex: 1;
+          max-width: 200px;
+          margin: 0 16px;
+        }
+      }
+
+      .upload-form {
+        padding: 20px;
+        margin: 20px 0;
+        background-color: var(--el-fill-color-lighter);
+        border-radius: 8px;
+
+        .form-tip {
+          margin-top: 4px;
+          font-size: 12px;
+          color: var(--el-text-color-placeholder);
+        }
+      }
+
+      .upload-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+        margin-top: 20px;
+      }
+    }
+
+    &__stats {
+      margin-bottom: 20px;
+
+      .stats-content {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 24px;
+      }
+
+      .stats-item {
+        display: flex;
+        align-items: center;
+
+        .label {
+          margin-right: 8px;
+          color: var(--el-text-color-regular);
+        }
+
+        .value {
+          font-size: 16px;
+          font-weight: 600;
+
+          &.success {
+            color: var(--el-color-success);
+          }
+
+          &.error {
+            color: var(--el-color-danger);
+          }
+
+          &.pending {
+            color: var(--el-color-warning);
+          }
+        }
+      }
+    }
+
+    &__recent {
+      .recent-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        h4 {
+          margin: 0;
+          color: var(--el-text-color-primary);
+        }
+      }
+
+      .recent-list {
+        .recent-item {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 12px 0;
+          border-bottom: 1px solid var(--el-border-color-lighter);
+
+          &:last-child {
+            border-bottom: none;
+          }
+
+          .material-info {
+            flex: 1;
+
+            .material-name {
+              margin-bottom: 6px;
+              font-weight: 500;
+              color: var(--el-text-color-primary);
+            }
+
+            .material-meta {
+              display: flex;
+              flex-wrap: wrap;
+              gap: 8px;
+              align-items: center;
+
+              .upload-time {
+                font-size: 12px;
+                color: var(--el-text-color-placeholder);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+</style>
