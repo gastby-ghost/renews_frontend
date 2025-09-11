@@ -1,10 +1,13 @@
-# 自动更新项目变更日志（仅更新文档，不提交到 Git）
+# 自动更新项目变更日志
 echo "📝 正在更新项目变更日志..."
 pnpm changelog:update
 
-# 检查是否有更新
+# 检查是否有更新并自动提交
 if [ -n "$(git status --porcelain src/views/PROJECT_CHANGELOG.md)" ]; then
-  echo "✅ 变更日志已更新（本地文档已同步，未提交到 Git）"
+  echo "✅ 变更日志已更新，正在提交到 Git..."
+  git add src/views/PROJECT_CHANGELOG.md .last-changelog-commit
+  git commit -m "docs: 自动更新项目变更日志 [skip ci]" --no-verify
+  echo "🎉 变更日志已同步到版本控制"
 else
   echo "ℹ️ 变更日志无需更新"
 fi

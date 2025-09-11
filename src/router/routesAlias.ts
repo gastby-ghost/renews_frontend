@@ -58,7 +58,16 @@ export enum RoutesAlias {
 
   // 素材管理相关路由
   MaterialFetch = '/material/fetch', // 抓取素材
+  MaterialFetchMainstream = '/material/fetch/mainstream', // 主流媒体素材抓取
+  MaterialFetchExternal = '/material/fetch/external', // 外部素材抓取
   MaterialUpload = '/material/upload', // 上传素材
   MaterialManagement = '/material/management', // 素材管理
-  MaterialEdit = '/material/edit' // 素材编辑
+  MaterialEdit = '/material/edit', // 素材编辑
+
+  // AI文档生成相关路由
+  DocumentGeneration = '/document-generation/project-list', // 文档生成项目列表
+  DocumentRequirements = '/document-generation/requirements', // 需求分析
+  DocumentTitle = '/document-generation/title', // 标题生成
+  DocumentOutline = '/document-generation/outline', // 大纲生成
+  DocumentContent = '/document-generation/content' // 内容生成
 }

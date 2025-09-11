@@ -705,6 +705,40 @@ export const asyncRoutes: AppRouteRecord[] = [
         }
       },
       {
+        path: 'fetch/mainstream',
+        name: 'MaterialFetchMainstream',
+        component: RoutesAlias.MaterialFetchMainstream,
+        meta: {
+          title: 'menus.material.fetchMainstream',
+          keepAlive: true,
+          isHide: true,
+          activePath: '/material/fetch',
+          authList: [
+            {
+              title: '主流媒体抓取',
+              authMark: 'fetch-mainstream'
+            }
+          ]
+        }
+      },
+      {
+        path: 'fetch/external',
+        name: 'MaterialFetchExternal',
+        component: RoutesAlias.MaterialFetchExternal,
+        meta: {
+          title: 'menus.material.fetchExternal',
+          keepAlive: true,
+          isHide: true,
+          activePath: '/material/fetch',
+          authList: [
+            {
+              title: '外部素材抓取',
+              authMark: 'fetch-external'
+            }
+          ]
+        }
+      },
+      {
         path: 'upload',
         name: 'MaterialUpload',
         component: RoutesAlias.MaterialUpload,
