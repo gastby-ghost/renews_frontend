@@ -291,6 +291,7 @@
     "material": {
       "title": "素材库",
       "fetch": "抓取素材",
+      "upload": "上传素材",
       "management": "素材管理",
       "edit": "编辑素材"
     },

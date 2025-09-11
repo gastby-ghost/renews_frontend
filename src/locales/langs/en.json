@@ -299,6 +299,7 @@
     "material": {
       "title": "Material Library",
       "fetch": "Fetch Materials",
+      "upload": "Upload Materials",
       "management": "Material Management",
       "edit": "Edit Material"
     },
