@@ -114,7 +114,7 @@
 
               <el-form-item label="发布时间">
                 <el-date-picker
-                  v-model="searchConfig.dateRange"
+                  v-model="searchConfig.dateRange as [string, string]"
                   type="daterange"
                   range-separator="至"
                   start-placeholder="开始日期"
@@ -292,7 +292,7 @@
           </div>
 
           <div class="material-actions">
-            <el-button size="small" @click.stop="showMaterialPreview(material)">
+            <el-button size="small" @click.stop="showPreview(material)">
               <el-icon><View /></el-icon>
               预览
             </el-button>
@@ -312,53 +312,55 @@
     <!-- 预览对话框 -->
     <el-dialog
       v-model="previewVisible"
-      :title="previewMaterial?.title"
+      :title="currentPreviewMaterial?.title"
       width="80%"
       class="material-preview-dialog"
     >
-      <div class="material-preview" v-if="previewMaterial">
+      <div class="material-preview" v-if="currentPreviewMaterial">
         <div class="preview-meta">
-          <div class="meta-row"> <strong>平台:</strong> {{ previewMaterial.platform }} </div>
-          <div class="meta-row"> <strong>作者:</strong> {{ previewMaterial.author }} </div>
+          <div class="meta-row"> <strong>平台:</strong> {{ currentPreviewMaterial.platform }} </div>
+          <div class="meta-row"> <strong>作者:</strong> {{ currentPreviewMaterial.author }} </div>
           <div class="meta-row">
-            <strong>发布时间:</strong> {{ formatDate(previewMaterial.publishDate) }}
+            <strong>发布时间:</strong> {{ formatDate(currentPreviewMaterial.publishDate) }}
           </div>
           <div class="meta-row">
             <strong>相关性评分:</strong>
-            <el-tag :type="getRelevanceType(previewMaterial.relevance)">
-              {{ previewMaterial.relevance }}%
+            <el-tag :type="getRelevanceType(currentPreviewMaterial.relevance)">
+              {{ currentPreviewMaterial.relevance }}%
             </el-tag>
           </div>
           <div class="meta-row">
             <strong>原文链接:</strong>
-            <el-link :href="previewMaterial.url" target="_blank" type="primary">
-              {{ previewMaterial.url }}
+            <el-link :href="currentPreviewMaterial.url" target="_blank" type="primary">
+              {{ currentPreviewMaterial.url }}
             </el-link>
           </div>
         </div>
 
         <div class="preview-content">
           <h4>内容摘要</h4>
-          <p>{{ previewMaterial.summary }}</p>
+          <p>{{ currentPreviewMaterial.summary }}</p>
 
           <h4>AI分析要点</h4>
           <div class="ai-insights">
             <ul>
-              <li v-for="insight in previewMaterial.aiInsights" :key="insight">{{ insight }}</li>
+              <li v-for="insight in currentPreviewMaterial.aiInsights" :key="insight">{{
+                insight
+              }}</li>
             </ul>
           </div>
 
           <h4>相关性分析</h4>
           <div class="relevance-analysis">
-            <p>{{ previewMaterial.relevanceReason }}</p>
+            <p>{{ currentPreviewMaterial.relevanceReason }}</p>
           </div>
         </div>
       </div>
 
       <template #footer>
         <el-button @click="previewVisible = false">关闭</el-button>
-        <el-button @click="visitSource(previewMaterial!)">访问原文</el-button>
-        <el-button type="primary" @click="addSingleMaterial(previewMaterial!)">
+        <el-button @click="visitSource(currentPreviewMaterial!)">访问原文</el-button>
+        <el-button type="primary" @click="addSingleMaterial(currentPreviewMaterial!)">
           添加到项目
         </el-button>
       </template>
@@ -442,7 +444,7 @@
   const materials = ref<any[]>([])
   const selectedMaterials = ref<string[]>([])
   const previewVisible = ref(false)
-  const previewMaterial = ref<any>(null)
+  const currentPreviewMaterial = ref<any>(null)
 
   // 计算属性
   const canSearch = computed(() => {
@@ -705,8 +707,8 @@
     }
   }
 
-  function showMaterialPreview(material: any) {
-    previewMaterial.value = material
+  function showPreview(material: any) {
+    currentPreviewMaterial.value = material
     previewVisible.value = true
   }
 

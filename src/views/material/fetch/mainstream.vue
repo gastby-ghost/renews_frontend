@@ -70,7 +70,7 @@
 
         <el-form-item label="时间范围">
           <el-date-picker
-            v-model="searchConfig.dateRange"
+            v-model="searchConfig.dateRange as [string, string]"
             type="daterange"
             range-separator="至"
             start-placeholder="开始日期"
@@ -172,7 +172,7 @@
           </div>
 
           <div class="material-actions">
-            <el-button size="small" @click.stop="showMaterialPreview(material)">
+            <el-button size="small" @click.stop="showPreview(material)">
               <el-icon><View /></el-icon>
               预览
             </el-button>
@@ -188,32 +188,32 @@
     <!-- 预览对话框 -->
     <el-dialog
       v-model="previewVisible"
-      :title="previewMaterial?.title"
+      :title="currentPreviewMaterial?.title"
       width="80%"
       class="material-preview-dialog"
     >
-      <div class="material-preview" v-if="previewMaterial">
+      <div class="material-preview" v-if="currentPreviewMaterial">
         <div class="preview-meta">
-          <div class="meta-row"> <strong>来源:</strong> {{ previewMaterial.source }} </div>
+          <div class="meta-row"> <strong>来源:</strong> {{ currentPreviewMaterial.source }} </div>
           <div class="meta-row">
-            <strong>发布时间:</strong> {{ formatDate(previewMaterial.publishDate) }}
+            <strong>发布时间:</strong> {{ formatDate(currentPreviewMaterial.publishDate) }}
           </div>
           <div class="meta-row">
             <strong>可靠性评分:</strong>
-            <el-tag :type="getReliabilityType(previewMaterial.reliability)">
-              {{ previewMaterial.reliability }}%
+            <el-tag :type="getReliabilityType(currentPreviewMaterial.reliability)">
+              {{ currentPreviewMaterial.reliability }}%
             </el-tag>
           </div>
         </div>
 
         <div class="preview-content">
           <h4>内容摘要</h4>
-          <p>{{ previewMaterial.summary }}</p>
+          <p>{{ currentPreviewMaterial.summary }}</p>
 
           <h4>关键信息</h4>
           <div class="key-points">
             <ul>
-              <li v-for="point in previewMaterial.keyPoints" :key="point">{{ point }}</li>
+              <li v-for="point in currentPreviewMaterial.keyPoints" :key="point">{{ point }}</li>
             </ul>
           </div>
         </div>
@@ -221,7 +221,7 @@
 
       <template #footer>
         <el-button @click="previewVisible = false">关闭</el-button>
-        <el-button type="primary" @click="addSingleMaterial(previewMaterial!)">
+        <el-button type="primary" @click="addSingleMaterial(currentPreviewMaterial!)">
           添加到项目
         </el-button>
       </template>
@@ -283,7 +283,7 @@
   const materials = ref<any[]>([])
   const selectedMaterials = ref<string[]>([])
   const previewVisible = ref(false)
-  const previewMaterial = ref<any>(null)
+  const currentPreviewMaterial = ref<any>(null)
 
   // 计算属性
   const canSearch = computed(() => {
@@ -464,8 +464,8 @@
     }
   }
 
-  function showMaterialPreview(material: any) {
-    previewMaterial.value = material
+  function showPreview(material: any) {
+    currentPreviewMaterial.value = material
     previewVisible.value = true
   }
 
