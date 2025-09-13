@@ -372,6 +372,7 @@
   import { ref, computed, onMounted } from 'vue'
   import { useRouter } from 'vue-router'
   import { ElMessage, ElMessageBox } from 'element-plus'
+  import { useMaterialStore } from '@/store/material'
   import {
     ArrowLeft,
     Search,
@@ -388,6 +389,7 @@
   } from '@element-plus/icons-vue'
 
   const router = useRouter()
+  const materialStore = useMaterialStore()
 
   // 表单引用
   const formRef = ref()
@@ -673,8 +675,32 @@
     }
 
     try {
-      // 这里应该调用API添加素材到项目
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      // 获取选中的素材数据
+      const selectedMaterialData = materials.value.filter((material) =>
+        selectedMaterials.value.includes(material.id)
+      )
+
+      // 转换为store需要的格式并添加标签
+      const materialsToAdd = selectedMaterialData.map((material) => ({
+        id: `external_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        title: material.title,
+        summary: material.summary,
+        content: material.content,
+        type: 'text' as const,
+        source: '外部素材',
+        tags: ['外部', ...(material.tags || [])],
+        url: material.url,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }))
+
+      // 添加到素材store
+      materialStore.addMaterials(materialsToAdd)
+
+      // 保存到localStorage作为备份
+      const existingMaterials = JSON.parse(localStorage.getItem('materials') || '[]')
+      existingMaterials.unshift(...materialsToAdd)
+      localStorage.setItem('materials', JSON.stringify(existingMaterials))
 
       ElMessage.success(
         `已成功添加 ${selectedMaterials.value.length} 个素材到项目，并自动添加"外部"标签`
@@ -689,20 +715,43 @@
         recentSources.splice(5)
         localStorage.setItem('recent_material_sources', JSON.stringify(recentSources))
       }
-    } catch {
+    } catch (error) {
+      console.error('添加素材失败:', error)
       ElMessage.error('添加素材失败，请重试')
     }
   }
 
   async function addSingleMaterial(material: any) {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 500))
+      // 转换为store需要的格式并添加标签
+      const materialToAdd = {
+        id: `external_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        title: material.title,
+        summary: material.summary,
+        content: material.content,
+        type: 'text' as const,
+        source: '外部素材',
+        tags: ['外部', ...(material.tags || [])],
+        url: material.url,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+
+      // 添加到素材store
+      materialStore.addMaterial(materialToAdd)
+
+      // 保存到localStorage作为备份
+      const existingMaterials = JSON.parse(localStorage.getItem('materials') || '[]')
+      existingMaterials.unshift(materialToAdd)
+      localStorage.setItem('materials', JSON.stringify(existingMaterials))
+
       ElMessage.success(`已添加素材"${material.title}"到项目，并自动添加"外部"标签`)
 
       if (previewVisible.value) {
         previewVisible.value = false
       }
-    } catch {
+    } catch (error) {
+      console.error('添加素材失败:', error)
       ElMessage.error('添加素材失败，请重试')
     }
   }

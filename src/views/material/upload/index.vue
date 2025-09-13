@@ -180,6 +180,7 @@
   import { ElMessage, ElMessageBox } from 'element-plus'
   import { Upload, UploadFilled, Document, Delete, ArrowRight } from '@element-plus/icons-vue'
   import { useRouter } from 'vue-router'
+  import { useMaterialStore } from '@/store/material'
 
   // 类型定义
   interface UploadFile {
@@ -207,6 +208,7 @@
 
   // 响应式数据
   const router = useRouter()
+  const materialStore = useMaterialStore()
   const uploadRef = ref()
   const fileList = ref<UploadFile[]>([])
   const uploading = ref(false)
@@ -377,8 +379,10 @@
   }
 
   const saveMaterialToStorage = async (material: Material): Promise<void> => {
-    // 这里应该调用实际的API
-    // 现在先保存到localStorage作为演示
+    // 添加到素材store
+    materialStore.addMaterial(material)
+
+    // 保存到localStorage作为备份
     const existingMaterials = JSON.parse(localStorage.getItem('materials') || '[]')
     existingMaterials.unshift(material)
     localStorage.setItem('materials', JSON.stringify(existingMaterials))

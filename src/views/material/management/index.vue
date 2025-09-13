@@ -347,6 +347,13 @@
   // 生命周期
   onMounted(async () => {
     try {
+      // 先从localStorage加载数据到store
+      const localMaterials = JSON.parse(localStorage.getItem('materials') || '[]')
+      if (localMaterials.length > 0) {
+        materialStore.addMaterials(localMaterials)
+      }
+
+      // 然后尝试从API加载
       await materialStore.loadLibraryMaterials()
     } catch (err) {
       console.error('加载素材库失败:', err)
