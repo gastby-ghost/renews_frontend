@@ -238,7 +238,10 @@ class ChangeLogUpdater {
     }
 
     try {
-      const currentContent = readFileSync(this.changelogPath, 'utf-8')
+      let currentContent = ''
+      if (existsSync(this.changelogPath)) {
+        currentContent = readFileSync(this.changelogPath, 'utf-8')
+      }
 
       // 找到变更历史部分
       const historyMarker = '## 📈 变更历史'
@@ -271,15 +274,9 @@ class ChangeLogUpdater {
 
       const newContent = beforeHistory + newEntries + existingEntries + afterHistory
 
-      // 更新最后修改时间
-      const updatedContent = newContent.replace(
-        /\*\*最后更新\*\*: \d{4}年\d{1,2}月\d{1,2}日/,
-        `**最后更新**: ${new Date().toLocaleDateString('zh-CN', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        })}`
-      )
+      // 更新统计信息
+      const stats = this.calculateStats(entries)
+      const updatedContent = this.updateStats(newContent, stats)
 
       writeFileSync(this.changelogPath, updatedContent)
       console.log(`✅ 成功更新变更日志，添加了 ${entries.length} 条记录`)
@@ -291,6 +288,74 @@ class ChangeLogUpdater {
     } catch (error) {
       console.error('❌ 更新变更日志失败:', error)
     }
+  }
+
+  /**
+   * 计算统计信息
+   */
+  private calculateStats(entries: ChangeLogEntry[]): Record<string, number> {
+    const stats = {
+      feat: 0,
+      fix: 0,
+      docs: 0,
+      style: 0,
+      refactor: 0,
+      test: 0,
+      chore: 0,
+      remove: 0
+    }
+
+    entries.forEach((entry) => {
+      if (stats.hasOwnProperty(entry.type)) {
+        stats[entry.type]++
+      }
+    })
+
+    return stats
+  }
+
+  /**
+   * 更新统计信息
+   */
+  private updateStats(content: string, newStats: Record<string, number>): string {
+    // 更新最后修改时间
+    let updatedContent = content.replace(
+      /\*\*最后更新\*\*: \d{4}年\d{1,2}月\d{1,2}日/,
+      `**最后更新**: ${new Date().toLocaleDateString('zh-CN', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      })}`
+    )
+
+    // 更新总提交数
+    const totalCommits = Object.values(newStats).reduce((sum, count) => sum + count, 0)
+    updatedContent = updatedContent.replace(
+      /\*\*总提交数\*\*: \d+/,
+      `**总提交数**: ${totalCommits}`
+    )
+
+    // 更新各类型统计
+    const typeLabels = {
+      feat: '功能新增',
+      fix: '问题修复',
+      docs: '文档更新',
+      style: '样式调整',
+      refactor: '代码重构',
+      test: '测试相关',
+      chore: '构建/工具',
+      remove: '删除功能'
+    }
+
+    Object.entries(newStats).forEach(([type, count]) => {
+      const label = typeLabels[type as keyof typeof typeLabels]
+      if (label) {
+        const regex = new RegExp(`\\*\\*${label}\\*\\*: \\d+`)
+        updatedContent = updatedContent.replace(regex, `**${label}**: ${count}`)
+      }
+    })
+
+    return updatedContent
   }
 
   /**
