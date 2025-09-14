@@ -25,22 +25,22 @@
   },
   "lint-staged": {
     "*.{js,ts,mjs,mts,tsx}": [
-      "eslint --config .eslintrc.lint-staged.cjs --fix --max-warnings 0 || true",
+      "eslint --config .eslintrc.lint-staged.cjs --fix --max-warnings 999",
       "prettier --write"
     ],
     "*.{cjs,json,jsonc}": [
       "prettier --write"
     ],
     "*.vue": [
-      "eslint --config .eslintrc.lint-staged.cjs --fix --max-warnings 0 || true",
-      "stylelint --fix --allow-empty-input || true",
+      "eslint --config .eslintrc.lint-staged.cjs --fix --max-warnings 999",
+      "stylelint --fix --allow-empty-input",
       "prettier --write"
     ],
     "*.{html,htm}": [
       "prettier --write"
     ],
     "*.{scss,css,less}": [
-      "stylelint --fix --allow-empty-input || true",
+      "stylelint --fix --allow-empty-input",
       "prettier --write"
     ],
     "*.{md,mdx}": [
