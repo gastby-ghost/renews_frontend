@@ -147,6 +147,13 @@
         </el-button>
       </div>
     </div>
+
+    <!-- 素材抽屉组件 -->
+    <MaterialDrawer
+      v-model:selected-materials="selectedMaterials"
+      @material-selected="handleMaterialSelected"
+      @material-dragged="handleMaterialDragged"
+    />
   </div>
 </template>
 
@@ -154,6 +161,8 @@
   import { ref, computed, onMounted } from 'vue'
   import { useRouter, useRoute } from 'vue-router'
   import { ElMessage } from 'element-plus'
+  import MaterialDrawer from '@/components/custom/material-drawer/MaterialDrawer.vue'
+  import type { Material } from '@/types/material'
 
   interface OutlineSubsection {
     id: string
@@ -176,6 +185,9 @@
   const titleDescription = ref('')
   const outline = ref<OutlineSection[]>([])
   const generatingOutline = ref(false)
+
+  // 素材相关
+  const selectedMaterials = ref<Material[]>([])
 
   onMounted(() => {
     loadExistingData()
@@ -403,6 +415,15 @@
 
   const saveOutline = () => {
     localStorage.setItem(`project_${projectId}_outline`, JSON.stringify(outline.value))
+  }
+
+  // 素材相关方法
+  const handleMaterialSelected = (material: Material) => {
+    console.log('素材已选择:', material)
+  }
+
+  const handleMaterialDragged = (event: DragEvent, material: Material) => {
+    console.log('素材被拖拽:', material)
   }
 
   const confirmOutline = () => {

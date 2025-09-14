@@ -206,6 +206,13 @@
         确认标题并继续
       </el-button>
     </div>
+
+    <!-- 素材抽屉组件 -->
+    <MaterialDrawer
+      v-model:selected-materials="selectedMaterials"
+      @material-selected="handleMaterialSelected"
+      @material-dragged="handleMaterialDragged"
+    />
   </div>
 </template>
 
@@ -213,18 +220,13 @@
   import { ref, reactive, computed, onMounted } from 'vue'
   import { useRouter, useRoute } from 'vue-router'
   import { ElMessage } from 'element-plus'
+  import MaterialDrawer from '@/components/custom/material-drawer/MaterialDrawer.vue'
+  import type { Material } from '@/types/material'
 
   interface TitleControls {
     count: number
     length: string
     styles: string[]
-  }
-
-  interface Material {
-    id: string
-    title: string
-    content: string
-    tags: string[]
   }
 
   interface GeneratedTitle {
@@ -251,11 +253,13 @@
 
   const extractedKeywords = ref<string[]>([])
   const newKeyword = ref('')
-  const selectedMaterials = ref<Material[]>([])
   const generatedTitles = ref<GeneratedTitle[]>([])
   const selectedTitleIndex = ref<number | null>(null)
   const generatingTitles = ref(false)
   const aiSearching = ref(false)
+
+  // 素材相关
+  const selectedMaterials = ref<Material[]>([])
 
   onMounted(() => {
     loadExistingData()
@@ -479,6 +483,15 @@
 
   const selectTitle = (index: number) => {
     selectedTitleIndex.value = index
+  }
+
+  // 素材相关方法
+  const handleMaterialSelected = (material: Material) => {
+    console.log('素材已选择:', material)
+  }
+
+  const handleMaterialDragged = (event: DragEvent, material: Material) => {
+    console.log('素材被拖拽:', material)
   }
 
   const confirmTitle = () => {

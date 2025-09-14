@@ -172,6 +172,13 @@
         </span>
       </template>
     </el-dialog>
+
+    <!-- 素材抽屉组件 -->
+    <MaterialDrawer
+      v-model:selected-materials="selectedMaterials"
+      @material-selected="handleMaterialSelected"
+      @material-dragged="handleMaterialDragged"
+    />
   </div>
 </template>
 
@@ -179,6 +186,8 @@
   import { ref, computed, onMounted, nextTick } from 'vue'
   import { useRouter, useRoute } from 'vue-router'
   import { ElMessage } from 'element-plus'
+  import MaterialDrawer from '@/components/custom/material-drawer/MaterialDrawer.vue'
+  import type { Material } from '@/types/material'
 
   interface AISuggestion {
     id: string
@@ -211,6 +220,9 @@
   const showOutline = ref(true)
   const showAIAssistant = ref(true)
   const generatingContent = ref(false)
+
+  // 素材相关
+  const selectedMaterials = ref<Material[]>([])
   const chatLoading = ref(false)
   const previewDialogVisible = ref(false)
   const chatInput = ref('')
@@ -470,6 +482,15 @@
 
   const previewContent = () => {
     previewDialogVisible.value = true
+  }
+
+  // 素材相关方法
+  const handleMaterialSelected = (material: Material) => {
+    console.log('素材已选择:', material)
+  }
+
+  const handleMaterialDragged = (event: DragEvent, material: Material) => {
+    console.log('素材被拖拽:', material)
   }
 
   const exportContent = () => {
