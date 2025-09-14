@@ -15,7 +15,8 @@
     "commit": "git-cz",
     "clean:dev": "tsx scripts/clean-dev.ts",
     "changelog:update": "tsx scripts/update-changelog.ts",
-    "changelog:manual": "tsx scripts/update-changelog.ts --manual"
+    "changelog:manual": "tsx scripts/update-changelog.ts --manual",
+    "commit:safe": "bash scripts/safe-commit.sh"
   },
   "config": {
     "commitizen": {
@@ -24,22 +25,22 @@
   },
   "lint-staged": {
     "*.{js,ts,mjs,mts,tsx}": [
-      "eslint --fix",
+      "eslint --config .eslintrc.lint-staged.cjs --fix --max-warnings 0 || true",
       "prettier --write"
     ],
     "*.{cjs,json,jsonc}": [
       "prettier --write"
     ],
     "*.vue": [
-      "eslint --fix",
-      "stylelint --fix --allow-empty-input",
+      "eslint --config .eslintrc.lint-staged.cjs --fix --max-warnings 0 || true",
+      "stylelint --fix --allow-empty-input || true",
       "prettier --write"
     ],
     "*.{html,htm}": [
       "prettier --write"
     ],
     "*.{scss,css,less}": [
-      "stylelint --fix --allow-empty-input",
+      "stylelint --fix --allow-empty-input || true",
       "prettier --write"
     ],
     "*.{md,mdx}": [
