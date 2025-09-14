@@ -8,6 +8,5 @@ dist-ssr
 src/types/auto-imports.d.ts
 src/types/components.d.ts
 
-# 变更日志文档 - 自动生成，不提交到版本控制
-src/views/PROJECT_CHANGELOG.md
+# 变更日志追踪文件 - 仅本地使用
 .last-changelog-commit

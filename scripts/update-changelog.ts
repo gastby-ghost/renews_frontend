@@ -281,9 +281,16 @@ class ChangeLogUpdater {
       writeFileSync(this.changelogPath, updatedContent)
       console.log(`✅ 成功更新变更日志，添加了 ${entries.length} 条记录`)
 
-      // 保存最后处理的提交哈希
+      // 保存最后处理的提交哈希（使用最新的提交哈希）
       if (entries.length > 0) {
-        this.saveLastCommitHash(entries[0].hash)
+        // 获取最新的提交哈希
+        try {
+          const latestCommit = execSync('git rev-parse HEAD', { encoding: 'utf-8' }).trim()
+          this.saveLastCommitHash(latestCommit)
+        } catch (error) {
+          console.warn('⚠️ 无法获取最新提交哈希，使用第一个条目的哈希')
+          this.saveLastCommitHash(entries[0].hash)
+        }
       }
     } catch (error) {
       console.error('❌ 更新变更日志失败:', error)
