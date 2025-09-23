@@ -1,0 +1,2095 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI驱动的内容创作编辑器 - 标题生成模块</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f5f7fa;
+            color: #2c3e50;
+            line-height: 1.6;
+        }
+        
+        .app-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .app-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 24px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .app-header h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .app-header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        
+        .app-content {
+            flex: 1;
+            padding: 24px;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        
+        .module-header {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .module-header h2 {
+            color: #2c3e50;
+            margin-bottom: 12px;
+            font-size: 24px;
+        }
+        
+        .module-header p {
+            color: #6c757d;
+            font-size: 16px;
+        }
+        
+        .feature-status {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 16px;
+        }
+        
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .status-badge.completed {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-badge.active {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        
+        .loading-content {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* 标题素材区样式 */
+        .title-material-section {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 24px;
+            overflow: hidden;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .section-header:hover {
+            background: #e9ecef;
+        }
+        
+        .section-header h3 {
+            margin: 0;
+            font-size: 18px;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .collapse-icon {
+            font-size: 12px;
+            transition: transform 0.2s;
+        }
+        
+        .collapse-icon.collapsed {
+            transform: rotate(-90deg);
+        }
+        
+        .section-content {
+            padding: 20px;
+        }
+        
+        .section-content.collapsed {
+            display: none;
+        }
+        
+        .materials-actions {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .action-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .ai-retrieve-btn {
+            background: #9b59b6;
+            color: white;
+        }
+        
+        .ai-retrieve-btn:hover {
+            background: #8e44ad;
+        }
+        
+        .manual-select-btn {
+            background: #3498db;
+            color: white;
+        }
+        
+        .manual-select-btn:hover {
+            background: #2980b9;
+        }
+        
+        .materials-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+        }
+        
+        .material-card {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 16px;
+            transition: all 0.2s;
+        }
+        
+        .material-card:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .material-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .material-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin: 0;
+        }
+        
+        .remove-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+        
+        .remove-btn:hover {
+            background: #c0392b;
+        }
+        
+        .material-summary {
+            font-size: 14px;
+            color: #6c757d;
+            margin-bottom: 12px;
+        }
+        
+        .material-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: #6c757d;
+        }
+        
+        .source-tag {
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 500;
+            color: white;
+        }
+        
+        .source-tag.mainstream {
+            background: #2c3e50;
+        }
+        
+        .source-tag.external {
+            background: #e67e22;
+        }
+        
+        .source-tag.local {
+            background: #2ecc71;
+        }
+        
+        .empty-materials {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+        
+        .empty-materials-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+        
+        /* 标题生成区样式 */
+        .title-generation-section {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+        
+        .materials-weight-section {
+            margin-bottom: 24px;
+        }
+        
+        .section-title {
+            margin: 0 0 16px 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .materials-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .material-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .material-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1;
+        }
+        
+        .material-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #2c3e50;
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .weight-control {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 120px;
+        }
+        
+        .weight-slider {
+            flex: 1;
+            height: 4px;
+            background: #dee2e6;
+            border-radius: 2px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        .weight-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #3498db;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        .weight-value {
+            font-size: 12px;
+            font-weight: 500;
+            color: #2c3e50;
+            min-width: 35px;
+            text-align: right;
+        }
+        
+        .generation-settings {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .setting-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .setting-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #495057;
+        }
+        
+        .style-select {
+            padding: 8px 12px;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+            color: #495057;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        
+        .style-select:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        
+        .generate-btn {
+            padding: 10px 24px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .generate-btn:hover:not(:disabled) {
+            background: #2980b9;
+            transform: translateY(-1px);
+        }
+        
+        .generate-btn:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .titles-display {
+            margin-bottom: 24px;
+        }
+        
+        .titles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        
+        .title-card {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+        
+        .title-card:hover {
+            border-color: #3498db;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .title-card.selected {
+            border-color: #e67e22;
+            background: #fef9e7;
+        }
+        
+        .title-content {
+            margin-bottom: 12px;
+        }
+        
+        .title-text {
+            margin: 0 0 8px 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: #2c3e50;
+            line-height: 1.4;
+        }
+        
+        .title-meta {
+            margin: 0;
+            font-size: 12px;
+            color: #6c757d;
+        }
+        
+        .title-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .analyze-btn {
+            background: #9b59b6;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 6px 8px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+        
+        .analyze-btn:hover {
+            background: #8e44ad;
+        }
+        
+        .select-btn {
+            background: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 6px 12px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .select-btn:hover:not(:disabled) {
+            background: #27ae60;
+        }
+        
+        .select-btn:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+        }
+        
+        .more-options {
+            text-align: center;
+        }
+        
+        .more-btn {
+            padding: 8px 16px;
+            background: #f8f9fa;
+            color: #6c757d;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .more-btn:hover:not(:disabled) {
+            background: #e9ecef;
+            color: #495057;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+        
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+        
+        .empty-state h3 {
+            margin: 0 0 8px 0;
+            font-size: 20px;
+            color: #495057;
+        }
+        
+        .empty-state p {
+            margin: 0;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+        
+        /* 手动选择素材对话框样式 */
+        .manual-material-selection-dialog {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 2000;
+        }
+        
+        .dialog-overlay {
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .dialog-content {
+            background: white;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 1200px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .dialog-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .dialog-header h3 {
+            margin: 0;
+            font-size: 20px;
+            color: #2c3e50;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #6c757d;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+        
+        .close-btn:hover {
+            background: #f8f9fa;
+            color: #495057;
+        }
+        
+        .search-section {
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+            background: #f8f9fa;
+        }
+        
+        .search-filters {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .date-range,
+        .source-selection,
+        .search-keywords {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .date-input,
+        .source-select,
+        .keywords-input {
+            padding: 8px 12px;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+        
+        .date-input:focus,
+        .source-select:focus,
+        .keywords-input:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        
+        .keywords-input {
+            min-width: 200px;
+        }
+        
+        .search-btn {
+            padding: 8px 16px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        
+        .search-btn:hover:not(:disabled) {
+            background: #2980b9;
+        }
+        
+        .search-btn:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+        }
+        
+        .materials-grid {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .material-column {
+            flex: 1;
+            border-right: 1px solid #e9ecef;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .material-column:last-child {
+            border-right: none;
+        }
+        
+        .column-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .column-header h4 {
+            margin: 0;
+            font-size: 16px;
+            color: #2c3e50;
+        }
+        
+        .column-count {
+            font-size: 12px;
+            color: #6c757d;
+        }
+        
+        .column-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+        
+        .dialog-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-top: 1px solid #e9ecef;
+            background: #f8f9fa;
+        }
+        
+        .selection-info {
+            font-size: 14px;
+            color: #6c757d;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .cancel-btn,
+        .add-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .cancel-btn {
+            background: #95a5a6;
+            color: white;
+        }
+        
+        .cancel-btn:hover {
+            background: #7f8c8d;
+        }
+        
+        .add-btn {
+            background: #3498db;
+            color: white;
+        }
+        
+        .add-btn:hover:not(:disabled) {
+            background: #2980b9;
+        }
+        
+        .add-btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+        
+        /* 标题分析面板样式 */
+        .title-analysis-panel {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 3000;
+        }
+        
+        .panel-overlay {
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .panel-content {
+            background: white;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 800px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+            background: #f8f9fa;
+            border-radius: 12px 12px 0 0;
+        }
+        
+        .panel-header h3 {
+            margin: 0;
+            font-size: 20px;
+            color: #2c3e50;
+        }
+        
+        .panel-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        
+        .analyzed-title {
+            margin-bottom: 24px;
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #9b59b6;
+        }
+        
+        .analyzed-title h4 {
+            margin: 0;
+            font-size: 18px;
+            color: #2c3e50;
+            line-height: 1.4;
+        }
+        
+        .analysis-section {
+            margin-bottom: 24px;
+        }
+        
+        .analysis-section h5 {
+            margin: 0 0 12px 0;
+            font-size: 16px;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+        
+        .keywords-cloud {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .keyword-tag {
+            padding: 4px 8px;
+            background: #3498db;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        
+        .keyword-tag:hover {
+            background: #2980b9;
+            transform: scale(1.05);
+        }
+        
+        .sentiment-analysis {
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .sentiment-bar {
+            display: flex;
+            height: 24px;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #e9ecef;
+        }
+        
+        .sentiment-segment {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .sentiment-segment.positive {
+            background: #2ecc71;
+        }
+        
+        .sentiment-segment.neutral {
+            background: #f39c12;
+        }
+        
+        .sentiment-segment.negative {
+            background: #e74c3c;
+        }
+        
+        .sentiment-label {
+            padding: 0 4px;
+            white-space: nowrap;
+        }
+        
+        .attractiveness-score {
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .score-display {
+            display: flex;
+            align-items: baseline;
+            justify-content: center;
+            margin-bottom: 12px;
+        }
+        
+        .score-number {
+            font-size: 48px;
+            font-weight: bold;
+            color: #9b59b6;
+        }
+        
+        .score-max {
+            font-size: 24px;
+            color: #6c757d;
+            margin-left: 4px;
+        }
+        
+        .score-stars {
+            margin-bottom: 8px;
+        }
+        
+        .star {
+            font-size: 24px;
+            color: #dee2e6;
+            margin: 0 2px;
+            transition: color 0.2s;
+        }
+        
+        .star.filled {
+            color: #f39c12;
+        }
+        
+        .score-description {
+            font-size: 14px;
+            color: #6c757d;
+            font-style: italic;
+        }
+        
+        .seo-suggestions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .suggestion-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            transition: all 0.2s;
+        }
+        
+        .suggestion-item:hover {
+            border-color: #3498db;
+            background: #f8f9ff;
+        }
+        
+        .suggestion-checkbox {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+        
+        .suggestion-label {
+            flex: 1;
+            font-size: 14px;
+            color: #495057;
+            cursor: pointer;
+            line-height: 1.4;
+        }
+        
+        .apply-suggestion-btn {
+            padding: 4px 8px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        
+        .apply-suggestion-btn:hover {
+            background: #2980b9;
+        }
+        
+        .panel-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-top: 1px solid #e9ecef;
+            background: #f8f9fa;
+            border-radius: 0 0 12px 12px;
+        }
+        
+        .apply-selected-btn,
+        .close-panel-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .apply-selected-btn {
+            background: #2ecc71;
+            color: white;
+        }
+        
+        .apply-selected-btn:hover:not(:disabled) {
+            background: #27ae60;
+        }
+        
+        .apply-selected-btn:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+        }
+        
+        .close-panel-btn {
+            background: #95a5a6;
+            color: white;
+        }
+        
+        .close-panel-btn:hover {
+            background: #7f8c8d;
+        }
+        
+        .loading-spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #ffffff;
+            border-top: 2px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* 通知样式 */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #2ecc71;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 6px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            z-index: 10000;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="app-container">
+            <header class="app-header">
+                <h1>AI驱动的内容创作编辑器</h1>
+                <p>智能标题生成模块 - 让AI助力您的内容创作</p>
+            </header>
+            
+            <main class="app-content">
+                <div class="module-header">
+                    <h2>标题生成模块</h2>
+                    <p>基于AI技术的智能标题生成，支持多源素材管理和标题优化分析</p>
+                    <div class="feature-status">
+                        <span class="status-badge completed">✅ 标题素材管理</span>
+                        <span class="status-badge completed">✅ AI自动检索</span>
+                        <span class="status-badge completed">✅ 手动选择素材</span>
+                        <span class="status-badge completed">✅ 智能标题生成</span>
+                        <span class="status-badge completed">✅ 标题分析优化</span>
+                    </div>
+                </div>
+                
+                <!-- 标题素材区 -->
+                <div class="title-material-section">
+                    <div class="section-header" @click="toggleMaterialsCollapse">
+                        <h3>
+                            标题素材管理
+                            <span class="collapse-icon" :class="{ collapsed: isMaterialsCollapsed }">▼</span>
+                        </h3>
+                        <span>{{ materials.length }} 个素材</span>
+                    </div>
+                    <div class="section-content" :class="{ collapsed: isMaterialsCollapsed }">
+                        <div class="materials-actions">
+                            <button class="action-btn ai-retrieve-btn" @click="handleAiRetrieveMaterials" :disabled="isRetrieving">
+                                <span v-if="isRetrieving" class="loading-spinner"></span>
+                                <span v-else>🤖 AI自动检索</span>
+                            </button>
+                            <button class="action-btn manual-select-btn" @click="handleManualSelectMaterials">
+                                📋 手动选择素材
+                            </button>
+                        </div>
+                        
+                        <div v-if="materials.length > 0" class="materials-grid">
+                            <div v-for="material in materials" :key="material.id" class="material-card">
+                                <div class="material-card-header">
+                                    <h4 class="material-title">{{ material.title }}</h4>
+                                    <button class="remove-btn" @click="handleRemoveMaterial(material.id)">删除</button>
+                                </div>
+                                <p class="material-summary">{{ material.summary }}</p>
+                                <div class="material-meta">
+                                    <span class="source-tag" :class="getSourceClass(material.source)">{{ material.source }}</span>
+                                    <span>{{ material.date }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div v-else class="empty-materials">
+                            <div class="empty-materials-icon">📁</div>
+                            <h3>暂无素材</h3>
+                            <p>点击"AI自动检索"或"手动选择素材"来添加素材</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 标题生成区 -->
+                <div class="title-generation-section">
+                    <!-- 素材权重设置区 -->
+                    <div v-if="boundMaterials.length > 0" class="materials-weight-section">
+                        <h4 class="section-title">素材权重设置</h4>
+                        <div class="materials-list">
+                            <div v-for="material in boundMaterials" :key="material.id" class="material-item">
+                                <div class="material-info">
+                                    <span class="material-title">{{ material.title }}</span>
+                                    <span class="material-source" :class="getSourceClass(material.source)">
+                                        {{ material.source }}
+                                    </span>
+                                </div>
+                                <div class="weight-control">
+                                    <input 
+                                        type="range"
+                                        min="0"
+                                        max="100"
+                                        v-model="material.weight"
+                                        @change="updateMaterialWeight(material.id, material.weight)"
+                                        class="weight-slider"
+                                    />
+                                    <span class="weight-value">{{ material.weight }}%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 标题生成设置 -->
+                    <div class="generation-settings">
+                        <div class="setting-item">
+                            <label class="setting-label">标题风格:</label>
+                            <select 
+                                v-model="titleStyle"
+                                @change="updateTitleStyle(titleStyle)"
+                                class="style-select"
+                            >
+                                <option value="正式">正式</option>
+                                <option value="轻松">轻松</option>
+                                <option value="创意">创意</option>
+                                <option value="专业">专业</option>
+                                <option value="简洁">简洁</option>
+                            </select>
+                        </div>
+                        
+                        <button 
+                            class="generate-btn"
+                            @click="handleGenerateTitles"
+                            :disabled="isGenerating || boundMaterials.length === 0"
+                        >
+                            <span v-if="isGenerating" class="loading-spinner"></span>
+                            <span v-else>生成标题</span>
+                        </button>
+                    </div>
+                    
+                    <!-- 标题展示区 -->
+                    <div v-if="generatedTitles.length > 0" class="titles-display">
+                        <h4 class="section-title">生成的标题选项</h4>
+                        <div class="titles-grid">
+                            <div 
+                                v-for="title in generatedTitles"
+                                :key="title.id"
+                                class="title-card"
+                                :class="{ 'selected': selectedTitle === title.text }"
+                                @click="handleSelectTitle(title)"
+                            >
+                                <div class="title-content">
+                                    <h5 class="title-text">{{ title.text }}</h5>
+                                    <p class="title-meta">基于 {{ title.materialCount }} 个素材生成</p>
+                                </div>
+                                <div class="title-actions">
+                                    <button 
+                                        class="analyze-btn"
+                                        @click.stop="handleAnalyzeTitle(title)"
+                                        title="分析标题"
+                                    >
+                                        📊
+                                    </button>
+                                    <button 
+                                        class="select-btn"
+                                        @click.stop="handleSelectTitle(title)"
+                                        :disabled="selectedTitle === title.text"
+                                    >
+                                        {{ selectedTitle === title.text ? '已选择' : '选择' }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="more-options">
+                            <button 
+                                class="more-btn"
+                                @click="handleGenerateTitles"
+                                :disabled="isGenerating"
+                            >
+                                生成更多选项
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- 空状态 -->
+                    <div v-if="boundMaterials.length === 0" class="empty-state">
+                        <div class="empty-icon">📝</div>
+                        <h3>请先添加素材</h3>
+                        <p>添加素材后，AI将基于素材为您生成标题选项</p>
+                    </div>
+                </div>
+                
+                <!-- 手动选择素材对话框 -->
+                <div v-if="showManualSelectionDialog" class="manual-material-selection-dialog">
+                    <div class="dialog-overlay" @click="closeManualSelectionDialog">
+                        <div class="dialog-content" @click.stop>
+                            <div class="dialog-header">
+                                <h3>手动选择素材</h3>
+                                <button class="close-btn" @click="closeManualSelectionDialog">×</button>
+                            </div>
+                            
+                            <div class="search-section">
+                                <div class="search-filters">
+                                    <div class="search-keywords">
+                                        <label>关键词:</label>
+                                        <input 
+                                            type="text" 
+                                            v-model="searchKeywords"
+                                            placeholder="输入搜索关键词"
+                                            class="keywords-input"
+                                        />
+                                    </div>
+                                    
+                                    <button 
+                                        class="search-btn"
+                                        @click="handleSearch"
+                                        :disabled="isSearching"
+                                    >
+                                        <span v-if="isSearching" class="loading-spinner"></span>
+                                        <span v-else>搜索</span>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="materials-grid">
+                                <!-- 主流媒体列 -->
+                                <div class="material-column">
+                                    <div class="column-header">
+                                        <h4>主流媒体</h4>
+                                        <span class="column-count">({{ mainstreamMaterials.length }})</span>
+                                    </div>
+                                    <div class="column-content">
+                                        <div 
+                                            v-for="material in mainstreamMaterials"
+                                            :key="material.id"
+                                            class="material-card"
+                                            :class="{ 'selected': selectedMaterials.includes(material.id) }"
+                                            @click="toggleMaterialSelection(material)"
+                                        >
+                                            <div class="material-card-header">
+                                                <input 
+                                                    type="checkbox"
+                                                    :checked="selectedMaterials.includes(material.id)"
+                                                    @click.stop
+                                                />
+                                                <span class="material-source-tag mainstream">主流媒体</span>
+                                            </div>
+                                            <h5 class="material-card-title">{{ material.title }}</h5>
+                                            <p class="material-card-summary">{{ material.summary }}</p>
+                                            <div class="material-card-meta">
+                                                <span class="reliability">
+                                                    可靠性: {{ '★'.repeat(material.reliability) }}
+                                                </span>
+                                                <span class="date">{{ material.date }}</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div v-if="mainstreamMaterials.length === 0" class="column-empty">
+                                            暂无主流媒体素材
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 外部检索列 -->
+                                <div class="material-column">
+                                    <div class="column-header">
+                                        <h4>外部检索</h4>
+                                        <span class="column-count">({{ externalMaterials.length }})</span>
+                                    </div>
+                                    <div class="column-content">
+                                        <div 
+                                            v-for="material in externalMaterials"
+                                            :key="material.id"
+                                            class="material-card"
+                                            :class="{ 'selected': selectedMaterials.includes(material.id) }"
+                                            @click="toggleMaterialSelection(material)"
+                                        >
+                                            <div class="material-card-header">
+                                                <input 
+                                                    type="checkbox"
+                                                    :checked="selectedMaterials.includes(material.id)"
+                                                    @click.stop
+                                                />
+                                                <span class="material-source-tag external">外部</span>
+                                            </div>
+                                            <h5 class="material-card-title">{{ material.title }}</h5>
+                                            <p class="material-card-summary">{{ material.summary }}</p>
+                                            <div class="material-card-meta">
+                                                <span class="reliability">
+                                                    可靠性: {{ '★'.repeat(material.reliability) }}
+                                                </span>
+                                                <span class="date">{{ material.date }}</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div v-if="externalMaterials.length === 0" class="column-empty">
+                                            暂无外部检索素材
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 本地上传列 -->
+                                <div class="material-column">
+                                    <div class="column-header">
+                                        <h4>本地上传</h4>
+                                        <span class="column-count">({{ localMaterials.length }})</span>
+                                        <button class="upload-btn" @click="triggerFileUpload">
+                                            上传本地素材
+                                        </button>
+                                        <input 
+                                            type="file" 
+                                            ref="fileInput"
+                                            accept=".md"
+                                            multiple
+                                            @change="handleFileUpload"
+                                            style="display: none;"
+                                        />
+                                    </div>
+                                    <div class="column-content">
+                                        <div 
+                                            v-for="material in localMaterials"
+                                            :key="material.id"
+                                            class="material-card"
+                                            :class="{ 'selected': selectedMaterials.includes(material.id) }"
+                                            @click="toggleMaterialSelection(material)"
+                                        >
+                                            <div class="material-card-header">
+                                                <input 
+                                                    type="checkbox"
+                                                    :checked="selectedMaterials.includes(material.id)"
+                                                    @click.stop
+                                                />
+                                                <span class="material-source-tag local">本地</span>
+                                            </div>
+                                            <h5 class="material-card-title">{{ material.title }}</h5>
+                                            <p class="material-card-summary">{{ material.summary }}</p>
+                                            <div class="material-card-meta">
+                                                <span class="file-size">{{ material.fileSize }}</span>
+                                                <span class="date">{{ material.date }}</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div v-if="localMaterials.length === 0" class="column-empty">
+                                            <div class="upload-area" @drop="handleDrop" @dragover.prevent>
+                                                <p>拖拽.md文件到此处</p>
+                                                <p>或点击"上传本地素材"按钮</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="dialog-footer">
+                                <div class="selection-info">
+                                    已选择 {{ selectedMaterials.length }} 个素材
+                                </div>
+                                <div class="action-buttons">
+                                    <button class="cancel-btn" @click="closeManualSelectionDialog">
+                                        取消
+                                    </button>
+                                    <button 
+                                        class="add-btn"
+                                        @click="handleAddMaterials"
+                                        :disabled="selectedMaterials.length === 0"
+                                    >
+                                        添加到标题区
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 标题分析面板 -->
+                <div v-if="showAnalysisPanel" class="title-analysis-panel">
+                    <div class="panel-overlay" @click="closeAnalysisPanel">
+                        <div class="panel-content" @click.stop>
+                            <div class="panel-header">
+                                <h3>标题分析</h3>
+                                <button class="close-btn" @click="closeAnalysisPanel">×</button>
+                            </div>
+                            
+                            <div class="panel-body">
+                                <!-- 分析中的标题 -->
+                                <div class="analyzed-title">
+                                    <h4>{{ analyzingTitle }}</h4>
+                                </div>
+                                
+                                <!-- 关键词提取 -->
+                                <div class="analysis-section">
+                                    <h5>关键词提取</h5>
+                                    <div class="keywords-cloud">
+                                        <span 
+                                            v-for="keyword in analysisData.keywords"
+                                            :key="keyword"
+                                            class="keyword-tag"
+                                            :style="{ fontSize: getKeywordSize(keyword) }"
+                                            @click="highlightKeyword(keyword)"
+                                        >
+                                            {{ keyword }}
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <!-- 情感倾向分析 -->
+                                <div class="analysis-section">
+                                    <h5>情感倾向</h5>
+                                    <div class="sentiment-analysis">
+                                        <div class="sentiment-bar">
+                                            <div 
+                                                class="sentiment-segment positive"
+                                                :style="{ width: analysisData.sentiment.positive + '%' }"
+                                            >
+                                                <span class="sentiment-label">积极 {{ analysisData.sentiment.positive }}%</span>
+                                            </div>
+                                            <div 
+                                                class="sentiment-segment neutral"
+                                                :style="{ width: analysisData.sentiment.neutral + '%' }"
+                                            >
+                                                <span class="sentiment-label">中性 {{ analysisData.sentiment.neutral }}%</span>
+                                            </div>
+                                            <div 
+                                                class="sentiment-segment negative"
+                                                :style="{ width: analysisData.sentiment.negative + '%' }"
+                                            >
+                                                <span class="sentiment-label">消极 {{ analysisData.sentiment.negative }}%</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 吸引力评分 -->
+                                <div class="analysis-section">
+                                    <h5>吸引力评分</h5>
+                                    <div class="attractiveness-score">
+                                        <div class="score-display">
+                                            <div class="score-number">{{ analysisData.attractiveness }}</div>
+                                            <div class="score-max">/100</div>
+                                        </div>
+                                        <div class="score-stars">
+                                            <span 
+                                                v-for="i in 5"
+                                                :key="i"
+                                                class="star"
+                                                :class="{ filled: i <= Math.floor(analysisData.attractiveness / 20) }"
+                                            >
+                                                ★
+                                            </span>
+                                        </div>
+                                        <div class="score-description">
+                                            {{ getScoreDescription(analysisData.attractiveness) }}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- SEO优化建议 -->
+                                <div class="analysis-section">
+                                    <h5>SEO优化建议</h5>
+                                    <div class="seo-suggestions">
+                                        <div 
+                                            v-for="(suggestion, index) in analysisData.seoSuggestions"
+                                            :key="index"
+                                            class="suggestion-item"
+                                        >
+                                            <input 
+                                                type="checkbox"
+                                                :id="'suggestion-' + index"
+                                                v-model="selectedSuggestions[index]"
+                                                class="suggestion-checkbox"
+                                            />
+                                            <label 
+                                                :for="'suggestion-' + index"
+                                                class="suggestion-label"
+                                            >
+                                                {{ suggestion }}
+                                            </label>
+                                            <button 
+                                                class="apply-suggestion-btn"
+                                                @click="applySingleSuggestion(suggestion)"
+                                                title="应用此建议"
+                                            >
+                                                应用
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="panel-footer">
+                                <button 
+                                    class="apply-selected-btn"
+                                    @click="applySelectedSuggestions"
+                                    :disabled="!hasSelectedSuggestions"
+                                >
+                                    应用选中的建议 ({{ selectedCount }})
+                                </button>
+                                <button 
+                                    class="close-panel-btn"
+                                    @click="closeAnalysisPanel"
+                                >
+                                    关闭
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+        
+        <!-- 全局加载状态 -->
+        <div v-if="isLoading" class="loading-overlay">
+            <div class="loading-content">
+                <div class="loading-spinner"></div>
+                <p>{{ loadingMessage }}</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref, reactive, computed, onMounted, watch } = Vue;
+        
+        createApp({
+            data() {
+                return {
+                    isLoading: false,
+                    loadingMessage: '正在加载...',
+                    projectData: {
+                        id: 'project-001',
+                        name: 'AI内容创作编辑器',
+                        type: '内容创作',
+                        status: '进行中',
+                        createdAt: '2024-01-01',
+                        description: '基于AI技术的内容创作和编辑工具'
+                    },
+                    projectRequirements: {
+                        targetAudience: '内容创作者、编辑、营销人员',
+                        contentTypes: ['文章', '博客', '营销文案'],
+                        stylePreferences: ['正式', '轻松', '创意'],
+                        keywords: ['AI', '内容创作', '编辑器', '智能']
+                    },
+                    
+                    // 素材管理
+                    materials: [],
+                    boundMaterials: [],
+                    isMaterialsCollapsed: false,
+                    isRetrieving: false,
+                    
+                    // 标题生成
+                    generatedTitles: [],
+                    selectedTitle: '',
+                    titleStyle: '正式',
+                    isGenerating: false,
+                    
+                    // 手动选择素材
+                    showManualSelectionDialog: false,
+                    searchKeywords: '',
+                    isSearching: false,
+                    selectedMaterials: [],
+                    mainstreamMaterials: [],
+                    externalMaterials: [],
+                    localMaterials: [],
+                    fileInput: null,
+                    
+                    // 标题分析
+                    showAnalysisPanel: false,
+                    analysisData: {
+                        keywords: [],
+                        sentiment: { positive: 0, neutral: 0, negative: 0 },
+                        attractiveness: 0,
+                        seoSuggestions: []
+                    },
+                    analyzingTitle: '',
+                    selectedSuggestions: {}
+                }
+            },
+            
+            computed: {
+                hasMaterials() {
+                    return this.materials.length > 0;
+                },
+                hasGeneratedTitles() {
+                    return this.generatedTitles.length > 0;
+                },
+                selectedCount() {
+                    return Object.values(this.selectedSuggestions).filter(Boolean).length;
+                },
+                hasSelectedSuggestions() {
+                    return this.selectedCount > 0;
+                }
+            },
+            
+            mounted() {
+                console.log('AI内容创作编辑器已启动');
+                this.initializeMockData();
+            },
+            
+            methods: {
+                initializeMockData() {
+                    // 初始化模拟数据
+                    this.mainstreamMaterials = [
+                        {
+                            id: 'ms-1',
+                            title: '人工智能在内容创作中的应用前景',
+                            summary: '探讨AI技术在内容创作领域的应用现状和未来发展趋势...',
+                            source: '主流媒体',
+                            reliability: 5,
+                            date: '2024-01-15'
+                        },
+                        {
+                            id: 'ms-2',
+                            title: '智能编辑器的技术架构分析',
+                            summary: '深入分析智能编辑器的系统架构、核心模块和技术实现方案...',
+                            source: '主流媒体',
+                            reliability: 4,
+                            date: '2024-01-10'
+                        }
+                    ];
+                    
+                    this.externalMaterials = [
+                        {
+                            id: 'ext-1',
+                            title: 'AI驱动的创作工具市场调研',
+                            summary: '对当前市场上AI驱动创作工具的调研报告和竞品分析...',
+                            source: '外部',
+                            reliability: 3,
+                            date: '2024-01-12'
+                        }
+                    ];
+                },
+                
+                // 素材管理方法
+                toggleMaterialsCollapse() {
+                    this.isMaterialsCollapsed = !this.isMaterialsCollapsed;
+                },
+                
+                async handleAiRetrieveMaterials() {
+                    this.isRetrieving = true;
+                    this.isLoading = true;
+                    this.loadingMessage = '正在AI检索素材...';
+                    
+                    try {
+                        // 模拟AI检索过程
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                        
+                        const aiMaterials = [
+                            {
+                                id: 'ai-' + Date.now() + '-1',
+                                title: '人工智能在内容创作中的应用研究',
+                                source: '主流媒体',
+                                summary: '探讨AI技术在内容创作领域的应用现状和发展趋势...',
+                                reliability: 5,
+                                date: new Date().toISOString().split('T')[0]
+                            },
+                            {
+                                id: 'ai-' + Date.now() + '-2',
+                                title: '智能编辑器的技术架构设计',
+                                source: '主流媒体',
+                                summary: '分析智能编辑器的系统架构和技术实现方案...',
+                                reliability: 4,
+                                date: new Date().toISOString().split('T')[0]
+                            }
+                        ];
+                        
+                        this.addMaterials(aiMaterials);
+                        this.showNotification('AI检索成功！已添加 ' + aiMaterials.length + ' 个素材');
+                        
+                    } catch (error) {
+                        console.error('AI检索素材失败:', error);
+                        this.showNotification('AI检索素材失败，请重试', 'error');
+                    } finally {
+                        this.isRetrieving = false;
+                        this.isLoading = false;
+                    }
+                },
+                
+                handleManualSelectMaterials() {
+                    this.showManualSelectionDialog = true;
+                    this.selectedMaterials = [];
+                },
+                
+                handleRemoveMaterial(materialId) {
+                    this.materials = this.materials.filter(m => m.id !== materialId);
+                    this.updateBoundMaterials();
+                    this.showNotification('素材已删除');
+                },
+                
+                addMaterials(newMaterials) {
+                    newMaterials.forEach(material => {
+                        if (!this.materials.find(m => m.id === material.id)) {
+                            this.materials.push({
+                                ...material,
+                                weight: 100,
+                                isBound: true
+                            });
+                        }
+                    });
+                    this.updateBoundMaterials();
+                },
+                
+                updateBoundMaterials() {
+                    this.boundMaterials = this.materials.filter(m => m.isBound);
+                },
+                
+                updateMaterialWeight(materialId, weight) {
+                    const material = this.materials.find(m => m.id === materialId);
+                    if (material) {
+                        material.weight = weight;
+                    }
+                },
+                
+                // 标题生成方法
+                async handleGenerateTitles() {
+                    if (this.boundMaterials.length === 0) {
+                        this.showNotification('请先添加素材', 'error');
+                        return;
+                    }
+                    
+                    this.isGenerating = true;
+                    this.isLoading = true;
+                    this.loadingMessage = '正在生成标题...';
+                    
+                    try {
+                        // 模拟生成过程
+                        await new Promise(resolve => setTimeout(resolve, 3000));
+                        
+                        const titles = [
+                            { id: Date.now() + 1, text: 'AI驱动的内容创作编辑器：功能设计与实现', materialCount: this.boundMaterials.length },
+                            { id: Date.now() + 2, text: '基于AI的内容创作编辑器架构设计', materialCount: this.boundMaterials.length },
+                            { id: Date.now() + 3, text: '智能内容创作编辑器的核心功能分析', materialCount: this.boundMaterials.length },
+                            { id: Date.now() + 4, text: 'AI辅助内容创作的技术实现方案', materialCount: this.boundMaterials.length },
+                            { id: Date.now() + 5, text: '内容创作编辑器的AI功能模块设计', materialCount: this.boundMaterials.length }
+                        ];
+                        
+                        this.generatedTitles = titles;
+                        this.showNotification('标题生成成功！已生成 ' + titles.length + ' 个标题选项');
+                        
+                    } catch (error) {
+                        console.error('生成标题失败:', error);
+                        this.showNotification('生成标题失败，请重试', 'error');
+                    } finally {
+                        this.isGenerating = false;
+                        this.isLoading = false;
+                    }
+                },
+                
+                handleSelectTitle(title) {
+                    this.selectedTitle = title.text;
+                    this.showNotification('已选择标题: ' + title.text);
+                    this.$emit('title-selected', title);
+                },
+                
+                updateTitleStyle(style) {
+                    this.titleStyle = style;
+                    this.showNotification('标题风格已更改为: ' + style);
+                },
+                
+                // 标题分析方法
+                async handleAnalyzeTitle(title) {
+                    this.analyzingTitle = title.text;
+                    this.showAnalysisPanel = true;
+                    this.isLoading = true;
+                    this.loadingMessage = '正在分析标题...';
+                    
+                    try {
+                        // 模拟分析过程
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                        
+                        this.analysisData = {
+                            keywords: ['AI', '内容创作', '编辑器', '功能设计', '技术实现', '智能', '架构', '模块'],
+                            sentiment: { positive: 75, neutral: 20, negative: 5 },
+                            attractiveness: 85,
+                            seoSuggestions: [
+                                '标题长度适中，适合SEO',
+                                '包含核心关键词"AI"和"内容创作"',
+                                '建议在标题开头添加数字吸引注意力',
+                                '可以考虑加入年份信息增加时效性',
+                                '标题结构清晰，易于理解'
+                            ]
+                        };
+                        
+                        this.selectedSuggestions = {};
+                        
+                    } catch (error) {
+                        console.error('分析标题失败:', error);
+                        this.showNotification('分析标题失败，请重试', 'error');
+                    } finally {
+                        this.isLoading = false;
+                    }
+                },
+                
+                closeAnalysisPanel() {
+                    this.showAnalysisPanel = false;
+                    this.analysisData = {
+                        keywords: [],
+                        sentiment: { positive: 0, neutral: 0, negative: 0 },
+                        attractiveness: 0,
+                        seoSuggestions: []
+                    };
+                    this.analyzingTitle = '';
+                    this.selectedSuggestions = {};
+                },
+                
+                getKeywordSize(keyword) {
+                    const importance = Math.random() * 0.5 + 0.5;
+                    return `${12 + importance * 8}px`;
+                },
+                
+                getScoreDescription(score) {
+                    if (score >= 80) return '优秀 - 标题具有很强的吸引力';
+                    if (score >= 60) return '良好 - 标题具有较好的吸引力';
+                    if (score >= 40) return '一般 - 标题吸引力中等';
+                    if (score >= 20) return '较差 - 标题吸引力较弱';
+                    return '很差 - 标题需要大幅改进';
+                },
+                
+                highlightKeyword(keyword) {
+                    console.log('高亮关键词:', keyword);
+                },
+                
+                applySingleSuggestion(suggestion) {
+                    this.showNotification('已应用建议: ' + suggestion);
+                    this.closeAnalysisPanel();
+                },
+                
+                applySelectedSuggestions() {
+                    const suggestions = [];
+                    Object.keys(this.selectedSuggestions).forEach(index => {
+                        if (this.selectedSuggestions[index]) {
+                            suggestions.push(this.analysisData.seoSuggestions[index]);
+                        }
+                    });
+                    
+                    if (suggestions.length > 0) {
+                        this.showNotification('已应用 ' + suggestions.length + ' 个建议');
+                        this.closeAnalysisPanel();
+                    }
+                },
+                
+                // 手动选择素材对话框方法
+                closeManualSelectionDialog() {
+                    this.showManualSelectionDialog = false;
+                    this.selectedMaterials = [];
+                },
+                
+                async handleSearch() {
+                    this.isSearching = true;
+                    
+                    try {
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                        console.log('搜索关键词:', this.searchKeywords);
+                    } catch (error) {
+                        console.error('搜索失败:', error);
+                    } finally {
+                        this.isSearching = false;
+                    }
+                },
+                
+                toggleMaterialSelection(material) {
+                    const index = this.selectedMaterials.indexOf(material.id);
+                    if (index > -1) {
+                        this.selectedMaterials.splice(index, 1);
+                    } else {
+                        this.selectedMaterials.push(material.id);
+                    }
+                },
+                
+                handleAddMaterials() {
+                    const allMaterials = [
+                        ...this.mainstreamMaterials,
+                        ...this.externalMaterials,
+                        ...this.localMaterials
+                    ];
+                    
+                    const selectedMaterialObjects = allMaterials.filter(material => 
+                        this.selectedMaterials.includes(material.id)
+                    );
+                    
+                    this.addMaterials(selectedMaterialObjects);
+                    this.closeManualSelectionDialog();
+                    this.showNotification('已添加 ' + selectedMaterialObjects.length + ' 个素材');
+                },
+                
+                triggerFileUpload() {
+                    this.$refs.fileInput.click();
+                },
+                
+                handleFileUpload(event) {
+                    const files = event.target.files;
+                    this.processFiles(files);
+                },
+                
+                handleDrop(event) {
+                    event.preventDefault();
+                    const files = event.dataTransfer.files;
+                    this.processFiles(files);
+                },
+                
+                processFiles(files) {
+                    Array.from(files).forEach(file => {
+                        if (file.type === 'text/markdown' || file.name.endsWith('.md')) {
+                            const reader = new FileReader();
+                            reader.onload = (e) => {
+                                const content = e.target.result;
+                                const material = {
+                                    id: 'local-' + Date.now() + '-' + Math.random(),
+                                    title: file.name.replace('.md', ''),
+                                    summary: content.substring(0, 100) + '...',
+                                    source: '本地',
+                                    fileSize: this.formatFileSize(file.size),
+                                    date: new Date().toISOString().split('T')[0],
+                                    content: content
+                                };
+                                this.localMaterials.push(material);
+                            };
+                            reader.readAsText(file);
+                        }
+                    });
+                },
+                
+                formatFileSize(bytes) {
+                    if (bytes === 0) return '0 Bytes';
+                    const k = 1024;
+                    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                    const i = Math.floor(Math.log(bytes) / Math.log(k));
+                    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+                },
+                
+                // 工具方法
+                getSourceClass(source) {
+                    const sourceMap = {
+                        '主流媒体': 'source-mainstream',
+                        '外部': 'source-external',
+                        '本地': 'source-local'
+                    };
+                    return sourceMap[source] || 'source-default';
+                },
+                
+                showNotification(message, type = 'success') {
+                    const notification = document.createElement('div');
+                    notification.className = 'notification';
+                    notification.style.cssText = `
+                        position: fixed;
+                        top: 20px;
+                        right: 20px;
+                        background: ${type === 'success' ? '#2ecc71' : '#e74c3c'};
+                        color: white;
+                        padding: 12px 20px;
+                        border-radius: 6px;
+                        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+                        z-index: 10000;
+                        animation: slideIn 0.3s ease-out;
+                    `;
+                    notification.textContent = message;
+                    document.body.appendChild(notification);
+                    
+                    setTimeout(() => {
+                        notification.remove();
+                    }, 3000);
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

@@ -11,6 +11,11 @@ export interface Material {
   createdAt: Date
   updatedAt?: Date
   selected?: boolean
+  // 标题生成模块扩展属性
+  weight?: number
+  reliability?: number
+  fileSize?: string
+  isBound?: boolean
 }
 
 export interface SearchProvider {
