@@ -1,6 +1,6 @@
 <template>
   <div class="outline-container">
-    <ArtTableHeader title="大纲编辑" :actions="headerActions" @back="goBack" />
+    <ArtTableHeader title="大纲编辑" @back="goBack" />
 
     <div class="step-indicator">
       <div class="step-item completed">
@@ -161,6 +161,7 @@
   import { ref, computed, onMounted } from 'vue'
   import { useRouter, useRoute } from 'vue-router'
   import { ElMessage } from 'element-plus'
+  import { syncProjectToList } from '@/utils/project/projectSync'
   import MaterialDrawer from '@/components/custom/material-drawer/MaterialDrawer.vue'
   import type { Material } from '@/types/material'
 
@@ -415,6 +416,9 @@
 
   const saveOutline = () => {
     localStorage.setItem(`project_${projectId}_outline`, JSON.stringify(outline.value))
+    
+    // 同步项目状态到列表
+    syncProjectToList(projectId)
   }
 
   // 素材相关方法

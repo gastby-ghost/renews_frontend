@@ -149,6 +149,7 @@ export default ({ mode }: { mode: string }) => {
     ],
     // 预加载项目必需的组件
     optimizeDeps: {
+      exclude: ['chunk-BV5AAZUM'],
       include: [
         'vue',
         'vue-router',
@@ -164,7 +165,6 @@ export default ({ mode }: { mode: string }) => {
         'element-plus/es/components/button/style/css',
         'element-plus/es/components/input/style/css',
         'element-plus/es/components/input-number/style/css',
-        'element-plus/es/components/textarea/style/css',
         'element-plus/es/components/switch/style/css',
         'element-plus/es/components/upload/style/css',
         'element-plus/es/components/menu/style/css',

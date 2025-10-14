@@ -79,7 +79,13 @@
       </div>
     </div>
 
-    <el-dialog v-model="dialogVisible" title="创建新项目" width="600px">
+    <!-- 创建/编辑项目对话框 -->
+    <el-dialog 
+      v-model="dialogVisible" 
+      :title="isEditMode ? '编辑项目' : '创建新项目'" 
+      width="600px"
+      @close="resetForm"
+    >
       <el-form ref="projectFormRef" :model="projectForm" :rules="projectRules" label-width="100px">
         <el-form-item label="项目名称" prop="name">
           <el-input v-model="projectForm.name" placeholder="请输入项目名称" />
@@ -93,7 +99,7 @@
           />
         </el-form-item>
         <el-form-item label="项目类型" prop="type">
-          <el-select v-model="projectForm.type" placeholder="请选择项目类型">
+          <el-select v-model="projectForm.type" placeholder="请选择项目类型" style="width: 100%">
             <el-option label="文章创作" value="article" />
             <el-option label="报告生成" value="report" />
             <el-option label="营销文案" value="marketing" />
@@ -104,7 +110,9 @@
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="createProject">创建</el-button>
+          <el-button type="primary" @click="isEditMode ? updateProject() : createProject()">
+            {{ isEditMode ? '保存' : '创建' }}
+          </el-button>
         </span>
       </template>
     </el-dialog>
@@ -134,6 +142,8 @@
 
   const router = useRouter()
   const dialogVisible = ref(false)
+  const isEditMode = ref(false)
+  const editingProjectId = ref<string>('')
   const projectFormRef = ref<FormInstance>()
 
   const projectForm = reactive({
@@ -225,10 +235,69 @@
     }
   }
 
+  // 从localStorage加载项目列表
+  const loadProjectsFromStorage = () => {
+    const stored = localStorage.getItem('project_list')
+    if (stored) {
+      try {
+        projectList.value = JSON.parse(stored)
+      } catch (error) {
+        console.error('Failed to parse project list:', error)
+        projectList.value = [...mockProjects]
+      }
+    } else {
+      projectList.value = [...mockProjects]
+    }
+    filteredProjectList.value = [...projectList.value]
+  }
+
+  // 保存项目列表到localStorage
+  const saveProjectsToStorage = () => {
+    localStorage.setItem('project_list', JSON.stringify(projectList.value))
+  }
+
+  // 同步项目数据到localStorage (在各个步骤页面调用)
+  const syncProjectToList = (projectId: string) => {
+    const project = projectList.value.find(p => p.id === projectId)
+    if (!project) return
+
+    // 从各个步骤的localStorage读取最新数据
+    const requirementsData = localStorage.getItem(`project_${projectId}_requirements`)
+    const titlesData = localStorage.getItem(`project_${projectId}_titles`)
+    const outlineData = localStorage.getItem(`project_${projectId}_outline`)
+    const contentData = localStorage.getItem(`project_${projectId}_content`)
+
+    // 更新项目进度
+    let currentStep = 1
+    if (contentData) {
+      currentStep = 4
+      project.status = 'completed'
+    } else if (outlineData) {
+      currentStep = 3
+      project.status = 'in_progress'
+    } else if (titlesData) {
+      currentStep = 2
+      project.status = 'in_progress'
+    } else if (requirementsData) {
+      currentStep = 1
+      project.status = 'in_progress'
+    }
+
+    project.currentStep = currentStep
+    project.updateTime = new Date().toISOString()
+
+    saveProjectsToStorage()
+  }
+
   onMounted(() => {
-    // Load mock data
-    projectList.value = mockProjects
-    filteredProjectList.value = [...mockProjects]
+    loadProjectsFromStorage()
+    
+    // 监听storage变化，实时更新项目列表
+    window.addEventListener('storage', (e) => {
+      if (e.key?.startsWith('project_')) {
+        loadProjectsFromStorage()
+      }
+    })
   })
 
   const getStatusType = (status: string) => {
@@ -298,9 +367,57 @@
     }
   }
 
-  const editProject = () => {
-    // TODO: Implement project editing
-    ElMessage.info('编辑功能开发中')
+  const editProject = (project: Project) => {
+    isEditMode.value = true
+    editingProjectId.value = project.id
+    projectForm.name = project.name
+    projectForm.description = project.description
+    projectForm.type = project.type
+    dialogVisible.value = true
+  }
+
+  const updateProject = async () => {
+    if (!projectFormRef.value) return
+
+    try {
+      await projectFormRef.value.validate()
+
+      const project = projectList.value.find((p) => p.id === editingProjectId.value)
+      if (project) {
+        project.name = projectForm.name
+        project.description = projectForm.description
+        project.type = projectForm.type
+        project.updateTime = new Date().toISOString()
+
+        // 保存到localStorage
+        saveProjectsToStorage()
+
+        // 同步更新到项目详情的localStorage
+        const projectData = localStorage.getItem(`project_${project.id}`)
+        if (projectData) {
+          const data = JSON.parse(projectData)
+          data.name = project.name
+          data.description = project.description
+          data.type = project.type
+          data.updateTime = project.updateTime
+          localStorage.setItem(`project_${project.id}`, JSON.stringify(data))
+        }
+
+        // 触发storage事件，通知其他页面更新
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: `project_${project.id}`,
+          newValue: JSON.stringify(project)
+        }))
+
+        ElMessage.success('项目更新成功')
+      }
+
+      dialogVisible.value = false
+      resetForm()
+      handleSearch() // 重新过滤列表
+    } catch (error) {
+      console.error('Form validation failed:', error)
+    }
   }
 
   const deleteProject = async (project: Project) => {
@@ -319,9 +436,23 @@
       const index = projectList.value.findIndex((p) => p.id === project.id)
       if (index > -1) {
         projectList.value.splice(index, 1)
-      }
+        
+        // 保存到localStorage
+        saveProjectsToStorage()
 
-      ElMessage.success('项目删除成功')
+        // 删除项目相关的所有localStorage数据
+        localStorage.removeItem(`project_${project.id}`)
+        localStorage.removeItem(`project_${project.id}_requirements`)
+        localStorage.removeItem(`project_${project.id}_titles`)
+        localStorage.removeItem(`project_${project.id}_outline`)
+        localStorage.removeItem(`project_${project.id}_content`)
+        localStorage.removeItem(`project_${project.id}_content_saved`)
+        
+        // 重新过滤列表
+        handleSearch()
+
+        ElMessage.success('项目删除成功')
+      }
     } catch {
       // User cancelled
     }
@@ -345,12 +476,15 @@
       }
 
       projectList.value.unshift(newProject)
-      dialogVisible.value = false
+      
+      // 保存到localStorage
+      saveProjectsToStorage()
+      
+      // 创建项目基础数据
+      localStorage.setItem(`project_${newProject.id}`, JSON.stringify(newProject))
 
-      // Reset form
-      projectForm.name = ''
-      projectForm.description = ''
-      projectForm.type = 'article'
+      dialogVisible.value = false
+      resetForm()
 
       ElMessage.success('项目创建成功')
 
@@ -359,6 +493,15 @@
     } catch (error) {
       console.error('Form validation failed:', error)
     }
+  }
+
+  const resetForm = () => {
+    isEditMode.value = false
+    editingProjectId.value = ''
+    projectForm.name = ''
+    projectForm.description = ''
+    projectForm.type = 'article'
+    projectFormRef.value?.resetFields()
   }
 </script>
 

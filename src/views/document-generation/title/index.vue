@@ -522,6 +522,7 @@
   import { ref, reactive, computed, onMounted } from 'vue'
   import { useRouter, useRoute } from 'vue-router'
   import { ElMessage } from 'element-plus'
+  import { syncProjectToList } from '@/utils/project/projectSync'
   import { 
     Document, DocumentAdd, Setting, 
     DataAnalysis, EditPen, FolderOpened, Search 
@@ -831,6 +832,9 @@
       updatedAt: new Date().toISOString()
     }
     localStorage.setItem(`project_${projectId}_titles`, JSON.stringify(titleData))
+    
+    // 同步项目状态到列表
+    syncProjectToList(projectId)
   }
 
   // 标题分析方法
@@ -1050,6 +1054,9 @@
     }
 
     localStorage.setItem(`project_${projectId}_titles`, JSON.stringify(titleData))
+    
+    // 同步项目状态到列表
+    syncProjectToList(projectId)
 
     ElMessage.success('标题已确认，即将进入大纲阶段')
 

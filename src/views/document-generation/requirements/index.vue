@@ -772,6 +772,7 @@
   import { ref, reactive, computed, onMounted } from 'vue'
   import { useRouter, useRoute } from 'vue-router'
   import { ElMessage, ElMessageBox } from 'element-plus'
+  import { syncProjectToList } from '@/utils/project/projectSync'
   import {
     Refresh,
     Close,
@@ -1252,6 +1253,9 @@
       updatedAt: new Date().toISOString()
     }
     localStorage.setItem(`project_${projectId}_requirements`, JSON.stringify(data))
+    
+    // 同步更新项目列表状态
+    syncProjectToList(projectId)
   }
 
   const goBack = () => {
