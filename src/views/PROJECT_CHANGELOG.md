@@ -10,18 +10,30 @@
 - **功能新增**: 1
 - **问题修复**: 0
 - **文档更新**: 0
-- **最后更新**: 2025年9月22日
+- **最后更新**: 2025年10月14日
 
 ## 📈 变更历史
 
+#### ✅ 2025-10-14 - 新增功能: 增强文档生成界面与功能
+
+**提交哈希**: `bc3ba2a3`  
+**提交者**: mcy  
+**影响文件**:
+
+- `src/views/document-generation/content/index.vue`
+- `src/views/document-generation/outline/index.vue`
+- `src/views/document-generation/project-list/index.vue`
+- `src/views/document-generation/requirements/index.vue`
+- `src/views/document-generation/title/index.vue`
+
 #### ✅ 2025-09-22 - 新增功能: 新增多个自定义组件以增强文档生成能力
+
 **提交哈希**: `5783d533`  
 **提交者**: mcy  
-**影响文件**:  
-- `src/views/PROJECT_CHANGELOG.md`  
-- `src/views/document-generation/requirements/index.vue`  
+**影响文件**:
 
-
+- `src/views/PROJECT_CHANGELOG.md`
+- `src/views/document-generation/requirements/index.vue`
 
 #### 📝 2025-09-14 - 文档更新: 添加项目变更日志系统使用指南
 
