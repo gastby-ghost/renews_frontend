@@ -99,7 +99,7 @@
 
     <!-- 搜索进度区域 -->
     <el-card class="material-fetch__progress" v-if="isSearching">
-      <SearchProgress
+      <SearchProgressComponent
         :progress="searchProgress"
         :config="searchConfig"
         :providers="providers"
@@ -176,9 +176,9 @@
   import { ref, computed, onMounted } from 'vue'
   import { ElMessage, ElMessageBox } from 'element-plus'
   import MaterialCard from '@/components/custom/material-card/MaterialCard.vue'
-  import SearchProgress from '@/components/custom/search-progress/SearchProgress.vue'
+  import SearchProgressComponent from '@/components/custom/search-progress/SearchProgress.vue'
   import { useMaterialStore } from '@/store/material'
-  import type { Material, SearchConfig } from '@/types/material'
+  import type { Material, SearchConfig, SearchProgress } from '@/types/material'
 
   const materialStore = useMaterialStore()
 

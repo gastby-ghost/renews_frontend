@@ -299,6 +299,7 @@
     "material": {
       "title": "Material Library",
       "fetch": "Fetch Materials",
+      "search": "Material Search",
       "management": "Material Management",
       "edit": "Edit Material"
     },

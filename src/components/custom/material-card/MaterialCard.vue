@@ -8,11 +8,16 @@
     @click="handleClick"
   >
     <div class="art-material-card__selection" v-if="showSelection">
-      <el-checkbox :model-value="isSelected" @change="handleSelectionChange" @click.stop />
+      <el-checkbox
+        :model-value="isSelected"
+        @change="() => handleSelectionChange()"
+        @click.stop
+        size="large"
+      />
     </div>
 
     <div class="art-material-card__type" v-if="showType">
-      <el-tag size="small" :type="getTypeTagType">
+      <el-tag size="small" :type="getTypeTagType as any">
         {{ getTypeLabel }}
       </el-tag>
     </div>
@@ -127,10 +132,9 @@
     emit('click', props.material)
   }
 
-  function handleSelectionChange(selected: boolean) {
-    if (selected) {
-      emit('select', props.material.id)
-    }
+  function handleSelectionChange() {
+    // 直接emit选择事件，由父组件处理选择逻辑
+    emit('select', props.material.id)
   }
 
   function handlePreview() {

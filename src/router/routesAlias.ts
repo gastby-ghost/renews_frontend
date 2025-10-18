@@ -61,6 +61,7 @@ export enum RoutesAlias {
   MaterialFetch = '/material/fetch', // 抓取素材
   MaterialManagement = '/material/management', // 素材管理
   MaterialEdit = '/material/edit', // 素材编辑
+  MaterialSearch = '/material/search', // 素材检索
   // 文档生成 - AI创作
   DocumentGeneration = '/document-generation/project-list', // 项目列表
   DocumentRequirements = '/document-generation/requirements', // 需求表单

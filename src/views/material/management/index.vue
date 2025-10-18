@@ -161,7 +161,7 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, computed, onMounted } from 'vue'
+  import { ref, computed, onMounted, onUnmounted } from 'vue'
   import { useRouter } from 'vue-router'
   import { ElMessage } from 'element-plus'
   import { Search, Refresh, Delete, Download, Plus, Edit, Picture } from '@element-plus/icons-vue'
@@ -352,6 +352,22 @@
       console.error('加载素材库失败:', err)
       ElMessage.error('加载素材库失败')
     }
+
+    // 监听路由变化，刷新素材列表
+    const unwatch = router.afterEach(async (to) => {
+      if (to.path === '/material/management') {
+        try {
+          await materialStore.loadLibraryMaterials()
+        } catch (err) {
+          console.error('刷新素材库失败:', err)
+        }
+      }
+    })
+
+    // 组件卸载时取消监听
+    onUnmounted(() => {
+      unwatch()
+    })
   })
 </script>
 

@@ -705,6 +705,16 @@ export const asyncRoutes: AppRouteRecord[] = [
         }
       },
       {
+        path: 'search',
+        name: 'MaterialSearch',
+        component: RoutesAlias.MaterialSearch,
+        meta: {
+          title: 'menus.material.search',
+          keepAlive: true,
+          showTextBadge: 'AI'
+        }
+      },
+      {
         path: 'management',
         name: 'MaterialManagement',
         component: RoutesAlias.MaterialManagement,
