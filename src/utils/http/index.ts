@@ -12,6 +12,13 @@ const MAX_RETRIES = 2
 const RETRY_DELAY = 1000
 const UNAUTHORIZED_DEBOUNCE_TIME = 3000
 
+/** 认证API路径配置 */
+const AUTH_API_PATTERNS = [
+  '/api/v1/core/',
+  '/api/v1/ai/'
+  // 未来可以轻松添加更多路径
+]
+
 /** 401防抖状态 */
 let isUnauthorizedErrorShown = false
 let unauthorizedTimer: NodeJS.Timeout | null = null
@@ -103,7 +110,7 @@ axiosInstance.interceptors.response.use(
     })
 
     // 检查是否是认证相关的API，这些API可能有不同的响应格式
-    const isAuthAPI = response.config.url?.includes('/api/v1/core/')
+    const isAuthAPI = AUTH_API_PATTERNS.some((pattern) => response.config.url?.includes(pattern))
     console.log('[HTTP Response] 检查API类型:', { url: response.config.url, isAuthAPI })
     if (isAuthAPI) {
       // 认证API的特殊处理
@@ -310,7 +317,7 @@ async function request<T = any>(config: ExtendedAxiosRequestConfig): Promise<T> 
     const res = await axiosInstance.request<Api.Http.BaseResponse<T>>(config)
 
     // 检查是否是认证相关的API，这些API可能有不同的响应格式
-    const isAuthAPI = config.url?.includes('/api/v1/core/')
+    const isAuthAPI = AUTH_API_PATTERNS.some((pattern) => config.url?.includes(pattern))
     console.log('[Request] 检查API类型:', { url: config.url, isAuthAPI })
 
     if (isAuthAPI) {
