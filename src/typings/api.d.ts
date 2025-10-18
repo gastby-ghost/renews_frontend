@@ -51,6 +51,14 @@ declare namespace Api {
       refreshToken: string
     }
 
+    /** 刷新令牌响应 */
+    interface RefreshTokenResponse {
+      // 根据API规范，刷新令牌API返回空对象
+      // 新的访问令牌应该在HTTP响应头中
+      // 添加一个可选属性以满足 ESLint 规则
+      success?: boolean
+    }
+
     /** 用户注册请求 */
     interface UserRegisterRequest {
       username: string
@@ -125,6 +133,13 @@ declare namespace Api {
     interface DeleteAccountRequest {
       password: string
       confirmation: string
+    }
+
+    /** 账户设置响应 */
+    interface AccountSettingsResponse {
+      success: boolean
+      data: UserResponse
+      third_party_accounts: any[]
     }
   }
 

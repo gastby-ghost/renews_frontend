@@ -43,18 +43,6 @@
             @keyup.enter="handleSubmit"
             style="margin-top: 25px"
           >
-            <ElFormItem prop="account">
-              <ElSelect v-model="formData.account" @change="setupAccount" class="account-select">
-                <ElOption
-                  v-for="account in accounts"
-                  :key="account.key"
-                  :label="account.label"
-                  :value="account.key"
-                >
-                  <span>{{ account.label }}</span>
-                </ElOption>
-              </ElSelect>
-            </ElFormItem>
             <ElFormItem prop="login">
               <ElInput :placeholder="$t('login.placeholder[0]')" v-model.trim="formData.login" />
             </ElFormItem>
@@ -128,47 +116,12 @@
   import { HttpError } from '@/utils/http/error'
   import { themeAnimation } from '@/utils/theme/animation'
   import { AuthService } from '@/api/authApi'
-  import { UserService } from '@/api/usersApi'
 
   defineOptions({ name: 'Login' })
 
   const { t } = useI18n()
   import { useSettingStore } from '@/store/modules/setting'
   import type { FormInstance, FormRules } from 'element-plus'
-
-  type AccountKey = 'super' | 'admin' | 'user'
-
-  export interface Account {
-    key: AccountKey
-    label: string
-    userName: string
-    password: string
-    roles: string[]
-  }
-
-  const accounts = computed<Account[]>(() => [
-    {
-      key: 'super',
-      label: t('login.roles.super'),
-      userName: 'Super',
-      password: '123456',
-      roles: ['R_SUPER']
-    },
-    {
-      key: 'admin',
-      label: t('login.roles.admin'),
-      userName: 'Admin',
-      password: '123456',
-      roles: ['R_ADMIN']
-    },
-    {
-      key: 'user',
-      label: t('login.roles.user'),
-      userName: 'User',
-      password: '123456',
-      roles: ['R_USER']
-    }
-  ])
 
   const settingStore = useSettingStore()
   const { isDark } = storeToRefs(settingStore)
@@ -184,7 +137,6 @@
   const formRef = ref<FormInstance>()
 
   const formData = reactive({
-    account: '',
     login: '',
     password: '',
     remember_me: false
@@ -224,18 +176,6 @@
   }))
 
   const loading = ref(false)
-
-  onMounted(() => {
-    setupAccount('super')
-  })
-
-  // 设置账号
-  const setupAccount = (key: AccountKey) => {
-    const selectedAccount = accounts.value.find((account: Account) => account.key === key)
-    formData.account = key
-    formData.login = selectedAccount?.userName ?? ''
-    formData.password = selectedAccount?.password ?? ''
-  }
 
   // 登录
   const handleSubmit = async () => {
@@ -298,14 +238,7 @@
 
       // 如果认证响应中没有用户信息，单独获取
       if (!authResponse.user) {
-        try {
-          console.log('[Login] 获取用户信息...')
-          const userInfo = await UserService.getUserInfo()
-          userStore.setUserInfo(userInfo)
-          console.log('[Login] 用户信息获取成功:', userInfo)
-        } catch (userInfoError) {
-          console.warn('获取用户信息失败，但登录成功:', userInfoError)
-        }
+        console.warn('[Login] 认证响应中未包含用户信息，但登录仍然成功')
       }
 
       // 登录成功处理

@@ -15,7 +15,6 @@ import { asyncRoutes } from '../routes/asyncRoutes'
 import { loadingService } from '@/utils/ui'
 import { useCommon } from '@/composables/useCommon'
 import { useWorktabStore } from '@/store/modules/worktab'
-import { UserService } from '@/api/usersApi'
 import { isAuthenticated } from '@/utils/auth'
 
 // 前端权限模式 loading 关闭延时，提升用户体验
@@ -136,11 +135,36 @@ async function handleLoginStatus(
   // 检查登录状态和令牌有效性
   const isUserLoggedIn = userStore.isLogin && isAuthenticated(userStore.accessToken)
 
+  // 如果用户未登录但访问的是非登录页面且不需要登录的页面，允许访问
   if (!isUserLoggedIn && to.path !== RoutesAlias.Login && !to.meta.noLogin) {
+    console.log('[Router Guard] 用户未登录，重定向到登录页')
     userStore.logOut()
     next(RoutesAlias.Login)
     return false
   }
+
+  // 如果用户已登录但访问登录页，重定向到首页
+  if (isUserLoggedIn && to.path === RoutesAlias.Login) {
+    console.log('[Router Guard] 用户已登录，重定向到首页')
+    const { homePath } = useCommon()
+    if (homePath.value) {
+      next({ path: homePath.value, replace: true })
+      return false
+    }
+  }
+
+  // 如果用户状态与令牌状态不一致，进行状态同步
+  if (userStore.accessToken && !userStore.isLogin) {
+    console.log('[Router Guard] 检测到令牌存在但登录状态为false，尝试初始化认证状态')
+    const authValid = userStore.initializeAuthState()
+    if (!authValid) {
+      console.log('[Router Guard] 认证状态初始化失败，重定向到登录页')
+      userStore.logOut()
+      next(RoutesAlias.Login)
+      return false
+    }
+  }
+
   return true
 }
 
@@ -163,14 +187,24 @@ async function handleDynamicRoutes(
     const isRefresh = from.path === '/'
     if (isRefresh || !userStore.info || Object.keys(userStore.info).length === 0) {
       try {
-        const data = await UserService.getUserInfo()
-        userStore.setUserInfo(data)
+        // 如果用户信息为空，但用户已登录，尝试验证令牌有效性
+        console.log('[Router Guard] 用户信息为空，但用户已登录，验证令牌有效性')
+
+        // 验证认证状态的完整性
+        const authStateValid = userStore.initializeAuthState()
+
+        if (!authStateValid) {
+          console.log('[Router Guard] 认证状态验证失败，重定向到登录页')
+          userStore.logOut()
+          next(RoutesAlias.Login)
+          return
+        }
 
         // 设置自动令牌刷新
         userStore.setupTokenRefresh()
       } catch (error) {
-        console.error('获取用户信息失败', error)
-        // 如果获取用户信息失败，可能是令牌过期，尝试登出
+        console.error('处理用户信息失败', error)
+        // 如果处理用户信息失败，可能是令牌过期，尝试登出
         if (!isAuthenticated(userStore.accessToken)) {
           userStore.logOut()
           next(RoutesAlias.Login)
@@ -219,19 +253,14 @@ async function getMenuData(router: Router): Promise<void> {
  */
 async function processFrontendMenu(router: Router): Promise<void> {
   const menuList = asyncRoutes.map((route) => menuDataToRouter(route))
-  const userStore = useUserStore()
-  const roles = userStore.info.roles
 
-  if (!roles) {
-    throw new Error('获取用户角色失败')
-  }
-
-  const filteredMenuList = filterMenuByRoles(menuList, roles)
+  // 简化权限检查，不再基于角色过滤菜单
+  // 所有登录用户都可以访问所有菜单
 
   // 添加延时以提升用户体验
   await new Promise((resolve) => setTimeout(resolve, LOADING_DELAY))
 
-  await registerAndStoreMenu(router, filteredMenuList)
+  await registerAndStoreMenu(router, menuList)
 }
 
 /**
@@ -239,6 +268,8 @@ async function processFrontendMenu(router: Router): Promise<void> {
  */
 async function processBackendMenu(router: Router): Promise<void> {
   const { menuList } = await menuService.getMenuList()
+  // 简化权限检查，不再基于角色过滤菜单
+  // 直接使用后端返回的菜单，所有登录用户都可以访问
   await registerAndStoreMenu(router, menuList)
 }
 
@@ -296,26 +327,6 @@ function handleMenuError(error: unknown): void {
   console.error('菜单处理失败:', error)
   useUserStore().logOut()
   throw error instanceof Error ? error : new Error('获取菜单列表失败，请重新登录')
-}
-
-/**
- * 根据角色过滤菜单
- */
-const filterMenuByRoles = (menu: AppRouteRecord[], roles: string[]): AppRouteRecord[] => {
-  return menu.reduce((acc: AppRouteRecord[], item) => {
-    const itemRoles = item.meta?.roles
-    const hasPermission = !itemRoles || itemRoles.some((role) => roles?.includes(role))
-
-    if (hasPermission) {
-      const filteredItem = { ...item }
-      if (filteredItem.children?.length) {
-        filteredItem.children = filterMenuByRoles(filteredItem.children, roles)
-      }
-      acc.push(filteredItem)
-    }
-
-    return acc
-  }, [])
 }
 
 /**

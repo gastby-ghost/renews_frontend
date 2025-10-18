@@ -86,11 +86,6 @@ export function hasPermission(userRoles: string[], requiredRoles: string[]): boo
     return false
   }
 
-  // 如果用户角色包含admin，直接返回true
-  if (userRoles.includes('admin')) {
-    return true
-  }
-
   // 检查是否有匹配的角色
   return requiredRoles.some((role) => userRoles.includes(role))
 }
@@ -162,5 +157,80 @@ export function getRolesFromToken(token: string): string[] {
   } catch (error) {
     console.warn('从令牌中提取用户角色失败:', error)
     return []
+  }
+}
+
+/**
+ * 验证认证状态的完整性
+ * 检查令牌、用户状态和会话信息的一致性
+ * @param accessToken 访问令牌
+ * @param isLogin 登录状态
+ * @param userInfo 用户信息
+ * @returns 是否通过验证
+ */
+export function validateAuthState(accessToken: string, isLogin: boolean, userInfo: any): boolean {
+  console.log('[Auth] 验证认证状态完整性', {
+    hasToken: !!accessToken,
+    isLogin,
+    hasUserInfo: !!userInfo
+  })
+
+  // 如果没有令牌，登录状态应该为false
+  if (!accessToken) {
+    console.log('[Auth] 没有令牌，认证状态无效')
+    return false
+  }
+
+  // 如果令牌存在但已过期，认证状态无效
+  if (isTokenExpired(accessToken)) {
+    console.log('[Auth] 令牌已过期，认证状态无效')
+    return false
+  }
+
+  // 如果令牌有效但登录状态为false，认证状态不一致
+  if (!isLogin) {
+    console.log('[Auth] 令牌有效但登录状态为false，认证状态不一致')
+    return false
+  }
+
+  // 如果令牌和登录状态都有效，但没有用户信息，认证状态不完整
+  if (!userInfo || Object.keys(userInfo).length === 0) {
+    console.log('[Auth] 缺少用户信息，认证状态不完整')
+    return false
+  }
+
+  console.log('[Auth] 认证状态验证通过')
+  return true
+}
+
+/**
+ * 从令牌中提取用户信息并验证
+ * @param token JWT令牌
+ * @returns 验证结果和用户信息
+ */
+export function extractAndValidateUserInfo(token: string): {
+  valid: boolean
+  userId?: string
+  roles?: string[]
+} {
+  try {
+    if (isTokenExpired(token)) {
+      console.log('[Auth] 令牌已过期')
+      return { valid: false }
+    }
+
+    const userId = getUserIdFromToken(token)
+    const roles = getRolesFromToken(token)
+
+    if (!userId) {
+      console.log('[Auth] 无法从令牌中提取用户ID')
+      return { valid: false }
+    }
+
+    console.log('[Auth] 从令牌中成功提取用户信息', { userId, roles })
+    return { valid: true, userId, roles }
+  } catch (error) {
+    console.error('[Auth] 提取和验证用户信息失败:', error)
+    return { valid: false }
   }
 }

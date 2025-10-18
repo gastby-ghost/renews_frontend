@@ -3,6 +3,7 @@ import { useUserStore } from '@/store/modules/user'
 import { ApiStatus } from './status'
 import { HttpError, handleError, showError } from './error'
 import { $t } from '@/locales'
+import { isTokenExpired } from '@/utils/auth'
 
 /** 请求配置常量 */
 const REQUEST_TIMEOUT = 15000
@@ -57,8 +58,23 @@ axiosInstance.interceptors.request.use(
       data: request.data,
       headers: request.headers
     })
-    const { accessToken } = useUserStore()
+    const { accessToken, initializeAuthState } = useUserStore()
+
     if (accessToken) {
+      // 在发送请求前验证令牌是否仍然有效
+      if (isTokenExpired(accessToken)) {
+        console.log('[HTTP Request] 检测到令牌已过期，尝试刷新令牌')
+        // 令牌已过期，尝试刷新令牌
+        useUserStore()
+          .refreshAccessToken()
+          .then((success) => {
+            if (!success) {
+              console.log('[HTTP Request] 令牌刷新失败，重新初始化认证状态')
+              initializeAuthState()
+            }
+          })
+      }
+
       // 使用Bearer token格式
       request.headers.set('Authorization', `Bearer ${accessToken}`)
     }

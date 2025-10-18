@@ -1,38 +1,27 @@
 import { useUserStore } from '@/store/modules/user'
-import { App, Directive, DirectiveBinding } from 'vue'
+import { App, Directive } from 'vue'
 
 /**
  * 角色权限指令
- * 只要用户角色包含指令值中的任意一个角色，则显示元素
+ * 简化版本：不再检查角色权限，所有登录用户都可以看到所有元素
+ * 保留指令以维持向后兼容性
  * 用法：
  * <el-button v-roles="['R_SUPER', 'R_ADMIN']">按钮</el-button>
  * <el-button v-roles="'R_ADMIN'">按钮</el-button>
  */
 
-interface RolesBinding extends DirectiveBinding {
-  value: string | string[]
-}
-
-function checkRolePermission(el: HTMLElement, binding: RolesBinding): void {
+function checkRolePermission(el: HTMLElement): void {
   const userStore = useUserStore()
-  const userRoles = userStore.getUserInfo.roles
 
-  // 如果用户角色为空或未定义，移除元素
-  if (!userRoles?.length) {
+  // 简化权限检查：只检查用户是否已登录
+  // 如果用户未登录，移除元素
+  if (!userStore.isLogin) {
     removeElement(el)
     return
   }
 
-  // 确保指令值为数组格式
-  const requiredRoles = Array.isArray(binding.value) ? binding.value : [binding.value]
-
-  // 检查用户是否具有所需角色之一
-  const hasPermission = requiredRoles.some((role: string) => userRoles.includes(role))
-
-  // 如果没有权限，安全地移除元素
-  if (!hasPermission) {
-    removeElement(el)
-  }
+  // 所有登录用户都可以看到所有元素，不再检查角色权限
+  // 保留逻辑结构以维持向后兼容性
 }
 
 function removeElement(el: HTMLElement): void {

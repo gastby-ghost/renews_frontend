@@ -400,7 +400,6 @@
   import { ElMessage, ElMessageBox } from 'element-plus'
   import { Plus, Delete, Edit, Search, Refresh, QuestionFilled } from '@element-plus/icons-vue'
   import { useTable, CacheInvalidationStrategy } from '@/composables/useTable'
-  import { UserService } from '@/api/usersApi'
   import { ACCOUNT_TABLE_DATA } from '@/mock/temp/formData'
   import { getColumnKey } from '@/composables/useTableColumns'
 
@@ -408,7 +407,18 @@
 
   type UserListItem = Api.User.UserListItem
 
-  const { getUserList } = UserService
+  // 模拟的用户列表获取函数，因为原方法已从 UserService 中移除
+  // 实际项目中应该替换为新的API或实现
+  const getUserList = (params: Api.Common.PaginatingSearchParams) => {
+    console.warn('getUserList 方法已从 UserService 中移除，这里使用模拟数据')
+    // 返回模拟数据，实际项目中应该替换为新的API调用
+    return Promise.resolve({
+      records: [],
+      total: 0,
+      current: params.current || 1,
+      size: params.size || 20
+    })
+  }
 
   // 选中的行
   const selectedRows = ref<UserListItem[]>([])

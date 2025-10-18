@@ -21,7 +21,7 @@ export class AuthService {
 
   // 刷新访问令牌
   static refreshToken(refreshToken: string) {
-    return request.post<Api.Auth.AuthResponse>({
+    return request.post<Api.Auth.RefreshTokenResponse>({
       url: '/api/v1/core/refresh-token',
       params: { refresh_token: refreshToken }
     })
@@ -50,6 +50,13 @@ export class AuthService {
   static verifyEmail(token: string) {
     return request.get<Api.Auth.VerificationResponse>({
       url: `/api/v1/core/verify/${token}`
+    })
+  }
+
+  // 获取账户设置
+  static getAccountSettings() {
+    return request.get<Api.Auth.AccountSettingsResponse>({
+      url: '/api/v1/core/account'
     })
   }
 

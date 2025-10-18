@@ -26,6 +26,8 @@
   })
 
   onMounted(() => {
+    // 初始化认证状态验证
+    userStore.initializeAuthState()
     // 检查存储兼容性
     checkStorageCompatibility()
     // 提升暗黑主题下页面刷新视觉体验

@@ -2,7 +2,7 @@ import { useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useUserStore } from '@/store/modules/user'
 import { useCommon } from '@/composables/useCommon'
-import { hasPermission, hasButtonPermission } from '@/utils/auth'
+import { hasPermission, hasButtonPermission, isTokenExpired } from '@/utils/auth'
 import type { AppRouteRecord } from '@/types/router'
 
 type AuthItem = NonNullable<AppRouteRecord['meta']['authList']>[number]
@@ -58,8 +58,25 @@ export const useAuth = () => {
    * @returns 是否已认证
    */
   const isAuthenticated = (): boolean => {
-    const { accessToken } = storeToRefs(userStore)
-    return !!accessToken.value
+    const { accessToken, isLogin } = storeToRefs(userStore)
+
+    // 检查是否有访问令牌
+    if (!accessToken.value) {
+      return false
+    }
+
+    // 检查登录状态是否一致
+    if (!isLogin.value) {
+      return false
+    }
+
+    // 检查令牌是否过期
+    try {
+      return !isTokenExpired(accessToken.value)
+    } catch (error) {
+      console.error('检查令牌过期状态失败:', error)
+      return false
+    }
   }
 
   return {

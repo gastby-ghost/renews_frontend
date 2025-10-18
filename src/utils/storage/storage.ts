@@ -3,6 +3,7 @@ import { router } from '@/router'
 import { useUserStore } from '@/store/modules/user'
 import { StorageConfig } from '@/utils/storage/storage-config'
 import { RoutesAlias } from '@/router/routesAlias'
+import { validateAuthState } from '@/utils/auth'
 
 /**
  * 存储兼容性管理器
@@ -144,6 +145,40 @@ class StorageCompatibilityManager {
   }
 
   /**
+   * 验证存储中的认证状态
+   * 检查用户存储的认证信息是否有效
+   * @returns 是否验证通过
+   */
+  validateStoredAuthState(): boolean {
+    // 如果在登录页面，跳过验证
+    if (this.isOnLoginPage()) {
+      return true
+    }
+
+    try {
+      // 获取用户存储状态
+      const userStore = useUserStore()
+      const { accessToken, isLogin, info } = userStore
+
+      // 使用认证工具验证状态
+      const isValid = validateAuthState(accessToken, isLogin, info)
+
+      if (!isValid) {
+        console.warn('[Storage] 存储的认证状态无效，需要重新登录')
+        this.performSystemLogout()
+        return false
+      }
+
+      console.debug('[Storage] 存储的认证状态验证通过')
+      return true
+    } catch (error) {
+      console.error('[Storage] 验证存储认证状态时出错:', error)
+      this.handleStorageError()
+      return false
+    }
+  }
+
+  /**
    * 检查存储是否为空
    */
   isStorageEmpty(): boolean {
@@ -182,6 +217,30 @@ class StorageCompatibilityManager {
       return false
     }
   }
+
+  /**
+   * 执行完整的存储验证
+   * 包括兼容性检查和认证状态验证
+   * @returns 是否验证通过
+   */
+  performCompleteValidation(): boolean {
+    // 首先执行兼容性检查
+    const isCompatible = this.checkCompatibility()
+    if (!isCompatible) {
+      console.warn('[Storage] 存储兼容性检查失败')
+      return false
+    }
+
+    // 然后执行认证状态验证
+    const isAuthValid = this.validateStoredAuthState()
+    if (!isAuthValid) {
+      console.warn('[Storage] 认证状态验证失败')
+      return false
+    }
+
+    console.debug('[Storage] 完整存储验证通过')
+    return true
+  }
 }
 
 // 创建存储兼容性管理器实例
@@ -213,4 +272,18 @@ export function validateStorageData(): boolean {
  */
 export function checkStorageCompatibility(): boolean {
   return storageManager.checkCompatibility()
+}
+
+/**
+ * 验证存储中的认证状态
+ */
+export function validateStoredAuthState(): boolean {
+  return storageManager.validateStoredAuthState()
+}
+
+/**
+ * 执行完整的存储验证
+ */
+export function performCompleteValidation(): boolean {
+  return storageManager.performCompleteValidation()
 }

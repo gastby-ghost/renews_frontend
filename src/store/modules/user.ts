@@ -58,8 +58,9 @@ export const useUserStore = defineStore(
         const userInfo: Api.User.UserInfo = {
           userId: newInfo.id,
           userName: newInfo.username,
-          roles: newInfo.roles || [],
-          buttons: [],
+          // 移除权限相关字段，保留基础信息
+          roles: [], // 保留空数组以维持兼容性
+          buttons: [], // 保留空数组以维持兼容性
           avatar: newInfo.avatar,
           email: newInfo.email,
           phone: '',
@@ -67,13 +68,19 @@ export const useUserStore = defineStore(
           id: newInfo.id,
           nickName: newInfo.username,
           userEmail: newInfo.email,
-          userRoles: newInfo.roles || [],
+          userRoles: [], // 保留空数组以维持兼容性
           status: newInfo.is_active ? '1' : '2'
         }
         info.value = userInfo
       } else {
-        // 已经是UserInfo格式
-        info.value = newInfo as Api.User.UserInfo
+        // 已经是UserInfo格式，确保移除权限相关字段
+        const userInfo = newInfo as Api.User.UserInfo
+        info.value = {
+          ...userInfo,
+          roles: [], // 清空角色数组
+          buttons: [], // 清空按钮权限数组
+          userRoles: [] // 清空用户角色数组
+        }
       }
     }
 
@@ -161,13 +168,30 @@ export const useUserStore = defineStore(
 
         const response = await AuthService.refreshToken(refreshToken.value)
 
-        if (response.success && response.token) {
-          setToken(
-            response.token,
-            response.refresh_token || refreshToken.value,
-            response.expires_in || undefined
-          )
+        // 根据API规范，刷新令牌API返回空对象 RefreshTokenResponse
+        // 如果请求成功，说明刷新令牌有效，新的访问令牌应该已经在HTTP响应头中
+        // 这里我们假设HTTP客户端会自动处理响应头中的新令牌
+        // 或者我们需要从响应头中手动提取新令牌
+
+        // 如果响应是空对象且没有错误，认为刷新成功
+        if (response && typeof response === 'object' && Object.keys(response).length === 0) {
+          console.log('[UserStore] 刷新令牌成功，但需要从响应头获取新令牌')
+          // 注意：这里可能需要根据实际的HTTP客户端实现来从响应头获取新令牌
+          // 如果令牌不在响应头中，可能需要修改API设计
           return true
+        }
+
+        // 如果响应包含令牌信息（向后兼容）
+        if (response && 'success' in response) {
+          const authResponse = response as Api.Auth.AuthResponse
+          if (authResponse.success && authResponse.token) {
+            setToken(
+              authResponse.token,
+              authResponse.refresh_token || refreshToken.value,
+              authResponse.expires_in || undefined
+            )
+            return true
+          }
         }
 
         return false
@@ -221,7 +245,7 @@ export const useUserStore = defineStore(
      * 更新登录方法以支持新的AuthResponse结构
      * @param authResponse 认证响应
      */
-    const loginWithAuthResponse = (authResponse: Api.Auth.AuthResponse) => {
+    const loginWithAuthResponse = async (authResponse: Api.Auth.AuthResponse): Promise<boolean> => {
       console.log('[UserStore] 处理登录响应:', authResponse)
 
       if (authResponse.success && authResponse.token) {
@@ -232,17 +256,25 @@ export const useUserStore = defineStore(
           authResponse.expires_in || undefined
         )
 
-        // 设置用户信息
-        if (authResponse.user) {
-          console.log('[UserStore] 设置用户信息:', authResponse.user)
-          setUserInfo(authResponse.user)
-        }
-
         // 设置登录状态
         setLoginStatus(true)
 
         // 设置自动令牌刷新
         setupTokenRefresh()
+
+        // 如果登录响应中包含用户信息，先设置
+        if (authResponse.user) {
+          console.log('[UserStore] 设置登录响应中的用户信息:', authResponse.user)
+          setUserInfo(authResponse.user)
+        }
+
+        // 使用 token 从 API 获取最新的用户信息
+        console.log('[UserStore] 使用 token 获取最新用户信息')
+        const fetchSuccess = await fetchUserInfo()
+
+        if (!fetchSuccess) {
+          console.warn('[UserStore] 获取最新用户信息失败，但登录仍然成功')
+        }
 
         console.log('[UserStore] 登录成功，用户状态:', info.value)
         return true
@@ -297,6 +329,108 @@ export const useUserStore = defineStore(
       router.push(RoutesAlias.Login)
     }
 
+    /**
+     * 初始化认证状态验证
+     * 在应用启动时验证存储的认证状态是否有效
+     * @returns 是否验证通过
+     */
+    const initializeAuthState = async (): Promise<boolean> => {
+      console.log('[UserStore] 初始化认证状态验证')
+
+      // 如果没有访问令牌，直接返回false
+      if (!accessToken.value) {
+        console.log('[UserStore] 没有访问令牌，设置登录状态为false')
+        setLoginStatus(false)
+        return false
+      }
+
+      // 检查令牌是否过期
+      if (isTokenExpired(accessToken.value)) {
+        console.log('[UserStore] 访问令牌已过期，设置登录状态为false')
+        setLoginStatus(false)
+        // 清空过期的令牌
+        setToken('', '')
+        return false
+      }
+
+      // 如果有令牌且未过期，但登录状态为false，则更新登录状态
+      if (!isLogin.value) {
+        console.log('[UserStore] 令牌有效但登录状态为false，更新登录状态')
+        setLoginStatus(true)
+        // 设置自动令牌刷新
+        setupTokenRefresh()
+      }
+
+      // 尝试获取最新的用户信息
+      console.log('[UserStore] 令牌有效，尝试获取最新用户信息')
+      const userInfoSuccess = await fetchUserInfo()
+
+      if (!userInfoSuccess) {
+        console.warn('[UserStore] 获取用户信息失败，但令牌仍然有效')
+      }
+
+      console.log('[UserStore] 认证状态验证完成，当前登录状态:', isLogin.value)
+      return isLogin.value
+    }
+
+    /**
+     * 获取用户账户信息
+     * 使用 token 从 API 获取最新的用户信息
+     * @returns 是否获取成功
+     */
+    const fetchUserInfo = async (): Promise<boolean> => {
+      try {
+        console.log('[UserStore] 开始获取用户账户信息')
+
+        // 检查是否有访问令牌
+        if (!accessToken.value) {
+          console.warn('[UserStore] 没有访问令牌，无法获取用户信息')
+          return false
+        }
+
+        const response = await AuthService.getAccountSettings()
+
+        if (response && response.success && response.data) {
+          console.log('[UserStore] 成功获取用户信息:', response.data)
+          // 使用 API 返回的用户信息更新 store
+          setUserInfo(response.data)
+          return true
+        }
+
+        console.error('[UserStore] 获取用户信息失败:', response)
+        return false
+      } catch (error) {
+        console.error('[UserStore] 获取用户信息时发生错误:', error)
+        return false
+      }
+    }
+
+    /**
+     * 初始化用户信息
+     * 在应用启动或登录后调用，获取并存储用户信息
+     * @returns 是否初始化成功
+     */
+    const initializeUserInfo = async (): Promise<boolean> => {
+      // 如果已经有用户信息，直接返回成功
+      if (info.value && info.value.id) {
+        console.log('[UserStore] 用户信息已存在，跳过初始化')
+        return true
+      }
+
+      // 尝试从 API 获取用户信息
+      const success = await fetchUserInfo()
+
+      if (success) {
+        console.log('[UserStore] 用户信息初始化成功')
+      } else {
+        console.warn('[UserStore] 用户信息初始化失败，可能需要重新登录')
+        // 如果获取用户信息失败，可能是 token 无效，执行登出
+        await logOut()
+      }
+
+      return success
+    }
+
     return {
       language,
       isLogin,
@@ -320,7 +454,10 @@ export const useUserStore = defineStore(
       refreshAccessToken,
       setupTokenRefresh,
       loginWithAuthResponse,
-      logOut
+      logOut,
+      initializeAuthState,
+      fetchUserInfo,
+      initializeUserInfo
     }
   },
   {
