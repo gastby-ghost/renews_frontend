@@ -118,22 +118,32 @@
   })
 
   const validateUsername = (rule: any, value: string, callback: any) => {
+    console.log('[Register] 验证用户名:', value)
     if (!value) {
-      callback(new Error(t('register.rule[0]')))
+      const errorMsg = t('register.rule[0]')
+      console.log('[Register] 用户名空错误信息:', errorMsg)
+      callback(new Error(errorMsg))
     } else if (value.length < 3 || value.length > 20) {
-      callback(new Error(t('register.rule[4]')))
+      const errorMsg = t('register.rule[4]')
+      console.log('[Register] 用户名长度错误信息:', errorMsg)
+      callback(new Error(errorMsg))
     } else {
       callback()
     }
   }
 
   const validateEmail = (rule: any, value: string, callback: any) => {
+    console.log('[Register] 验证邮箱:', value)
     if (!value) {
-      callback(new Error(t('register.rule[1]')))
+      const errorMsg = t('register.rule[1]')
+      console.log('[Register] 邮箱空错误信息:', errorMsg)
+      callback(new Error(errorMsg))
     } else {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
       if (!emailRegex.test(value)) {
-        callback(new Error(t('register.rule[6]')))
+        const errorMsg = t('register.rule[6]')
+        console.log('[Register] 邮箱格式错误信息:', errorMsg)
+        callback(new Error(errorMsg))
       } else {
         callback()
       }
@@ -141,10 +151,15 @@
   }
 
   const validatePass = (rule: any, value: string, callback: any) => {
+    console.log('[Register] 验证密码:', value ? '***' : '')
     if (!value) {
-      callback(new Error(t('register.rule[2]')))
+      const errorMsg = t('register.rule[2]')
+      console.log('[Register] 密码空错误信息:', errorMsg)
+      callback(new Error(errorMsg))
     } else if (value.length < 6) {
-      callback(new Error(t('register.rule[5]')))
+      const errorMsg = t('register.rule[5]')
+      console.log('[Register] 密码长度错误信息:', errorMsg)
+      callback(new Error(errorMsg))
     } else {
       if (formData.confirm_password !== '') {
         formRef.value?.validateField('confirm_password')
@@ -154,10 +169,15 @@
   }
 
   const validatePass2 = (rule: any, value: string, callback: any) => {
+    console.log('[Register] 验证确认密码:', value ? '***' : '')
     if (!value) {
-      callback(new Error(t('register.rule[2]')))
+      const errorMsg = t('register.rule[2]')
+      console.log('[Register] 确认密码空错误信息:', errorMsg)
+      callback(new Error(errorMsg))
     } else if (value !== formData.password) {
-      callback(new Error(t('register.rule[3]')))
+      const errorMsg = t('register.rule[3]')
+      console.log('[Register] 密码不匹配错误信息:', errorMsg)
+      callback(new Error(errorMsg))
     } else {
       callback()
     }
@@ -171,8 +191,11 @@
     agree_to_terms: [
       {
         validator: (rule: any, value: boolean, callback: any) => {
+          console.log('[Register] 验证服务条款同意:', value)
           if (!value) {
-            callback(new Error(t('register.rule[7]')))
+            const errorMsg = t('register.rule[7]')
+            console.log('[Register] 服务条款未同意错误信息:', errorMsg)
+            callback(new Error(errorMsg))
           } else {
             callback()
           }
@@ -186,11 +209,20 @@
     if (!formRef.value) return
 
     try {
+      console.log('[Register] 开始表单验证')
       await formRef.value.validate()
+      console.log('[Register] 表单验证通过')
       loading.value = true
 
       // 注册请求
       const { username, email, password, confirm_password } = formData
+      console.log('[Register] 准备发送注册请求:', {
+        username,
+        email,
+        password: '***',
+        confirm_password: '***',
+        agree_to_terms: formData.agree_to_terms
+      })
 
       const registerResponse = await AuthService.register(
         {
@@ -206,7 +238,10 @@
         }
       )
 
+      console.log('[Register] 收到注册响应:', registerResponse)
+
       if (registerResponse.success) {
+        console.log('[Register] 注册成功，准备显示成功提示')
         // 注册成功，显示成功提示
         ElNotification({
           title: t('register.success.title'),
@@ -218,17 +253,22 @@
 
         // 延迟跳转到登录页
         setTimeout(() => {
+          console.log('[Register] 准备跳转到登录页')
           router.push(RoutesAlias.Login)
         }, 2000)
       } else {
+        console.log('[Register] 注册失败，响应:', registerResponse)
         throw new Error(registerResponse.message || '注册失败')
       }
     } catch (error) {
+      console.log('[Register] 捕获到错误:', error)
       // 处理 HttpError
       if (error instanceof HttpError) {
+        console.log('[Register] HttpError:', error.message, error.code)
         ElMessage.error(error.message || '注册失败，请稍后重试')
       } else {
         // 处理非 HttpError
+        console.log('[Register] 非HttpError:', error)
         ElMessage.error(error instanceof Error ? error.message : '注册失败，请稍后重试')
         console.error('[Register] Unexpected error:', error)
       }

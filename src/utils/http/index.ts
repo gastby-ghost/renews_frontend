@@ -88,21 +88,25 @@ axiosInstance.interceptors.response.use(
 
     // 检查是否是认证相关的API，这些API可能有不同的响应格式
     const isAuthAPI = response.config.url?.includes('/api/v1/core/')
+    console.log('[HTTP Response] 检查API类型:', { url: response.config.url, isAuthAPI })
     if (isAuthAPI) {
       // 认证API的特殊处理
       const responseData = response.data as any
+      console.log('[HTTP Response] 认证API响应数据:', responseData)
 
       // 检查是否是AuthResponse格式 (success字段而不是code字段)
       if (Object.prototype.hasOwnProperty.call(responseData, 'success')) {
-        console.log('[HTTP Response] 检测到AuthResponse格式')
+        console.log('[HTTP Response] 检测到AuthResponse格式，success值:', responseData.success)
 
         // 如果success为true，直接返回响应
         if (responseData.success === true) {
+          console.log('[HTTP Response] AuthResponse成功，返回响应')
           return response
         } else {
           // 如果success为false，抛出错误
           const errorMessage =
             responseData.message || responseData.msg || $t('httpMsg.requestFailed')
+          console.log('[HTTP Response] AuthResponse失败，错误信息:', errorMessage)
           throw createHttpError(errorMessage, ApiStatus.error)
         }
       }
@@ -291,6 +295,7 @@ async function request<T = any>(config: ExtendedAxiosRequestConfig): Promise<T> 
 
     // 检查是否是认证相关的API，这些API可能有不同的响应格式
     const isAuthAPI = config.url?.includes('/api/v1/core/')
+    console.log('[Request] 检查API类型:', { url: config.url, isAuthAPI })
 
     if (isAuthAPI) {
       // 认证API的特殊处理，直接返回整个响应数据
