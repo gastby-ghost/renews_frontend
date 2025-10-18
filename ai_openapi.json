@@ -1,0 +1,1955 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "AI Service API",
+    "description": "MediaAgent ReNews AI Content Creation Service",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/v1/ai/webpage-summary/summarize-async": {
+      "post": {
+        "tags": ["webpage-summary"],
+        "summary": "Summarize Webpage Async",
+        "description": "异步网页总结 - 创建Celery异步任务进行网页内容总结\n\nArgs:\n    request: 网页总结请求，包含URL和配置参数\n    \nReturns:\n    异步任务信息",
+        "operationId": "summarize_webpage_async_api_v1_ai_webpage_summary_summarize_async_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/WebpageSummaryAsyncRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/WebpageSummaryAsyncResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/webpage-summary/status/{task_id}": {
+      "get": {
+        "tags": ["webpage-summary"],
+        "summary": "Get Webpage Summary Status",
+        "description": "获取网页总结任务状态\n\nArgs:\n    task_id: Celery任务ID\n    \nReturns:\n    任务状态信息",
+        "operationId": "get_webpage_summary_status_api_v1_ai_webpage_summary_status__task_id__get",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Task Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/WebpageSummaryStatusResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/retrieval/search": {
+      "get": {
+        "tags": ["retrieval"],
+        "summary": "Search Endpoint",
+        "description": "通用直连搜索接口，可指定搜索引擎或使用默认配置。",
+        "operationId": "search_endpoint_api_v1_ai_retrieval_search_get",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "Q" }
+          },
+          {
+            "name": "provider",
+            "in": "query",
+            "required": false,
+            "schema": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Provider" }
+          },
+          {
+            "name": "freshness",
+            "in": "query",
+            "required": false,
+            "schema": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Freshness" }
+          },
+          {
+            "name": "summary",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+              "default": true,
+              "title": "Summary"
+            }
+          },
+          {
+            "name": "include",
+            "in": "query",
+            "required": false,
+            "schema": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Include" }
+          },
+          {
+            "name": "exclude",
+            "in": "query",
+            "required": false,
+            "schema": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Exclude" }
+          },
+          {
+            "name": "count",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "default": 10, "title": "Count" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Search Endpoint Api V1 Ai Retrieval Search Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/retrieval/agent-search-async": {
+      "get": {
+        "tags": ["retrieval"],
+        "summary": "Agent Search Async Endpoint",
+        "description": "创建检索Agent的Celery异步任务。",
+        "operationId": "agent_search_async_endpoint_api_v1_ai_retrieval_agent_search_async_get",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "Q" }
+          },
+          {
+            "name": "freshness",
+            "in": "query",
+            "required": false,
+            "schema": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Freshness" }
+          },
+          {
+            "name": "summary",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+              "default": true,
+              "title": "Summary"
+            }
+          },
+          {
+            "name": "include",
+            "in": "query",
+            "required": false,
+            "schema": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Include" }
+          },
+          {
+            "name": "exclude",
+            "in": "query",
+            "required": false,
+            "schema": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Exclude" }
+          },
+          {
+            "name": "count",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "default": 10, "title": "Count" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Agent Search Async Endpoint Api V1 Ai Retrieval Agent Search Async Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/retrieval/status/{task_id}": {
+      "get": {
+        "tags": ["retrieval"],
+        "summary": "Get Task Status",
+        "description": "查询检索相关任务的Celery任务状态。",
+        "operationId": "get_task_status_api_v1_ai_retrieval_status__task_id__get",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Task Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Task Status Api V1 Ai Retrieval Status  Task Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/tasks/\\{task_id\\}/cancel": {
+      "post": {
+        "tags": ["tasks"],
+        "summary": "Cancel Task",
+        "description": "基于 task_id 撤销/中断 Celery 异步任务。\n\nArgs:\n    task_id: Celery 任务ID\n    terminate: 若任务已开始，是否通过信号强制终止\n    signal: 终止信号（Linux 下常用 \"SIGTERM\"/\"SIGKILL\"）。仅在 terminate=True 时生效。\n\nReturns:\n    撤销结果",
+        "operationId": "cancel_task_api_v1_ai_tasks___task_id___cancel_post",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "Task Id" }
+          },
+          {
+            "name": "terminate",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "boolean", "default": true, "title": "Terminate" }
+          },
+          {
+            "name": "signal",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "default": "SIGTERM",
+              "title": "Signal"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Cancel Task Api V1 Ai Tasks   Task Id   Cancel Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/scope-agent/execute": {
+      "post": {
+        "tags": ["Scope Agent"],
+        "summary": "Execute Scope Agent",
+        "description": "Execute a scope agent with user and project constraints.\n\nEnsures only one scope agent runs per user per project at a time.",
+        "operationId": "execute_scope_agent_api_v1_ai_scope_agent_execute_post",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "User Id" }
+          },
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "Project Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/ScopeAgentRequest" } }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ScopeAgentResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/scope-agent/status/{task_id}": {
+      "get": {
+        "tags": ["Scope Agent"],
+        "summary": "Get Scope Agent Status",
+        "description": "Get the status of a scope agent task.",
+        "operationId": "get_scope_agent_status_api_v1_ai_scope_agent_status__task_id__get",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Task Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ScopeAgentStatusResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/scope-agent/tasks": {
+      "get": {
+        "tags": ["Scope Agent"],
+        "summary": "List Scope Agent Tasks",
+        "description": "List scope agent tasks for a user, optionally filtered by project.",
+        "operationId": "list_scope_agent_tasks_api_v1_ai_scope_agent_tasks_get",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "User Id" }
+          },
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": false,
+            "schema": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Project Id" }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "default": 50, "title": "Limit" }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "default": 0, "title": "Offset" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ScopeAgentListResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/scope-agent/cancel/{task_id}": {
+      "post": {
+        "tags": ["Scope Agent"],
+        "summary": "Cancel Scope Agent Task",
+        "description": "Cancel a running scope agent task.",
+        "operationId": "cancel_scope_agent_task_api_v1_ai_scope_agent_cancel__task_id__post",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Task Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/scope-agent/state/{task_id}": {
+      "get": {
+        "tags": ["Scope Agent"],
+        "summary": "Get Scope Agent Graph State",
+        "description": "Get the LangGraph state for a running scope agent task.\n\nThis returns the internal state of the LangGraph including messages,\nnext nodes to execute, and other graph state information.",
+        "operationId": "get_scope_agent_graph_state_api_v1_ai_scope_agent_state__task_id__get",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Task Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/search-agent/execute": {
+      "post": {
+        "tags": ["Search Agent"],
+        "summary": "Execute Search Agent",
+        "description": "Execute a search agent with user and project constraints.\n\nEnsures only one search agent runs per user per project at a time.",
+        "operationId": "execute_search_agent_api_v1_ai_search_agent_execute_post",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "User Id" }
+          },
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "Project Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/SearchAgentRequest" } }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SearchAgentResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/search-agent/status/{task_id}": {
+      "get": {
+        "tags": ["Search Agent"],
+        "summary": "Get Search Agent Status",
+        "description": "Get the status of a search agent task.",
+        "operationId": "get_search_agent_status_api_v1_ai_search_agent_status__task_id__get",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Task Id" }
+          },
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "User Id" }
+          },
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "Project Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SearchAgentStatusResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/search-agent/tasks": {
+      "get": {
+        "tags": ["Search Agent"],
+        "summary": "List Search Agent Tasks",
+        "description": "List search agent tasks for a user.",
+        "operationId": "list_search_agent_tasks_api_v1_ai_search_agent_tasks_get",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "User Id" }
+          },
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": false,
+            "schema": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Project Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SearchAgentListResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/search-agent/cancel/{task_id}": {
+      "post": {
+        "tags": ["Search Agent"],
+        "summary": "Cancel Search Agent Task",
+        "description": "Cancel a running search agent task.",
+        "operationId": "cancel_search_agent_task_api_v1_ai_search_agent_cancel__task_id__post",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Task Id" }
+          },
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "User Id" }
+          },
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "Project Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/search-agent/state/{task_id}": {
+      "get": {
+        "tags": ["Search Agent"],
+        "summary": "Get Search Agent Graph State",
+        "description": "Get the current LangGraph state for a running search agent task.",
+        "operationId": "get_search_agent_graph_state_api_v1_ai_search_agent_state__task_id__get",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Task Id" }
+          },
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "User Id" }
+          },
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "Project Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/search-tools/search": {
+      "post": {
+        "tags": ["search-tools"],
+        "summary": "Search Endpoint",
+        "description": "Execute search using the specified provider.\n\nThis endpoint provides a unified interface for both Tavily and Bocha search,\nwith provider-specific fields applied based on the provider selection.\n\nArgs:\n    request: Unified search parameters including provider selection\n    \nReturns:\n    Structured search output with metadata and timing information",
+        "operationId": "search_endpoint_api_v1_ai_search_tools_search_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UnifiedSearchRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SearchToolsResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/search-tools/status": {
+      "get": {
+        "tags": ["search-tools"],
+        "summary": "Search Tools Status",
+        "description": "Check the configuration status of search tools.\n\nReturns:\n    Status information for both Tavily and Bocha search tools",
+        "operationId": "search_tools_status_api_v1_ai_search_tools_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SearchToolsStatusResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/search-tools/providers": {
+      "get": {
+        "tags": ["search-tools"],
+        "summary": "Get Search Providers",
+        "description": "Get information about available search providers.\n\nReturns:\n    Dictionary with provider information and capabilities",
+        "operationId": "get_search_providers_api_v1_ai_search_tools_providers_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Search Providers Api V1 Ai Search Tools Providers Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/title-generate/generate": {
+      "post": {
+        "summary": "Generate Titles Endpoint",
+        "description": "Generate news titles based on research brief and web search data.\n\nThis endpoint directly exposes the title generation agent with structured output,\nproviding bottom-up data flow for the research agent architecture.\n\nArgs:\n    request: Title generation parameters including research brief and search data\n    \nReturns:\n    Structured title generation output with metadata and timing information",
+        "operationId": "generate_titles_endpoint_api_v1_ai_title_generate_generate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/TitleGenerationRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TitleGenerationResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/title-generate/status": {
+      "get": {
+        "summary": "Get Title Tools Status",
+        "description": "Get the status of title generation tools.",
+        "operationId": "get_title_tools_status_api_v1_ai_title_generate_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TitleToolsStatusResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/title-generate/validate": {
+      "post": {
+        "summary": "Validate Title Generation Request",
+        "description": "Validate title generation request before processing.\n\nArgs:\n    request: Title generation request to validate\n    \nReturns:\n    Validation result with any errors or warnings",
+        "operationId": "validate_title_generation_request_api_v1_ai_title_generate_validate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/TitleGenerationRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Validate Title Generation Request Api V1 Ai Title Generate Validate Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/outline-generate/generate": {
+      "post": {
+        "summary": "Generate Outline Endpoint",
+        "description": "Generate news article outline based on selected title and web search data.\n\nThis endpoint directly exposes the outline generation agent with structured output,\nproviding detailed structure for news article creation.\n\nArgs:\n    request: Outline generation parameters including title and search data\n    \nReturns:\n    Structured outline generation output with metadata and timing information",
+        "operationId": "generate_outline_endpoint_api_v1_ai_outline_generate_generate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/OutlineGenerationRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OutlineGenerationResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/outline-generate/status": {
+      "get": {
+        "summary": "Get Outline Tools Status",
+        "description": "Get the status of outline generation tools.",
+        "operationId": "get_outline_tools_status_api_v1_ai_outline_generate_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OutlineGenerationStatusResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/outline-generate/validate": {
+      "post": {
+        "summary": "Validate Outline Generation Request",
+        "description": "Validate outline generation request before processing.\n\nArgs:\n    request: Outline generation request to validate\n    \nReturns:\n    Validation result with any errors or warnings",
+        "operationId": "validate_outline_generation_request_api_v1_ai_outline_generate_validate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/OutlineGenerationRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Validate Outline Generation Request Api V1 Ai Outline Generate Validate Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "summary": "Root",
+        "operationId": "root__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Health Check",
+        "description": "健康检查端点，同时检查Celery连接。",
+        "operationId": "health_check_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": { "$ref": "#/components/schemas/ValidationError" },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "OutlineGenerationRequest": {
+        "properties": {
+          "title": {
+            "$ref": "#/components/schemas/Title",
+            "description": "选定的新闻标题（来自TitleState的完整Title对象）"
+          },
+          "research_brief": {
+            "type": "string",
+            "minLength": 10,
+            "title": "Research Brief",
+            "description": "研究简报"
+          },
+          "web_search_data": {
+            "anyOf": [
+              { "items": { "$ref": "#/components/schemas/TavilySearchResult" }, "type": "array" },
+              { "items": { "type": "string" }, "type": "array" }
+            ],
+            "minLength": 1,
+            "title": "Web Search Data",
+            "description": "网络搜索数据"
+          }
+        },
+        "type": "object",
+        "required": ["title", "research_brief", "web_search_data"],
+        "title": "OutlineGenerationRequest",
+        "description": "Request model for outline generation."
+      },
+      "OutlineGenerationResponse": {
+        "properties": {
+          "success": { "type": "boolean", "title": "Success", "description": "是否成功生成大纲" },
+          "outline": {
+            "items": { "$ref": "#/components/schemas/OutlineSection" },
+            "type": "array",
+            "title": "Outline",
+            "description": "生成的大纲结构"
+          },
+          "outline_sources_details": {
+            "additionalProperties": {
+              "items": { "additionalProperties": true, "type": "object" },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Outline Sources Details",
+            "description": "大纲来源详细信息映射"
+          },
+          "generation_time": {
+            "type": "number",
+            "title": "Generation Time",
+            "description": "大纲生成时间（秒）"
+          },
+          "section_count": {
+            "type": "integer",
+            "title": "Section Count",
+            "description": "大纲章节数量"
+          },
+          "generation_summary": {
+            "type": "string",
+            "title": "Generation Summary",
+            "description": "大纲生成过程总结",
+            "default": ""
+          },
+          "total_word_estimate": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Total Word Estimate",
+            "description": "总字数估算"
+          },
+          "final_report": {
+            "type": "string",
+            "title": "Final Report",
+            "description": "最终报告",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": ["success", "outline", "generation_time", "section_count"],
+        "title": "OutlineGenerationResponse",
+        "description": "Response model for outline generation."
+      },
+      "OutlineGenerationStatusResponse": {
+        "properties": {
+          "configured": {
+            "type": "boolean",
+            "title": "Configured",
+            "description": "是否已配置大纲生成功能"
+          },
+          "available_models": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Available Models",
+            "description": "可用模型列表"
+          },
+          "default_model": { "type": "string", "title": "Default Model", "description": "默认模型" }
+        },
+        "type": "object",
+        "required": ["configured", "available_models", "default_model"],
+        "title": "OutlineGenerationStatusResponse",
+        "description": "Response model for outline generation status."
+      },
+      "OutlineSection": {
+        "properties": {
+          "level": {
+            "type": "integer",
+            "title": "Level",
+            "description": "章节层级，1为一级标题，2为二级标题，以此类推"
+          },
+          "title": { "type": "string", "title": "Title", "description": "章节标题" },
+          "content_direction": {
+            "type": "string",
+            "title": "Content Direction",
+            "description": "内容方向和写作要点"
+          },
+          "data_requirements": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Data Requirements",
+            "description": "需要采集的数据类型和来源"
+          },
+          "estimated_word_count": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Estimated Word Count",
+            "description": "预计字数"
+          },
+          "priority": {
+            "type": "string",
+            "title": "Priority",
+            "description": "优先级：high/medium/low",
+            "default": "medium"
+          },
+          "sources": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Sources",
+            "description": "支持该章节的来源编号"
+          }
+        },
+        "type": "object",
+        "required": ["level", "title", "content_direction"],
+        "title": "OutlineSection",
+        "description": "单个大纲章节的结构化表示"
+      },
+      "ScopeAgentListResponse": {
+        "properties": {
+          "tasks": {
+            "items": { "$ref": "#/components/schemas/ScopeAgentStatusResponse" },
+            "type": "array",
+            "title": "Tasks",
+            "description": "List of agent tasks"
+          },
+          "total_count": {
+            "type": "integer",
+            "title": "Total Count",
+            "description": "Total number of tasks"
+          },
+          "user_id": { "type": "string", "title": "User Id", "description": "User ID" },
+          "project_id": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Project Id",
+            "description": "Project ID if filtered by project"
+          }
+        },
+        "type": "object",
+        "required": ["tasks", "total_count", "user_id"],
+        "title": "ScopeAgentListResponse",
+        "description": "Response model for listing scope agent tasks."
+      },
+      "ScopeAgentRequest": {
+        "properties": {
+          "query": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Query",
+            "description": "Query or input for the scope agent"
+          }
+        },
+        "type": "object",
+        "required": ["query"],
+        "title": "ScopeAgentRequest",
+        "description": "Request model for scope agent execution."
+      },
+      "ScopeAgentResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "Whether the agent execution was started successfully"
+          },
+          "task_id": {
+            "type": "string",
+            "title": "Task Id",
+            "description": "Unique task ID for tracking the agent execution"
+          },
+          "message": { "type": "string", "title": "Message", "description": "Status message" },
+          "user_id": {
+            "type": "string",
+            "title": "User Id",
+            "description": "User ID associated with the task"
+          },
+          "project_id": {
+            "type": "string",
+            "title": "Project Id",
+            "description": "Project ID associated with the task"
+          },
+          "agent_type": {
+            "type": "string",
+            "title": "Agent Type",
+            "description": "Type of agent that was executed"
+          }
+        },
+        "type": "object",
+        "required": ["success", "task_id", "message", "user_id", "project_id", "agent_type"],
+        "title": "ScopeAgentResponse",
+        "description": "Response model for scope agent execution."
+      },
+      "ScopeAgentStatusResponse": {
+        "properties": {
+          "task_id": { "type": "string", "title": "Task Id", "description": "Task ID" },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Current status of the agent"
+          },
+          "progress": {
+            "type": "integer",
+            "title": "Progress",
+            "description": "Progress percentage (0-100)"
+          },
+          "result": {
+            "anyOf": [{ "additionalProperties": true, "type": "object" }, { "type": "null" }],
+            "title": "Result",
+            "description": "Result data if the agent completed successfully"
+          },
+          "error": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Error",
+            "description": "Error message if the agent failed"
+          },
+          "user_id": {
+            "type": "string",
+            "title": "User Id",
+            "description": "User ID associated with the task"
+          },
+          "project_id": {
+            "type": "string",
+            "title": "Project Id",
+            "description": "Project ID associated with the task"
+          },
+          "agent_type": { "type": "string", "title": "Agent Type", "description": "Type of agent" },
+          "created_at": {
+            "type": "number",
+            "title": "Created At",
+            "description": "Timestamp when the task was created"
+          },
+          "updated_at": {
+            "type": "number",
+            "title": "Updated At",
+            "description": "Timestamp when the task was last updated"
+          }
+        },
+        "type": "object",
+        "required": [
+          "task_id",
+          "status",
+          "progress",
+          "user_id",
+          "project_id",
+          "agent_type",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "ScopeAgentStatusResponse",
+        "description": "Response model for scope agent status."
+      },
+      "SearchAgentListResponse": {
+        "properties": {
+          "tasks": {
+            "items": { "$ref": "#/components/schemas/SearchAgentStatusResponse" },
+            "type": "array",
+            "title": "Tasks",
+            "description": "List of agent tasks"
+          },
+          "total_count": {
+            "type": "integer",
+            "title": "Total Count",
+            "description": "Total number of tasks"
+          },
+          "user_id": { "type": "string", "title": "User Id", "description": "User ID" },
+          "project_id": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Project Id",
+            "description": "Project ID if filtered by project"
+          }
+        },
+        "type": "object",
+        "required": ["tasks", "total_count", "user_id"],
+        "title": "SearchAgentListResponse",
+        "description": "Response model for listing search agent tasks."
+      },
+      "SearchAgentRequest": {
+        "properties": {
+          "brief": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Brief",
+            "description": "brief for research"
+          },
+          "max_concurrent_research_units": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Max Concurrent Research Units",
+            "description": "Maximum number of concurrent research units (overrides default config)"
+          },
+          "max_researcher_iterations": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Max Researcher Iterations",
+            "description": "Maximum number of research iterations (overrides default config)"
+          }
+        },
+        "type": "object",
+        "required": ["brief"],
+        "title": "SearchAgentRequest",
+        "description": "Request model for search agent execution."
+      },
+      "SearchAgentResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "Whether the agent execution was started successfully"
+          },
+          "task_id": {
+            "type": "string",
+            "title": "Task Id",
+            "description": "Unique task ID for tracking the agent execution"
+          },
+          "message": { "type": "string", "title": "Message", "description": "Status message" },
+          "user_id": {
+            "type": "string",
+            "title": "User Id",
+            "description": "User ID associated with the task"
+          },
+          "project_id": {
+            "type": "string",
+            "title": "Project Id",
+            "description": "Project ID associated with the task"
+          },
+          "agent_type": {
+            "type": "string",
+            "title": "Agent Type",
+            "description": "Type of agent that was executed"
+          }
+        },
+        "type": "object",
+        "required": ["success", "task_id", "message", "user_id", "project_id", "agent_type"],
+        "title": "SearchAgentResponse",
+        "description": "Response model for search agent execution."
+      },
+      "SearchAgentStatusResponse": {
+        "properties": {
+          "task_id": { "type": "string", "title": "Task Id", "description": "Task ID" },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Current status of the agent"
+          },
+          "progress": {
+            "type": "integer",
+            "title": "Progress",
+            "description": "Progress percentage (0-100)"
+          },
+          "result": {
+            "anyOf": [{ "additionalProperties": true, "type": "object" }, { "type": "null" }],
+            "title": "Result",
+            "description": "Result data if the agent completed successfully"
+          },
+          "error": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Error",
+            "description": "Error message if the agent failed"
+          },
+          "user_id": {
+            "type": "string",
+            "title": "User Id",
+            "description": "User ID associated with the task"
+          },
+          "project_id": {
+            "type": "string",
+            "title": "Project Id",
+            "description": "Project ID associated with the task"
+          },
+          "agent_type": { "type": "string", "title": "Agent Type", "description": "Type of agent" },
+          "created_at": {
+            "type": "number",
+            "title": "Created At",
+            "description": "Timestamp when the task was created"
+          },
+          "updated_at": {
+            "type": "number",
+            "title": "Updated At",
+            "description": "Timestamp when the task was last updated"
+          }
+        },
+        "type": "object",
+        "required": [
+          "task_id",
+          "status",
+          "progress",
+          "user_id",
+          "project_id",
+          "agent_type",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "SearchAgentStatusResponse",
+        "description": "Response model for search agent status."
+      },
+      "SearchResultItem": {
+        "properties": {
+          "url": { "type": "string", "title": "Url", "description": "搜索结果URL" },
+          "webtitle": { "type": "string", "title": "Webtitle", "description": "搜索结果标题" },
+          "score": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Score",
+            "description": "搜索相关性评分"
+          },
+          "query": { "type": "string", "title": "Query", "description": "产生此结果的搜索查询" },
+          "aititle": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Aititle",
+            "description": "AI总结标题"
+          },
+          "summary": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Summary",
+            "description": "AI生成的内容摘要"
+          },
+          "key_excerpts": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Key Excerpts",
+            "description": "关键摘录"
+          },
+          "published_date": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Published Date",
+            "description": "发布日期"
+          }
+        },
+        "type": "object",
+        "required": ["url", "webtitle", "score", "query"],
+        "title": "SearchResultItem",
+        "description": "Individual search result item."
+      },
+      "SearchToolsResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "Whether the search was successful"
+          },
+          "provider": {
+            "type": "string",
+            "title": "Provider",
+            "description": "Search provider used (tavily/bocha)"
+          },
+          "results": {
+            "items": { "$ref": "#/components/schemas/SearchResultItem" },
+            "type": "array",
+            "title": "Results",
+            "description": "搜索结果列表"
+          },
+          "total_results": {
+            "type": "integer",
+            "title": "Total Results",
+            "description": "总结果数量"
+          },
+          "search_queries": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Search Queries",
+            "description": "执行的搜索查询列表"
+          },
+          "search_time": {
+            "type": "number",
+            "title": "Search Time",
+            "description": "搜索耗时（秒）"
+          },
+          "api_execution_time": {
+            "type": "number",
+            "title": "Api Execution Time",
+            "description": "API执行时间（秒）"
+          },
+          "query_count": {
+            "type": "integer",
+            "title": "Query Count",
+            "description": "Number of queries executed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "provider",
+          "results",
+          "total_results",
+          "search_queries",
+          "search_time",
+          "api_execution_time",
+          "query_count"
+        ],
+        "title": "SearchToolsResponse",
+        "description": "Response model for search tools."
+      },
+      "SearchToolsStatusResponse": {
+        "properties": {
+          "tavily_configured": {
+            "type": "boolean",
+            "title": "Tavily Configured",
+            "description": "Whether Tavily API is configured"
+          },
+          "bocha_configured": {
+            "type": "boolean",
+            "title": "Bocha Configured",
+            "description": "Whether Bocha API is configured"
+          },
+          "tavily_api_key_status": {
+            "type": "string",
+            "title": "Tavily Api Key Status",
+            "description": "Tavily API key status"
+          },
+          "bocha_api_key_status": {
+            "type": "string",
+            "title": "Bocha Api Key Status",
+            "description": "Bocha API key status"
+          },
+          "default_provider": {
+            "type": "string",
+            "title": "Default Provider",
+            "description": "Default search provider"
+          },
+          "available_providers": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Available Providers",
+            "description": "List of available providers"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tavily_configured",
+          "bocha_configured",
+          "tavily_api_key_status",
+          "bocha_api_key_status",
+          "default_provider",
+          "available_providers"
+        ],
+        "title": "SearchToolsStatusResponse",
+        "description": "Response model for search tools status."
+      },
+      "TavilySearchResult": {
+        "properties": {
+          "url": { "type": "string", "title": "Url", "description": "搜索结果URL" },
+          "webtitle": { "type": "string", "title": "Webtitle", "description": "搜索结果标题" },
+          "score": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Score",
+            "description": "搜索相关性评分"
+          },
+          "query": { "type": "string", "title": "Query", "description": "产生此结果的搜索查询" },
+          "aititle": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Aititle",
+            "description": "AI总结标题"
+          },
+          "summary": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Summary",
+            "description": "AI生成的内容摘要"
+          },
+          "key_excerpts": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Key Excerpts",
+            "description": "关键摘录"
+          },
+          "published_date": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Published Date",
+            "description": "发布日期"
+          }
+        },
+        "type": "object",
+        "required": ["url", "webtitle", "score", "query"],
+        "title": "TavilySearchResult",
+        "description": "Tavily搜索结果的结构化表示"
+      },
+      "Title": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "一个客观、简洁、吸引人的新闻标题"
+          },
+          "angle": {
+            "type": "string",
+            "title": "Angle",
+            "description": "具体说明报道的核心思路和切入点"
+          },
+          "why_now": { "type": "string", "title": "Why Now", "description": "新闻时效性钩子" },
+          "news_values": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "News Values",
+            "description": "新闻价值标准列表，包含：Timeliness, Impact, Proximity, Prominence, Conflict, Human Interest, Novelty"
+          },
+          "verifiability": {
+            "type": "string",
+            "title": "Verifiability",
+            "description": "评估依据现有来源进行核实的难易程度"
+          },
+          "sources": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Sources",
+            "description": "支持该标题的具体来源编号列表，如 ['1', '2']"
+          },
+          "risk_notes": { "type": "string", "title": "Risk Notes", "description": "任何潜在风险" },
+          "feasibility": {
+            "type": "string",
+            "title": "Feasibility",
+            "description": "完成报道的可行性"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "angle",
+          "why_now",
+          "news_values",
+          "verifiability",
+          "sources",
+          "risk_notes",
+          "feasibility"
+        ],
+        "title": "Title",
+        "description": "单个新闻标题候选的结构化表示"
+      },
+      "TitleGenerationRequest": {
+        "properties": {
+          "research_brief": {
+            "type": "string",
+            "minLength": 10,
+            "title": "Research Brief",
+            "description": "Research brief to guide title generation"
+          },
+          "web_search_data": {
+            "anyOf": [
+              { "items": { "$ref": "#/components/schemas/TavilySearchResult" }, "type": "array" },
+              { "items": { "type": "string" }, "type": "array" }
+            ],
+            "minLength": 1,
+            "title": "Web Search Data",
+            "description": "Web search results to base titles on"
+          }
+        },
+        "type": "object",
+        "required": ["research_brief", "web_search_data"],
+        "title": "TitleGenerationRequest",
+        "description": "Request model for title generation."
+      },
+      "TitleGenerationResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "Whether the title generation was successful"
+          },
+          "titles": {
+            "items": { "$ref": "#/components/schemas/Title" },
+            "type": "array",
+            "title": "Titles",
+            "description": "Generated news titles"
+          },
+          "title_sources_details": {
+            "additionalProperties": {
+              "items": { "additionalProperties": true, "type": "object" },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Title Sources Details",
+            "description": "Title sources mapping with detailed source information"
+          },
+          "generation_time": {
+            "type": "number",
+            "title": "Generation Time",
+            "description": "Title generation time in seconds"
+          },
+          "title_count": {
+            "type": "integer",
+            "title": "Title Count",
+            "description": "Number of titles generated"
+          },
+          "generation_summary": {
+            "type": "string",
+            "title": "Generation Summary",
+            "description": "Summary of the title generation process",
+            "default": ""
+          },
+          "total_candidates": {
+            "type": "integer",
+            "title": "Total Candidates",
+            "description": "Total number of candidates generated",
+            "default": 0
+          },
+          "final_report": {
+            "type": "string",
+            "title": "Final Report",
+            "description": "Final report from the title generation agent",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": ["success", "titles", "generation_time", "title_count"],
+        "title": "TitleGenerationResponse",
+        "description": "Response model for title generation with enhanced structured output."
+      },
+      "TitleToolsStatusResponse": {
+        "properties": {
+          "configured": {
+            "type": "boolean",
+            "title": "Configured",
+            "description": "Whether title generation is properly configured"
+          },
+          "available_models": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Available Models",
+            "description": "List of available models for title generation"
+          },
+          "default_model": {
+            "type": "string",
+            "title": "Default Model",
+            "description": "Default model for title generation"
+          }
+        },
+        "type": "object",
+        "required": ["configured", "available_models", "default_model"],
+        "title": "TitleToolsStatusResponse",
+        "description": "Response model for title tools status."
+      },
+      "UnifiedSearchRequest": {
+        "properties": {
+          "queries": {
+            "items": { "type": "string" },
+            "type": "array",
+            "minItems": 1,
+            "title": "Queries",
+            "description": "List of search queries"
+          },
+          "max_results": {
+            "type": "integer",
+            "maximum": 50.0,
+            "minimum": 1.0,
+            "title": "Max Results",
+            "description": "Maximum number of results",
+            "default": 10
+          },
+          "enable_structured_summaries": {
+            "type": "boolean",
+            "title": "Enable Structured Summaries",
+            "description": "Enable AI-generated summaries for search results",
+            "default": true
+          },
+          "summarization_model": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Summarization Model",
+            "description": "Model to use for summarization",
+            "default": "deepseek:deepseek-chat"
+          },
+          "max_content_length": {
+            "type": "integer",
+            "maximum": 200000.0,
+            "minimum": 1000.0,
+            "title": "Max Content Length",
+            "description": "Maximum content length for summarization",
+            "default": 50000
+          },
+          "topic": {
+            "anyOf": [
+              { "type": "string", "enum": ["general", "news", "finance"] },
+              { "type": "null" }
+            ],
+            "title": "Topic",
+            "description": "Search topic filter (Tavily only)",
+            "default": "general"
+          },
+          "include_raw_content": {
+            "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+            "title": "Include Raw Content",
+            "description": "Include full webpage content (Tavily only)",
+            "default": true
+          },
+          "freshness": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Freshness",
+            "description": "Time range filter (Bocha only)"
+          },
+          "summary": {
+            "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+            "title": "Summary",
+            "description": "Return AI-generated summaries (Bocha only)",
+            "default": true
+          },
+          "include": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Include",
+            "description": "Include only these domains (Bocha only)"
+          },
+          "exclude": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Exclude",
+            "description": "Exclude these domains (Bocha only)"
+          },
+          "provider": {
+            "type": "string",
+            "enum": ["tavily", "bocha"],
+            "title": "Provider",
+            "description": "Search provider to use"
+          }
+        },
+        "type": "object",
+        "required": ["queries", "provider"],
+        "title": "UnifiedSearchRequest",
+        "description": "Unified request model for all search providers."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": { "anyOf": [{ "type": "string" }, { "type": "integer" }] },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": { "type": "string", "title": "Message" },
+          "type": { "type": "string", "title": "Error Type" }
+        },
+        "type": "object",
+        "required": ["loc", "msg", "type"],
+        "title": "ValidationError"
+      },
+      "WebpageSummaryAsyncRequest": {
+        "properties": {
+          "url": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Url",
+            "description": "要总结的网页URL"
+          },
+          "model_name": {
+            "type": "string",
+            "title": "Model Name",
+            "description": "使用的模型名称",
+            "default": "deepseek:deepseek-chat"
+          },
+          "max_tokens": {
+            "type": "integer",
+            "maximum": 10000.0,
+            "minimum": 100.0,
+            "title": "Max Tokens",
+            "description": "模型最大token数",
+            "default": 8192
+          },
+          "scraping_timeout": {
+            "type": "integer",
+            "maximum": 300.0,
+            "minimum": 5.0,
+            "title": "Scraping Timeout",
+            "description": "网页抓取超时时间（秒）",
+            "default": 120
+          },
+          "max_content_length": {
+            "type": "integer",
+            "maximum": 100000.0,
+            "minimum": 1000.0,
+            "title": "Max Content Length",
+            "description": "最大内容长度限制",
+            "default": 128000
+          },
+          "target_format": {
+            "anyOf": [{ "additionalProperties": true, "type": "object" }, { "type": "null" }],
+            "title": "Target Format",
+            "description": "目标JSON格式（可选）",
+            "example": {
+              "key_excerpts": ["摘录原文1", "摘录原文2", "摘录原文3"],
+              "summary": "文章摘要"
+            }
+          }
+        },
+        "type": "object",
+        "required": ["url"],
+        "title": "WebpageSummaryAsyncRequest",
+        "description": "异步网页总结请求"
+      },
+      "WebpageSummaryAsyncResponse": {
+        "properties": {
+          "success": { "type": "boolean", "title": "Success", "description": "是否成功" },
+          "message": { "type": "string", "title": "Message", "description": "响应消息" },
+          "task_id": { "type": "string", "title": "Task Id", "description": "任务ID" },
+          "url": { "type": "string", "title": "Url", "description": "请求的URL" }
+        },
+        "type": "object",
+        "required": ["success", "message", "task_id", "url"],
+        "title": "WebpageSummaryAsyncResponse",
+        "description": "异步网页总结响应"
+      },
+      "WebpageSummaryStatusResponse": {
+        "properties": {
+          "success": { "type": "boolean", "title": "Success", "description": "是否成功" },
+          "task_id": { "type": "string", "title": "Task Id", "description": "任务ID" },
+          "status": { "type": "string", "title": "Status", "description": "任务状态" },
+          "progress": { "type": "integer", "title": "Progress", "description": "进度百分比" },
+          "result": {
+            "anyOf": [{ "additionalProperties": true, "type": "object" }, { "type": "null" }],
+            "title": "Result",
+            "description": "任务结果"
+          },
+          "error": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Error",
+            "description": "错误信息"
+          }
+        },
+        "type": "object",
+        "required": ["success", "task_id", "status", "progress"],
+        "title": "WebpageSummaryStatusResponse",
+        "description": "网页总结任务状态响应"
+      }
+    }
+  }
+}

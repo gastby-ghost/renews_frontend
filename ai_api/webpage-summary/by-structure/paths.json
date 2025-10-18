@@ -1,0 +1,83 @@
+{
+  "/api/v1/ai/webpage-summary/summarize-async": {
+    "post": {
+      "tags": ["webpage-summary"],
+      "summary": "Summarize Webpage Async",
+      "description": "异步网页总结 - 创建Celery异步任务进行网页内容总结\n\nArgs:\n    request: 网页总结请求，包含URL和配置参数\n    \nReturns:\n    异步任务信息",
+      "operationId": "summarize_webpage_async_api_v1_ai_webpage_summary_summarize_async_post",
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/WebpageSummaryAsyncRequest"
+            }
+          }
+        },
+        "required": true
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebpageSummaryAsyncResponse"
+              }
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/api/v1/ai/webpage-summary/status/{task_id}": {
+    "get": {
+      "tags": ["webpage-summary"],
+      "summary": "Get Webpage Summary Status",
+      "description": "获取网页总结任务状态\n\nArgs:\n    task_id: Celery任务ID\n    \nReturns:\n    任务状态信息",
+      "operationId": "get_webpage_summary_status_api_v1_ai_webpage_summary_status__task_id__get",
+      "parameters": [
+        {
+          "name": "task_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Task Id"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebpageSummaryStatusResponse"
+              }
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

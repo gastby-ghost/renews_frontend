@@ -1,0 +1,258 @@
+{
+  "/api/v1/ai/scope-agent/execute": {
+    "post": {
+      "tags": ["Scope Agent"],
+      "summary": "Execute Scope Agent",
+      "description": "Execute a scope agent with user and project constraints.\n\nEnsures only one scope agent runs per user per project at a time.",
+      "operationId": "execute_scope_agent_api_v1_ai_scope_agent_execute_post",
+      "parameters": [
+        {
+          "name": "user_id",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "User Id"
+          }
+        },
+        {
+          "name": "project_id",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Project Id"
+          }
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ScopeAgentRequest"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScopeAgentResponse"
+              }
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/api/v1/ai/scope-agent/status/{task_id}": {
+    "get": {
+      "tags": ["Scope Agent"],
+      "summary": "Get Scope Agent Status",
+      "description": "Get the status of a scope agent task.",
+      "operationId": "get_scope_agent_status_api_v1_ai_scope_agent_status__task_id__get",
+      "parameters": [
+        {
+          "name": "task_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Task Id"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScopeAgentStatusResponse"
+              }
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/api/v1/ai/scope-agent/tasks": {
+    "get": {
+      "tags": ["Scope Agent"],
+      "summary": "List Scope Agent Tasks",
+      "description": "List scope agent tasks for a user, optionally filtered by project.",
+      "operationId": "list_scope_agent_tasks_api_v1_ai_scope_agent_tasks_get",
+      "parameters": [
+        {
+          "name": "user_id",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "User Id"
+          }
+        },
+        {
+          "name": "project_id",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Project Id"
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "default": 50,
+            "title": "Limit"
+          }
+        },
+        {
+          "name": "offset",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "default": 0,
+            "title": "Offset"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScopeAgentListResponse"
+              }
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/api/v1/ai/scope-agent/cancel/{task_id}": {
+    "post": {
+      "tags": ["Scope Agent"],
+      "summary": "Cancel Scope Agent Task",
+      "description": "Cancel a running scope agent task.",
+      "operationId": "cancel_scope_agent_task_api_v1_ai_scope_agent_cancel__task_id__post",
+      "parameters": [
+        {
+          "name": "task_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Task Id"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/api/v1/ai/scope-agent/state/{task_id}": {
+    "get": {
+      "tags": ["Scope Agent"],
+      "summary": "Get Scope Agent Graph State",
+      "description": "Get the LangGraph state for a running scope agent task.\n\nThis returns the internal state of the LangGraph including messages,\nnext nodes to execute, and other graph state information.",
+      "operationId": "get_scope_agent_graph_state_api_v1_ai_scope_agent_state__task_id__get",
+      "parameters": [
+        {
+          "name": "task_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Task Id"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

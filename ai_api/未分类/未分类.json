@@ -1,0 +1,578 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "AI Service API",
+    "description": "MediaAgent ReNews AI Content Creation Service",
+    "version": "1.0.0"
+  },
+  "servers": [],
+  "paths": {
+    "/api/v1/ai/title-generate/generate": {
+      "post": {
+        "summary": "Generate Titles Endpoint",
+        "description": "Generate news titles based on research brief and web search data.\n\nThis endpoint directly exposes the title generation agent with structured output,\nproviding bottom-up data flow for the research agent architecture.\n\nArgs:\n    request: Title generation parameters including research brief and search data\n    \nReturns:\n    Structured title generation output with metadata and timing information",
+        "operationId": "generate_titles_endpoint_api_v1_ai_title_generate_generate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TitleGenerationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TitleGenerationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/title-generate/status": {
+      "get": {
+        "summary": "Get Title Tools Status",
+        "description": "Get the status of title generation tools.",
+        "operationId": "get_title_tools_status_api_v1_ai_title_generate_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TitleToolsStatusResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/title-generate/validate": {
+      "post": {
+        "summary": "Validate Title Generation Request",
+        "description": "Validate title generation request before processing.\n\nArgs:\n    request: Title generation request to validate\n    \nReturns:\n    Validation result with any errors or warnings",
+        "operationId": "validate_title_generation_request_api_v1_ai_title_generate_validate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TitleGenerationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Validate Title Generation Request Api V1 Ai Title Generate Validate Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/outline-generate/generate": {
+      "post": {
+        "summary": "Generate Outline Endpoint",
+        "description": "Generate news article outline based on selected title and web search data.\n\nThis endpoint directly exposes the outline generation agent with structured output,\nproviding detailed structure for news article creation.\n\nArgs:\n    request: Outline generation parameters including title and search data\n    \nReturns:\n    Structured outline generation output with metadata and timing information",
+        "operationId": "generate_outline_endpoint_api_v1_ai_outline_generate_generate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OutlineGenerationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutlineGenerationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/outline-generate/status": {
+      "get": {
+        "summary": "Get Outline Tools Status",
+        "description": "Get the status of outline generation tools.",
+        "operationId": "get_outline_tools_status_api_v1_ai_outline_generate_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutlineGenerationStatusResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/outline-generate/validate": {
+      "post": {
+        "summary": "Validate Outline Generation Request",
+        "description": "Validate outline generation request before processing.\n\nArgs:\n    request: Outline generation request to validate\n    \nReturns:\n    Validation result with any errors or warnings",
+        "operationId": "validate_outline_generation_request_api_v1_ai_outline_generate_validate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OutlineGenerationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Validate Outline Generation Request Api V1 Ai Outline Generate Validate Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "summary": "Root",
+        "operationId": "root__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Health Check",
+        "description": "健康检查端点，同时检查Celery连接。",
+        "operationId": "health_check_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "未分类",
+      "description": "未分类 相关的 API"
+    }
+  ],
+  "components": {
+    "schemas": {
+      "TitleGenerationResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "Whether the title generation was successful"
+          },
+          "titles": {
+            "items": {
+              "$ref": "#/components/schemas/Title"
+            },
+            "type": "array",
+            "title": "Titles",
+            "description": "Generated news titles"
+          },
+          "title_sources_details": {
+            "additionalProperties": {
+              "items": {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Title Sources Details",
+            "description": "Title sources mapping with detailed source information"
+          },
+          "generation_time": {
+            "type": "number",
+            "title": "Generation Time",
+            "description": "Title generation time in seconds"
+          },
+          "title_count": {
+            "type": "integer",
+            "title": "Title Count",
+            "description": "Number of titles generated"
+          },
+          "generation_summary": {
+            "type": "string",
+            "title": "Generation Summary",
+            "description": "Summary of the title generation process",
+            "default": ""
+          },
+          "total_candidates": {
+            "type": "integer",
+            "title": "Total Candidates",
+            "description": "Total number of candidates generated",
+            "default": 0
+          },
+          "final_report": {
+            "type": "string",
+            "title": "Final Report",
+            "description": "Final report from the title generation agent",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": ["success", "titles", "generation_time", "title_count"],
+        "title": "TitleGenerationResponse",
+        "description": "Response model for title generation with enhanced structured output."
+      },
+      "OutlineGenerationStatusResponse": {
+        "properties": {
+          "configured": {
+            "type": "boolean",
+            "title": "Configured",
+            "description": "是否已配置大纲生成功能"
+          },
+          "available_models": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Available Models",
+            "description": "可用模型列表"
+          },
+          "default_model": {
+            "type": "string",
+            "title": "Default Model",
+            "description": "默认模型"
+          }
+        },
+        "type": "object",
+        "required": ["configured", "available_models", "default_model"],
+        "title": "OutlineGenerationStatusResponse",
+        "description": "Response model for outline generation status."
+      },
+      "TitleGenerationRequest": {
+        "properties": {
+          "research_brief": {
+            "type": "string",
+            "minLength": 10,
+            "title": "Research Brief",
+            "description": "Research brief to guide title generation"
+          },
+          "web_search_data": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/TavilySearchResult"
+                },
+                "type": "array"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            ],
+            "minLength": 1,
+            "title": "Web Search Data",
+            "description": "Web search results to base titles on"
+          }
+        },
+        "type": "object",
+        "required": ["research_brief", "web_search_data"],
+        "title": "TitleGenerationRequest",
+        "description": "Request model for title generation."
+      },
+      "Title": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "一个客观、简洁、吸引人的新闻标题"
+          },
+          "angle": {
+            "type": "string",
+            "title": "Angle",
+            "description": "具体说明报道的核心思路和切入点"
+          },
+          "why_now": {
+            "type": "string",
+            "title": "Why Now",
+            "description": "新闻时效性钩子"
+          },
+          "news_values": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "News Values",
+            "description": "新闻价值标准列表，包含：Timeliness, Impact, Proximity, Prominence, Conflict, Human Interest, Novelty"
+          },
+          "verifiability": {
+            "type": "string",
+            "title": "Verifiability",
+            "description": "评估依据现有来源进行核实的难易程度"
+          },
+          "sources": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Sources",
+            "description": "支持该标题的具体来源编号列表，如 ['1', '2']"
+          },
+          "risk_notes": {
+            "type": "string",
+            "title": "Risk Notes",
+            "description": "任何潜在风险"
+          },
+          "feasibility": {
+            "type": "string",
+            "title": "Feasibility",
+            "description": "完成报道的可行性"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "angle",
+          "why_now",
+          "news_values",
+          "verifiability",
+          "sources",
+          "risk_notes",
+          "feasibility"
+        ],
+        "title": "Title",
+        "description": "单个新闻标题候选的结构化表示"
+      },
+      "TitleToolsStatusResponse": {
+        "properties": {
+          "configured": {
+            "type": "boolean",
+            "title": "Configured",
+            "description": "Whether title generation is properly configured"
+          },
+          "available_models": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Available Models",
+            "description": "List of available models for title generation"
+          },
+          "default_model": {
+            "type": "string",
+            "title": "Default Model",
+            "description": "Default model for title generation"
+          }
+        },
+        "type": "object",
+        "required": ["configured", "available_models", "default_model"],
+        "title": "TitleToolsStatusResponse",
+        "description": "Response model for title tools status."
+      },
+      "OutlineGenerationResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "是否成功生成大纲"
+          },
+          "outline": {
+            "items": {
+              "$ref": "#/components/schemas/OutlineSection"
+            },
+            "type": "array",
+            "title": "Outline",
+            "description": "生成的大纲结构"
+          },
+          "outline_sources_details": {
+            "additionalProperties": {
+              "items": {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Outline Sources Details",
+            "description": "大纲来源详细信息映射"
+          },
+          "generation_time": {
+            "type": "number",
+            "title": "Generation Time",
+            "description": "大纲生成时间（秒）"
+          },
+          "section_count": {
+            "type": "integer",
+            "title": "Section Count",
+            "description": "大纲章节数量"
+          },
+          "generation_summary": {
+            "type": "string",
+            "title": "Generation Summary",
+            "description": "大纲生成过程总结",
+            "default": ""
+          },
+          "total_word_estimate": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Word Estimate",
+            "description": "总字数估算"
+          },
+          "final_report": {
+            "type": "string",
+            "title": "Final Report",
+            "description": "最终报告",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": ["success", "outline", "generation_time", "section_count"],
+        "title": "OutlineGenerationResponse",
+        "description": "Response model for outline generation."
+      },
+      "OutlineGenerationRequest": {
+        "properties": {
+          "title": {
+            "$ref": "#/components/schemas/Title",
+            "description": "选定的新闻标题（来自TitleState的完整Title对象）"
+          },
+          "research_brief": {
+            "type": "string",
+            "minLength": 10,
+            "title": "Research Brief",
+            "description": "研究简报"
+          },
+          "web_search_data": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/TavilySearchResult"
+                },
+                "type": "array"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            ],
+            "minLength": 1,
+            "title": "Web Search Data",
+            "description": "网络搜索数据"
+          }
+        },
+        "type": "object",
+        "required": ["title", "research_brief", "web_search_data"],
+        "title": "OutlineGenerationRequest",
+        "description": "Request model for outline generation."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      }
+    }
+  }
+}

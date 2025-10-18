@@ -1,0 +1,11 @@
+{
+  "name": "retrieval",
+  "tags": [
+    {
+      "name": "retrieval",
+      "description": "retrieval 相关的 API"
+    }
+  ],
+  "paths_count": 3,
+  "components": ["schemas"]
+}

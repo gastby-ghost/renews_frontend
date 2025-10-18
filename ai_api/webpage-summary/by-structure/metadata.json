@@ -1,0 +1,11 @@
+{
+  "name": "webpage-summary",
+  "tags": [
+    {
+      "name": "webpage-summary",
+      "description": "webpage-summary 相关的 API"
+    }
+  ],
+  "paths_count": 2,
+  "components": ["schemas"]
+}

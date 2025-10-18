@@ -1,0 +1,188 @@
+{
+  "ScopeAgentRequest": {
+    "properties": {
+      "query": {
+        "type": "string",
+        "maxLength": 1000,
+        "minLength": 1,
+        "title": "Query",
+        "description": "Query or input for the scope agent"
+      }
+    },
+    "type": "object",
+    "required": ["query"],
+    "title": "ScopeAgentRequest",
+    "description": "Request model for scope agent execution."
+  },
+  "ScopeAgentListResponse": {
+    "properties": {
+      "tasks": {
+        "items": {
+          "$ref": "#/components/schemas/ScopeAgentStatusResponse"
+        },
+        "type": "array",
+        "title": "Tasks",
+        "description": "List of agent tasks"
+      },
+      "total_count": {
+        "type": "integer",
+        "title": "Total Count",
+        "description": "Total number of tasks"
+      },
+      "user_id": {
+        "type": "string",
+        "title": "User Id",
+        "description": "User ID"
+      },
+      "project_id": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Project Id",
+        "description": "Project ID if filtered by project"
+      }
+    },
+    "type": "object",
+    "required": ["tasks", "total_count", "user_id"],
+    "title": "ScopeAgentListResponse",
+    "description": "Response model for listing scope agent tasks."
+  },
+  "ScopeAgentStatusResponse": {
+    "properties": {
+      "task_id": {
+        "type": "string",
+        "title": "Task Id",
+        "description": "Task ID"
+      },
+      "status": {
+        "type": "string",
+        "title": "Status",
+        "description": "Current status of the agent"
+      },
+      "progress": {
+        "type": "integer",
+        "title": "Progress",
+        "description": "Progress percentage (0-100)"
+      },
+      "result": {
+        "anyOf": [
+          {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Result",
+        "description": "Result data if the agent completed successfully"
+      },
+      "error": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Error",
+        "description": "Error message if the agent failed"
+      },
+      "user_id": {
+        "type": "string",
+        "title": "User Id",
+        "description": "User ID associated with the task"
+      },
+      "project_id": {
+        "type": "string",
+        "title": "Project Id",
+        "description": "Project ID associated with the task"
+      },
+      "agent_type": {
+        "type": "string",
+        "title": "Agent Type",
+        "description": "Type of agent"
+      },
+      "created_at": {
+        "type": "number",
+        "title": "Created At",
+        "description": "Timestamp when the task was created"
+      },
+      "updated_at": {
+        "type": "number",
+        "title": "Updated At",
+        "description": "Timestamp when the task was last updated"
+      }
+    },
+    "type": "object",
+    "required": [
+      "task_id",
+      "status",
+      "progress",
+      "user_id",
+      "project_id",
+      "agent_type",
+      "created_at",
+      "updated_at"
+    ],
+    "title": "ScopeAgentStatusResponse",
+    "description": "Response model for scope agent status."
+  },
+  "ScopeAgentResponse": {
+    "properties": {
+      "success": {
+        "type": "boolean",
+        "title": "Success",
+        "description": "Whether the agent execution was started successfully"
+      },
+      "task_id": {
+        "type": "string",
+        "title": "Task Id",
+        "description": "Unique task ID for tracking the agent execution"
+      },
+      "message": {
+        "type": "string",
+        "title": "Message",
+        "description": "Status message"
+      },
+      "user_id": {
+        "type": "string",
+        "title": "User Id",
+        "description": "User ID associated with the task"
+      },
+      "project_id": {
+        "type": "string",
+        "title": "Project Id",
+        "description": "Project ID associated with the task"
+      },
+      "agent_type": {
+        "type": "string",
+        "title": "Agent Type",
+        "description": "Type of agent that was executed"
+      }
+    },
+    "type": "object",
+    "required": ["success", "task_id", "message", "user_id", "project_id", "agent_type"],
+    "title": "ScopeAgentResponse",
+    "description": "Response model for scope agent execution."
+  },
+  "HTTPValidationError": {
+    "properties": {
+      "detail": {
+        "items": {
+          "$ref": "#/components/schemas/ValidationError"
+        },
+        "type": "array",
+        "title": "Detail"
+      }
+    },
+    "type": "object",
+    "title": "HTTPValidationError"
+  }
+}

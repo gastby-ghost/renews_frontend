@@ -1,0 +1,9 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "AI Service API",
+    "description": "MediaAgent ReNews AI Content Creation Service",
+    "version": "1.0.0"
+  },
+  "servers": []
+}

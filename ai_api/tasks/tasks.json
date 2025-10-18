@@ -1,0 +1,104 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "AI Service API",
+    "description": "MediaAgent ReNews AI Content Creation Service",
+    "version": "1.0.0"
+  },
+  "servers": [],
+  "paths": {
+    "/api/v1/ai/tasks/\\{task_id\\}/cancel": {
+      "post": {
+        "tags": ["tasks"],
+        "summary": "Cancel Task",
+        "description": "基于 task_id 撤销/中断 Celery 异步任务。\n\nArgs:\n    task_id: Celery 任务ID\n    terminate: 若任务已开始，是否通过信号强制终止\n    signal: 终止信号（Linux 下常用 \"SIGTERM\"/\"SIGKILL\"）。仅在 terminate=True 时生效。\n\nReturns:\n    撤销结果",
+        "operationId": "cancel_task_api_v1_ai_tasks___task_id___cancel_post",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Task Id"
+            }
+          },
+          {
+            "name": "terminate",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Terminate"
+            }
+          },
+          {
+            "name": "signal",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "SIGTERM",
+              "title": "Signal"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Cancel Task Api V1 Ai Tasks   Task Id   Cancel Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "tasks",
+      "description": "tasks 相关的 API"
+    }
+  ],
+  "components": {
+    "schemas": {
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      }
+    }
+  }
+}
