@@ -257,6 +257,13 @@
       // 登录请求
       const { login, password } = formData
 
+      console.log('[Login] 开始登录请求:', {
+        login,
+        password: password ? '***' : 'empty',
+        remember_me: formData.remember_me,
+        apiUrl: import.meta.env.VITE_API_URL
+      })
+
       const authResponse = await AuthService.login(
         {
           login,
@@ -269,13 +276,21 @@
         }
       )
 
+      console.log('[Login] 登录响应:', authResponse)
+
       // 验证响应
       if (!authResponse.success || !authResponse.token) {
+        console.log('[Login] 登录响应验证失败:', {
+          success: authResponse.success,
+          hasToken: !!authResponse.token,
+          message: authResponse.message
+        })
         throw new Error(authResponse.message || '登录失败')
       }
 
       // 使用新的登录方法处理认证响应
       const loginSuccess = userStore.loginWithAuthResponse(authResponse)
+      console.log('[Login] 登录响应处理结果:', loginSuccess)
 
       if (!loginSuccess) {
         throw new Error('登录响应处理失败')
@@ -284,8 +299,10 @@
       // 如果认证响应中没有用户信息，单独获取
       if (!authResponse.user) {
         try {
+          console.log('[Login] 获取用户信息...')
           const userInfo = await UserService.getUserInfo()
           userStore.setUserInfo(userInfo)
+          console.log('[Login] 用户信息获取成功:', userInfo)
         } catch (userInfoError) {
           console.warn('获取用户信息失败，但登录成功:', userInfoError)
         }
@@ -295,6 +312,7 @@
       showLoginSuccessNotice()
       router.push('/')
     } catch (error) {
+      console.error('[Login] 登录错误:', error)
       // 处理 HttpError
       if (error instanceof HttpError) {
         ElMessage.error(error.message || '登录失败，请检查用户名和密码')

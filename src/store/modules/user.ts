@@ -51,8 +51,30 @@ export const useUserStore = defineStore(
      * 设置用户信息
      * @param newInfo 新的用户信息
      */
-    const setUserInfo = (newInfo: Api.User.UserInfo) => {
-      info.value = newInfo
+    const setUserInfo = (newInfo: Api.User.UserInfo | Api.Auth.UserResponse) => {
+      // 处理不同格式的用户信息
+      if ('id' in newInfo && 'username' in newInfo) {
+        // UserResponse格式 -> UserInfo格式转换
+        const userInfo: Api.User.UserInfo = {
+          userId: newInfo.id,
+          userName: newInfo.username,
+          roles: newInfo.roles || [],
+          buttons: [],
+          avatar: newInfo.avatar,
+          email: newInfo.email,
+          phone: '',
+          // 扩展字段
+          id: newInfo.id,
+          nickName: newInfo.username,
+          userEmail: newInfo.email,
+          userRoles: newInfo.roles || [],
+          status: newInfo.is_active ? '1' : '2'
+        }
+        info.value = userInfo
+      } else {
+        // 已经是UserInfo格式
+        info.value = newInfo as Api.User.UserInfo
+      }
     }
 
     /**
@@ -200,6 +222,8 @@ export const useUserStore = defineStore(
      * @param authResponse 认证响应
      */
     const loginWithAuthResponse = (authResponse: Api.Auth.AuthResponse) => {
+      console.log('[UserStore] 处理登录响应:', authResponse)
+
       if (authResponse.success && authResponse.token) {
         // 设置令牌
         setToken(
@@ -210,11 +234,8 @@ export const useUserStore = defineStore(
 
         // 设置用户信息
         if (authResponse.user) {
+          console.log('[UserStore] 设置用户信息:', authResponse.user)
           setUserInfo(authResponse.user)
-          // 添加邮箱字段到用户状态（如果存在）
-          if (authResponse.user.email) {
-            info.value.email = authResponse.user.email
-          }
         }
 
         // 设置登录状态
@@ -223,8 +244,11 @@ export const useUserStore = defineStore(
         // 设置自动令牌刷新
         setupTokenRefresh()
 
+        console.log('[UserStore] 登录成功，用户状态:', info.value)
         return true
       }
+
+      console.log('[UserStore] 登录失败:', authResponse)
       return false
     }
 

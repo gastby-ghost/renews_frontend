@@ -51,6 +51,12 @@ const axiosInstance = axios.create({
 /** 请求拦截器 */
 axiosInstance.interceptors.request.use(
   (request: InternalAxiosRequestConfig) => {
+    console.log('[HTTP Request] 发送请求:', {
+      url: request.url,
+      method: request.method,
+      data: request.data,
+      headers: request.headers
+    })
     const { accessToken } = useUserStore()
     if (accessToken) {
       // 使用Bearer token格式
@@ -65,6 +71,7 @@ axiosInstance.interceptors.request.use(
     return request
   },
   (error) => {
+    console.log('[HTTP Request] 请求配置错误:', error)
     showError(createHttpError($t('httpMsg.requestConfigError'), ApiStatus.error))
     return Promise.reject(error)
   }
@@ -73,6 +80,35 @@ axiosInstance.interceptors.request.use(
 /** 响应拦截器 */
 axiosInstance.interceptors.response.use(
   (response: AxiosResponse<Api.Http.BaseResponse>) => {
+    console.log('[HTTP Response] 成功响应:', {
+      url: response.config.url,
+      status: response.status,
+      data: response.data
+    })
+
+    // 检查是否是认证相关的API，这些API可能有不同的响应格式
+    const isAuthAPI = response.config.url?.includes('/api/v1/core/')
+    if (isAuthAPI) {
+      // 认证API的特殊处理
+      const responseData = response.data as any
+
+      // 检查是否是AuthResponse格式 (success字段而不是code字段)
+      if (Object.prototype.hasOwnProperty.call(responseData, 'success')) {
+        console.log('[HTTP Response] 检测到AuthResponse格式')
+
+        // 如果success为true，直接返回响应
+        if (responseData.success === true) {
+          return response
+        } else {
+          // 如果success为false，抛出错误
+          const errorMessage =
+            responseData.message || responseData.msg || $t('httpMsg.requestFailed')
+          throw createHttpError(errorMessage, ApiStatus.error)
+        }
+      }
+    }
+
+    // 标准API响应处理
     const { code, msg } = response.data
     if (code === ApiStatus.success) return response
     if (code === ApiStatus.unauthorized) handleUnauthorizedError(msg)
@@ -86,6 +122,14 @@ axiosInstance.interceptors.response.use(
     throw createHttpError(errorMessage, code)
   },
   async (error) => {
+    console.log('[HTTP Response] 错误响应:', {
+      url: error.config?.url,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      message: error.message
+    })
+
     const originalRequest = error.config as ExtendedAxiosRequestConfig
 
     // 处理401错误和令牌刷新
@@ -244,7 +288,19 @@ async function request<T = any>(config: ExtendedAxiosRequestConfig): Promise<T> 
 
   try {
     const res = await axiosInstance.request<Api.Http.BaseResponse<T>>(config)
-    return res.data.data as T
+
+    // 检查是否是认证相关的API，这些API可能有不同的响应格式
+    const isAuthAPI = config.url?.includes('/api/v1/core/')
+
+    if (isAuthAPI) {
+      // 认证API的特殊处理，直接返回整个响应数据
+      console.log('[Request] 认证API，返回完整响应数据:', res.data)
+      return res.data as T
+    } else {
+      // 标准API响应处理，返回data字段
+      console.log('[Request] 标准API，返回data字段:', res.data.data)
+      return res.data.data as T
+    }
   } catch (error) {
     if (error instanceof HttpError && error.code !== ApiStatus.unauthorized) {
       const showMsg = config.showErrorMessage !== false

@@ -74,8 +74,21 @@ declare namespace Api {
       token?: string | null
       refresh_token?: string | null
       expires_in?: number | null
-      user?: Api.User.UserInfo | null
+      user?: UserResponse | null
       redirect_url?: string | null
+    }
+
+    /** 用户响应 */
+    interface UserResponse {
+      id: number
+      username: string
+      email: string
+      is_active: boolean
+      is_verified: boolean
+      created_at: string
+      updated_at: string
+      roles?: string[]
+      avatar?: string
     }
 
     /** 待注册响应 */
