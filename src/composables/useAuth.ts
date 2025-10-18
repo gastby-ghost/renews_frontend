@@ -2,6 +2,7 @@ import { useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useUserStore } from '@/store/modules/user'
 import { useCommon } from '@/composables/useCommon'
+import { hasPermission, hasButtonPermission } from '@/utils/auth'
 import type { AppRouteRecord } from '@/types/router'
 
 type AuthItem = NonNullable<AppRouteRecord['meta']['authList']>[number]
@@ -35,14 +36,35 @@ export const useAuth = () => {
   const hasAuth = (auth: string): boolean => {
     // 前端模式
     if (isFrontendMode.value) {
-      return frontendAuthList.includes(auth)
+      return hasButtonPermission(frontendAuthList, auth)
     }
 
     // 后端模式
     return backendAuthList.some((item) => item?.authMark === auth)
   }
 
+  /**
+   * 检查是否拥有特定角色权限
+   * @param roles 需要的角色列表
+   * @returns 是否有权限
+   */
+  const hasRole = (roles: string[]): boolean => {
+    const userRoles = info.value?.roles ?? []
+    return hasPermission(userRoles, roles)
+  }
+
+  /**
+   * 检查用户是否已认证
+   * @returns 是否已认证
+   */
+  const isAuthenticated = (): boolean => {
+    const { accessToken } = storeToRefs(userStore)
+    return !!accessToken.value
+  }
+
   return {
-    hasAuth
+    hasAuth,
+    hasRole,
+    isAuthenticated
   }
 }

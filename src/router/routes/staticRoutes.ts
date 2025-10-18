@@ -36,6 +36,18 @@ export const staticRoutes: AppRouteRecordRaw[] = [
     meta: { title: 'menus.forgetPassword.title', isHideTab: true, noLogin: true, setTheme: true }
   },
   {
+    path: RoutesAlias.VerifyEmail,
+    name: 'VerifyEmail',
+    component: () => import('@views/auth/verify-email/index.vue'),
+    meta: { title: 'menus.verifyEmail.title', isHideTab: true, noLogin: true, setTheme: true }
+  },
+  {
+    path: RoutesAlias.UserPreferences,
+    name: 'UserPreferences',
+    component: () => import('@views/user/preferences/index.vue'),
+    meta: { title: 'menus.userPreferences.title', isHideTab: true }
+  },
+  {
     path: '/403',
     name: 'Exception403',
     component: () => import('@views/exception/403/index.vue'),

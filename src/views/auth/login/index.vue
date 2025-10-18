@@ -55,8 +55,8 @@
                 </ElOption>
               </ElSelect>
             </ElFormItem>
-            <ElFormItem prop="username">
-              <ElInput :placeholder="$t('login.placeholder[0]')" v-model.trim="formData.username" />
+            <ElFormItem prop="login">
+              <ElInput :placeholder="$t('login.placeholder[0]')" v-model.trim="formData.login" />
             </ElFormItem>
             <ElFormItem prop="password">
               <ElInput
@@ -87,9 +87,7 @@
             </div>
 
             <div class="forget-password">
-              <ElCheckbox v-model="formData.rememberPassword">{{
-                $t('login.rememberPwd')
-              }}</ElCheckbox>
+              <ElCheckbox v-model="formData.remember_me">{{ $t('login.rememberMe') }}</ElCheckbox>
               <RouterLink :to="RoutesAlias.ForgetPassword">{{ $t('login.forgetPwd') }}</RouterLink>
             </div>
 
@@ -129,6 +127,7 @@
   import { useI18n } from 'vue-i18n'
   import { HttpError } from '@/utils/http/error'
   import { themeAnimation } from '@/utils/theme/animation'
+  import { AuthService } from '@/api/authApi'
   import { UserService } from '@/api/usersApi'
 
   defineOptions({ name: 'Login' })
@@ -186,14 +185,42 @@
 
   const formData = reactive({
     account: '',
-    username: '',
+    login: '',
     password: '',
-    rememberPassword: true
+    remember_me: false
   })
 
   const rules = computed<FormRules>(() => ({
-    username: [{ required: true, message: t('login.placeholder[0]'), trigger: 'blur' }],
-    password: [{ required: true, message: t('login.placeholder[1]'), trigger: 'blur' }]
+    login: [
+      { required: true, message: t('login.placeholder[0]'), trigger: 'blur' },
+      {
+        validator: (rule: any, value: string, callback: any) => {
+          if (!value) {
+            callback(new Error(t('login.placeholder[0]')))
+          } else {
+            // 简单的邮箱格式验证
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+            const isEmail = emailRegex.test(value)
+
+            // 如果是邮箱格式，检查邮箱长度
+            if (isEmail && value.length > 50) {
+              callback(new Error(t('login.emailTooLong')))
+            }
+            // 如果不是邮箱，检查用户名长度
+            else if (!isEmail && (value.length < 3 || value.length > 20)) {
+              callback(new Error(t('login.usernameLengthError')))
+            } else {
+              callback()
+            }
+          }
+        },
+        trigger: 'blur'
+      }
+    ],
+    password: [
+      { required: true, message: t('login.placeholder[1]'), trigger: 'blur' },
+      { min: 6, message: t('login.passwordMinLength'), trigger: 'blur' }
+    ]
   }))
 
   const loading = ref(false)
@@ -206,7 +233,7 @@
   const setupAccount = (key: AccountKey) => {
     const selectedAccount = accounts.value.find((account: Account) => account.key === key)
     formData.account = key
-    formData.username = selectedAccount?.userName ?? ''
+    formData.login = selectedAccount?.userName ?? ''
     formData.password = selectedAccount?.password ?? ''
   }
 
@@ -228,23 +255,41 @@
       loading.value = true
 
       // 登录请求
-      const { username, password } = formData
+      const { login, password } = formData
 
-      const { token, refreshToken } = await UserService.login({
-        userName: username,
-        password
-      })
+      const authResponse = await AuthService.login(
+        {
+          login,
+          password,
+          remember_me: formData.remember_me
+        },
+        {
+          // 禁用自动错误显示，因为我们将在catch块中处理
+          showErrorMessage: false
+        }
+      )
 
-      // 验证token
-      if (!token) {
-        throw new Error('Login failed - no token received')
+      // 验证响应
+      if (!authResponse.success || !authResponse.token) {
+        throw new Error(authResponse.message || '登录失败')
       }
 
-      // 存储token和用户信息
-      userStore.setToken(token, refreshToken)
-      const userInfo = await UserService.getUserInfo()
-      userStore.setUserInfo(userInfo)
-      userStore.setLoginStatus(true)
+      // 使用新的登录方法处理认证响应
+      const loginSuccess = userStore.loginWithAuthResponse(authResponse)
+
+      if (!loginSuccess) {
+        throw new Error('登录响应处理失败')
+      }
+
+      // 如果认证响应中没有用户信息，单独获取
+      if (!authResponse.user) {
+        try {
+          const userInfo = await UserService.getUserInfo()
+          userStore.setUserInfo(userInfo)
+        } catch (userInfoError) {
+          console.warn('获取用户信息失败，但登录成功:', userInfoError)
+        }
+      }
 
       // 登录成功处理
       showLoginSuccessNotice()
@@ -252,10 +297,10 @@
     } catch (error) {
       // 处理 HttpError
       if (error instanceof HttpError) {
-        // console.log(error.code)
+        ElMessage.error(error.message || '登录失败，请检查用户名和密码')
       } else {
         // 处理非 HttpError
-        ElMessage.error('登录失败，请稍后重试')
+        ElMessage.error(error instanceof Error ? error.message : '登录失败，请稍后重试')
         console.error('[Login] Unexpected error:', error)
       }
     } finally {

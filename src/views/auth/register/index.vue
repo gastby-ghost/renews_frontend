@@ -18,20 +18,29 @@
               />
             </ElFormItem>
 
+            <ElFormItem prop="email">
+              <ElInput
+                v-model.trim="formData.email"
+                :placeholder="$t('register.placeholder[1]')"
+                type="email"
+                autocomplete="off"
+              />
+            </ElFormItem>
+
             <ElFormItem prop="password">
               <ElInput
                 v-model.trim="formData.password"
-                :placeholder="$t('register.placeholder[1]')"
+                :placeholder="$t('register.placeholder[2]')"
                 type="password"
                 autocomplete="off"
                 show-password
               />
             </ElFormItem>
 
-            <ElFormItem prop="confirmPassword">
+            <ElFormItem prop="confirm_password">
               <ElInput
-                v-model.trim="formData.confirmPassword"
-                :placeholder="$t('register.placeholder[2]')"
+                v-model.trim="formData.confirm_password"
+                :placeholder="$t('register.placeholder[3]')"
                 type="password"
                 autocomplete="off"
                 @keyup.enter="register"
@@ -39,9 +48,15 @@
               />
             </ElFormItem>
 
-            <ElFormItem prop="agreement">
-              <ElCheckbox v-model="formData.agreement">
+            <ElFormItem prop="agree_to_terms">
+              <ElCheckbox v-model="formData.agree_to_terms">
                 {{ $t('register.agreeText') }}
+                <router-link
+                  style="color: var(--main-color); text-decoration: none"
+                  to="/terms-of-service"
+                  >{{ $t('register.termsOfService') }}</router-link
+                >
+                {{ $t('common.and') }}
                 <router-link
                   style="color: var(--main-color); text-decoration: none"
                   to="/privacy-policy"
@@ -78,9 +93,11 @@
 <script setup lang="ts">
   import AppConfig from '@/config'
   import { RoutesAlias } from '@/router/routesAlias'
-  import { ElMessage } from 'element-plus'
+  import { ElMessage, ElNotification } from 'element-plus'
   import type { FormInstance, FormRules } from 'element-plus'
   import { useI18n } from 'vue-i18n'
+  import { AuthService } from '@/api/authApi'
+  import { HttpError } from '@/utils/http/error'
 
   defineOptions({ name: 'Register' })
 
@@ -94,47 +111,68 @@
 
   const formData = reactive({
     username: '',
+    email: '',
     password: '',
-    confirmPassword: '',
-    agreement: false
+    confirm_password: '',
+    agree_to_terms: false
   })
 
-  const validatePass = (rule: any, value: string, callback: any) => {
-    if (value === '') {
-      callback(new Error(t('register.placeholder[1]')))
+  const validateUsername = (rule: any, value: string, callback: any) => {
+    if (!value) {
+      callback(new Error(t('register.rule[0]')))
+    } else if (value.length < 3 || value.length > 20) {
+      callback(new Error(t('register.rule[4]')))
     } else {
-      if (formData.confirmPassword !== '') {
-        formRef.value?.validateField('confirmPassword')
+      callback()
+    }
+  }
+
+  const validateEmail = (rule: any, value: string, callback: any) => {
+    if (!value) {
+      callback(new Error(t('register.rule[1]')))
+    } else {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (!emailRegex.test(value)) {
+        callback(new Error(t('register.rule[6]')))
+      } else {
+        callback()
+      }
+    }
+  }
+
+  const validatePass = (rule: any, value: string, callback: any) => {
+    if (!value) {
+      callback(new Error(t('register.rule[2]')))
+    } else if (value.length < 6) {
+      callback(new Error(t('register.rule[5]')))
+    } else {
+      if (formData.confirm_password !== '') {
+        formRef.value?.validateField('confirm_password')
       }
       callback()
     }
   }
 
   const validatePass2 = (rule: any, value: string, callback: any) => {
-    if (value === '') {
-      callback(new Error(t('register.rule[0]')))
+    if (!value) {
+      callback(new Error(t('register.rule[2]')))
     } else if (value !== formData.password) {
-      callback(new Error(t('register.rule[1]')))
+      callback(new Error(t('register.rule[3]')))
     } else {
       callback()
     }
   }
 
   const rules = reactive<FormRules>({
-    username: [
-      { required: true, message: t('register.placeholder[0]'), trigger: 'blur' },
-      { min: 3, max: 20, message: t('register.rule[2]'), trigger: 'blur' }
-    ],
-    password: [
-      { required: true, validator: validatePass, trigger: 'blur' },
-      { min: 6, message: t('register.rule[3]'), trigger: 'blur' }
-    ],
-    confirmPassword: [{ required: true, validator: validatePass2, trigger: 'blur' }],
-    agreement: [
+    username: [{ required: true, validator: validateUsername, trigger: 'blur' }],
+    email: [{ required: true, validator: validateEmail, trigger: 'blur' }],
+    password: [{ required: true, validator: validatePass, trigger: 'blur' }],
+    confirm_password: [{ required: true, validator: validatePass2, trigger: 'blur' }],
+    agree_to_terms: [
       {
         validator: (rule: any, value: boolean, callback: any) => {
           if (!value) {
-            callback(new Error(t('register.rule[4]')))
+            callback(new Error(t('register.rule[7]')))
           } else {
             callback()
           }
@@ -151,21 +189,52 @@
       await formRef.value.validate()
       loading.value = true
 
-      // 模拟注册请求
-      setTimeout(() => {
-        loading.value = false
-        ElMessage.success('注册成功')
-        toLogin()
-      }, 1000)
-    } catch (error) {
-      console.log('验证失败', error)
-    }
-  }
+      // 注册请求
+      const { username, email, password, confirm_password } = formData
 
-  const toLogin = () => {
-    setTimeout(() => {
-      router.push(RoutesAlias.Login)
-    }, 1000)
+      const registerResponse = await AuthService.register(
+        {
+          username,
+          email,
+          password,
+          confirm_password,
+          agree_to_terms: formData.agree_to_terms
+        },
+        {
+          // 禁用自动错误显示，因为我们将在catch块中处理
+          showErrorMessage: false
+        }
+      )
+
+      if (registerResponse.success) {
+        // 注册成功，显示成功提示
+        ElNotification({
+          title: t('register.success.title'),
+          message: t('register.success.message'),
+          type: 'success',
+          duration: 5000,
+          showClose: true
+        })
+
+        // 延迟跳转到登录页
+        setTimeout(() => {
+          router.push(RoutesAlias.Login)
+        }, 2000)
+      } else {
+        throw new Error(registerResponse.message || '注册失败')
+      }
+    } catch (error) {
+      // 处理 HttpError
+      if (error instanceof HttpError) {
+        ElMessage.error(error.message || '注册失败，请稍后重试')
+      } else {
+        // 处理非 HttpError
+        ElMessage.error(error instanceof Error ? error.message : '注册失败，请稍后重试')
+        console.error('[Register] Unexpected error:', error)
+      }
+    } finally {
+      loading.value = false
+    }
   }
 </script>
 

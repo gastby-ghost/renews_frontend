@@ -16,6 +16,7 @@ import { loadingService } from '@/utils/ui'
 import { useCommon } from '@/composables/useCommon'
 import { useWorktabStore } from '@/store/modules/worktab'
 import { UserService } from '@/api/usersApi'
+import { isAuthenticated } from '@/utils/auth'
 
 // 前端权限模式 loading 关闭延时，提升用户体验
 const LOADING_DELAY = 100
@@ -132,7 +133,10 @@ async function handleLoginStatus(
   userStore: ReturnType<typeof useUserStore>,
   next: NavigationGuardNext
 ): Promise<boolean> {
-  if (!userStore.isLogin && to.path !== RoutesAlias.Login && !to.meta.noLogin) {
+  // 检查登录状态和令牌有效性
+  const isUserLoggedIn = userStore.isLogin && isAuthenticated(userStore.accessToken)
+
+  if (!isUserLoggedIn && to.path !== RoutesAlias.Login && !to.meta.noLogin) {
     userStore.logOut()
     next(RoutesAlias.Login)
     return false
@@ -161,8 +165,17 @@ async function handleDynamicRoutes(
       try {
         const data = await UserService.getUserInfo()
         userStore.setUserInfo(data)
+
+        // 设置自动令牌刷新
+        userStore.setupTokenRefresh()
       } catch (error) {
         console.error('获取用户信息失败', error)
+        // 如果获取用户信息失败，可能是令牌过期，尝试登出
+        if (!isAuthenticated(userStore.accessToken)) {
+          userStore.logOut()
+          next(RoutesAlias.Login)
+          return
+        }
       }
     }
 

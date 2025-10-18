@@ -50,6 +50,69 @@ declare namespace Api {
       token: string
       refreshToken: string
     }
+
+    /** 用户注册请求 */
+    interface UserRegisterRequest {
+      username: string
+      email: string
+      password: string
+      confirm_password: string
+      agree_to_terms: boolean
+    }
+
+    /** 用户登录请求 */
+    interface UserLoginRequest {
+      login: string
+      password: string
+      remember_me?: boolean
+    }
+
+    /** 认证响应 */
+    interface AuthResponse {
+      success: boolean
+      message: string
+      token?: string | null
+      refresh_token?: string | null
+      expires_in?: number | null
+      user?: Api.User.UserInfo | null
+      redirect_url?: string | null
+    }
+
+    /** 待注册响应 */
+    interface PendingRegistrationResponse {
+      success: boolean
+      message: string
+      token: string
+      email: string
+      username: string
+    }
+
+    /** 忘记密码请求 */
+    interface ForgotPasswordRequest {
+      email: string
+      newpassword: string
+    }
+
+    /** 忘记密码响应 */
+    interface ForgotPasswordResponse {
+      success: boolean
+      message: string
+    }
+
+    /** 验证响应 */
+    interface VerificationResponse {
+      success: boolean
+      message: string
+      verification_type?: string | null
+      user_id?: number | null
+      redirect_url?: string | null
+    }
+
+    /** 删除账户请求 */
+    interface DeleteAccountRequest {
+      password: string
+      confirmation: string
+    }
   }
 
   /** 用户类型 */
@@ -63,6 +126,18 @@ declare namespace Api {
       avatar?: string
       email?: string
       phone?: string
+      // 扩展字段
+      id?: number
+      nickName?: string
+      userGender?: string
+      userPhone?: string
+      userEmail?: string
+      userRoles?: string[]
+      status?: '1' | '2' | '3' | '4' // 1: 在线 2: 离线 3: 异常 4: 注销
+      createBy?: string
+      createTime?: string
+      updateBy?: string
+      updateTime?: string
     }
 
     /** 用户列表数据 */
@@ -88,6 +163,64 @@ declare namespace Api {
       userPhone: string
       userEmail: string
       userRoles: string[]
+    }
+  }
+
+  /** 用户偏好类型 */
+  namespace Preferences {
+    /** 用户偏好设置 */
+    interface UserPreference {
+      user_id: string
+      theme?: 'light' | 'dark' | 'auto'
+      font_size?: 'small' | 'medium' | 'large'
+      auto_save_frequency?: '1' | '3' | '5' | '10' | '15' | '30'
+      language?: string
+      timezone?: string
+      notifications_enabled?: boolean
+      sound_enabled?: boolean
+      compact_mode?: boolean
+      show_tooltips?: boolean
+      auto_complete?: boolean
+      spell_check?: boolean
+      custom_settings?: Record<string, any>
+      created_at?: string
+      updated_at?: string
+    }
+
+    /** 更新用户偏好请求 */
+    interface UpdateUserPreferenceRequest {
+      theme?: 'light' | 'dark' | 'auto' | null
+      font_size?: 'small' | 'medium' | 'large' | null
+      auto_save_interval?: number | null
+      shortcut_settings?: Record<string, any> | null
+      language?: string | null
+      timezone?: string | null
+      notifications_enabled?: boolean | null
+      sound_enabled?: boolean | null
+      compact_mode?: boolean | null
+      show_tooltips?: boolean | null
+      auto_complete?: boolean | null
+      spell_check?: boolean | null
+      custom_settings?: Record<string, any> | null
+    }
+
+    /** 用户偏好响应 */
+    interface UserPreferenceResponse {
+      theme?: string
+      font_size?: string
+      auto_save_interval?: number
+      shortcut_settings?: Record<string, any> | null
+      user_id: number
+      created_at: string
+      updated_at?: string | null
+    }
+
+    /** 默认偏好响应 */
+    interface DefaultPreferencesResponse {
+      theme: string
+      font_size: string
+      auto_save_interval: number
+      shortcut_settings: Record<string, any>
     }
   }
 }

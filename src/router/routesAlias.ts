@@ -8,6 +8,7 @@ export enum RoutesAlias {
   Login = '/auth/login', // 登录
   Register = '/auth/register', // 注册
   ForgetPassword = '/auth/forget-password', // 忘记密码
+  VerifyEmail = '/auth/verify-email', // 邮件验证
   Exception403 = '/exception/403', // 403
   Exception404 = '/exception/404', // 404
   Exception500 = '/exception/500', // 500
@@ -43,6 +44,7 @@ export enum RoutesAlias {
   User = '/system/user', // 账户
   Role = '/system/role', // 角色
   UserCenter = '/system/user-center', // 用户中心
+  UserPreferences = '/user/preferences', // 用户偏好设置
   Menu = '/system/menu', // 菜单
   NestedMenu1 = '/system/nested/menu1', // 嵌套菜单1
   NestedMenu21 = '/system/nested/menu2', // 嵌套菜单2-1

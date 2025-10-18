@@ -94,7 +94,9 @@ export function handleError(error: AxiosError<ErrorResponse>): never {
   }
 
   const statusCode = error.response?.status
-  const errorMessage = error.response?.data?.msg || error.message
+  const responseData = error.response?.data as any
+  const errorMessage = responseData?.msg || error.message
+  const detailMessage = responseData?.detail // 获取服务器返回的具体错误详情
   const requestConfig = error.config
 
   // 处理网络错误
@@ -105,10 +107,11 @@ export function handleError(error: AxiosError<ErrorResponse>): never {
     })
   }
 
-  // 处理 HTTP 状态码错误
-  const message = statusCode
-    ? getErrorMessage(statusCode)
-    : errorMessage || $t('httpMsg.requestFailed')
+  // 优先使用服务器返回的具体错误详情，其次使用msg字段，最后使用通用错误消息
+  const message =
+    detailMessage ||
+    errorMessage ||
+    (statusCode ? getErrorMessage(statusCode) : $t('httpMsg.requestFailed'))
   throw new HttpError(message, statusCode || ApiStatus.error, {
     data: error.response.data,
     url: requestConfig?.url,
