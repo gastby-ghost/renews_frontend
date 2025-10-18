@@ -1,8 +1,5 @@
 import { router } from '@/router'
 import { App, Directive, DirectiveBinding } from 'vue'
-import { storeToRefs } from 'pinia'
-import { useUserStore } from '@/store/modules/user'
-import { hasButtonPermission } from '@/utils/auth'
 
 /**
  * 权限指令（后端控制模式可用）
@@ -21,14 +18,9 @@ function checkAuthPermission(el: HTMLElement, binding: AuthBinding): void {
   // 检查是否有对应的权限标识
   const hasRoutePermission = authList.some((item) => item.authMark === binding.value)
 
-  // 检查用户是否有按钮权限
-  const userStore = useUserStore()
-  const { info } = storeToRefs(userStore)
-  const userButtons = info.value?.buttons ?? []
-  const hasButtonAuth = hasButtonPermission(userButtons, binding.value)
-
-  // 如果没有权限，移除元素
-  if (!hasRoutePermission && !hasButtonAuth) {
+  // 检查用户是否有按钮权限 - 新 API 结构不再支持按钮权限
+  // 仅检查路由权限
+  if (!hasRoutePermission) {
     removeElement(el)
   }
 }

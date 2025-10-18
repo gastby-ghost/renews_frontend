@@ -2,7 +2,7 @@
   <ArtBasicBanner
     class="banner"
     height="13.3rem"
-    :title="`欢迎回来 ${userInfo.userName}`"
+    :title="`欢迎回来 ${userInfo.username}`"
     backgroundColor="var(--el-color-primary-light-9)"
     titleColor="var(--art-gray-900)"
     :decoration="false"

@@ -4,26 +4,29 @@
       <div class="left-wrap">
         <div class="user-wrap box-style">
           <img class="bg" src="@imgs/user/bg.webp" />
-          <img class="avatar" src="@imgs/user/avatar.webp" />
-          <h2 class="name">{{ userInfo.userName }}</h2>
-          <p class="des">Art Design Pro 是一款漂亮的后台管理系统模版.</p>
+          <img class="avatar" :src="userInfo.avatar || '@imgs/user/avatar.webp'" />
+          <h2 class="name">{{ userInfo.username }}</h2>
+          <p class="des">{{ date }}</p>
 
           <div class="outer-info">
             <div>
               <i class="iconfont-sys">&#xe72e;</i>
-              <span>jdkjjfnndf@mall.com</span>
+              <span>{{ userInfo.email }}</span>
             </div>
             <div>
               <i class="iconfont-sys">&#xe608;</i>
-              <span>交互专家</span>
+              <span>{{ userInfo.is_active ? '活跃用户' : '非活跃用户' }}</span>
             </div>
             <div>
               <i class="iconfont-sys">&#xe736;</i>
-              <span>广东省深圳市</span>
+              <span>{{ userInfo.is_verified ? '已验证' : '未验证' }}</span>
             </div>
             <div>
               <i class="iconfont-sys">&#xe811;</i>
-              <span>字节跳动－某某平台部－UED</span>
+              <span
+                >注册时间:
+                {{ userInfo.created_at ? formatDate(userInfo.created_at) : '未知' }}</span
+              >
             </div>
           </div>
 
@@ -59,27 +62,20 @@
             label-position="top"
           >
             <ElRow>
-              <ElFormItem label="姓名" prop="realName">
-                <el-input v-model="form.realName" :disabled="!isEdit" />
+              <ElFormItem label="用户名" prop="username">
+                <ElInput v-model="form.username" :disabled="!isEdit" />
               </ElFormItem>
-              <ElFormItem label="性别" prop="sex" class="right-input">
-                <ElSelect v-model="form.sex" placeholder="Select" :disabled="!isEdit">
-                  <ElOption
-                    v-for="item in options"
-                    :key="item.value"
-                    :label="item.label"
-                    :value="item.value"
-                  />
-                </ElSelect>
+              <ElFormItem label="邮箱" prop="email" class="right-input">
+                <ElInput v-model="form.email" :disabled="!isEdit" />
               </ElFormItem>
             </ElRow>
 
             <ElRow>
-              <ElFormItem label="昵称" prop="nikeName">
-                <ElInput v-model="form.nikeName" :disabled="!isEdit" />
+              <ElFormItem label="昵称" prop="nickName">
+                <ElInput v-model="form.nickName" :disabled="!isEdit" />
               </ElFormItem>
-              <ElFormItem label="邮箱" prop="email" class="right-input">
-                <ElInput v-model="form.email" :disabled="!isEdit" />
+              <ElFormItem label="头像" prop="avatar" class="right-input">
+                <ElInput v-model="form.avatar" :disabled="!isEdit" placeholder="头像URL" />
               </ElFormItem>
             </ElRow>
 
@@ -97,7 +93,13 @@
             </ElFormItem>
 
             <div class="el-form-item-right">
-              <ElButton type="primary" style="width: 90px" v-ripple @click="edit">
+              <ElButton
+                type="primary"
+                style="width: 90px"
+                v-ripple
+                @click="edit"
+                :loading="isLoading"
+              >
                 {{ isEdit ? '保存' : '编辑' }}
               </ElButton>
             </div>
@@ -149,7 +151,8 @@
 
 <script setup lang="ts">
   import { useUserStore } from '@/store/modules/user'
-  import { ElForm, FormInstance, FormRules } from 'element-plus'
+  import { AuthService } from '@/api/authApi'
+  import { ElForm, FormInstance, FormRules, ElMessage } from 'element-plus'
 
   defineOptions({ name: 'UserCenter' })
 
@@ -158,15 +161,20 @@
 
   const isEdit = ref(false)
   const isEditPwd = ref(false)
+  const isLoading = ref(false)
   const date = ref('')
+
+  // 表单数据 - 基于 core API 的实际字段
   const form = reactive({
-    realName: 'John Snow',
-    nikeName: '皮卡丘',
-    email: '59301283@mall.com',
-    mobile: '18888888888',
-    address: '广东省深圳市宝安区西乡街道101栋201',
-    sex: '2',
-    des: 'Art Design Pro 是一款漂亮的后台管理系统模版.'
+    username: '',
+    email: '',
+    avatar: '',
+    realName: '',
+    nickName: '',
+    mobile: '',
+    address: '',
+    sex: '',
+    des: ''
   })
 
   const pwdForm = reactive({
@@ -178,36 +186,71 @@
   const ruleFormRef = ref<FormInstance>()
 
   const rules = reactive<FormRules>({
-    realName: [
-      { required: true, message: '请输入昵称', trigger: 'blur' },
-      { min: 2, max: 50, message: '长度在 2 到 30 个字符', trigger: 'blur' }
+    username: [
+      { required: true, message: '请输入用户名', trigger: 'blur' },
+      { min: 2, max: 50, message: '长度在 2 到 50 个字符', trigger: 'blur' }
     ],
-    nikeName: [
-      { required: true, message: '请输入昵称', trigger: 'blur' },
-      { min: 2, max: 50, message: '长度在 2 到 30 个字符', trigger: 'blur' }
+    email: [
+      { required: true, message: '请输入邮箱', trigger: 'blur' },
+      { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
     ],
-    email: [{ required: true, message: '请输入昵称', trigger: 'blur' }],
-    mobile: [{ required: true, message: '请输入手机号码', trigger: 'blur' }],
-    address: [{ required: true, message: '请输入地址', trigger: 'blur' }],
-    sex: [{ type: 'array', required: true, message: '请选择性别', trigger: 'blur' }]
+    nickName: [
+      { required: true, message: '请输入昵称', trigger: 'blur' },
+      { min: 2, max: 50, message: '长度在 2 到 50 个字符', trigger: 'blur' }
+    ]
   })
-
-  const options = [
-    {
-      value: '1',
-      label: '男'
-    },
-    {
-      value: '2',
-      label: '女'
-    }
-  ]
 
   const lableList: Array<string> = ['专注设计', '很有想法', '辣~', '大长腿', '川妹子', '海纳百川']
 
   onMounted(() => {
     getDate()
+    loadUserData()
   })
+
+  // 加载用户数据
+  const loadUserData = async () => {
+    if (userInfo.value) {
+      // 从用户信息填充表单
+      form.username = userInfo.value.username || ''
+      form.email = userInfo.value.email || ''
+      form.avatar = userInfo.value.avatar || ''
+      form.realName = userInfo.value.username || ''
+      form.nickName = userInfo.value.username || ''
+    }
+  }
+
+  // 保存用户信息
+  const saveUserInfo = async () => {
+    if (!ruleFormRef.value) return
+
+    try {
+      await ruleFormRef.value.validate()
+      isLoading.value = true
+
+      // 只更新 API 支持的字段
+      const updateData = {
+        username: form.username,
+        email: form.email,
+        avatar: form.avatar
+      }
+
+      const response = await AuthService.updateAccountSettings(updateData)
+
+      if (response.success) {
+        ElMessage.success('用户信息更新成功')
+        // 更新本地存储的用户信息
+        userStore.setUserInfo(response)
+        isEdit.value = false
+      } else {
+        ElMessage.error('用户信息更新失败')
+      }
+    } catch (error) {
+      console.error('保存用户信息失败:', error)
+      ElMessage.error('保存失败，请检查输入内容')
+    } finally {
+      isLoading.value = false
+    }
+  }
 
   const getDate = () => {
     const d = new Date()
@@ -231,8 +274,21 @@
     date.value = text
   }
 
-  const edit = () => {
-    isEdit.value = !isEdit.value
+  const edit = async () => {
+    if (isEdit.value) {
+      // 保存模式
+      await saveUserInfo()
+    } else {
+      // 编辑模式
+      isEdit.value = true
+    }
+  }
+
+  // 格式化日期
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '未知'
+    const date = new Date(dateString)
+    return date.toLocaleDateString('zh-CN')
   }
 
   const editPwd = () => {

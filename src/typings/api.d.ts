@@ -143,9 +143,9 @@ declare namespace Api {
     }
   }
 
-  /** 用户类型 */
+  /** 用户类型 - 已废弃，使用 Auth.UserResponse 代替 */
   namespace User {
-    /** 用户信息 */
+    /** @deprecated 使用 Auth.UserResponse 代替 */
     interface UserInfo {
       userId: number
       userName: string
@@ -168,7 +168,7 @@ declare namespace Api {
       updateTime?: string
     }
 
-    /** 用户列表数据 */
+    /** @deprecated 用户列表数据 */
     interface UserListData {
       records: UserListItem[]
       current: number
@@ -176,7 +176,7 @@ declare namespace Api {
       total: number
     }
 
-    /** 用户列表项 */
+    /** @deprecated 用户列表项 */
     interface UserListItem {
       id: number
       avatar: string

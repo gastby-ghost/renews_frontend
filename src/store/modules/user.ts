@@ -27,8 +27,8 @@ export const useUserStore = defineStore(
     const isLock = ref(false)
     // 锁屏密码
     const lockPassword = ref('')
-    // 用户信息
-    const info = ref<Partial<Api.User.UserInfo>>({})
+    // 用户信息 - 仅存储来自 core API 的必要字段
+    const info = ref<Partial<Api.Auth.UserResponse>>({})
     // 搜索历史记录
     const searchHistory = ref<AppRouteRecord[]>([])
     // 访问令牌
@@ -48,38 +48,35 @@ export const useUserStore = defineStore(
     const getWorktabState = computed(() => useWorktabStore().$state)
 
     /**
-     * 设置用户信息
-     * @param newInfo 新的用户信息
+     * 设置用户信息 - 仅存储来自 core API 的必要字段
+     * @param newInfo 新的用户信息 (UserResponse 格式)
      */
-    const setUserInfo = (newInfo: Api.User.UserInfo | Api.Auth.UserResponse) => {
-      // 处理不同格式的用户信息
-      if ('id' in newInfo && 'username' in newInfo) {
-        // UserResponse格式 -> UserInfo格式转换
-        const userInfo: Api.User.UserInfo = {
-          userId: newInfo.id,
-          userName: newInfo.username,
-          // 移除权限相关字段，保留基础信息
-          roles: [], // 保留空数组以维持兼容性
-          buttons: [], // 保留空数组以维持兼容性
-          avatar: newInfo.avatar,
-          email: newInfo.email,
-          phone: '',
-          // 扩展字段
-          id: newInfo.id,
-          nickName: newInfo.username,
-          userEmail: newInfo.email,
-          userRoles: [], // 保留空数组以维持兼容性
-          status: newInfo.is_active ? '1' : '2'
-        }
-        info.value = userInfo
-      } else {
-        // 已经是UserInfo格式，确保移除权限相关字段
-        const userInfo = newInfo as Api.User.UserInfo
+    const setUserInfo = (newInfo: Api.Auth.UserResponse | Api.Auth.AccountSettingsResponse) => {
+      // 处理 AccountSettingsResponse 格式
+      if ('data' in newInfo) {
         info.value = {
-          ...userInfo,
-          roles: [], // 清空角色数组
-          buttons: [], // 清空按钮权限数组
-          userRoles: [] // 清空用户角色数组
+          id: newInfo.data.id,
+          username: newInfo.data.username,
+          email: newInfo.data.email,
+          is_active: newInfo.data.is_active,
+          is_verified: newInfo.data.is_verified,
+          created_at: newInfo.data.created_at,
+          updated_at: newInfo.data.updated_at,
+          avatar: newInfo.data.avatar,
+          roles: newInfo.data.roles || []
+        }
+      } else {
+        // 处理 UserResponse 格式
+        info.value = {
+          id: newInfo.id,
+          username: newInfo.username,
+          email: newInfo.email,
+          is_active: newInfo.is_active,
+          is_verified: newInfo.is_verified,
+          created_at: newInfo.created_at,
+          updated_at: newInfo.updated_at,
+          avatar: newInfo.avatar,
+          roles: newInfo.roles || []
         }
       }
     }
@@ -265,7 +262,7 @@ export const useUserStore = defineStore(
         // 如果登录响应中包含用户信息，先设置
         if (authResponse.user) {
           console.log('[UserStore] 设置登录响应中的用户信息:', authResponse.user)
-          setUserInfo(authResponse.user)
+          setUserInfo(authResponse.user as Api.Auth.UserResponse)
         }
 
         // 使用 token 从 API 获取最新的用户信息
@@ -393,7 +390,7 @@ export const useUserStore = defineStore(
         if (response && response.success && response.data) {
           console.log('[UserStore] 成功获取用户信息:', response.data)
           // 使用 API 返回的用户信息更新 store
-          setUserInfo(response.data)
+          setUserInfo(response as Api.Auth.AccountSettingsResponse)
           return true
         }
 

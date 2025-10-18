@@ -60,6 +60,14 @@ export class AuthService {
     })
   }
 
+  // 更新账户设置
+  static updateAccountSettings(data: Partial<Api.Auth.UserResponse>) {
+    return request.put<Api.Auth.AccountSettingsResponse>({
+      url: '/api/v1/core/account',
+      data
+    })
+  }
+
   // 注销账户
   static deleteAccount(params: Api.Auth.DeleteAccountRequest) {
     return request.del<null>({

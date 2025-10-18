@@ -20,8 +20,8 @@ export const useAuth = () => {
   const { isFrontendMode } = useCommon()
   const { info } = storeToRefs(userStore)
 
-  // 前端按钮权限（例如：['add', 'edit']）
-  const frontendAuthList = info.value?.buttons ?? []
+  // 前端按钮权限（例如：['add', 'edit']）- 新结构下不再支持按钮权限
+  const frontendAuthList: string[] = []
 
   // 后端路由 meta 配置的权限列表（例如：[{ authMark: 'add' }]）
   const backendAuthList: AuthItem[] = Array.isArray(route.meta.authList)
@@ -49,7 +49,7 @@ export const useAuth = () => {
    * @returns 是否有权限
    */
   const hasRole = (roles: string[]): boolean => {
-    const userRoles = info.value?.roles ?? []
+    const userRoles = info.value?.roles || []
     return hasPermission(userRoles, roles)
   }
 
