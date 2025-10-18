@@ -1,0 +1,17 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "写作助手核心服务",
+    "description": "提供写作助手的核心功能API",
+    "version": "1.0.0"
+  },
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  }
+}

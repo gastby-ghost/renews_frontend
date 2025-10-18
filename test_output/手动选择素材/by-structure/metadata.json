@@ -1,0 +1,11 @@
+{
+  "name": "手动选择素材",
+  "tags": [
+    {
+      "name": "手动选择素材",
+      "description": "手动选择素材 相关的 API"
+    }
+  ],
+  "paths_count": 9,
+  "components": ["securitySchemes", "schemas"]
+}

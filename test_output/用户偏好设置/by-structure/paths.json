@@ -1,0 +1,375 @@
+{
+  "/api/v1/core/preferences/": {
+    "put": {
+      "tags": ["用户偏好设置"],
+      "summary": "Update User Preference",
+      "description": "更新当前用户的偏好设置",
+      "operationId": "update_user_preference_api_v1_core_preferences__put",
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/PreferenceUpdateRequest"
+            }
+          }
+        },
+        "required": true
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreferenceUpdateResponse"
+              }
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ]
+    }
+  },
+  "/api/v1/core/preferences/reset": {
+    "post": {
+      "tags": ["用户偏好设置"],
+      "summary": "Reset User Preference",
+      "description": "重置当前用户的偏好设置",
+      "operationId": "reset_user_preference_api_v1_core_preferences_reset_post",
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/PreferenceResetRequest"
+            }
+          }
+        },
+        "required": true
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreferenceResetResponse"
+              }
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ]
+    }
+  },
+  "/api/v1/core/preferences/export": {
+    "post": {
+      "tags": ["用户偏好设置"],
+      "summary": "Export User Preference",
+      "description": "导出当前用户的偏好设置",
+      "operationId": "export_user_preference_api_v1_core_preferences_export_post",
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/PreferenceExportRequest"
+            }
+          }
+        },
+        "required": true
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreferenceExportResponse"
+              }
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ]
+    }
+  },
+  "/api/v1/core/preferences/import": {
+    "post": {
+      "tags": ["用户偏好设置"],
+      "summary": "Import User Preference",
+      "description": "导入当前用户的偏好设置",
+      "operationId": "import_user_preference_api_v1_core_preferences_import_post",
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/PreferenceImportRequest"
+            }
+          }
+        },
+        "required": true
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreferenceImportResponse"
+              }
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ]
+    }
+  },
+  "/api/v1/core/preferences/themes": {
+    "get": {
+      "tags": ["用户偏好设置"],
+      "summary": "Get Available Themes",
+      "description": "获取可用的界面主题列表",
+      "operationId": "get_available_themes_api_v1_core_preferences_themes_get",
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array",
+                "title": "Response Get Available Themes Api V1 Core Preferences Themes Get"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/api/v1/core/preferences/font-sizes": {
+    "get": {
+      "tags": ["用户偏好设置"],
+      "summary": "Get Available Font Sizes",
+      "description": "获取可用的字体大小列表",
+      "operationId": "get_available_font_sizes_api_v1_core_preferences_font_sizes_get",
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array",
+                "title": "Response Get Available Font Sizes Api V1 Core Preferences Font Sizes Get"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/api/v1/core/preferences/auto-save-frequencies": {
+    "get": {
+      "tags": ["用户偏好设置"],
+      "summary": "Get Available Auto Save Frequencies",
+      "description": "获取可用的自动保存频率列表",
+      "operationId": "get_available_auto_save_frequencies_api_v1_core_preferences_auto_save_frequencies_get",
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array",
+                "title": "Response Get Available Auto Save Frequencies Api V1 Core Preferences Auto Save Frequencies Get"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/api/v1/core/preferences/languages": {
+    "get": {
+      "tags": ["用户偏好设置"],
+      "summary": "Get Available Languages",
+      "description": "获取可用的语言列表",
+      "operationId": "get_available_languages_api_v1_core_preferences_languages_get",
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array",
+                "title": "Response Get Available Languages Api V1 Core Preferences Languages Get"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/api/v1/core/preferences/timezones": {
+    "get": {
+      "tags": ["用户偏好设置"],
+      "summary": "Get Available Timezones",
+      "description": "获取可用的时区列表",
+      "operationId": "get_available_timezones_api_v1_core_preferences_timezones_get",
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array",
+                "title": "Response Get Available Timezones Api V1 Core Preferences Timezones Get"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/api/v1/core/preferences/admin/all": {
+    "get": {
+      "tags": ["用户偏好设置"],
+      "summary": "Get All User Preferences",
+      "description": "获取所有用户的偏好设置（管理员功能）",
+      "operationId": "get_all_user_preferences_api_v1_core_preferences_admin_all_get",
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "items": {
+                  "$ref": "#/components/schemas/UserPreference"
+                },
+                "type": "array",
+                "title": "Response Get All User Preferences Api V1 Core Preferences Admin All Get"
+              }
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ]
+    }
+  },
+  "/api/v1/core/preferences/admin/{user_id}": {
+    "delete": {
+      "tags": ["用户偏好设置"],
+      "summary": "Delete User Preference Admin",
+      "description": "删除指定用户的偏好设置（管理员功能）",
+      "operationId": "delete_user_preference_admin_api_v1_core_preferences_admin__user_id__delete",
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "user_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "User Id"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

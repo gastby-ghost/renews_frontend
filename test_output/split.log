@@ -1,0 +1,22 @@
+2025-10-17 18:22:39,126 - openapi_splitter - INFO - 开始拆分 OpenAPI 文件: core_openapi.json
+2025-10-17 18:22:39,127 - openapi_splitter - INFO - 输出目录: test_output
+2025-10-17 18:22:39,127 - openapi_splitter - INFO - 拆分策略: hybrid
+2025-10-17 18:22:39,132 - openapi_splitter - INFO - 成功加载 OpenAPI 规范文件: core_openapi.json
+2025-10-17 18:22:39,132 - openapi_splitter - INFO - 识别到 14 个功能模块: ['用户认证', '项目管理', '素材管理', '标题素材区', 'AI自动检索素材', '手动选择素材', 'AI辅助功能', '成稿导出', '写作统计', '组件导航', '自动保存', '快捷键支持', '用户偏好设置', '未分类']
+2025-10-17 18:22:39,145 - openapi_splitter - INFO - 已创建模块文件: test_output/用户认证/用户认证.json
+2025-10-17 18:22:39,152 - openapi_splitter - INFO - 已创建模块文件: test_output/项目管理/项目管理.json
+2025-10-17 18:22:39,160 - openapi_splitter - INFO - 已创建模块文件: test_output/素材管理/素材管理.json
+2025-10-17 18:22:39,165 - openapi_splitter - INFO - 已创建模块文件: test_output/标题素材区/标题素材区.json
+2025-10-17 18:22:39,167 - openapi_splitter - INFO - 已创建模块文件: test_output/AI自动检索素材/AI自动检索素材.json
+2025-10-17 18:22:39,169 - openapi_splitter - INFO - 已创建模块文件: test_output/手动选择素材/手动选择素材.json
+2025-10-17 18:22:39,172 - openapi_splitter - INFO - 已创建模块文件: test_output/AI辅助功能/AI辅助功能.json
+2025-10-17 18:22:39,178 - openapi_splitter - INFO - 已创建模块文件: test_output/成稿导出/成稿导出.json
+2025-10-17 18:22:39,181 - openapi_splitter - INFO - 已创建模块文件: test_output/写作统计/写作统计.json
+2025-10-17 18:22:39,183 - openapi_splitter - INFO - 已创建模块文件: test_output/组件导航/组件导航.json
+2025-10-17 18:22:39,187 - openapi_splitter - INFO - 已创建模块文件: test_output/自动保存/自动保存.json
+2025-10-17 18:22:39,189 - openapi_splitter - INFO - 已创建模块文件: test_output/快捷键支持/快捷键支持.json
+2025-10-17 18:22:39,191 - openapi_splitter - INFO - 已创建模块文件: test_output/用户偏好设置/用户偏好设置.json
+2025-10-17 18:22:39,193 - openapi_splitter - INFO - 已创建模块文件: test_output/未分类/未分类.json
+2025-10-17 18:22:39,193 - openapi_splitter - INFO - 已创建基础规范文件: test_output/base.json
+2025-10-17 18:22:39,193 - openapi_splitter - INFO - 生成索引文件...
+2025-10-17 18:22:39,194 - openapi_splitter - INFO - 已创建索引文件: test_output/index.json

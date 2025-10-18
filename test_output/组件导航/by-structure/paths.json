@@ -1,0 +1,640 @@
+{
+  "/api/v1/core/navigation/overview/{project_id}": {
+    "get": {
+      "tags": ["组件导航"],
+      "summary": "Get Navigation Overview",
+      "description": "获取项目导航概览",
+      "operationId": "get_navigation_overview_api_v1_core_navigation_overview__project_id__get",
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "project_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Project Id"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NavigationOverview"
+              }
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/api/v1/core/navigation/navigate": {
+    "post": {
+      "tags": ["组件导航"],
+      "summary": "Navigate To Component",
+      "description": "切换到指定组件",
+      "operationId": "navigate_to_component_api_v1_core_navigation_navigate_post",
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/NavigationRequest"
+            }
+          }
+        },
+        "required": true
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NavigationResponse"
+              }
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ]
+    }
+  },
+  "/api/v1/core/navigation/order": {
+    "post": {
+      "tags": ["组件导航"],
+      "summary": "Update Component Order",
+      "description": "更新组件显示顺序",
+      "operationId": "update_component_order_api_v1_core_navigation_order_post",
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ComponentOrderRequest"
+            }
+          }
+        },
+        "required": true
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ComponentOrderResponse"
+              }
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ]
+    }
+  },
+  "/api/v1/core/navigation/shortcuts": {
+    "get": {
+      "tags": ["组件导航"],
+      "summary": "Get Shortcut Keys",
+      "description": "获取所有快捷键",
+      "operationId": "get_shortcut_keys_api_v1_core_navigation_shortcuts_get",
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ]
+    }
+  },
+  "/api/v1/core/navigation/progress/{project_id}/{component_type}": {
+    "get": {
+      "tags": ["组件导航"],
+      "summary": "Get Component Progress",
+      "description": "获取组件完成进度",
+      "operationId": "get_component_progress_api_v1_core_navigation_progress__project_id___component_type__get",
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "project_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Project Id"
+          }
+        },
+        {
+          "name": "component_type",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "$ref": "#/components/schemas/app__navigation__schemas__ComponentType"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/api/v1/core/navigation/components/{project_id}": {
+    "get": {
+      "tags": ["组件导航"],
+      "summary": "Get Project Components",
+      "description": "获取项目所有组件信息",
+      "operationId": "get_project_components_api_v1_core_navigation_components__project_id__get",
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "project_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Project Id"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/api/v1/core/navigation/core-components": {
+    "get": {
+      "tags": ["组件导航"],
+      "summary": "Get Core Components",
+      "description": "获取核心组件列表",
+      "operationId": "get_core_components_api_v1_core_navigation_core_components_get",
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ]
+    }
+  },
+  "/api/v1/core/navigation/auxiliary-components": {
+    "get": {
+      "tags": ["组件导航"],
+      "summary": "Get Auxiliary Components",
+      "description": "获取辅助组件列表",
+      "operationId": "get_auxiliary_components_api_v1_core_navigation_auxiliary_components_get",
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ]
+    }
+  },
+  "/api/v1/core/navigation/status/{project_id}/{component_type}": {
+    "get": {
+      "tags": ["组件导航"],
+      "summary": "Get Component Status",
+      "description": "获取组件状态",
+      "operationId": "get_component_status_api_v1_core_navigation_status__project_id___component_type__get",
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "project_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Project Id"
+          }
+        },
+        {
+          "name": "component_type",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "$ref": "#/components/schemas/app__navigation__schemas__ComponentType"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/api/v1/core/navigation/health": {
+    "get": {
+      "tags": ["组件导航"],
+      "summary": "Navigation Health Check",
+      "description": "导航模块健康检查",
+      "operationId": "navigation_health_check_api_v1_core_navigation_health_get",
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        }
+      }
+    }
+  },
+  "/api/v1/core/navigation/settings/{project_id}": {
+    "get": {
+      "tags": ["组件导航"],
+      "summary": "Get Component Settings",
+      "description": "获取用户的组件设置",
+      "operationId": "get_component_settings_api_v1_core_navigation_settings__project_id__get",
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "project_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Project Id"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/api/v1/core/navigation/settings": {
+    "post": {
+      "tags": ["组件导航"],
+      "summary": "Save Component Settings",
+      "description": "保存组件设置",
+      "operationId": "save_component_settings_api_v1_core_navigation_settings_post",
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ComponentSettingsRequest"
+            }
+          }
+        },
+        "required": true
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ComponentSettingsResponse"
+              }
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ]
+    }
+  },
+  "/api/v1/core/navigation/settings/update": {
+    "put": {
+      "tags": ["组件导航"],
+      "summary": "Update Component Setting",
+      "description": "更新单个组件设置",
+      "operationId": "update_component_setting_api_v1_core_navigation_settings_update_put",
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ComponentSettingsUpdateRequest"
+            }
+          }
+        },
+        "required": true
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ComponentSettingsUpdateResponse"
+              }
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ]
+    }
+  },
+  "/api/v1/core/navigation/settings/reset": {
+    "post": {
+      "tags": ["组件导航"],
+      "summary": "Reset Component Settings",
+      "description": "重置组件设置",
+      "operationId": "reset_component_settings_api_v1_core_navigation_settings_reset_post",
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ComponentSettingsResetRequest"
+            }
+          }
+        },
+        "required": true
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ComponentSettingsResetResponse"
+              }
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ]
+    }
+  },
+  "/api/v1/core/navigation/settings/{project_id}/visible": {
+    "get": {
+      "tags": ["组件导航"],
+      "summary": "Get Visible Components",
+      "description": "获取可见的组件列表",
+      "operationId": "get_visible_components_api_v1_core_navigation_settings__project_id__visible_get",
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "project_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Project Id"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/api/v1/core/navigation/settings/{project_id}/export": {
+    "get": {
+      "tags": ["组件导航"],
+      "summary": "Export Component Settings",
+      "description": "导出组件设置",
+      "operationId": "export_component_settings_api_v1_core_navigation_settings__project_id__export_get",
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "project_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Project Id"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "name": "AI自动检索素材",
+  "tags": [
+    {
+      "name": "AI自动检索素材",
+      "description": "AI自动检索素材 相关的 API"
+    }
+  ],
+  "paths_count": 8,
+  "components": ["securitySchemes", "schemas"]
+}

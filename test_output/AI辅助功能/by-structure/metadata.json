@@ -1,0 +1,11 @@
+{
+  "name": "AI辅助功能",
+  "tags": [
+    {
+      "name": "AI辅助功能",
+      "description": "AI辅助功能 相关的 API"
+    }
+  ],
+  "paths_count": 7,
+  "components": ["securitySchemes", "schemas"]
+}

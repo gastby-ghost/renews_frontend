@@ -1,0 +1,11 @@
+{
+  "name": "项目管理",
+  "tags": [
+    {
+      "name": "项目管理",
+      "description": "项目管理 相关的 API"
+    }
+  ],
+  "paths_count": 36,
+  "components": ["securitySchemes", "schemas"]
+}

@@ -1,0 +1,3170 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "写作助手核心服务",
+    "description": "提供写作助手的核心功能API",
+    "version": "1.0.0"
+  },
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    },
+    "schemas": {
+      "TagCreateRequest": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 20,
+            "minLength": 1,
+            "title": "Name",
+            "description": "标签名称，1-20个字符"
+          },
+          "document_id": {
+            "type": "string",
+            "title": "Document Id",
+            "description": "文档ID"
+          }
+        },
+        "type": "object",
+        "required": ["name", "document_id"],
+        "title": "TagCreateRequest",
+        "description": "创建标签请求"
+      },
+      "TagCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 30,
+            "minLength": 1,
+            "title": "Name",
+            "description": "标签名称"
+          }
+        },
+        "type": "object",
+        "required": ["name"],
+        "title": "TagCreate",
+        "description": "创建标签请求"
+      },
+      "MaterialEditRequest": {
+        "properties": {
+          "material_id": {
+            "type": "integer",
+            "title": "Material Id",
+            "description": "素材ID"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title",
+            "description": "素材标题"
+          },
+          "content": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content",
+            "description": "素材内容（支持Markdown格式）"
+          },
+          "source_link": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Link",
+            "description": "来源链接"
+          },
+          "reliability_score": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reliability Score",
+            "description": "可信度评分"
+          },
+          "tags": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array",
+                "maxItems": 10
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tags",
+            "description": "标签列表（最多10个）"
+          }
+        },
+        "type": "object",
+        "required": ["material_id"],
+        "title": "MaterialEditRequest",
+        "description": "素材编辑请求"
+      },
+      "TagDeleteRequest": {
+        "properties": {
+          "tag_id": {
+            "type": "integer",
+            "title": "Tag Id",
+            "description": "标签ID"
+          },
+          "document_id": {
+            "type": "string",
+            "title": "Document Id",
+            "description": "文档ID"
+          }
+        },
+        "type": "object",
+        "required": ["tag_id", "document_id"],
+        "title": "TagDeleteRequest",
+        "description": "删除标签请求"
+      },
+      "MaterialUnbindingRequest": {
+        "properties": {
+          "document_id": {
+            "type": "string",
+            "title": "Document Id",
+            "description": "文档ID"
+          },
+          "material_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Material Ids",
+            "description": "要解绑的素材ID列表"
+          }
+        },
+        "type": "object",
+        "required": ["document_id", "material_ids"],
+        "title": "MaterialUnbindingRequest",
+        "description": "素材解绑请求"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "MaterialBulkOperationResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "operation_type": {
+            "type": "string",
+            "title": "Operation Type",
+            "description": "操作类型"
+          },
+          "success_count": {
+            "type": "integer",
+            "title": "Success Count",
+            "description": "成功操作数量"
+          },
+          "failed_count": {
+            "type": "integer",
+            "title": "Failed Count",
+            "description": "失败操作数量",
+            "default": 0
+          },
+          "operation_details": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Operation Details",
+            "description": "操作详情"
+          }
+        },
+        "type": "object",
+        "required": ["success", "message", "operation_type", "success_count"],
+        "title": "MaterialBulkOperationResponse",
+        "description": "素材批量操作响应"
+      },
+      "TagListResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "tags": {
+            "items": {
+              "$ref": "#/components/schemas/TagResponse"
+            },
+            "type": "array",
+            "title": "Tags",
+            "description": "标签列表"
+          },
+          "total_count": {
+            "type": "integer",
+            "title": "Total Count",
+            "description": "标签总数"
+          },
+          "system_tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "System Tags",
+            "description": "系统标签名称列表"
+          }
+        },
+        "type": "object",
+        "required": ["success", "message", "total_count"],
+        "title": "TagListResponse",
+        "description": "标签列表响应"
+      },
+      "MaterialContentPreviewRequest": {
+        "properties": {
+          "content": {
+            "type": "string",
+            "title": "Content",
+            "description": "Markdown格式的内容"
+          },
+          "preview_type": {
+            "type": "string",
+            "title": "Preview Type",
+            "description": "预览类型：html(HTML)/text(纯文本)",
+            "default": "html"
+          }
+        },
+        "type": "object",
+        "required": ["content"],
+        "title": "MaterialContentPreviewRequest",
+        "description": "素材内容预览请求"
+      },
+      "MaterialContentPreviewResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "preview_content": {
+            "type": "string",
+            "title": "Preview Content",
+            "description": "预览内容"
+          },
+          "preview_type": {
+            "type": "string",
+            "title": "Preview Type",
+            "description": "预览类型"
+          },
+          "word_count": {
+            "type": "integer",
+            "title": "Word Count",
+            "description": "字数统计"
+          },
+          "estimated_reading_time": {
+            "type": "integer",
+            "title": "Estimated Reading Time",
+            "description": "预估阅读时间（分钟）"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "preview_content",
+          "preview_type",
+          "word_count",
+          "estimated_reading_time"
+        ],
+        "title": "MaterialContentPreviewResponse",
+        "description": "素材内容预览响应"
+      },
+      "MaterialSelectionStatusRequest": {
+        "properties": {
+          "document_id": {
+            "type": "string",
+            "title": "Document Id",
+            "description": "文档ID"
+          },
+          "material_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Material Ids",
+            "description": "要查询的素材ID列表"
+          }
+        },
+        "type": "object",
+        "required": ["document_id"],
+        "title": "MaterialSelectionStatusRequest",
+        "description": "素材选择状态请求"
+      },
+      "MainstreamMediaSearchRequest": {
+        "properties": {
+          "project_id": {
+            "type": "integer",
+            "title": "Project Id"
+          },
+          "keywords": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Keywords",
+            "description": "检索关键词"
+          },
+          "context_relevant": {
+            "type": "boolean",
+            "title": "Context Relevant",
+            "description": "是否与当前内容相关",
+            "default": false
+          },
+          "current_component_context": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Component Context",
+            "description": "当前组件上下文"
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Page",
+            "description": "页码",
+            "default": 1
+          },
+          "page_size": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Page Size",
+            "description": "每页数量",
+            "default": 20
+          }
+        },
+        "type": "object",
+        "required": ["project_id", "keywords"],
+        "title": "MainstreamMediaSearchRequest",
+        "description": "主流媒体素材搜索请求"
+      },
+      "TagFilterRequest": {
+        "properties": {
+          "document_id": {
+            "type": "string",
+            "title": "Document Id",
+            "description": "文档ID"
+          },
+          "tag_names": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tag Names",
+            "description": "要筛选的标签名称列表"
+          },
+          "search_query": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Search Query",
+            "description": "搜索查询，支持#标签名格式"
+          }
+        },
+        "type": "object",
+        "required": ["document_id"],
+        "title": "TagFilterRequest",
+        "description": "标签筛选请求"
+      },
+      "TagOperationResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "operation_type": {
+            "type": "string",
+            "title": "Operation Type",
+            "description": "操作类型：create/update/delete"
+          },
+          "tag": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TagResponse"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "操作后的标签信息"
+          },
+          "affected_materials": {
+            "type": "integer",
+            "title": "Affected Materials",
+            "description": "受影响的素材数量",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": ["success", "message", "operation_type"],
+        "title": "TagOperationResponse",
+        "description": "标签操作响应"
+      },
+      "MaterialResponse": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Title",
+            "description": "素材标题"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content",
+            "description": "素材内容"
+          },
+          "source_type": {
+            "type": "string",
+            "title": "Source Type",
+            "description": "来源类型"
+          },
+          "source_link": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Link",
+            "description": "来源链接"
+          },
+          "reliability_score": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Reliability Score",
+            "description": "可信度评分",
+            "default": 0.8
+          },
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "user_id": {
+            "type": "integer",
+            "title": "User Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags",
+            "description": "标签列表"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "content",
+          "source_type",
+          "id",
+          "user_id",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "MaterialResponse",
+        "description": "素材响应模型"
+      },
+      "AddMainstreamMediaRequest": {
+        "properties": {
+          "project_id": {
+            "type": "integer",
+            "title": "Project Id"
+          },
+          "material_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Material Ids",
+            "description": "要添加的素材ID列表"
+          }
+        },
+        "type": "object",
+        "required": ["project_id", "material_ids"],
+        "title": "AddMainstreamMediaRequest",
+        "description": "添加主流媒体素材到项目请求"
+      },
+      "MaterialManagementResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "materials": {
+            "items": {
+              "$ref": "#/components/schemas/MaterialManagementItem"
+            },
+            "type": "array",
+            "title": "Materials"
+          },
+          "total_count": {
+            "type": "integer",
+            "title": "Total Count"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          },
+          "total_pages": {
+            "type": "integer",
+            "title": "Total Pages"
+          },
+          "available_tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Available Tags",
+            "description": "可用标签列表"
+          },
+          "document_binding_count": {
+            "type": "integer",
+            "title": "Document Binding Count",
+            "description": "文档绑定素材数量",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "materials",
+          "total_count",
+          "page",
+          "page_size",
+          "total_pages"
+        ],
+        "title": "MaterialManagementResponse",
+        "description": "素材管理区响应"
+      },
+      "MaterialSelectionStatusResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "selected_materials": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Selected Materials",
+            "description": "已选择的素材列表"
+          },
+          "total_selected": {
+            "type": "integer",
+            "title": "Total Selected",
+            "description": "已选择的素材总数"
+          },
+          "selection_status": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object",
+            "title": "Selection Status",
+            "description": "素材选择状态映射"
+          }
+        },
+        "type": "object",
+        "required": ["success", "message", "total_selected"],
+        "title": "MaterialSelectionStatusResponse",
+        "description": "素材选择状态响应"
+      },
+      "Body_validate_upload_files_api_v1_core_materials_upload_validate_post": {
+        "properties": {
+          "files": {
+            "items": {
+              "type": "string",
+              "format": "binary"
+            },
+            "type": "array",
+            "title": "Files",
+            "description": "要验证的文件列表"
+          }
+        },
+        "type": "object",
+        "required": ["files"],
+        "title": "Body_validate_upload_files_api_v1_core_materials_upload_validate_post"
+      },
+      "MaterialDragAndDropRequest": {
+        "properties": {
+          "material_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Material Ids",
+            "description": "要拖拽的素材ID列表"
+          },
+          "target_type": {
+            "type": "string",
+            "title": "Target Type",
+            "description": "目标类型：title(标题)/chapter(章节)"
+          },
+          "target_id": {
+            "type": "string",
+            "title": "Target Id",
+            "description": "目标ID"
+          },
+          "document_id": {
+            "type": "string",
+            "title": "Document Id",
+            "description": "文档ID"
+          }
+        },
+        "type": "object",
+        "required": ["material_ids", "target_type", "target_id", "document_id"],
+        "title": "MaterialDragAndDropRequest",
+        "description": "素材拖拽请求"
+      },
+      "MaterialEditResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "material": {
+            "$ref": "#/components/schemas/MaterialResponse"
+          },
+          "updated_fields": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Updated Fields",
+            "description": "更新的字段列表"
+          }
+        },
+        "type": "object",
+        "required": ["success", "message", "material"],
+        "title": "MaterialEditResponse",
+        "description": "素材编辑响应"
+      },
+      "MaterialEditHistoryResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "material_id": {
+            "type": "integer",
+            "title": "Material Id"
+          },
+          "edit_history": {
+            "items": {
+              "$ref": "#/components/schemas/MaterialEditHistoryItem"
+            },
+            "type": "array",
+            "title": "Edit History",
+            "description": "编辑历史列表"
+          },
+          "total_count": {
+            "type": "integer",
+            "title": "Total Count",
+            "description": "编辑记录总数",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": ["success", "message", "material_id"],
+        "title": "MaterialEditHistoryResponse",
+        "description": "素材编辑历史响应"
+      },
+      "AddMainstreamMediaResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "added_materials": {
+            "items": {
+              "$ref": "#/components/schemas/MainstreamMediaMaterial"
+            },
+            "type": "array",
+            "title": "Added Materials"
+          },
+          "total_added": {
+            "type": "integer",
+            "title": "Total Added"
+          },
+          "auto_tags_added": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Auto Tags Added",
+            "description": "自动添加的标签"
+          }
+        },
+        "type": "object",
+        "required": ["success", "message", "added_materials", "total_added"],
+        "title": "AddMainstreamMediaResponse",
+        "description": "添加主流媒体素材到项目响应"
+      },
+      "Body_upload_local_materials_api_v1_core_materials_upload_post": {
+        "properties": {
+          "files": {
+            "items": {
+              "type": "string",
+              "format": "binary"
+            },
+            "type": "array",
+            "title": "Files",
+            "description": "要上传的MD文件列表，支持多文件同时上传，最多10个文件"
+          },
+          "document_id": {
+            "type": "string",
+            "title": "Document Id",
+            "description": "文档ID，必填"
+          },
+          "tags": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tags",
+            "description": "自定义标签列表，可选，会自动添加本地标签",
+            "default": "[]"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description",
+            "description": "素材描述，可选"
+          }
+        },
+        "type": "object",
+        "required": ["files", "document_id"],
+        "title": "Body_upload_local_materials_api_v1_core_materials_upload_post"
+      },
+      "MainstreamMediaSearchResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "materials": {
+            "items": {
+              "$ref": "#/components/schemas/MainstreamMediaMaterial"
+            },
+            "type": "array",
+            "title": "Materials"
+          },
+          "total_count": {
+            "type": "integer",
+            "title": "Total Count"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          },
+          "total_pages": {
+            "type": "integer",
+            "title": "Total Pages"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "materials",
+          "total_count",
+          "page",
+          "page_size",
+          "total_pages"
+        ],
+        "title": "MainstreamMediaSearchResponse",
+        "description": "主流媒体素材搜索响应"
+      },
+      "MaterialTagUpdateResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "material_id": {
+            "type": "integer",
+            "title": "Material Id"
+          },
+          "updated_tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Updated Tags",
+            "description": "更新后的标签列表"
+          },
+          "added_tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Added Tags",
+            "description": "新增的标签列表"
+          },
+          "removed_tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Removed Tags",
+            "description": "移除的标签列表"
+          }
+        },
+        "type": "object",
+        "required": ["success", "message", "material_id"],
+        "title": "MaterialTagUpdateResponse",
+        "description": "素材标签更新响应"
+      },
+      "UploadProgressResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "操作是否成功"
+          },
+          "upload_id": {
+            "type": "string",
+            "title": "Upload Id",
+            "description": "上传任务ID"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "上传状态：pending(等待中)/processing(处理中)/completed(完成)/failed(失败)"
+          },
+          "progress": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Progress",
+            "description": "上传进度百分比"
+          },
+          "total_files": {
+            "type": "integer",
+            "title": "Total Files",
+            "description": "总文件数"
+          },
+          "processed_files": {
+            "type": "integer",
+            "title": "Processed Files",
+            "description": "已处理文件数"
+          },
+          "current_file": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current File",
+            "description": "当前正在处理的文件名"
+          },
+          "estimated_time": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estimated Time",
+            "description": "预计剩余时间"
+          },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Message",
+            "description": "错误信息（如果有）"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "upload_id",
+          "status",
+          "progress",
+          "total_files",
+          "processed_files"
+        ],
+        "title": "UploadProgressResponse",
+        "description": "上传进度响应"
+      },
+      "MaterialUploadResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "操作是否成功"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "操作结果消息"
+          },
+          "uploaded_materials": {
+            "items": {
+              "$ref": "#/components/schemas/UploadedMaterial"
+            },
+            "type": "array",
+            "title": "Uploaded Materials",
+            "description": "成功上传的素材列表"
+          },
+          "total_uploaded": {
+            "type": "integer",
+            "title": "Total Uploaded",
+            "description": "成功上传的素材总数"
+          },
+          "total_size": {
+            "type": "integer",
+            "title": "Total Size",
+            "description": "上传文件的总大小（字节）"
+          },
+          "auto_tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Auto Tags",
+            "description": "自动添加的标签列表，包含本地标签"
+          },
+          "upload_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upload Id",
+            "description": "上传任务ID，用于查询进度"
+          }
+        },
+        "type": "object",
+        "required": ["success", "message", "total_uploaded", "total_size"],
+        "title": "MaterialUploadResponse",
+        "description": "素材上传响应"
+      },
+      "TagResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "is_system": {
+            "type": "boolean",
+            "title": "Is System"
+          },
+          "material_count": {
+            "type": "integer",
+            "title": "Material Count",
+            "description": "使用该标签的素材数量"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": ["id", "name", "is_system", "material_count", "created_at"],
+        "title": "TagResponse",
+        "description": "标签响应"
+      },
+      "MaterialUpdate": {
+        "properties": {
+          "title": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title",
+            "description": "素材标题"
+          },
+          "content": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content",
+            "description": "素材内容"
+          },
+          "source_link": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Link",
+            "description": "来源链接"
+          },
+          "reliability_score": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reliability Score",
+            "description": "可信度评分"
+          },
+          "tags": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tags",
+            "description": "标签列表"
+          }
+        },
+        "type": "object",
+        "title": "MaterialUpdate",
+        "description": "更新素材请求"
+      },
+      "app__material__schemas__MaterialBindingResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "bound_count": {
+            "type": "integer",
+            "title": "Bound Count",
+            "description": "成功绑定数量"
+          },
+          "failed_count": {
+            "type": "integer",
+            "title": "Failed Count",
+            "description": "绑定失败数量",
+            "default": 0
+          },
+          "details": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Details",
+            "description": "绑定详情"
+          }
+        },
+        "type": "object",
+        "required": ["success", "message", "bound_count"],
+        "title": "MaterialBindingResponse",
+        "description": "素材绑定响应"
+      },
+      "MaterialDeleteRequest": {
+        "properties": {
+          "material_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Material Ids",
+            "description": "要删除的素材ID列表"
+          }
+        },
+        "type": "object",
+        "required": ["material_ids"],
+        "title": "MaterialDeleteRequest",
+        "description": "删除素材请求"
+      },
+      "MaterialMultiSelectRequest": {
+        "properties": {
+          "material_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Material Ids",
+            "description": "要选择的素材ID列表"
+          },
+          "document_id": {
+            "type": "string",
+            "title": "Document Id",
+            "description": "文档ID"
+          }
+        },
+        "type": "object",
+        "required": ["material_ids", "document_id"],
+        "title": "MaterialMultiSelectRequest",
+        "description": "素材多选请求"
+      },
+      "MaterialDragAndDropResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "bound_count": {
+            "type": "integer",
+            "title": "Bound Count",
+            "description": "成功绑定数量"
+          },
+          "failed_count": {
+            "type": "integer",
+            "title": "Failed Count",
+            "description": "绑定失败数量",
+            "default": 0
+          },
+          "target_type": {
+            "type": "string",
+            "title": "Target Type",
+            "description": "目标类型"
+          },
+          "target_id": {
+            "type": "string",
+            "title": "Target Id",
+            "description": "目标ID"
+          },
+          "material_types": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Material Types",
+            "description": "素材类型标签列表"
+          },
+          "binding_details": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Binding Details",
+            "description": "绑定详情"
+          }
+        },
+        "type": "object",
+        "required": ["success", "message", "bound_count", "target_type", "target_id"],
+        "title": "MaterialDragAndDropResponse",
+        "description": "素材拖拽响应"
+      },
+      "MaterialBulkOperationRequest": {
+        "properties": {
+          "material_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Material Ids",
+            "description": "要操作的素材ID列表"
+          },
+          "operation_type": {
+            "type": "string",
+            "title": "Operation Type",
+            "description": "操作类型：bind(绑定)/unbind(解绑)/delete(删除)"
+          },
+          "target_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Type",
+            "description": "目标类型：title(标题)/chapter(章节)"
+          },
+          "target_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Id",
+            "description": "目标ID"
+          },
+          "document_id": {
+            "type": "string",
+            "title": "Document Id",
+            "description": "文档ID"
+          }
+        },
+        "type": "object",
+        "required": ["material_ids", "operation_type", "document_id"],
+        "title": "MaterialBulkOperationRequest",
+        "description": "素材批量操作请求"
+      },
+      "MaterialUnbindingResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "unbound_count": {
+            "type": "integer",
+            "title": "Unbound Count",
+            "description": "成功解绑数量"
+          },
+          "failed_count": {
+            "type": "integer",
+            "title": "Failed Count",
+            "description": "解绑失败数量",
+            "default": 0
+          },
+          "details": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Details",
+            "description": "解绑详情"
+          }
+        },
+        "type": "object",
+        "required": ["success", "message", "unbound_count"],
+        "title": "MaterialUnbindingResponse",
+        "description": "素材解绑响应"
+      },
+      "TagUpdateRequest": {
+        "properties": {
+          "tag_id": {
+            "type": "integer",
+            "title": "Tag Id",
+            "description": "标签ID"
+          },
+          "new_name": {
+            "type": "string",
+            "maxLength": 20,
+            "minLength": 1,
+            "title": "New Name",
+            "description": "新标签名称，1-20个字符"
+          },
+          "document_id": {
+            "type": "string",
+            "title": "Document Id",
+            "description": "文档ID"
+          }
+        },
+        "type": "object",
+        "required": ["tag_id", "new_name", "document_id"],
+        "title": "TagUpdateRequest",
+        "description": "更新标签请求"
+      },
+      "Body_drag_drop_upload_materials_api_v1_core_materials_upload_drag_drop_post": {
+        "properties": {
+          "files": {
+            "items": {
+              "type": "string",
+              "format": "binary"
+            },
+            "type": "array",
+            "title": "Files",
+            "description": "拖拽上传的MD文件列表"
+          },
+          "document_id": {
+            "type": "string",
+            "title": "Document Id",
+            "description": "文档ID"
+          },
+          "tags": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tags",
+            "description": "自定义标签列表",
+            "default": "[]"
+          }
+        },
+        "type": "object",
+        "required": ["files", "document_id"],
+        "title": "Body_drag_drop_upload_materials_api_v1_core_materials_upload_drag_drop_post"
+      },
+      "MaterialTagUpdateRequest": {
+        "properties": {
+          "material_id": {
+            "type": "integer",
+            "title": "Material Id",
+            "description": "素材ID"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 10,
+            "title": "Tags",
+            "description": "标签列表（最多10个）"
+          }
+        },
+        "type": "object",
+        "required": ["material_id", "tags"],
+        "title": "MaterialTagUpdateRequest",
+        "description": "素材标签更新请求"
+      },
+      "MaterialDeleteResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "deleted_count": {
+            "type": "integer",
+            "title": "Deleted Count"
+          },
+          "failed_count": {
+            "type": "integer",
+            "title": "Failed Count"
+          },
+          "details": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Details",
+            "description": "删除详情"
+          }
+        },
+        "type": "object",
+        "required": ["success", "message", "deleted_count", "failed_count"],
+        "title": "MaterialDeleteResponse",
+        "description": "删除素材响应"
+      },
+      "MaterialBindingRequest": {
+        "properties": {
+          "document_id": {
+            "type": "string",
+            "title": "Document Id",
+            "description": "文档ID"
+          },
+          "material_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Material Ids",
+            "description": "要绑定的素材ID列表"
+          }
+        },
+        "type": "object",
+        "required": ["document_id", "material_ids"],
+        "title": "MaterialBindingRequest",
+        "description": "素材绑定请求"
+      },
+      "MaterialManagementRequest": {
+        "properties": {
+          "document_id": {
+            "type": "string",
+            "title": "Document Id",
+            "description": "文档ID"
+          },
+          "keywords": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Keywords",
+            "description": "搜索关键词"
+          },
+          "tags": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tags",
+            "description": "标签筛选"
+          },
+          "sort_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sort By",
+            "description": "排序方式：relevance(相关性)/time(时间)",
+            "default": "relevance"
+          },
+          "show_all_materials": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Show All Materials",
+            "description": "是否显示所有素材",
+            "default": false
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Page",
+            "description": "页码",
+            "default": 1
+          },
+          "page_size": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Page Size",
+            "description": "每页数量",
+            "default": 20
+          }
+        },
+        "type": "object",
+        "required": ["document_id"],
+        "title": "MaterialManagementRequest",
+        "description": "素材管理区请求"
+      },
+      "FileValidationResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "验证是否成功"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "验证结果消息"
+          },
+          "valid_files": {
+            "items": {
+              "$ref": "#/components/schemas/ValidatedFile"
+            },
+            "type": "array",
+            "title": "Valid Files",
+            "description": "验证通过的文件列表"
+          },
+          "invalid_files": {
+            "items": {
+              "$ref": "#/components/schemas/ValidatedFile"
+            },
+            "type": "array",
+            "title": "Invalid Files",
+            "description": "验证失败的文件列表"
+          },
+          "total_valid": {
+            "type": "integer",
+            "title": "Total Valid",
+            "description": "验证通过的文件总数"
+          },
+          "total_invalid": {
+            "type": "integer",
+            "title": "Total Invalid",
+            "description": "验证失败的文件总数"
+          }
+        },
+        "type": "object",
+        "required": ["success", "message", "total_valid", "total_invalid"],
+        "title": "FileValidationResponse",
+        "description": "文件验证响应"
+      },
+      "TagFilterResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "filtered_materials": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Filtered Materials",
+            "description": "筛选后的素材列表"
+          },
+          "total_count": {
+            "type": "integer",
+            "title": "Total Count",
+            "description": "筛选后的素材总数"
+          },
+          "applied_tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Applied Tags",
+            "description": "应用的筛选标签"
+          },
+          "available_tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Available Tags",
+            "description": "可用的标签列表"
+          }
+        },
+        "type": "object",
+        "required": ["success", "message", "total_count"],
+        "title": "TagFilterResponse",
+        "description": "标签筛选响应"
+      },
+      "MaterialMultiSelectResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "selected_materials": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Selected Materials",
+            "description": "选中的素材列表"
+          },
+          "total_selected": {
+            "type": "integer",
+            "title": "Total Selected",
+            "description": "选中的素材总数"
+          },
+          "material_types": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Material Types",
+            "description": "素材类型标签列表"
+          }
+        },
+        "type": "object",
+        "required": ["success", "message", "total_selected"],
+        "title": "MaterialMultiSelectResponse",
+        "description": "素材多选响应"
+      }
+    }
+  },
+  "paths": {
+    "/api/v1/core/mainstream-media/search": {
+      "post": {
+        "tags": ["素材管理"],
+        "summary": "Search Mainstream Media Materials",
+        "description": "搜索主流媒体素材 (F046_主流媒体素材抓取)\n\n业务规则：\n1. 通过\"主流媒体素材\"按钮触发检索\n2. 检索主流媒体向量数据库\n3. 支持关键词搜索和分页\n4. 可选择是否与当前内容相关\n\n异常处理：\n- 检索失败 → 提示\"素材检索失败，请重试\"\n- 无匹配结果 → 提示\"未找到匹配的素材\"",
+        "operationId": "search_mainstream_media_materials_api_v1_core_mainstream_media_search_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MainstreamMediaSearchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MainstreamMediaSearchResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/core/mainstream-media/add": {
+      "post": {
+        "tags": ["素材管理"],
+        "summary": "Add Mainstream Media To Project",
+        "description": "将主流媒体素材添加到项目 (F046_主流媒体素材抓取)\n\n业务规则：\n1. 素材添加到项目后自动添加\"主流媒体\"标签\n2. 支持批量添加多个素材\n3. 自动建立项目与素材的关联关系\n\n异常处理：\n- 未选择素材 → 提示\"请至少选择一个素材\"\n- 添加失败 → 提示\"添加素材失败，请重试\"",
+        "operationId": "add_mainstream_media_to_project_api_v1_core_mainstream_media_add_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddMainstreamMediaRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddMainstreamMediaResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/core/ai-materials/search": {
+      "post": {
+        "tags": ["素材管理"],
+        "summary": "Search Ai Materials",
+        "description": "搜索AI素材 (F018_素材抓取)\n\n业务规则：\n1. 通过\"AI检索素材\"按钮触发检索\n2. 支持关键词搜索和分页\n3. 可选择是否与当前内容相关\n4. 检索结果按相关性排序\n\n异常处理：\n- 检索失败 → 提示\"素材检索失败，请重试\"\n- 无匹配结果 → 提示\"未找到匹配的素材\"",
+        "operationId": "search_ai_materials_api_v1_core_ai_materials_search_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MainstreamMediaSearchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MainstreamMediaSearchResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/core/ai-materials/add": {
+      "post": {
+        "tags": ["素材管理"],
+        "summary": "Add Ai Materials To Project",
+        "description": "添加AI检索素材到项目 (F018_素材抓取)\n\n业务规则：\n1. 支持多选素材\n2. 添加素材时自动附加\"外部\"标签\n3. 素材自动关联到项目\n\n异常处理：\n- 未选择素材 → 提示\"请至少选择一个素材\"\n- 添加失败 → 提示\"添加素材失败，请重试\"",
+        "operationId": "add_ai_materials_to_project_api_v1_core_ai_materials_add_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddMainstreamMediaRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddMainstreamMediaResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/core/management": {
+      "post": {
+        "tags": ["素材管理"],
+        "summary": "Get Material Management Data",
+        "description": "获取素材管理区数据 (F019_素材管理区)\n\n业务规则：\n1. 常驻显示在编辑界面右侧\n2. 默认显示与当前文档绑定的素材\n3. 支持按标签筛选（含\"主流媒体\"/\"外部\"/\"本地\"标签）\n4. 支持按相关性、时间等排序\n5. 可选择显示所有素材\n\n异常处理：\n- 无搜索结果 → 显示\"未找到匹配的素材\"\n- 加载失败 → 提示\"加载失败，请重试\"",
+        "operationId": "get_material_management_data_api_v1_core_management_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterialManagementRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialManagementResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/core/binding": {
+      "post": {
+        "tags": ["素材管理"],
+        "summary": "Bind Materials To Document",
+        "description": "将素材绑定到文档 (F019_素材管理区)\n\n业务规则：\n1. 支持批量绑定多个素材\n2. 自动跳过已绑定的素材\n3. 验证素材权限和存在性\n\n异常处理：\n- 未选择素材 → 提示\"请至少选择一个素材\"\n- 绑定失败 → 提示\"绑定失败，请重试\"",
+        "operationId": "bind_materials_to_document_api_v1_core_binding_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterialBindingRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__material__schemas__MaterialBindingResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/core/unbinding": {
+      "post": {
+        "tags": ["素材管理"],
+        "summary": "Unbind Materials From Document",
+        "description": "将素材从文档解绑 (F019_素材管理区)\n\n业务规则：\n1. 支持批量解绑多个素材\n2. 验证素材权限和绑定状态\n3. 安全删除绑定关系\n\n异常处理：\n- 未选择素材 → 提示\"请至少选择一个素材\"\n- 解绑失败 → 提示\"解绑失败，请重试\"",
+        "operationId": "unbind_materials_from_document_api_v1_core_unbinding_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterialUnbindingRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialUnbindingResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/core/materials": {
+      "delete": {
+        "tags": ["素材管理"],
+        "summary": "Delete Materials",
+        "description": "批量删除素材",
+        "operationId": "delete_materials_api_v1_core_materials_delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterialDeleteRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialDeleteResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/core/materials/{material_id}": {
+      "put": {
+        "tags": ["素材管理"],
+        "summary": "Update Material",
+        "description": "更新素材",
+        "operationId": "update_material_api_v1_core_materials__material_id__put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "material_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Material Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterialUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/core/tags": {
+      "post": {
+        "tags": ["素材管理"],
+        "summary": "Create Tag",
+        "description": "创建标签",
+        "operationId": "create_tag_api_v1_core_tags_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TagCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/core/materials/edit": {
+      "post": {
+        "tags": ["素材管理"],
+        "summary": "Edit Material",
+        "description": "编辑素材 (F020_素材编辑)\n\n业务规则：\n1. 支持编辑素材标题、内容、来源链接、可信度评分\n2. 内容支持Markdown格式\n3. 标签数量限制为最多10个\n4. 系统标签不可编辑\n5. 记录编辑历史和变更摘要\n\n异常处理：\n- 素材不存在或无权限 → 提示\"素材不存在或无权限编辑\"\n- 标签数量超限 → 提示\"标签数量不能超过10个\"\n- 系统标签编辑 → 提示\"系统标签不可编辑\"",
+        "operationId": "edit_material_api_v1_core_materials_edit_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterialEditRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialEditResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/core/materials/tags/update": {
+      "post": {
+        "tags": ["素材管理"],
+        "summary": "Update Material Tags",
+        "description": "更新素材标签 (F020_素材编辑)\n\n业务规则：\n1. 标签数量限制为最多10个\n2. 系统标签不可添加\n3. 返回新增和移除的标签信息\n\n异常处理：\n- 素材不存在或无权限 → 提示\"素材不存在或无权限编辑\"\n- 标签数量超限 → 提示\"标签数量不能超过10个\"\n- 系统标签添加 → 提示\"系统标签不可添加\"",
+        "operationId": "update_material_tags_api_v1_core_materials_tags_update_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterialTagUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialTagUpdateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/core/materials/preview": {
+      "post": {
+        "tags": ["素材管理"],
+        "summary": "Preview Material Content",
+        "description": "预览素材内容 (F020_素材编辑)\n\n业务规则：\n1. 支持HTML和纯文本两种预览模式\n2. 自动计算字数统计和预估阅读时间\n3. 支持Markdown格式内容预览\n\n异常处理：\n- 预览生成失败 → 返回错误信息",
+        "operationId": "preview_material_content_api_v1_core_materials_preview_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterialContentPreviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialContentPreviewResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/core/materials/{material_id}/edit-history": {
+      "get": {
+        "tags": ["素材管理"],
+        "summary": "Get Material Edit History",
+        "description": "获取素材编辑历史 (F020_素材编辑)\n\n业务规则：\n1. 记录素材的编辑历史\n2. 包含编辑时间、编辑者、变更字段、变更摘要\n3. 支持分页查询\n\n异常处理：\n- 素材不存在或无权限 → 提示\"素材不存在或无权限查看\"",
+        "operationId": "get_material_edit_history_api_v1_core_materials__material_id__edit_history_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "material_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Material Id"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "页码",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "页码"
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "每页数量",
+              "default": 20,
+              "title": "Page Size"
+            },
+            "description": "每页数量"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialEditHistoryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/core/materials/multi-select": {
+      "post": {
+        "tags": ["素材管理"],
+        "summary": "Multi Select Materials",
+        "description": "多选素材 (F021_素材多选与拖拽)\n\n业务规则：\n1. 勾选的素材自动置顶显示\n2. 支持多选多个素材\n3. 显示素材类型标签（\"主流媒体\"/\"外部\"/\"本地\"）\n4. 验证素材存在性和权限\n\n异常处理：\n- 未选择素材 → 提示\"请先选择要操作的素材\"\n- 素材不存在 → 跳过无效素材",
+        "operationId": "multi_select_materials_api_v1_core_materials_multi_select_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterialMultiSelectRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialMultiSelectResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/core/materials/drag-and-drop": {
+      "post": {
+        "tags": ["素材管理"],
+        "summary": "Drag And Drop Materials",
+        "description": "拖拽素材到目标区域 (F021_素材多选与拖拽)\n\n业务规则：\n1. 支持拖拽单个或多个选中的素材\n2. 拖拽时显示视觉反馈\n3. 拖拽到目标区域时显示素材类型标签\n4. 建立绑定关系\n\n异常处理：\n- 未选择素材 → 提示\"请先选择要拖拽的素材\"\n- 拖拽到无效区域 → 提示\"请拖拽到有效区域\"",
+        "operationId": "drag_and_drop_materials_api_v1_core_materials_drag_and_drop_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterialDragAndDropRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialDragAndDropResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/core/materials/selection-status": {
+      "post": {
+        "tags": ["素材管理"],
+        "summary": "Get Material Selection Status",
+        "description": "获取素材选择状态 (F021_素材多选与拖拽)\n\n业务规则：\n1. 查询指定素材的选择状态\n2. 返回已选择的素材列表\n3. 显示素材类型标签\n\n异常处理：\n- 查询失败 → 返回错误信息",
+        "operationId": "get_material_selection_status_api_v1_core_materials_selection_status_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterialSelectionStatusRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialSelectionStatusResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/core/materials/bulk-operation": {
+      "post": {
+        "tags": ["素材管理"],
+        "summary": "Bulk Operation Materials",
+        "description": "素材批量操作 (F021_素材多选与拖拽)\n\n业务规则：\n1. 支持批量绑定、解绑、删除操作\n2. 验证素材存在性和权限\n3. 返回详细的操作结果\n\n异常处理：\n- 未选择素材 → 提示\"请先选择要操作的素材\"\n- 无效操作类型 → 提示\"无效的操作类型\"\n- 绑定操作缺少目标 → 提示\"绑定操作需要指定目标\"",
+        "operationId": "bulk_operation_materials_api_v1_core_materials_bulk_operation_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterialBulkOperationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialBulkOperationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/core/materials/select": {
+      "post": {
+        "tags": ["素材管理"],
+        "summary": "Select Materials",
+        "description": "选择素材 (F021_素材多选与拖拽)",
+        "operationId": "select_materials_api_v1_core_materials_select_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterialMultiSelectRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Select Materials Api V1 Core Materials Select Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/core/materials/unselect": {
+      "post": {
+        "tags": ["素材管理"],
+        "summary": "Unselect Materials",
+        "description": "取消选择素材 (F021_素材多选与拖拽)",
+        "operationId": "unselect_materials_api_v1_core_materials_unselect_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterialMultiSelectRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Unselect Materials Api V1 Core Materials Unselect Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/core/materials/selected/{document_id}": {
+      "get": {
+        "tags": ["素材管理"],
+        "summary": "Get Selected Materials",
+        "description": "获取已选择的素材列表 (F021_素材多选与拖拽)",
+        "operationId": "get_selected_materials_api_v1_core_materials_selected__document_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Document Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Selected Materials Api V1 Core Materials Selected  Document Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/core/tags/create": {
+      "post": {
+        "tags": ["素材管理"],
+        "summary": "Create Tag",
+        "description": "创建标签 (F022_标签管理)",
+        "operationId": "create_tag_api_v1_core_tags_create_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TagCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagOperationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/core/tags/update": {
+      "put": {
+        "tags": ["素材管理"],
+        "summary": "Update Tag",
+        "description": "更新标签 (F022_标签管理)",
+        "operationId": "update_tag_api_v1_core_tags_update_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TagUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagOperationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/core/tags/delete": {
+      "delete": {
+        "tags": ["素材管理"],
+        "summary": "Delete Tag",
+        "description": "删除标签 (F022_标签管理)",
+        "operationId": "delete_tag_api_v1_core_tags_delete_delete",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TagDeleteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagOperationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/core/tags/list/{document_id}": {
+      "get": {
+        "tags": ["素材管理"],
+        "summary": "Get Tag List",
+        "description": "获取标签列表 (F022_标签管理)",
+        "operationId": "get_tag_list_api_v1_core_tags_list__document_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Document Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/core/tags/filter": {
+      "post": {
+        "tags": ["素材管理"],
+        "summary": "Filter Materials By Tags",
+        "description": "通过标签筛选素材 (F022_标签管理)",
+        "operationId": "filter_materials_by_tags_api_v1_core_tags_filter_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TagFilterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagFilterResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/core/materials/upload": {
+      "post": {
+        "tags": ["素材管理"],
+        "summary": "Upload Local Materials",
+        "description": "上传本地MD文件素材 (F023_本地素材上传)\n\n业务规则：\n1. 仅支持.md文件格式\n2. 文件大小限制在100MB以内\n3. 上传后自动提取文本内容并添加\"本地\"标签\n4. 支持多文件同时上传\n\n异常处理：\n- 文件过大 → 提示\"文件大小不能超过100MB\"\n- 不支持的文件格式 → 提示\"请上传.md格式的文件\"\n- 上传失败 → 提示\"上传失败，请重试\"",
+        "operationId": "upload_local_materials_api_v1_core_materials_upload_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_local_materials_api_v1_core_materials_upload_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialUploadResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/core/materials/upload/drag-drop": {
+      "post": {
+        "tags": ["素材管理"],
+        "summary": "Drag Drop Upload Materials",
+        "description": "拖拽上传MD文件素材 (F023_本地素材上传)\n\n业务规则：\n1. 支持拖拽MD文件到上传区域进行素材上传\n2. 功能与标准上传相同\n3. 自动添加\"本地\"标签",
+        "operationId": "drag_drop_upload_materials_api_v1_core_materials_upload_drag_drop_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_drag_drop_upload_materials_api_v1_core_materials_upload_drag_drop_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialUploadResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/core/materials/upload/validate": {
+      "post": {
+        "tags": ["素材管理"],
+        "summary": "Validate Upload Files",
+        "description": "验证上传文件 (F023_本地素材上传)\n\n业务规则：\n1. 在上传前验证文件格式和大小是否符合要求\n2. 返回详细的验证结果",
+        "operationId": "validate_upload_files_api_v1_core_materials_upload_validate_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_validate_upload_files_api_v1_core_materials_upload_validate_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileValidationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/core/materials/upload/progress/{upload_id}": {
+      "get": {
+        "tags": ["素材管理"],
+        "summary": "Get Upload Progress",
+        "description": "获取上传进度 (F023_本地素材上传)\n\n业务规则：\n1. 获取指定上传任务的处理进度\n2. 返回实时进度和状态信息",
+        "operationId": "get_upload_progress_api_v1_core_materials_upload_progress__upload_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "upload_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Upload Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadProgressResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "素材管理",
+      "description": "素材管理 相关的 API"
+    }
+  ]
+}

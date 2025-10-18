@@ -1,0 +1,312 @@
+{
+  "/api/v1/core/export/create": {
+    "post": {
+      "tags": ["成稿导出"],
+      "summary": "Create Export Task",
+      "description": "创建导出任务\n\n创建文档导出任务，支持多种格式和范围选择",
+      "operationId": "create_export_task_api_v1_core_export_create_post",
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ExportRequest"
+            }
+          }
+        },
+        "required": true
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExportProgress"
+              }
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ]
+    }
+  },
+  "/api/v1/core/export/progress/{task_id}": {
+    "get": {
+      "tags": ["成稿导出"],
+      "summary": "Get Export Progress",
+      "description": "获取导出进度\n\n查询指定导出任务的进度信息",
+      "operationId": "get_export_progress_api_v1_core_export_progress__task_id__get",
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "task_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Task Id"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExportProgress"
+              }
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/api/v1/core/export/result/{task_id}": {
+    "get": {
+      "tags": ["成稿导出"],
+      "summary": "Get Export Result",
+      "description": "获取导出结果\n\n查询指定导出任务的结果信息",
+      "operationId": "get_export_result_api_v1_core_export_result__task_id__get",
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "task_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Task Id"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExportResult"
+              }
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/api/v1/core/export/download/{task_id}": {
+    "get": {
+      "tags": ["成稿导出"],
+      "summary": "Download Export File",
+      "description": "下载导出文件\n\n下载指定导出任务生成的文件",
+      "operationId": "download_export_file_api_v1_core_export_download__task_id__get",
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "task_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Task Id"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/api/v1/core/export/history": {
+    "get": {
+      "tags": ["成稿导出"],
+      "summary": "Get Export History",
+      "description": "获取导出历史记录\n\n查询用户的导出历史记录",
+      "operationId": "get_export_history_api_v1_core_export_history_get",
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "project_id",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Project Id"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ExportHistory"
+                },
+                "title": "Response Get Export History Api V1 Core Export History Get"
+              }
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/api/v1/core/export/validate": {
+    "post": {
+      "tags": ["成稿导出"],
+      "summary": "Validate Export Request",
+      "description": "验证导出请求\n\n验证导出请求的合法性，检查内容和格式",
+      "operationId": "validate_export_request_api_v1_core_export_validate_post",
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ExportRequest"
+            }
+          }
+        },
+        "required": true
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "type": "object",
+                "title": "Response Validate Export Request Api V1 Core Export Validate Post"
+              }
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ]
+    }
+  },
+  "/api/v1/core/export/formats": {
+    "get": {
+      "tags": ["成稿导出"],
+      "summary": "Get Supported Formats",
+      "description": "获取支持的导出格式\n\n返回系统支持的所有导出格式及其特性",
+      "operationId": "get_supported_formats_api_v1_core_export_formats_get",
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array",
+                "title": "Response Get Supported Formats Api V1 Core Export Formats Get"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

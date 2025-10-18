@@ -1,0 +1,11 @@
+{
+  "name": "快捷键支持",
+  "tags": [
+    {
+      "name": "快捷键支持",
+      "description": "快捷键支持 相关的 API"
+    }
+  ],
+  "paths_count": 7,
+  "components": ["securitySchemes", "schemas"]
+}

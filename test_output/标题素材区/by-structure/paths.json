@@ -1,0 +1,402 @@
+{
+  "/api/v1/core/titles/materials/{project_id}": {
+    "get": {
+      "tags": ["标题素材区"],
+      "summary": "Get Project Materials",
+      "description": "获取项目的标题素材列表",
+      "operationId": "get_project_materials_api_v1_core_titles_materials__project_id__get",
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "project_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Project Id"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TitleMaterialResponse"
+              }
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/api/v1/core/titles/materials/{project_id}/toggle": {
+    "post": {
+      "tags": ["标题素材区"],
+      "summary": "Toggle Material Fold",
+      "description": "切换素材的折叠状态",
+      "operationId": "toggle_material_fold_api_v1_core_titles_materials__project_id__toggle_post",
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "project_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Project Id"
+          }
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/TitleMaterialToggleRequest"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TitleMaterialToggleResponse"
+              }
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/api/v1/core/titles/materials/{project_id}/filter": {
+    "post": {
+      "tags": ["标题素材区"],
+      "summary": "Filter Materials",
+      "description": "筛选标题素材",
+      "operationId": "filter_materials_api_v1_core_titles_materials__project_id__filter_post",
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "project_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Project Id"
+          }
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/TitleMaterialFilterRequest"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TitleMaterialFilterResponse"
+              }
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/api/v1/core/titles/materials/{project_id}/add": {
+    "post": {
+      "tags": ["标题素材区"],
+      "summary": "Add Material",
+      "description": "添加新的标题素材",
+      "operationId": "add_material_api_v1_core_titles_materials__project_id__add_post",
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "project_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Project Id"
+          }
+        },
+        {
+          "name": "title_text",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Title Text"
+          }
+        },
+        {
+          "name": "source",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "$ref": "#/components/schemas/TitleMaterialSource"
+          }
+        },
+        {
+          "name": "source_url",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "title": "Source Url"
+          }
+        }
+      ],
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "title": "Tags"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/api/v1/core/titles/materials/{project_id}/{material_id}": {
+    "delete": {
+      "tags": ["标题素材区"],
+      "summary": "Remove Material",
+      "description": "删除标题素材",
+      "operationId": "remove_material_api_v1_core_titles_materials__project_id___material_id__delete",
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "project_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Project Id"
+          }
+        },
+        {
+          "name": "material_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Material Id"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/api/v1/core/titles/materials/{project_id}/statistics": {
+    "get": {
+      "tags": ["标题素材区"],
+      "summary": "Get Material Statistics",
+      "description": "获取项目素材统计信息",
+      "operationId": "get_material_statistics_api_v1_core_titles_materials__project_id__statistics_get",
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "project_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Project Id"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/api/v1/core/titles/materials/sources": {
+    "get": {
+      "tags": ["标题素材区"],
+      "summary": "Get Available Sources",
+      "description": "获取可用的素材来源类型",
+      "operationId": "get_available_sources_api_v1_core_titles_materials_sources_get",
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        }
+      }
+    }
+  },
+  "/api/v1/core/titles/materials/tags/{project_id}": {
+    "get": {
+      "tags": ["标题素材区"],
+      "summary": "Get Project Tags",
+      "description": "获取项目的所有标签",
+      "operationId": "get_project_tags_api_v1_core_titles_materials_tags__project_id__get",
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "project_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Project Id"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

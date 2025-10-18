@@ -1,0 +1,968 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "写作助手核心服务",
+    "description": "提供写作助手的核心功能API",
+    "version": "1.0.0"
+  },
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    },
+    "schemas": {
+      "DeleteAccountRequest": {
+        "properties": {
+          "password": {
+            "type": "string",
+            "title": "Password",
+            "description": "当前密码"
+          },
+          "confirmation": {
+            "type": "string",
+            "title": "Confirmation",
+            "description": "确认文本，必须为'DELETE_MY_ACCOUNT'"
+          }
+        },
+        "type": "object",
+        "required": ["password", "confirmation"],
+        "title": "DeleteAccountRequest"
+      },
+      "PendingRegistrationResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "token": {
+            "type": "string",
+            "title": "Token"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "username": {
+            "type": "string",
+            "title": "Username"
+          }
+        },
+        "type": "object",
+        "required": ["success", "message", "token", "email", "username"],
+        "title": "PendingRegistrationResponse"
+      },
+      "AuthResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Token"
+          },
+          "refresh_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Refresh Token"
+          },
+          "expires_in": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires In"
+          },
+          "user": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "redirect_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Redirect Url"
+          }
+        },
+        "type": "object",
+        "required": ["success", "message"],
+        "title": "AuthResponse"
+      },
+      "UserPreference": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "title": "User Id",
+            "description": "用户ID"
+          },
+          "theme": {
+            "$ref": "#/components/schemas/ThemeType",
+            "description": "界面主题",
+            "default": "light"
+          },
+          "font_size": {
+            "$ref": "#/components/schemas/FontSize",
+            "description": "字体大小",
+            "default": "medium"
+          },
+          "auto_save_frequency": {
+            "$ref": "#/components/schemas/AutoSaveFrequency",
+            "description": "自动保存频率",
+            "default": "5"
+          },
+          "language": {
+            "type": "string",
+            "title": "Language",
+            "description": "界面语言",
+            "default": "zh-CN"
+          },
+          "timezone": {
+            "type": "string",
+            "title": "Timezone",
+            "description": "时区设置",
+            "default": "Asia/Shanghai"
+          },
+          "notifications_enabled": {
+            "type": "boolean",
+            "title": "Notifications Enabled",
+            "description": "是否启用通知",
+            "default": true
+          },
+          "sound_enabled": {
+            "type": "boolean",
+            "title": "Sound Enabled",
+            "description": "是否启用声音",
+            "default": true
+          },
+          "compact_mode": {
+            "type": "boolean",
+            "title": "Compact Mode",
+            "description": "是否启用紧凑模式",
+            "default": false
+          },
+          "show_tooltips": {
+            "type": "boolean",
+            "title": "Show Tooltips",
+            "description": "是否显示工具提示",
+            "default": true
+          },
+          "auto_complete": {
+            "type": "boolean",
+            "title": "Auto Complete",
+            "description": "是否启用自动完成",
+            "default": true
+          },
+          "spell_check": {
+            "type": "boolean",
+            "title": "Spell Check",
+            "description": "是否启用拼写检查",
+            "default": true
+          },
+          "custom_settings": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Custom Settings",
+            "description": "自定义设置",
+            "default": {}
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "创建时间"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At",
+            "description": "更新时间"
+          }
+        },
+        "type": "object",
+        "required": ["user_id"],
+        "title": "UserPreference",
+        "description": "用户偏好设置"
+      },
+      "UserRegisterRequest": {
+        "properties": {
+          "username": {
+            "type": "string",
+            "maxLength": 20,
+            "minLength": 3,
+            "title": "Username",
+            "description": "用户名，必须唯一且3-20个字符"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email",
+            "description": "有效邮箱地址，需验证"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 6,
+            "title": "Password",
+            "description": "密码6位"
+          },
+          "confirm_password": {
+            "type": "string",
+            "title": "Confirm Password",
+            "description": "确认密码，必须与密码一致"
+          },
+          "agree_to_terms": {
+            "type": "boolean",
+            "title": "Agree To Terms",
+            "description": "是否同意服务条款"
+          }
+        },
+        "type": "object",
+        "required": ["username", "email", "password", "confirm_password", "agree_to_terms"],
+        "title": "UserRegisterRequest"
+      },
+      "VerificationResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "verification_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verification Type"
+          },
+          "user_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Id"
+          },
+          "redirect_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Redirect Url"
+          }
+        },
+        "type": "object",
+        "required": ["success", "message"],
+        "title": "VerificationResponse"
+      },
+      "UserPreferenceResponse": {
+        "properties": {
+          "theme": {
+            "type": "string",
+            "title": "Theme",
+            "default": "light"
+          },
+          "font_size": {
+            "type": "string",
+            "title": "Font Size",
+            "default": "medium"
+          },
+          "auto_save_interval": {
+            "type": "integer",
+            "title": "Auto Save Interval",
+            "default": 5
+          },
+          "shortcut_settings": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shortcut Settings"
+          },
+          "user_id": {
+            "type": "integer",
+            "title": "User Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": ["user_id", "created_at"],
+        "title": "UserPreferenceResponse"
+      },
+      "DefaultPreferencesResponse": {
+        "properties": {
+          "theme": {
+            "type": "string",
+            "title": "Theme"
+          },
+          "font_size": {
+            "type": "string",
+            "title": "Font Size"
+          },
+          "auto_save_interval": {
+            "type": "integer",
+            "title": "Auto Save Interval"
+          },
+          "shortcut_settings": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Shortcut Settings"
+          }
+        },
+        "type": "object",
+        "required": ["theme", "font_size", "auto_save_interval", "shortcut_settings"],
+        "title": "DefaultPreferencesResponse"
+      },
+      "ForgotPasswordResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": ["success", "message"],
+        "title": "ForgotPasswordResponse"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "UserLoginRequest": {
+        "properties": {
+          "login": {
+            "type": "string",
+            "title": "Login",
+            "description": "用户名或邮箱"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password",
+            "description": "用户密码"
+          },
+          "remember_me": {
+            "type": "boolean",
+            "title": "Remember Me",
+            "description": "是否记住登录，有效期7天",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": ["login", "password"],
+        "title": "UserLoginRequest"
+      },
+      "UpdateUserPreferenceRequest": {
+        "properties": {
+          "theme": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Theme",
+            "description": "主题设置：light/dark"
+          },
+          "font_size": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Font Size",
+            "description": "字体大小：small/medium/large"
+          },
+          "auto_save_interval": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 60.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Auto Save Interval",
+            "description": "自动保存间隔（秒）"
+          },
+          "shortcut_settings": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shortcut Settings",
+            "description": "快捷键设置"
+          }
+        },
+        "type": "object",
+        "title": "UpdateUserPreferenceRequest"
+      },
+      "ForgotPasswordRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email",
+            "description": "注册邮箱"
+          },
+          "newpassword": {
+            "type": "string",
+            "title": "Newpassword",
+            "description": "用户密码"
+          }
+        },
+        "type": "object",
+        "required": ["email", "newpassword"],
+        "title": "ForgotPasswordRequest"
+      }
+    }
+  },
+  "paths": {
+    "/api/v1/core/register": {
+      "post": {
+        "tags": ["用户认证"],
+        "summary": "Register User",
+        "description": "用户注册（使用缓存系统）",
+        "operationId": "register_user_api_v1_core_register_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserRegisterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PendingRegistrationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/core/login": {
+      "post": {
+        "tags": ["用户认证"],
+        "summary": "Login User",
+        "description": "用户登录",
+        "operationId": "login_user_api_v1_core_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserLoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/core/forgot-password": {
+      "post": {
+        "tags": ["用户认证"],
+        "summary": "Forgot Password",
+        "description": "请求密码重置",
+        "operationId": "forgot_password_api_v1_core_forgot_password_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForgotPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForgotPasswordResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/core/verify/{token}": {
+      "get": {
+        "tags": ["用户认证"],
+        "summary": "Verify Email Token",
+        "description": "统一的邮件验证令牌处理",
+        "operationId": "verify_email_token_api_v1_core_verify__token__get",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/core/account": {
+      "delete": {
+        "tags": ["用户认证"],
+        "summary": "Delete Account",
+        "description": "注销账户",
+        "operationId": "delete_account_api_v1_core_account_delete",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteAccountRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/core/refresh-token": {
+      "post": {
+        "tags": ["用户认证"],
+        "summary": "Refresh Access Token",
+        "description": "刷新访问令牌",
+        "operationId": "refresh_access_token_api_v1_core_refresh_token_post",
+        "parameters": [
+          {
+            "name": "refresh_token",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Refresh Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/core/logout": {
+      "post": {
+        "tags": ["用户认证"],
+        "summary": "Logout",
+        "description": "用户登出",
+        "operationId": "logout_api_v1_core_logout_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/core/cleanup-expired-tokens": {
+      "post": {
+        "tags": ["用户认证"],
+        "summary": "Cleanup Expired Tokens",
+        "description": "清理过期的验证令牌（管理员功能）",
+        "operationId": "cleanup_expired_tokens_api_v1_core_cleanup_expired_tokens_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/core/health": {
+      "get": {
+        "tags": ["用户认证"],
+        "summary": "Health Check",
+        "description": "基础健康检查",
+        "operationId": "health_check_api_v1_core_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/core/health/detailed": {
+      "get": {
+        "tags": ["用户认证"],
+        "summary": "Detailed Health Check",
+        "description": "详细健康检查",
+        "operationId": "detailed_health_check_api_v1_core_health_detailed_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/core/health/ready": {
+      "get": {
+        "tags": ["用户认证"],
+        "summary": "Readiness Check",
+        "description": "就绪性检查 - 服务是否准备好接收请求",
+        "operationId": "readiness_check_api_v1_core_health_ready_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/core/health/live": {
+      "get": {
+        "tags": ["用户认证"],
+        "summary": "Liveness Check",
+        "description": "存活检查 - 服务是否正在运行",
+        "operationId": "liveness_check_api_v1_core_health_live_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/core/metrics": {
+      "get": {
+        "tags": ["用户认证"],
+        "summary": "Get Metrics",
+        "description": "获取服务指标",
+        "operationId": "get_metrics_api_v1_core_metrics_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/core/preferences": {
+      "put": {
+        "tags": ["用户认证"],
+        "summary": "Update User Preferences",
+        "description": "更新用户偏好设置",
+        "operationId": "update_user_preferences_api_v1_core_preferences_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserPreferenceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPreferenceResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/core/preferences/default": {
+      "get": {
+        "tags": ["用户认证"],
+        "summary": "Get Default Preferences",
+        "description": "获取默认偏好设置",
+        "operationId": "get_default_preferences_api_v1_core_preferences_default_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DefaultPreferencesResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "用户认证",
+      "description": "用户认证 相关的 API"
+    }
+  ]
+}

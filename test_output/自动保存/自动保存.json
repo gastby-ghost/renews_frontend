@@ -1,0 +1,734 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "写作助手核心服务",
+    "description": "提供写作助手的核心功能API",
+    "version": "1.0.0"
+  },
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    },
+    "schemas": {
+      "AutoSaveStatusResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "是否成功"
+          },
+          "project_id": {
+            "type": "string",
+            "title": "Project Id",
+            "description": "项目ID"
+          },
+          "component_type": {
+            "$ref": "#/components/schemas/app__autosave__schemas__ComponentType",
+            "description": "组件类型"
+          },
+          "last_save_time": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Save Time",
+            "description": "最后保存时间"
+          },
+          "next_save_time": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Save Time",
+            "description": "下次保存时间"
+          },
+          "save_count": {
+            "type": "integer",
+            "title": "Save Count",
+            "description": "保存次数",
+            "default": 0
+          },
+          "status": {
+            "$ref": "#/components/schemas/AutoSaveStatus",
+            "description": "当前状态"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "状态消息"
+          }
+        },
+        "type": "object",
+        "required": ["success", "project_id", "component_type", "status", "message"],
+        "title": "AutoSaveStatusResponse",
+        "description": "自动保存状态响应模型"
+      },
+      "AutoSaveRequest": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "title": "Project Id",
+            "description": "项目ID"
+          },
+          "component_type": {
+            "$ref": "#/components/schemas/app__autosave__schemas__ComponentType",
+            "description": "组件类型"
+          },
+          "component_data": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Component Data",
+            "description": "组件数据"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version",
+            "description": "数据版本号"
+          },
+          "last_modified": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Modified",
+            "description": "最后修改时间"
+          }
+        },
+        "type": "object",
+        "required": ["project_id", "component_type", "component_data"],
+        "title": "AutoSaveRequest",
+        "description": "自动保存请求模型"
+      },
+      "AutoSaveHistoryResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "是否成功"
+          },
+          "project_id": {
+            "type": "string",
+            "title": "Project Id",
+            "description": "项目ID"
+          },
+          "component_type": {
+            "$ref": "#/components/schemas/app__autosave__schemas__ComponentType",
+            "description": "组件类型"
+          },
+          "history": {
+            "items": {
+              "$ref": "#/components/schemas/AutoSaveRecord"
+            },
+            "type": "array",
+            "title": "History",
+            "description": "保存历史记录"
+          },
+          "total_count": {
+            "type": "integer",
+            "title": "Total Count",
+            "description": "总记录数"
+          },
+          "current_version": {
+            "type": "string",
+            "title": "Current Version",
+            "description": "当前版本号"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "project_id",
+          "component_type",
+          "history",
+          "total_count",
+          "current_version"
+        ],
+        "title": "AutoSaveHistoryResponse",
+        "description": "自动保存历史响应模型"
+      },
+      "AutoSaveConfig": {
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "description": "是否启用自动保存",
+            "default": true
+          },
+          "interval_minutes": {
+            "type": "integer",
+            "title": "Interval Minutes",
+            "description": "自动保存间隔（分钟）",
+            "default": 5
+          },
+          "max_versions": {
+            "type": "integer",
+            "title": "Max Versions",
+            "description": "最大保存版本数",
+            "default": 10
+          },
+          "auto_cleanup": {
+            "type": "boolean",
+            "title": "Auto Cleanup",
+            "description": "是否自动清理旧版本",
+            "default": true
+          }
+        },
+        "type": "object",
+        "title": "AutoSaveConfig",
+        "description": "自动保存配置模型"
+      },
+      "AutoSaveStatus": {
+        "type": "string",
+        "enum": ["pending", "saving", "success", "failed", "conflict"],
+        "title": "AutoSaveStatus",
+        "description": "自动保存状态枚举"
+      },
+      "AutoSaveRestoreResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "是否成功"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "响应消息"
+          },
+          "restored_data": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Restored Data",
+            "description": "恢复的数据"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version",
+            "description": "恢复的版本号"
+          },
+          "restored_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Restored At",
+            "description": "恢复时间"
+          }
+        },
+        "type": "object",
+        "required": ["success", "message", "restored_data", "version", "restored_at"],
+        "title": "AutoSaveRestoreResponse",
+        "description": "自动保存恢复响应模型"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "AutoSaveRestoreRequest": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "title": "Project Id",
+            "description": "项目ID"
+          },
+          "component_type": {
+            "$ref": "#/components/schemas/app__autosave__schemas__ComponentType",
+            "description": "组件类型"
+          },
+          "save_id": {
+            "type": "string",
+            "title": "Save Id",
+            "description": "要恢复的保存记录ID"
+          }
+        },
+        "type": "object",
+        "required": ["project_id", "component_type", "save_id"],
+        "title": "AutoSaveRestoreRequest",
+        "description": "自动保存恢复请求模型"
+      },
+      "AutoSaveResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "是否成功"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "响应消息"
+          },
+          "save_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Save Id",
+            "description": "保存记录ID"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version",
+            "description": "新版本号"
+          },
+          "saved_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Saved At",
+            "description": "保存时间"
+          },
+          "status": {
+            "$ref": "#/components/schemas/AutoSaveStatus",
+            "description": "保存状态"
+          }
+        },
+        "type": "object",
+        "required": ["success", "message", "status"],
+        "title": "AutoSaveResponse",
+        "description": "自动保存响应模型"
+      }
+    }
+  },
+  "paths": {
+    "/api/v1/core/autosave/start": {
+      "post": {
+        "tags": ["自动保存"],
+        "summary": "Start Auto Save",
+        "description": "启动自动保存",
+        "operationId": "start_auto_save_api_v1_core_autosave_start_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "component_type",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Component Type"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Start Auto Save Api V1 Core Autosave Start Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/core/autosave/stop": {
+      "post": {
+        "tags": ["自动保存"],
+        "summary": "Stop Auto Save",
+        "description": "停止自动保存",
+        "operationId": "stop_auto_save_api_v1_core_autosave_stop_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "component_type",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Component Type"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Stop Auto Save Api V1 Core Autosave Stop Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/core/autosave/save": {
+      "post": {
+        "tags": ["自动保存"],
+        "summary": "Manual Save",
+        "description": "手动保存",
+        "operationId": "manual_save_api_v1_core_autosave_save_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutoSaveRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutoSaveResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/core/autosave/status/{project_id}/{component_type}": {
+      "get": {
+        "tags": ["自动保存"],
+        "summary": "Get Save Status",
+        "description": "获取保存状态",
+        "operationId": "get_save_status_api_v1_core_autosave_status__project_id___component_type__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "component_type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Component Type"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutoSaveStatusResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/core/autosave/history/{project_id}/{component_type}": {
+      "get": {
+        "tags": ["自动保存"],
+        "summary": "Get Save History",
+        "description": "获取保存历史",
+        "operationId": "get_save_history_api_v1_core_autosave_history__project_id___component_type__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "component_type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Component Type"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutoSaveHistoryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/core/autosave/restore": {
+      "post": {
+        "tags": ["自动保存"],
+        "summary": "Restore Save",
+        "description": "恢复保存记录",
+        "operationId": "restore_save_api_v1_core_autosave_restore_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutoSaveRestoreRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutoSaveRestoreResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/core/autosave/config": {
+      "put": {
+        "tags": ["自动保存"],
+        "summary": "Update Config",
+        "description": "更新自动保存配置",
+        "operationId": "update_config_api_v1_core_autosave_config_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutoSaveConfig"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Update Config Api V1 Core Autosave Config Put"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/core/autosave/health": {
+      "get": {
+        "tags": ["自动保存"],
+        "summary": "Health Check",
+        "description": "健康检查",
+        "operationId": "health_check_api_v1_core_autosave_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Health Check Api V1 Core Autosave Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "自动保存",
+      "description": "自动保存 相关的 API"
+    }
+  ]
+}
