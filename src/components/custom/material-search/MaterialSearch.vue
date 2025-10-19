@@ -113,33 +113,6 @@
             />
           </el-form-item>
 
-          <el-form-item label="高级选项">
-            <el-collapse v-model="advancedOptions">
-              <el-collapse-item title="搜索范围" name="scope">
-                <el-input
-                  v-model="searchForm.searchScope"
-                  type="textarea"
-                  :rows="3"
-                  placeholder="描述AI理解的检索范围（可选）"
-                />
-              </el-collapse-item>
-
-              <el-collapse-item title="内容过滤" name="filters">
-                <div class="art-material-search__filters">
-                  <el-form-item label="素材类型">
-                    <el-checkbox-group v-model="searchForm.filters.type">
-                      <el-checkbox label="image">图片</el-checkbox>
-                      <el-checkbox label="video">视频</el-checkbox>
-                      <el-checkbox label="audio">音频</el-checkbox>
-                      <el-checkbox label="text">文本</el-checkbox>
-                      <el-checkbox label="other">其他</el-checkbox>
-                    </el-checkbox-group>
-                  </el-form-item>
-                </div>
-              </el-collapse-item>
-            </el-collapse>
-          </el-form-item>
-
           <!-- Agent模式特有选项 -->
           <el-form-item v-if="searchMode === 'agent'" label="Agent类型">
             <el-select
@@ -383,10 +356,6 @@
     keywords: string
     providers: string[]
     maxResults: number
-    searchScope: string
-    filters: {
-      type: Material['type'][]
-    }
   }
 
   interface AgentForm {
@@ -411,7 +380,6 @@
   const selectedMaterials = ref<string[]>([])
   const loadingMaterials = ref<string[]>([])
 
-  const advancedOptions = ref<string[]>([])
   const showAgentPanel = ref(false)
   const searchMode = ref<'simple' | 'agent'>('simple')
   const availableAgents = ref<AgentService[]>([])
@@ -440,11 +408,7 @@
   const searchForm = reactive<SearchForm>({
     keywords: '',
     providers: ['tavily'],
-    maxResults: 20,
-    searchScope: '',
-    filters: {
-      type: []
-    }
+    maxResults: 20
   })
 
   // Agent表单数据
@@ -465,9 +429,7 @@
   // 搜索配置
   const searchConfig = computed(() => ({
     keywords: searchForm.keywords,
-    providers: searchForm.providers,
-    searchScope: searchForm.searchScope,
-    filters: searchForm.filters
+    providers: searchForm.providers
   }))
 
   // 可用的搜索提供商
@@ -597,10 +559,10 @@
         const agentConfig: AgentSearchConfig = {
           keywords: searchForm.keywords,
           providers: searchForm.providers,
-          searchScope: searchForm.searchScope,
+          searchScope: '',
           agentType: agentForm.agentType,
           agentConfig: agentForm.agentConfig,
-          filters: searchForm.filters,
+          filters: { type: [] },
           maxResults: searchForm.maxResults,
           enableAIEnhancement: agentForm.enableAIEnhancement
         }
@@ -615,8 +577,8 @@
         const searchParams = {
           keywords: searchForm.keywords,
           providers: searchForm.providers,
-          searchScope: searchForm.searchScope,
-          filters: searchForm.filters,
+          searchScope: '',
+          filters: { type: [] },
           page: currentPage.value,
           pageSize: searchForm.maxResults
         }
@@ -638,7 +600,12 @@
         updateSearchProgress('completed', 100, 100, '搜索完成')
 
         // 添加到搜索历史
-        materialStore.searchMaterials(searchConfig.value)
+        materialStore.searchMaterials({
+          keywords: searchForm.keywords,
+          providers: searchForm.providers,
+          searchScope: '',
+          filters: { type: [] }
+        })
 
         ElMessage.success(`找到 ${result.total} 个相关素材`)
       }
@@ -676,9 +643,6 @@
     searchFormRef.value.resetFields()
     searchForm.providers = ['tavily']
     searchForm.maxResults = 20
-    searchForm.searchScope = ''
-    searchForm.filters.type = []
-    advancedOptions.value = []
 
     // 重置Agent表单
     agentForm.agentType = 'search'
@@ -695,7 +659,6 @@
   const useHistoryItem = (item: any) => {
     searchForm.keywords = item.keywords
     searchForm.providers = [...item.providers]
-    searchForm.searchScope = item.searchScope || ''
     handleSearch()
   }
 
@@ -1013,12 +976,6 @@
       align-items: center;
       justify-content: space-between;
       width: 100%;
-    }
-
-    &__filters {
-      .el-form-item {
-        margin-bottom: 12px;
-      }
     }
 
     &__actions {
