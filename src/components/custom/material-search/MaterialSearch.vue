@@ -105,9 +105,9 @@
           <el-form-item label="结果数量" prop="maxResults">
             <el-slider
               v-model="searchForm.maxResults"
-              :min="5"
-              :max="50"
-              :step="5"
+              :min="1"
+              :max="10"
+              :step="1"
               show-stops
               show-input
             />
@@ -231,16 +231,14 @@
         </template>
 
         <div class="art-material-search__results-grid">
-          <MaterialCard
+          <SearchResultCard
             v-for="material in searchResults"
             :key="material.id"
             :material="material"
             :selected="selectedMaterials.includes(material.id)"
             :loading="loadingMaterials.includes(material.id)"
-            :show-type="true"
+            :show-selection="true"
             @select="toggleMaterialSelection"
-            @preview="showPreview"
-            @download="downloadMaterial"
             @click="selectMaterial(material)"
           />
         </div>
@@ -343,10 +341,16 @@
   import { ElMessage } from 'element-plus'
   import { Search, Setting, Close } from '@element-plus/icons-vue'
   import type { FormInstance, FormRules } from 'element-plus'
-  import { materialSearchService } from '@/services/materialSearch'
+  import { materialSearchService, type SearchToolsResult } from '@/services/materialSearch'
   import { useMaterialStore } from '@/store/material'
-  import type { Material, SearchProgress, AgentSearchConfig, AgentService } from '@/types/material'
-  import MaterialCard from '@/components/custom/material-card/MaterialCard.vue'
+  import type {
+    Material,
+    SearchProgress,
+    AgentSearchConfig,
+    AgentService,
+    SearchResultMaterial
+  } from '@/types/material'
+  import SearchResultCard from '@/components/custom/material-card/SearchResultMaterial.vue'
   import SearchProgressComponent from '@/components/custom/search-progress/SearchProgress.vue'
   // import AgentPanel from './AgentPanel.vue' // 暂时注释，等组件创建后再启用
   import { useRouter } from 'vue-router'
@@ -376,7 +380,7 @@
   const pageSize = ref(20)
   const totalResults = ref(0)
 
-  const searchResults = ref<Material[]>([])
+  const searchResults = ref<SearchResultMaterial[]>([])
   const selectedMaterials = ref<string[]>([])
   const loadingMaterials = ref<string[]>([])
 
@@ -513,8 +517,8 @@
       // 更新搜索进度
       updateSearchProgress('searching', 20, 100, 'Agent正在分析需求...')
 
-      // 模拟Agent搜索
-      const result = await materialSearchService.mockSearch({
+      // 使用真实API进行Agent搜索
+      const result: SearchToolsResult = await materialSearchService.searchWithSearchTools({
         keywords: config.keywords,
         providers: config.providers,
         searchScope: config.searchScope,
@@ -587,7 +591,8 @@
         updateSearchProgress('searching', 20, 100, '正在搜索素材...')
 
         // 执行搜索
-        const result = await materialSearchService.searchWithSearchTools(searchParams)
+        const result: SearchToolsResult =
+          await materialSearchService.searchWithSearchTools(searchParams)
 
         // 更新搜索进度
         updateSearchProgress('processing', 80, 100, '处理搜索结果...')
@@ -803,39 +808,6 @@
   // 根据ID获取素材
   const getMaterialById = (id: string) => {
     return searchResults.value.find((material) => material.id === id)
-  }
-
-  // 预览素材
-  const showPreview = (material: Material) => {
-    // 实现预览功能
-    ElMessage.info(`预览素材: ${material.title}`)
-  }
-
-  // 下载素材
-  const downloadMaterial = async (material: Material) => {
-    if (!material.url) {
-      ElMessage.warning('该素材没有可下载的链接')
-      return
-    }
-
-    try {
-      loadingMaterials.value.push(material.id)
-      const downloadUrl = await materialSearchService.downloadMaterial(material.id)
-
-      // 创建下载链接
-      const link = document.createElement('a')
-      link.href = downloadUrl
-      link.download = material.title || 'material'
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-
-      ElMessage.success('下载开始')
-    } catch {
-      ElMessage.error('下载失败')
-    } finally {
-      loadingMaterials.value = loadingMaterials.value.filter((id) => id !== material.id)
-    }
   }
 
   // 分页处理

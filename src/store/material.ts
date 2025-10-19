@@ -4,6 +4,7 @@ import { materialSearchService } from '@/services/materialSearch'
 import { agentService } from '@/services/agentService'
 import type {
   Material,
+  SearchResultMaterial,
   SearchConfig,
   SearchProgress,
   MaterialLibraryState,
@@ -46,7 +47,7 @@ export const useMaterialStore = defineStore('material', () => {
   // Search-tools 相关状态
   const searchToolsStatus = ref<SearchToolsStatusResponse | null>(null)
   const searchMode = ref<'simple' | 'agent'>('simple')
-  const currentSearchResults = ref<Material[]>([])
+  const currentSearchResults = ref<SearchResultMaterial[]>([])
   const searchProgress = ref<SearchProgress>({
     stage: 'config',
     current: 0,
@@ -195,7 +196,7 @@ export const useMaterialStore = defineStore('material', () => {
       updateSearchProgress('processing', 80, 100, '处理搜索结果...')
 
       // 保存当前搜索结果
-      currentSearchResults.value = result.materials
+      currentSearchResults.value = result.materials as SearchResultMaterial[]
 
       // 添加到素材库
       addMaterials(result.materials)
@@ -203,7 +204,7 @@ export const useMaterialStore = defineStore('material', () => {
       // 更新搜索进度
       updateSearchProgress('completed', 100, 100, '搜索完成')
 
-      return result.materials
+      return result.materials as SearchResultMaterial[]
     } catch (error) {
       state.value.error = error instanceof Error ? error.message : '搜索失败'
       throw error

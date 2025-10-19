@@ -1,9 +1,16 @@
 import http from '@/utils/http'
-import type { Material, SearchProvider } from '@/types/material'
+import type { Material, SearchProvider, SearchResultMaterial } from '@/types/material'
 import { HttpError } from '@/utils/http/error'
 
 export interface SearchResult {
   materials: Material[]
+  total: number
+  page: number
+  pageSize: number
+}
+
+export interface SearchToolsResult {
+  materials: SearchResultMaterial[]
   total: number
   page: number
   pageSize: number
@@ -23,8 +30,8 @@ export interface SearchParams {
   pageSize?: number
 }
 
-// Search-tools API 相关类型定义
-export interface SearchToolsRequest {
+// Search-tools API 相关类型定义 - 根据 ai_openapi.json 更新
+export interface UnifiedSearchRequest {
   queries: string[]
   provider: 'tavily' | 'bocha'
   max_results?: number
@@ -42,6 +49,9 @@ export interface SearchToolsRequest {
   include?: string
   exclude?: string
 }
+
+// 保持向后兼容的别名
+export type SearchToolsRequest = UnifiedSearchRequest
 
 export interface SearchToolsResponse {
   success: boolean
@@ -61,6 +71,7 @@ export interface SearchResultItem {
   query: string
   aititle?: string
   summary?: string
+  tags?: string[] // 添加tags字段，虽然API文档中没有，但可能在实际返回中存在
   key_excerpts: string[]
   published_date?: string
 }
@@ -194,74 +205,11 @@ class MaterialSearchService {
     }
   }
 
-  // Mock search for development/testing
-  async mockSearch(params: SearchParams): Promise<SearchResult> {
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 1000 + Math.random() * 2000))
-
-    const mockMaterials: Material[] = Array.from({ length: 10 }, (_, index) => ({
-      id: `mock-${params.keywords}-${Date.now()}-${index}`,
-      title: `${params.keywords} - 相关素材 ${index + 1}`,
-      source: params.providers[0] || 'mock',
-      summary: `这是关于${params.keywords}的高质量素材，适合多种用途。素材内容丰富，质量优秀，可以满足您的各种需求。`,
-      tags: [params.keywords, '素材', '高质量', '专业'],
-      type: ['image', 'video', 'text', 'other'][Math.floor(Math.random() * 4)] as Material['type'],
-      url: `https://example.com/material-${index + 1}`,
-      thumbnail: `https://picsum.photos/300/200?random=${Date.now()}-${index}`,
-      createdAt: new Date(Date.now() - Math.random() * 86400000 * 30), // Random date within 30 days
-      selected: false
-    }))
-
-    return {
-      materials: mockMaterials,
-      total: mockMaterials.length,
-      page: params.page || 1,
-      pageSize: params.pageSize || 20
-    }
-  }
-
-  // Provider-specific search implementations
-  async searchGoogle(params: SearchParams): Promise<SearchResult> {
-    return this.mockSearch(params)
-  }
-
-  async searchBing(params: SearchParams): Promise<SearchResult> {
-    return this.mockSearch(params)
-  }
-
-  async searchUnsplash(params: SearchParams): Promise<SearchResult> {
-    const result = await this.mockSearch(params)
-    // Unsplash-specific modifications
-    result.materials = result.materials.map((material) => ({
-      ...material,
-      type: 'image' as const,
-      source: 'Unsplash',
-      tags: [...material.tags, 'photo', 'photography']
-    }))
-    return result
-  }
-
-  async searchWithAI(params: SearchParams): Promise<SearchResult> {
-    // Simulate AI processing delay
-    await new Promise((resolve) => setTimeout(resolve, 2000 + Math.random() * 3000))
-
-    const result = await this.mockSearch(params)
-
-    // AI-specific enhancements
-    result.materials = result.materials.map((material) => ({
-      ...material,
-      summary: `AI增强：${material.summary}。通过AI技术优化了素材的相关性和质量评分。`,
-      tags: [...material.tags, 'AI-enhanced', '智能推荐']
-    }))
-
-    return result
-  }
-
-  // 集成 search-tools API
-  async searchWithSearchTools(params: SearchParams): Promise<SearchResult> {
+  // 集成 search-tools API - 完全使用API返回值
+  async searchWithSearchTools(params: SearchParams): Promise<SearchToolsResult> {
     try {
-      // 构建API请求
-      const request: SearchToolsRequest = {
+      // 构建API请求 - 使用UnifiedSearchRequest接口
+      const request: UnifiedSearchRequest = {
         queries: [params.keywords],
         provider: params.providers[0] as 'tavily' | 'bocha',
         max_results: params.pageSize || 20,
@@ -284,10 +232,10 @@ class MaterialSearchService {
         timeout: 120000
       })
 
-      // 转换结果
+      // 转换结果 - 完全使用API返回值
       const materials = response.results.map((result) =>
         this.transformSearchResultToMaterial(result, response.provider)
-      )
+      ) as SearchResultMaterial[]
 
       return {
         materials,
@@ -358,8 +306,11 @@ class MaterialSearchService {
     }
   }
 
-  // 转换函数：将SearchResultItem转换为Material
-  private transformSearchResultToMaterial(result: SearchResultItem, provider: string): Material {
+  // 转换函数：将SearchResultItem转换为SearchResultMaterial - 完全使用API返回值
+  private transformSearchResultToMaterial(
+    result: SearchResultItem,
+    provider: string
+  ): SearchResultMaterial {
     // 从URL提取域名作为来源
     const url = new URL(result.url)
     const source = url.hostname
@@ -370,12 +321,8 @@ class MaterialSearchService {
     // 确定素材类型（基于URL和内容）
     const type = this.determineMaterialType(result.url, result.summary)
 
-    // 提取标签
-    const tags = this.extractTags(
-      result.aititle || result.webtitle,
-      result.summary,
-      result.key_excerpts
-    )
+    // 只使用API返回的tags，不生成虚假标签
+    const tags = result.tags && result.tags.length > 0 ? result.tags : []
 
     return {
       id,
@@ -388,7 +335,14 @@ class MaterialSearchService {
       thumbnail: this.generateThumbnailUrl(result.url, type),
       content: result.key_excerpts.join('\n\n'),
       createdAt: result.published_date ? new Date(result.published_date) : new Date(),
-      selected: false
+      selected: false,
+      // SearchResultMaterial特有字段 - 完全使用API返回值
+      score: result.score,
+      query: result.query,
+      aititle: result.aititle,
+      key_excerpts: result.key_excerpts,
+      published_date: result.published_date,
+      webtitle: result.webtitle
     }
   }
 

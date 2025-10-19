@@ -1025,7 +1025,7 @@
           },
           "web_search_data": {
             "anyOf": [
-              { "items": { "$ref": "#/components/schemas/TavilySearchResult" }, "type": "array" },
+              { "items": { "$ref": "#/components/schemas/SearchResultItem" }, "type": "array" },
               { "items": { "type": "string" }, "type": "array" }
             ],
             "minLength": 1,
@@ -1430,7 +1430,6 @@
       "SearchResultItem": {
         "properties": {
           "url": { "type": "string", "title": "Url", "description": "搜索结果URL" },
-          "webtitle": { "type": "string", "title": "Webtitle", "description": "搜索结果标题" },
           "score": {
             "type": "number",
             "maximum": 1.0,
@@ -1449,6 +1448,12 @@
             "title": "Summary",
             "description": "AI生成的内容摘要"
           },
+          "tags": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Tags",
+            "description": "标签"
+          },
           "key_excerpts": {
             "items": { "type": "string" },
             "type": "array",
@@ -1462,7 +1467,7 @@
           }
         },
         "type": "object",
-        "required": ["url", "webtitle", "score", "query"],
+        "required": ["url", "score", "query"],
         "title": "SearchResultItem",
         "description": "Individual search result item."
       },
@@ -1571,45 +1576,6 @@
         "title": "SearchToolsStatusResponse",
         "description": "Response model for search tools status."
       },
-      "TavilySearchResult": {
-        "properties": {
-          "url": { "type": "string", "title": "Url", "description": "搜索结果URL" },
-          "webtitle": { "type": "string", "title": "Webtitle", "description": "搜索结果标题" },
-          "score": {
-            "type": "number",
-            "maximum": 1.0,
-            "minimum": 0.0,
-            "title": "Score",
-            "description": "搜索相关性评分"
-          },
-          "query": { "type": "string", "title": "Query", "description": "产生此结果的搜索查询" },
-          "aititle": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
-            "title": "Aititle",
-            "description": "AI总结标题"
-          },
-          "summary": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
-            "title": "Summary",
-            "description": "AI生成的内容摘要"
-          },
-          "key_excerpts": {
-            "items": { "type": "string" },
-            "type": "array",
-            "title": "Key Excerpts",
-            "description": "关键摘录"
-          },
-          "published_date": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
-            "title": "Published Date",
-            "description": "发布日期"
-          }
-        },
-        "type": "object",
-        "required": ["url", "webtitle", "score", "query"],
-        "title": "TavilySearchResult",
-        "description": "Tavily搜索结果的结构化表示"
-      },
       "Title": {
         "properties": {
           "title": {
@@ -1671,7 +1637,7 @@
           },
           "web_search_data": {
             "anyOf": [
-              { "items": { "$ref": "#/components/schemas/TavilySearchResult" }, "type": "array" },
+              { "items": { "$ref": "#/components/schemas/SearchResultItem" }, "type": "array" },
               { "items": { "type": "string" }, "type": "array" }
             ],
             "minLength": 1,
@@ -1799,7 +1765,7 @@
             "minimum": 1000.0,
             "title": "Max Content Length",
             "description": "Maximum content length for summarization",
-            "default": 50000
+            "default": 8192
           },
           "topic": {
             "anyOf": [
