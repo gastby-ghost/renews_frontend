@@ -90,7 +90,8 @@ class MaterialSearchService {
     try {
       const response = await http.post<SearchResult>({
         url: `${this.baseUrl}/search`,
-        data: params
+        data: params,
+        timeout: 120000
       })
       return response
     } catch (error) {
@@ -103,7 +104,8 @@ class MaterialSearchService {
     try {
       const response = await http.post<SearchResult>({
         url: `${this.baseUrl}/search/${providerId}`,
-        data: params
+        data: params,
+        timeout: 120000
       })
       return response
     } catch (error) {
@@ -275,10 +277,11 @@ class MaterialSearchService {
         request.summary = true
       }
 
-      // 发送请求
+      // 发送请求，设置120秒超时
       const response = await http.post<SearchToolsResponse>({
         url: '/api/v1/ai/search-tools/search',
-        data: request
+        data: request,
+        timeout: 120000
       })
 
       // 转换结果
