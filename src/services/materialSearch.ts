@@ -292,19 +292,29 @@ class MaterialSearchService {
   // 检查搜索工具状态
   async checkSearchToolsStatus(): Promise<SearchToolsStatusResponse> {
     try {
+      console.log('[MaterialSearchService] 开始检查搜索工具状态...')
       const response = await http.get<SearchToolsStatusResponse>({
         url: '/api/v1/ai/search-tools/status'
       })
+      console.log('[MaterialSearchService] 搜索工具状态检查成功:', response)
       return response
     } catch (error) {
-      console.error('Check search tools status error:', error)
+      console.error('[MaterialSearchService] Check search tools status error:', error)
       // 添加更详细的错误信息
       if (error instanceof HttpError) {
-        console.error('HTTP Error Details:', {
+        console.error('[MaterialSearchService] HTTP Error Details:', {
           code: error.code,
           url: error.url,
           method: error.method,
-          data: error.data
+          data: error.data,
+          message: error.message,
+          timestamp: error.timestamp
+        })
+      } else {
+        console.error('[MaterialSearchService] 非HTTP错误:', {
+          error: error,
+          errorMessage: error instanceof Error ? error.message : '未知错误',
+          errorType: typeof error
         })
       }
       throw new Error('无法检查搜索工具状态')

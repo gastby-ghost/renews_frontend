@@ -112,6 +112,18 @@ axiosInstance.interceptors.response.use(
     // 检查是否是认证相关的API，这些API可能有不同的响应格式
     const isAuthAPI = AUTH_API_PATTERNS.some((pattern) => response.config.url?.includes(pattern))
     console.log('[HTTP Response] 检查API类型:', { url: response.config.url, isAuthAPI })
+
+    // 添加更详细的响应数据结构日志
+    console.log('[HTTP Response] 响应数据结构分析:', {
+      hasData: !!response.data,
+      dataType: typeof response.data,
+      dataKeys: response.data ? Object.keys(response.data) : [],
+      hasCode: response.data && 'code' in response.data,
+      hasSuccess: response.data && 'success' in response.data,
+      codeValue: response.data?.code,
+      successValue: (response.data as any)?.success
+    })
+
     if (isAuthAPI) {
       // 认证API的特殊处理
       const responseData = response.data as any
@@ -137,8 +149,23 @@ axiosInstance.interceptors.response.use(
 
     // 标准API响应处理
     const { code, msg } = response.data
-    if (code === ApiStatus.success) return response
-    if (code === ApiStatus.unauthorized) handleUnauthorizedError(msg)
+    console.log('[HTTP Response] 标准API处理:', { code, msg, expectedCode: ApiStatus.success })
+
+    // 处理没有code和msg字段的响应（直接返回数据）
+    if (code === undefined && msg === undefined) {
+      console.log('[HTTP Response] 检测到无code/msg字段的响应，直接返回数据')
+      return response
+    }
+
+    if (code === ApiStatus.success) {
+      console.log('[HTTP Response] 标准API成功，返回响应')
+      return response
+    }
+
+    if (code === ApiStatus.unauthorized) {
+      console.log('[HTTP Response] 处理未授权错误')
+      handleUnauthorizedError(msg)
+    }
 
     // 获取响应数据中的detail字段作为具体错误信息
     const responseData = response.data as any
@@ -146,6 +173,7 @@ axiosInstance.interceptors.response.use(
 
     // 优先使用detail字段，其次使用msg字段
     const errorMessage = detailMessage || msg || $t('httpMsg.requestFailed')
+    console.log('[HTTP Response] 标准API错误处理:', { errorMessage, code, detailMessage, msg })
     throw createHttpError(errorMessage, code)
   },
   async (error) => {
@@ -320,14 +348,31 @@ async function request<T = any>(config: ExtendedAxiosRequestConfig): Promise<T> 
     const isAuthAPI = AUTH_API_PATTERNS.some((pattern) => config.url?.includes(pattern))
     console.log('[Request] 检查API类型:', { url: config.url, isAuthAPI })
 
+    // 检查响应数据结构
+    const responseData = res.data as any
+    const hasCodeField = responseData && 'code' in responseData
+    const hasDataField = responseData && 'data' in responseData
+    const hasSuccessField = responseData && 'success' in responseData
+
+    console.log('[Request] 响应数据结构分析:', {
+      hasCodeField,
+      hasDataField,
+      hasSuccessField,
+      isAuthAPI
+    })
+
     if (isAuthAPI) {
       // 认证API的特殊处理，直接返回整个响应数据
       console.log('[Request] 认证API，返回完整响应数据:', res.data)
       return res.data as T
-    } else {
+    } else if (hasCodeField && hasDataField) {
       // 标准API响应处理，返回data字段
       console.log('[Request] 标准API，返回data字段:', res.data.data)
       return res.data.data as T
+    } else {
+      // 没有标准结构，直接返回响应数据
+      console.log('[Request] 非标准API响应，直接返回响应数据:', res.data)
+      return res.data as T
     }
   } catch (error) {
     if (error instanceof HttpError && error.code !== ApiStatus.unauthorized) {

@@ -377,6 +377,7 @@
   import SearchProgressComponent from '@/components/custom/search-progress/SearchProgress.vue'
   // import AgentPanel from './AgentPanel.vue' // 暂时注释，等组件创建后再启用
   import { useRouter } from 'vue-router'
+  import { HttpError } from '@/utils/http/error'
 
   interface SearchForm {
     keywords: string
@@ -888,8 +889,12 @@
   // 组件挂载时检查搜索工具状态
   onMounted(async () => {
     try {
+      console.log('[MaterialSearch] 组件挂载，开始检查搜索工具状态...')
       const status = await materialSearchService.checkSearchToolsStatus()
+      console.log('[MaterialSearch] 搜索工具状态检查完成:', status)
+
       if (!status.tavily_configured && !status.bocha_configured) {
+        console.log('[MaterialSearch] 搜索工具未配置，显示警告')
         ElMessage.warning('搜索工具未配置，请联系管理员')
       }
 
@@ -899,7 +904,13 @@
         await fetchAvailableAgents()
       }
     } catch (error) {
-      console.error('Check search tools status error:', error)
+      console.error('[MaterialSearch] Check search tools status error:', error)
+      console.error('[MaterialSearch] 错误详情:', {
+        error: error,
+        errorMessage: error instanceof Error ? error.message : '未知错误',
+        errorType: typeof error,
+        isHttpError: error instanceof HttpError
+      })
     }
   })
 </script>
