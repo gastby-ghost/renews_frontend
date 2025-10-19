@@ -12,20 +12,9 @@
 </template>
 
 <script setup lang="ts">
-  import { onMounted } from 'vue'
-  import { useMaterialStore } from '@/store/material'
   import MaterialSearch from '@/components/custom/material-search/MaterialSearch.vue'
 
-  const materialStore = useMaterialStore()
-
-  // 页面加载时检查搜索工具状态
-  onMounted(async () => {
-    try {
-      await materialStore.checkSearchToolsStatus()
-    } catch (error) {
-      console.error('Failed to check search tools status:', error)
-    }
-  })
+  console.log('[material/search/index.vue] 页面组件已加载，状态检查由子组件 MaterialSearch 负责')
 </script>
 
 <style scoped lang="scss">

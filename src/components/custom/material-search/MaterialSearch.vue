@@ -890,10 +890,21 @@
   onMounted(async () => {
     try {
       console.log('[MaterialSearch] 组件挂载，开始检查搜索工具状态...')
-      const status = await materialSearchService.checkSearchToolsStatus()
-      console.log('[MaterialSearch] 搜索工具状态检查完成:', status)
+      console.log('[MaterialSearch] 时间戳:', new Date().toISOString())
 
-      if (!status.tavily_configured && !status.bocha_configured) {
+      // 检查是否已经有缓存的状态数据
+      if (materialStore.searchToolsStatus) {
+        console.log('[MaterialSearch] 使用store中的缓存状态数据')
+      } else {
+        const status = await materialStore.checkSearchToolsStatus()
+        console.log('[MaterialSearch] 搜索工具状态检查完成:', status)
+      }
+
+      console.log('[MaterialSearch] 完成时间戳:', new Date().toISOString())
+
+      // 检查搜索工具配置状态
+      const currentStatus = materialStore.searchToolsStatus
+      if (currentStatus && !currentStatus.tavily_configured && !currentStatus.bocha_configured) {
         console.log('[MaterialSearch] 搜索工具未配置，显示警告')
         ElMessage.warning('搜索工具未配置，请联系管理员')
       }

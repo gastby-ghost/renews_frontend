@@ -215,10 +215,21 @@ export const useMaterialStore = defineStore('material', () => {
   // 检查搜索工具状态
   async function checkSearchToolsStatus() {
     try {
+      // 如果已经有状态数据且最近更新过，直接返回
+      if (searchToolsStatus.value) {
+        console.log('[material store] 使用已有的状态数据，跳过API调用')
+        return searchToolsStatus.value
+      }
+
+      console.log('[material store] checkSearchToolsStatus: 开始检查搜索工具状态')
+      console.log('[material store] 时间戳:', new Date().toISOString())
       const status = await materialSearchService.checkSearchToolsStatus()
+      console.log('[material store] checkSearchToolsStatus: 搜索工具状态检查完成')
+      console.log('[material store] 完成时间戳:', new Date().toISOString())
       searchToolsStatus.value = status
       return status
     } catch (error) {
+      console.error('[material store] checkSearchToolsStatus error:', error)
       state.value.error = error instanceof Error ? error.message : '检查搜索工具状态失败'
       throw error
     }

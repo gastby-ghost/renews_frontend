@@ -76,6 +76,15 @@ export interface SearchToolsStatusResponse {
 
 class MaterialSearchService {
   private baseUrl = '/api/materials'
+  private searchToolsStatusCache: {
+    data: SearchToolsStatusResponse | null
+    timestamp: number
+    ttl: number // 缓存有效期（毫秒）
+  } = {
+    data: null,
+    timestamp: 0,
+    ttl: 30000 // 30秒缓存
+  }
 
   async search(params: SearchParams): Promise<SearchResult> {
     try {
@@ -289,14 +298,39 @@ class MaterialSearchService {
     }
   }
 
-  // 检查搜索工具状态
+  // 检查搜索工具状态（带缓存）
   async checkSearchToolsStatus(): Promise<SearchToolsStatusResponse> {
     try {
-      console.log('[MaterialSearchService] 开始检查搜索工具状态...')
+      const now = Date.now()
+      const cacheAge = now - this.searchToolsStatusCache.timestamp
+
+      // 检查缓存是否有效
+      if (this.searchToolsStatusCache.data && cacheAge < this.searchToolsStatusCache.ttl) {
+        console.log('[MaterialSearchService] 使用缓存数据，缓存年龄:', cacheAge, 'ms')
+        return this.searchToolsStatusCache.data
+      }
+
+      console.log('[MaterialSearchService] 缓存已过期或不存在，发起新请求...')
+      console.log('[MaterialSearchService] 请求URL: /api/v1/ai/search-tools/status')
+      console.log('[MaterialSearchService] 时间戳:', new Date().toISOString())
+      console.log(
+        '[MaterialSearchService] 调用堆栈:',
+        new Error().stack?.split('\n').slice(1, 5).join('\n')
+      )
+
       const response = await http.get<SearchToolsStatusResponse>({
         url: '/api/v1/ai/search-tools/status'
       })
-      console.log('[MaterialSearchService] 搜索工具状态检查成功:', response)
+
+      // 更新缓存
+      this.searchToolsStatusCache = {
+        data: response,
+        timestamp: now,
+        ttl: 30000 // 30秒缓存
+      }
+
+      console.log('[MaterialSearchService] 搜索工具状态检查成功，已更新缓存')
+      console.log('[MaterialSearchService] 响应时间戳:', new Date().toISOString())
       return response
     } catch (error) {
       console.error('[MaterialSearchService] Check search tools status error:', error)
