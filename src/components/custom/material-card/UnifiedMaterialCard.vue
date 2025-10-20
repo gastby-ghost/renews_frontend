@@ -1,15 +1,17 @@
 <template>
   <div
-    class="search-result-material"
+    class="unified-material-card"
     :class="{
-      'search-result-material--selected': isSelected,
-      'search-result-material--loading': loading
+      'unified-material-card--selected': isSelected,
+      'unified-material-card--loading': loading,
+      'unified-material-card--search': context === 'search',
+      'unified-material-card--management': context === 'management'
     }"
     @click="handleClick"
   >
-    <!-- 顶部区域：选择框和相关性评分 -->
-    <div class="search-result-material__header">
-      <div class="search-result-material__selection" v-if="showSelection">
+    <!-- 顶部区域：选择框和匹配度评分 -->
+    <div class="unified-material-card__header">
+      <div class="unified-material-card__selection" v-if="showSelection">
         <el-checkbox
           :model-value="isSelected"
           @change="() => handleSelectionChange()"
@@ -18,9 +20,9 @@
         />
       </div>
 
-      <div class="search-result-material__score">
-        <div class="search-result-material__score-label">匹配度</div>
-        <div class="search-result-material__score-value">
+      <div class="unified-material-card__score" v-if="showScore && hasScore">
+        <div class="unified-material-card__score-label">匹配度</div>
+        <div class="unified-material-card__score-value">
           <el-rate
             v-model="scoreRating"
             disabled
@@ -34,40 +36,40 @@
     </div>
 
     <!-- 主要内容区域 -->
-    <div class="search-result-material__content">
-      <!-- AI标题 -->
-      <h3 class="search-result-material__title" :title="material.aititle || material.title">
-        {{ material.aititle || material.title }}
+    <div class="unified-material-card__content">
+      <!-- 标题 -->
+      <h3 class="unified-material-card__title" :title="displayTitle">
+        {{ displayTitle }}
       </h3>
 
-      <!-- AI摘要 -->
-      <p class="search-result-material__summary" v-if="material.summary">
+      <!-- 摘要 -->
+      <p class="unified-material-card__summary" v-if="material.summary">
         {{ material.summary }}
       </p>
 
       <!-- URL链接 -->
-      <div class="search-result-material__url">
+      <div class="unified-material-card__url" v-if="material.url">
         <el-icon><Link /></el-icon>
         <a
           :href="material.url"
           target="_blank"
           rel="noopener noreferrer"
           @click.stop
-          class="search-result-material__url-link"
+          class="unified-material-card__url-link"
         >
           {{ formatUrl(material.url) }}
         </a>
       </div>
     </div>
 
-    <!-- 底部区域：标签和展开按钮 -->
-    <div class="search-result-material__footer">
-      <div class="search-result-material__tags" v-if="material.tags && material.tags.length > 0">
+    <!-- 底部区域：标签和操作按钮 -->
+    <div class="unified-material-card__footer">
+      <div class="unified-material-card__tags" v-if="material.tags && material.tags.length > 0">
         <el-tag
           v-for="tag in material.tags.slice(0, 3)"
           :key="tag"
           size="small"
-          class="search-result-material__tag"
+          class="unified-material-card__tag"
         >
           {{ tag }}
         </el-tag>
@@ -76,101 +78,71 @@
         </el-tag>
       </div>
 
-      <div class="search-result-material__actions">
-        <el-button
-          size="small"
-          text
-          @click.stop="toggleDetails"
-          class="search-result-material__expand-btn"
-        >
-          {{ showDetails ? '收起详情' : '展开详情' }}
-          <el-icon
-            class="search-result-material__expand-icon"
-            :class="{ 'is-expanded': showDetails }"
-          >
-            <ArrowDown />
-          </el-icon>
-        </el-button>
+      <div class="unified-material-card__actions">
+        <el-button size="small" type="primary" @click.stop="handlePreview"> 预览 </el-button>
       </div>
     </div>
 
-    <!-- 可折叠区域 -->
-    <el-collapse-transition>
-      <div v-show="showDetails" class="search-result-material__details">
-        <div
-          class="search-result-material__detail-section"
-          v-if="material.key_excerpts && material.key_excerpts.length > 0"
-        >
-          <h4 class="search-result-material__detail-title">关键摘录</h4>
-          <ul class="search-result-material__excerpts">
-            <li v-for="(excerpt, index) in material.key_excerpts" :key="index">
-              {{ excerpt }}
-            </li>
-          </ul>
-        </div>
-
-        <div class="search-result-material__detail-section" v-if="material.published_date">
-          <h4 class="search-result-material__detail-title">发布日期</h4>
-          <p class="search-result-material__detail-content">{{
-            formatDate(material.published_date)
-          }}</p>
-        </div>
-
-        <div class="search-result-material__detail-section" v-if="material.query">
-          <h4 class="search-result-material__detail-title">搜索查询</h4>
-          <p class="search-result-material__detail-content">{{ material.query }}</p>
-        </div>
-
-        <div
-          class="search-result-material__detail-section"
-          v-if="material.webtitle && material.webtitle !== material.title"
-        >
-          <h4 class="search-result-material__detail-title">原始标题</h4>
-          <p class="search-result-material__detail-content">{{ material.webtitle }}</p>
-        </div>
-      </div>
-    </el-collapse-transition>
-
     <!-- 加载遮罩 -->
-    <div class="search-result-material__overlay" v-if="loading">
+    <div class="unified-material-card__overlay" v-if="loading">
       <el-icon class="is-loading"><Loading /></el-icon>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-  import { computed, ref } from 'vue'
-  import type { SearchResultMaterial } from '@/types/material'
-  import { Link, Loading, ArrowDown } from '@element-plus/icons-vue'
+  import { computed } from 'vue'
+  import type { Material, SearchResultMaterial } from '@/types/material'
+  import { Link, Loading } from '@element-plus/icons-vue'
+
+  // 联合类型，支持两种素材类型
+  type UnifiedMaterial = Material | SearchResultMaterial
 
   interface Props {
-    material: SearchResultMaterial
+    material: UnifiedMaterial
     selected?: boolean
     loading?: boolean
     showSelection?: boolean
+    showScore?: boolean
+    context: 'search' | 'management'
   }
 
   interface Emits {
     (e: 'select', id: string): void
-    (e: 'click', material: SearchResultMaterial): void
+    (e: 'preview', material: UnifiedMaterial): void
+    (e: 'edit', material: UnifiedMaterial): void
+    (e: 'click', material: UnifiedMaterial): void
   }
 
   const props = withDefaults(defineProps<Props>(), {
     selected: false,
     loading: false,
-    showSelection: true
+    showSelection: true,
+    showScore: false
   })
 
   const emit = defineEmits<Emits>()
 
-  const showDetails = ref(false)
-
   const isSelected = computed(() => props.selected)
+
+  // 判断是否有评分
+  const hasScore = computed(() => {
+    return 'score' in props.material && typeof props.material.score === 'number'
+  })
 
   // 将0-1的评分转换为1-5的星级评分
   const scoreRating = computed(() => {
+    if (!hasScore.value) return 0
     // 将0-1的评分映射到1-5的星级
-    return Math.max(1, Math.round(props.material.score * 5))
+    return Math.max(1, Math.round((props.material as SearchResultMaterial).score * 5))
+  })
+
+  // 显示标题（优先使用AI标题）
+  const displayTitle = computed(() => {
+    if ('aititle' in props.material && props.material.aititle) {
+      return props.material.aititle
+    }
+    return props.material.title
   })
 
   function handleClick() {
@@ -181,8 +153,8 @@
     emit('select', props.material.id)
   }
 
-  function toggleDetails() {
-    showDetails.value = !showDetails.value
+  function handlePreview() {
+    emit('preview', props.material)
   }
 
   function formatUrl(url: string): string {
@@ -194,23 +166,10 @@
       return url
     }
   }
-
-  function formatDate(dateString: string): string {
-    try {
-      const date = new Date(dateString)
-      return date.toLocaleDateString('zh-CN', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      })
-    } catch {
-      return dateString
-    }
-  }
 </script>
 
 <style scoped lang="scss">
-  .search-result-material {
+  .unified-material-card {
     position: relative;
     overflow: hidden;
     cursor: pointer;
@@ -235,11 +194,24 @@
       opacity: 0.7;
     }
 
+    &--search {
+      // 搜索结果界面特有样式
+      .unified-material-card__header {
+        padding: 12px 16px 8px;
+      }
+    }
+
+    &--management {
+      // 素材管理界面特有样式
+      .unified-material-card__header {
+        padding: 8px 16px 4px;
+      }
+    }
+
     &__header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 12px 16px 8px;
     }
 
     &__selection {
@@ -336,65 +308,10 @@
     }
 
     &__actions {
+      display: flex;
       flex-shrink: 0;
-    }
-
-    &__expand-btn {
-      padding: 0;
-      font-size: 12px;
-    }
-
-    &__expand-icon {
-      margin-left: 4px;
-      transition: transform 0.3s ease;
-
-      &.is-expanded {
-        transform: rotate(180deg);
-      }
-    }
-
-    &__details {
-      padding: 0 16px 16px;
-      background: var(--el-fill-color-lighter);
-      border-top: 1px solid var(--el-border-color-lighter);
-    }
-
-    &__detail-section {
-      margin-top: 12px;
-
-      &:first-child {
-        margin-top: 12px;
-      }
-    }
-
-    &__detail-title {
-      margin: 0 0 6px;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--el-text-color-primary);
-    }
-
-    &__detail-content {
-      margin: 0;
-      font-size: 13px;
-      line-height: 1.4;
-      color: var(--el-text-color-regular);
-    }
-
-    &__excerpts {
-      padding-left: 16px;
-      margin: 0;
-    }
-
-    &__excerpts li {
-      margin-bottom: 6px;
-      font-size: 13px;
-      line-height: 1.4;
-      color: var(--el-text-color-regular);
-
-      &:last-child {
-        margin-bottom: 0;
-      }
+      gap: 8px;
+      align-items: center;
     }
 
     &__overlay {
@@ -414,7 +331,7 @@
   }
 
   @media (width <= 768px) {
-    .search-result-material {
+    .unified-material-card {
       &__header {
         padding: 10px 12px 6px;
       }
@@ -444,8 +361,8 @@
       }
 
       &__actions {
+        justify-content: flex-end;
         width: 100%;
-        text-align: right;
       }
 
       &__details {

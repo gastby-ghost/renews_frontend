@@ -90,9 +90,11 @@
         :material="material"
         :selected="selectedMaterials.includes(material.id)"
         :loading="loadingMaterials.includes(material.id)"
+        :show-selection="true"
+        :show-score="false"
+        context="management"
         @select="toggleMaterialSelection"
-        @preview="showPreview"
-        @download="downloadMaterial"
+        @preview="showMaterialPreview"
         @edit="handleEdit"
         @click="selectMaterial(material)"
       />
@@ -115,44 +117,14 @@
     <el-empty v-else-if="!materialStore.loading" description="暂无素材" :image-size="200">
     </el-empty>
 
-    <!-- 预览对话框 -->
-    <el-dialog
-      v-model="previewVisible"
-      :title="previewMaterial?.title"
-      width="80%"
-      :before-close="closePreview"
-    >
-      <div class="material-management__preview" v-if="previewMaterial">
-        <div class="material-management__preview-media">
-          <img
-            v-if="previewMaterial.thumbnail"
-            :src="previewMaterial.thumbnail"
-            :alt="previewMaterial.title"
-          />
-          <div v-else class="material-management__preview-placeholder">
-            <el-icon><Picture /></el-icon>
-          </div>
-        </div>
-        <div class="material-management__preview-info">
-          <h4>{{ previewMaterial.title }}</h4>
-          <p><strong>来源：</strong>{{ previewMaterial.source }}</p>
-          <p><strong>类型：</strong>{{ getTypeLabel(previewMaterial.type) }}</p>
-          <p><strong>总结：</strong>{{ previewMaterial.summary }}</p>
-          <p
-            ><strong>标签：</strong>
-            <el-tag
-              v-for="tag in previewMaterial.tags"
-              :key="tag"
-              size="small"
-              style="margin-right: 4px"
-            >
-              {{ tag }}
-            </el-tag>
-          </p>
-          <p><strong>创建时间：</strong>{{ formatDate(previewMaterial.createdAt) }}</p>
-        </div>
-      </div>
-    </el-dialog>
+    <!-- 素材预览对话框 -->
+    <MaterialPreviewDialog
+      :visible="previewDialogVisible"
+      :material="previewMaterial"
+      context="management"
+      @update:visible="previewDialogVisible = $event"
+      @material-updated="handleMaterialUpdated"
+    />
 
     <!-- 批量删除确认对话框 -->
     <el-dialog v-model="deleteDialogVisible" title="确认删除" width="400px">
@@ -168,11 +140,11 @@
 <script setup lang="ts">
   import { ref, computed, onMounted, onUnmounted } from 'vue'
   import { useRouter } from 'vue-router'
-  import { ElMessage, ElMessageBox } from 'element-plus'
-  import { Search, Refresh, Delete, Download, Picture } from '@element-plus/icons-vue'
-  import MaterialCard from '@/components/custom/material-card/MaterialCard.vue'
+  import { ElMessage } from 'element-plus'
+  import { Search, Refresh, Delete, Download } from '@element-plus/icons-vue'
+  import MaterialCard from '@/components/custom/material-card/UnifiedMaterialCard.vue'
+  import MaterialPreviewDialog from '@/components/custom/material-card/MaterialPreviewDialog.vue'
   import { useMaterialStore } from '@/store/material'
-  import { materialApiService } from '@/services/materialApi'
   import type { Material } from '@/types/material'
 
   const router = useRouter()
@@ -186,7 +158,7 @@
   })
 
   // 状态
-  const previewVisible = ref(false)
+  const previewDialogVisible = ref(false)
   const previewMaterial = ref<Material | null>(null)
   const loadingMaterials = ref<string[]>([])
   const deleteDialogVisible = ref(false)
@@ -274,67 +246,19 @@
     }
   }
 
-  function showPreview(material: Material) {
+  function showMaterialPreview(material: Material) {
     previewMaterial.value = material
-    previewVisible.value = true
+    previewDialogVisible.value = true
   }
 
-  function closePreview() {
-    previewVisible.value = false
-    previewMaterial.value = null
-  }
-
-  async function downloadMaterial(material: Material) {
-    if (!material.url) {
-      ElMessage.warning('该素材暂不支持下载')
-      return
-    }
-
-    loadingMaterials.value.push(material.id)
-
-    try {
-      // 模拟下载
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      ElMessage.success('下载完成')
-    } catch (err) {
-      console.error('下载失败:', err)
-      ElMessage.error('下载失败')
-    } finally {
-      loadingMaterials.value = loadingMaterials.value.filter((id) => id !== material.id)
-    }
+  function handleMaterialUpdated(updatedMaterial: Material) {
+    // 更新本地状态中的素材
+    materialStore.updateMaterial(updatedMaterial)
   }
 
   async function handleEdit(material: Material) {
-    try {
-      // 使用Element Plus的MessageBox作为简单的编辑对话框
-      const { value: newTitle } = await ElMessageBox.prompt('请输入新的素材标题', '编辑素材', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        inputValue: material.title,
-        inputPattern: /^.{1,255}$/,
-        inputErrorMessage: '标题长度应在1-255个字符之间'
-      })
-
-      if (newTitle && newTitle !== material.title) {
-        // 调用API更新素材
-        await materialApiService.updateMaterial(parseInt(material.id, 10), {
-          title: newTitle
-        })
-
-        // 更新本地状态
-        materialStore.updateMaterial({
-          id: material.id,
-          title: newTitle
-        })
-
-        ElMessage.success('素材更新成功')
-      }
-    } catch (err) {
-      if (err !== 'cancel') {
-        console.error('编辑素材失败:', err)
-        ElMessage.error('编辑素材失败')
-      }
-    }
+    // 直接打开预览对话框并切换到编辑模式
+    showMaterialPreview(material)
   }
 
   function exportMaterials() {
@@ -349,27 +273,6 @@
     setTimeout(() => {
       ElMessage.success('导出完成')
     }, 1000)
-  }
-
-  function getTypeLabel(type: Material['type']) {
-    const typeLabels = {
-      image: '图片',
-      video: '视频',
-      audio: '音频',
-      text: '文本',
-      other: '其他'
-    }
-    return typeLabels[type] || '其他'
-  }
-
-  function formatDate(date: Date) {
-    return new Intl.DateTimeFormat('zh-CN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(date)
   }
 
   // 分页处理方法
@@ -415,6 +318,8 @@
   onMounted(async () => {
     try {
       await loadMaterials()
+      // 清空之前的选择状态，确保从搜索页面跳转过来时不会保留之前的选择
+      materialStore.clearSelection()
     } catch (err) {
       console.error('加载素材库失败:', err)
       ElMessage.error('加载素材库失败')
@@ -425,6 +330,8 @@
       if (to.path === '/material/management') {
         try {
           await loadMaterials()
+          // 进入页面时清空选择状态
+          materialStore.clearSelection()
         } catch (err) {
           console.error('刷新素材库失败:', err)
         }

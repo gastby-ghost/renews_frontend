@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { ElMessage } from 'element-plus'
 import { materialSearchService } from '@/services/materialSearch'
 import { agentService } from '@/services/agentService'
 import { materialApiService, MaterialApiService } from '@/services/materialApi'
@@ -641,16 +642,48 @@ export const useMaterialStore = defineStore('material', () => {
    */
   async function deleteMaterialsFromDatabase(materialIds: string[]) {
     try {
-      // 将字符串ID转换为数字ID
-      const numericIds = materialIds.map((id) => parseInt(id, 10))
+      console.log('[MaterialStore] 开始删除素材，原始ID列表:', materialIds)
+
+      // 将字符串ID转换为数字ID，并添加验证
+      const numericIds: number[] = []
+      const invalidIds: string[] = []
+
+      materialIds.forEach((id) => {
+        const numId = parseInt(id, 10)
+        if (isNaN(numId)) {
+          console.error(`[MaterialStore] 无效的素材ID: ${id}`)
+          invalidIds.push(id)
+        } else {
+          numericIds.push(numId)
+        }
+      })
+
+      if (invalidIds.length > 0) {
+        console.warn(`[MaterialStore] 发现 ${invalidIds.length} 个无效ID:`, invalidIds)
+        ElMessage.warning(`发现 ${invalidIds.length} 个无效的素材ID，将跳过删除`)
+      }
+
+      if (numericIds.length === 0) {
+        throw new Error('没有有效的素材ID可以删除')
+      }
+
+      console.log('[MaterialStore] 转换后的数字ID列表:', numericIds)
 
       // 调用API删除素材
       const response = await materialApiService.deleteMaterials(numericIds)
+      console.log('[MaterialStore] 删除API响应:', response)
 
-      // 从本地状态中移除已删除的素材
-      materialIds.forEach((id) => {
+      // 从本地状态中移除已删除的素材（只移除成功删除的）
+      const successfullyDeletedIds = materialIds.filter((id) => {
+        const numId = parseInt(id, 10)
+        return !isNaN(numId) && numericIds.includes(numId)
+      })
+
+      successfullyDeletedIds.forEach((id) => {
         removeMaterial(id)
       })
+
+      console.log('[MaterialStore] 从本地状态移除的素材ID:', successfullyDeletedIds)
 
       return {
         success: response.success,
@@ -659,6 +692,7 @@ export const useMaterialStore = defineStore('material', () => {
         failedCount: response.failed_count
       }
     } catch (error) {
+      console.error('[MaterialStore] 删除素材失败:', error)
       state.value.error = error instanceof Error ? error.message : '从数据库删除素材失败'
       throw error
     }

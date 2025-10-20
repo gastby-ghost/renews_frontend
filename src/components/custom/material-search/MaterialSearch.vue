@@ -238,7 +238,10 @@
             :selected="selectedMaterials.includes(material.id)"
             :loading="loadingMaterials.includes(material.id)"
             :show-selection="true"
+            :show-score="true"
+            context="search"
             @select="toggleMaterialSelection"
+            @preview="showMaterialPreview"
             @click="selectMaterial(material)"
           />
         </div>
@@ -333,6 +336,14 @@
         <el-button type="primary" @click="resetForm">重新搜索</el-button>
       </el-empty>
     </div>
+
+    <!-- 素材预览对话框 -->
+    <MaterialPreviewDialog
+      :visible="previewDialogVisible"
+      :material="previewMaterial"
+      context="search"
+      @update:visible="previewDialogVisible = $event"
+    />
   </div>
 </template>
 
@@ -350,8 +361,9 @@
     AgentService,
     SearchResultMaterial
   } from '@/types/material'
-  import SearchResultCard from '@/components/custom/material-card/SearchResultMaterial.vue'
+  import SearchResultCard from '@/components/custom/material-card/UnifiedMaterialCard.vue'
   import SearchProgressComponent from '@/components/custom/search-progress/SearchProgress.vue'
+  import MaterialPreviewDialog from '@/components/custom/material-card/MaterialPreviewDialog.vue'
   // import AgentPanel from './AgentPanel.vue' // 暂时注释，等组件创建后再启用
   import { useRouter } from 'vue-router'
   import { HttpError } from '@/utils/http/error'
@@ -392,6 +404,10 @@
   const addToLibraryDialogVisible = ref(false)
   const addProgressDialogVisible = ref(false)
   const addingToLibrary = ref(false)
+
+  // 预览对话框相关状态
+  const previewDialogVisible = ref(false)
+  const previewMaterial = ref<SearchResultMaterial | null>(null)
 
   // 添加到素材库选项
   const addToLibraryOptions = ref({
@@ -794,6 +810,12 @@
   // 根据ID获取素材
   const getMaterialById = (id: string) => {
     return searchResults.value.find((material) => material.id === id)
+  }
+
+  // 显示素材预览
+  const showMaterialPreview = (material: SearchResultMaterial) => {
+    previewMaterial.value = material
+    previewDialogVisible.value = true
   }
 
   // 分页处理
