@@ -1,0 +1,591 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "写作助手核心服务",
+    "description": "提供写作助手的核心功能API",
+    "version": "1.0.0"
+  },
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    },
+    "schemas": {
+      "AIRetrievalRequest": {
+        "properties": {
+          "requirement": {
+            "$ref": "#/components/schemas/AIRequirement",
+            "description": "检索需求"
+          },
+          "user_id": {
+            "type": "string",
+            "title": "User Id",
+            "description": "用户ID"
+          }
+        },
+        "type": "object",
+        "required": ["requirement", "user_id"],
+        "title": "AIRetrievalRequest",
+        "description": "AI检索请求模型"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "AIRequirement": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "title": "Project Id",
+            "description": "项目ID"
+          },
+          "keywords": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Keywords",
+            "description": "关键词列表",
+            "default": []
+          },
+          "topic": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Topic",
+            "description": "主题描述"
+          },
+          "industry": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Industry",
+            "description": "行业领域"
+          },
+          "content_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content Type",
+            "description": "内容类型"
+          },
+          "language": {
+            "type": "string",
+            "title": "Language",
+            "description": "语言要求",
+            "default": "zh-CN"
+          },
+          "max_results": {
+            "type": "integer",
+            "title": "Max Results",
+            "description": "最大检索结果数",
+            "default": 100
+          },
+          "similarity_threshold": {
+            "type": "number",
+            "title": "Similarity Threshold",
+            "description": "相似度阈值",
+            "default": 0.7
+          }
+        },
+        "type": "object",
+        "required": ["project_id"],
+        "title": "AIRequirement",
+        "description": "AI检索需求模型"
+      },
+      "AIRetrievalResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "操作是否成功"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "响应消息"
+          },
+          "materials": {
+            "items": {
+              "$ref": "#/components/schemas/TitleMaterial"
+            },
+            "type": "array",
+            "title": "Materials",
+            "description": "检索到的素材列表",
+            "default": []
+          },
+          "total_count": {
+            "type": "integer",
+            "title": "Total Count",
+            "description": "检索结果总数"
+          },
+          "retrieval_metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Retrieval Metadata",
+            "description": "检索元数据",
+            "default": {}
+          },
+          "processing_time": {
+            "type": "number",
+            "title": "Processing Time",
+            "description": "处理时间（秒）"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp",
+            "description": "时间戳"
+          }
+        },
+        "type": "object",
+        "required": ["success", "message", "total_count", "processing_time"],
+        "title": "AIRetrievalResponse",
+        "description": "AI检索响应模型"
+      }
+    }
+  },
+  "paths": {
+    "/api/v1/core/titles/ai-retrieval/{project_id}/retrieve": {
+      "post": {
+        "tags": ["AI自动检索素材"],
+        "summary": "Ai Retrieve Materials",
+        "description": "AI自动检索素材",
+        "operationId": "ai_retrieve_materials_api_v1_core_titles_ai_retrieval__project_id__retrieve_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AIRetrievalRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AIRetrievalResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/core/titles/ai-retrieval/{project_id}/status/{retrieval_id}": {
+      "get": {
+        "tags": ["AI自动检索素材"],
+        "summary": "Get Retrieval Status",
+        "description": "获取检索状态",
+        "operationId": "get_retrieval_status_api_v1_core_titles_ai_retrieval__project_id__status__retrieval_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "retrieval_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Retrieval Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/core/titles/ai-retrieval/{project_id}/history": {
+      "get": {
+        "tags": ["AI自动检索素材"],
+        "summary": "Get Retrieval History",
+        "description": "获取检索历史",
+        "operationId": "get_retrieval_history_api_v1_core_titles_ai_retrieval__project_id__history_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/core/titles/ai-retrieval/{project_id}/quick-retrieve": {
+      "post": {
+        "tags": ["AI自动检索素材"],
+        "summary": "Quick Ai Retrieve",
+        "description": "快速AI检索（简化参数）",
+        "operationId": "quick_ai_retrieve_api_v1_core_titles_ai_retrieval__project_id__quick_retrieve_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true,
+                "title": "Request Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/core/titles/ai-retrieval/{project_id}/suggestions": {
+      "get": {
+        "tags": ["AI自动检索素材"],
+        "summary": "Get Ai Suggestions",
+        "description": "获取AI检索建议",
+        "operationId": "get_ai_suggestions_api_v1_core_titles_ai_retrieval__project_id__suggestions_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/core/titles/ai-retrieval/{project_id}/batch-retrieve": {
+      "post": {
+        "tags": ["AI自动检索素材"],
+        "summary": "Batch Ai Retrieve",
+        "description": "批量AI检索",
+        "operationId": "batch_ai_retrieve_api_v1_core_titles_ai_retrieval__project_id__batch_retrieve_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/AIRequirement"
+                },
+                "title": "Requirements"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/core/titles/ai-retrieval/{project_id}/history/{history_id}": {
+      "delete": {
+        "tags": ["AI自动检索素材"],
+        "summary": "Delete Retrieval History",
+        "description": "删除检索历史",
+        "operationId": "delete_retrieval_history_api_v1_core_titles_ai_retrieval__project_id__history__history_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "history_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "History Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/core/titles/ai-retrieval/{project_id}/analytics": {
+      "get": {
+        "tags": ["AI自动检索素材"],
+        "summary": "Get Retrieval Analytics",
+        "description": "获取检索分析数据",
+        "operationId": "get_retrieval_analytics_api_v1_core_titles_ai_retrieval__project_id__analytics_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "AI自动检索素材",
+      "description": "AI自动检索素材 相关的 API"
+    }
+  ]
+}

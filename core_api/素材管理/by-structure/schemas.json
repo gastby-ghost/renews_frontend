@@ -1,0 +1,359 @@
+{
+  "app__material__schemas__TagResponse__2": {
+    "properties": {
+      "id": {
+        "type": "integer",
+        "title": "Id"
+      },
+      "name": {
+        "type": "string",
+        "title": "Name"
+      },
+      "is_system": {
+        "type": "boolean",
+        "title": "Is System"
+      },
+      "material_count": {
+        "type": "integer",
+        "title": "Material Count",
+        "description": "使用该标签的素材数量"
+      },
+      "created_at": {
+        "type": "string",
+        "format": "date-time",
+        "title": "Created At"
+      }
+    },
+    "type": "object",
+    "required": ["id", "name", "is_system", "material_count", "created_at"],
+    "title": "TagResponse",
+    "description": "标签响应"
+  },
+  "MaterialResponse": {
+    "properties": {
+      "title": {
+        "type": "string",
+        "maxLength": 255,
+        "minLength": 1,
+        "title": "Title",
+        "description": "素材标题"
+      },
+      "summary": {
+        "type": "string",
+        "title": "Summary",
+        "description": "素材摘要/内容"
+      },
+      "url": {
+        "anyOf": [
+          {
+            "type": "string",
+            "maxLength": 255
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Url",
+        "description": "素材URL"
+      },
+      "score": {
+        "type": "number",
+        "maximum": 1.0,
+        "minimum": 0.0,
+        "title": "Score",
+        "description": "素材评分",
+        "default": 0.8
+      },
+      "key_excerpts": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array",
+        "title": "Key Excerpts",
+        "description": "关键摘录"
+      },
+      "id": {
+        "type": "integer",
+        "title": "Id"
+      },
+      "user_id": {
+        "type": "integer",
+        "title": "User Id"
+      },
+      "created_at": {
+        "type": "string",
+        "format": "date-time",
+        "title": "Created At"
+      },
+      "updated_at": {
+        "type": "string",
+        "format": "date-time",
+        "title": "Updated At"
+      },
+      "tags": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array",
+        "title": "Tags",
+        "description": "标签列表"
+      }
+    },
+    "type": "object",
+    "required": ["title", "summary", "id", "user_id", "created_at", "updated_at"],
+    "title": "MaterialResponse",
+    "description": "素材响应模型"
+  },
+  "MaterialUpdateRequest": {
+    "properties": {
+      "update_data": {
+        "$ref": "#/components/schemas/MaterialUpdate",
+        "description": "更新数据"
+      }
+    },
+    "type": "object",
+    "required": ["update_data"],
+    "title": "MaterialUpdateRequest",
+    "description": "更新素材请求"
+  },
+  "HTTPValidationError": {
+    "properties": {
+      "detail": {
+        "items": {
+          "$ref": "#/components/schemas/ValidationError"
+        },
+        "type": "array",
+        "title": "Detail"
+      }
+    },
+    "type": "object",
+    "title": "HTTPValidationError"
+  },
+  "MaterialDeleteResponse": {
+    "properties": {
+      "success": {
+        "type": "boolean",
+        "title": "Success"
+      },
+      "message": {
+        "type": "string",
+        "title": "Message"
+      },
+      "deleted_count": {
+        "type": "integer",
+        "title": "Deleted Count"
+      },
+      "failed_count": {
+        "type": "integer",
+        "title": "Failed Count"
+      },
+      "details": {
+        "items": {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        "type": "array",
+        "title": "Details",
+        "description": "删除详情"
+      }
+    },
+    "type": "object",
+    "required": ["success", "message", "deleted_count", "failed_count"],
+    "title": "MaterialDeleteResponse",
+    "description": "删除素材响应"
+  },
+  "MaterialDeleteRequest": {
+    "properties": {
+      "material_ids": {
+        "items": {
+          "type": "integer"
+        },
+        "type": "array",
+        "maxItems": 100,
+        "minItems": 1,
+        "title": "Material Ids",
+        "description": "要删除的素材ID列表，最多100个"
+      }
+    },
+    "type": "object",
+    "required": ["material_ids"],
+    "title": "MaterialDeleteRequest",
+    "description": "删除素材请求"
+  },
+  "TagCreate": {
+    "properties": {
+      "name": {
+        "type": "string",
+        "maxLength": 30,
+        "minLength": 1,
+        "title": "Name",
+        "description": "标签名称"
+      }
+    },
+    "type": "object",
+    "required": ["name"],
+    "title": "TagCreate",
+    "description": "创建标签请求"
+  },
+  "AddCompleteMaterialRequest": {
+    "properties": {
+      "project_id": {
+        "type": "integer",
+        "exclusiveMinimum": 0.0,
+        "title": "Project Id",
+        "description": "项目ID，必须为正整数"
+      },
+      "materials": {
+        "items": {
+          "$ref": "#/components/schemas/CompleteMaterialData"
+        },
+        "type": "array",
+        "maxItems": 100,
+        "minItems": 1,
+        "title": "Materials",
+        "description": "完整的素材数据列表，最多100个"
+      }
+    },
+    "type": "object",
+    "required": ["project_id", "materials"],
+    "title": "AddCompleteMaterialRequest",
+    "description": "添加完整素材到项目请求"
+  },
+  "MaterialUpdate": {
+    "properties": {
+      "title": {
+        "anyOf": [
+          {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Title",
+        "description": "素材标题"
+      },
+      "summary": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Summary",
+        "description": "素材摘要/内容"
+      },
+      "url": {
+        "anyOf": [
+          {
+            "type": "string",
+            "maxLength": 255
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Url",
+        "description": "素材URL"
+      },
+      "score": {
+        "anyOf": [
+          {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Score",
+        "description": "素材评分"
+      },
+      "key_excerpts": {
+        "anyOf": [
+          {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Key Excerpts",
+        "description": "关键摘录"
+      },
+      "tags": {
+        "anyOf": [
+          {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Tags",
+        "description": "标签列表"
+      }
+    },
+    "type": "object",
+    "title": "MaterialUpdate",
+    "description": "更新素材请求"
+  },
+  "MaterialListResponse": {
+    "properties": {
+      "success": {
+        "type": "boolean",
+        "title": "Success"
+      },
+      "message": {
+        "type": "string",
+        "title": "Message"
+      },
+      "materials": {
+        "items": {
+          "$ref": "#/components/schemas/MaterialResponse"
+        },
+        "type": "array",
+        "title": "Materials"
+      },
+      "total_count": {
+        "type": "integer",
+        "title": "Total Count"
+      },
+      "page": {
+        "type": "integer",
+        "title": "Page"
+      },
+      "page_size": {
+        "type": "integer",
+        "title": "Page Size"
+      },
+      "total_pages": {
+        "type": "integer",
+        "title": "Total Pages"
+      }
+    },
+    "type": "object",
+    "required": [
+      "success",
+      "message",
+      "materials",
+      "total_count",
+      "page",
+      "page_size",
+      "total_pages"
+    ],
+    "title": "MaterialListResponse",
+    "description": "素材列表响应"
+  }
+}

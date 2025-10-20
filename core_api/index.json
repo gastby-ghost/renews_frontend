@@ -1,0 +1,161 @@
+{
+  "input_file": "core_openapi.json",
+  "output_directory": "core_api",
+  "strategy": "hybrid",
+  "modules": [
+    {
+      "name": "自动保存",
+      "directory": "core_api/自动保存",
+      "files": [
+        {
+          "name": "自动保存.json",
+          "path": "core_api/自动保存/自动保存.json",
+          "type": "module"
+        }
+      ]
+    },
+    {
+      "name": "AI自动检索素材",
+      "directory": "core_api/AI自动检索素材",
+      "files": [
+        {
+          "name": "AI自动检索素材.json",
+          "path": "core_api/AI自动检索素材/AI自动检索素材.json",
+          "type": "module"
+        }
+      ]
+    },
+    {
+      "name": "AI辅助功能",
+      "directory": "core_api/AI辅助功能",
+      "files": [
+        {
+          "name": "AI辅助功能.json",
+          "path": "core_api/AI辅助功能/AI辅助功能.json",
+          "type": "module"
+        }
+      ]
+    },
+    {
+      "name": "项目管理",
+      "directory": "core_api/项目管理",
+      "files": [
+        {
+          "name": "项目管理.json",
+          "path": "core_api/项目管理/项目管理.json",
+          "type": "module"
+        }
+      ]
+    },
+    {
+      "name": "手动选择素材",
+      "directory": "core_api/手动选择素材",
+      "files": [
+        {
+          "name": "手动选择素材.json",
+          "path": "core_api/手动选择素材/手动选择素材.json",
+          "type": "module"
+        }
+      ]
+    },
+    {
+      "name": "用户偏好设置",
+      "directory": "core_api/用户偏好设置",
+      "files": [
+        {
+          "name": "用户偏好设置.json",
+          "path": "core_api/用户偏好设置/用户偏好设置.json",
+          "type": "module"
+        }
+      ]
+    },
+    {
+      "name": "成稿导出",
+      "directory": "core_api/成稿导出",
+      "files": [
+        {
+          "name": "成稿导出.json",
+          "path": "core_api/成稿导出/成稿导出.json",
+          "type": "module"
+        }
+      ]
+    },
+    {
+      "name": "标题素材区",
+      "directory": "core_api/标题素材区",
+      "files": [
+        {
+          "name": "标题素材区.json",
+          "path": "core_api/标题素材区/标题素材区.json",
+          "type": "module"
+        }
+      ]
+    },
+    {
+      "name": "写作统计",
+      "directory": "core_api/写作统计",
+      "files": [
+        {
+          "name": "写作统计.json",
+          "path": "core_api/写作统计/写作统计.json",
+          "type": "module"
+        }
+      ]
+    },
+    {
+      "name": "组件导航",
+      "directory": "core_api/组件导航",
+      "files": [
+        {
+          "name": "组件导航.json",
+          "path": "core_api/组件导航/组件导航.json",
+          "type": "module"
+        }
+      ]
+    },
+    {
+      "name": "快捷键支持",
+      "directory": "core_api/快捷键支持",
+      "files": [
+        {
+          "name": "快捷键支持.json",
+          "path": "core_api/快捷键支持/快捷键支持.json",
+          "type": "module"
+        }
+      ]
+    },
+    {
+      "name": "素材管理",
+      "directory": "core_api/素材管理",
+      "files": [
+        {
+          "name": "素材管理.json",
+          "path": "core_api/素材管理/素材管理.json",
+          "type": "module"
+        }
+      ]
+    },
+    {
+      "name": "用户认证",
+      "directory": "core_api/用户认证",
+      "files": [
+        {
+          "name": "用户认证.json",
+          "path": "core_api/用户认证/用户认证.json",
+          "type": "module"
+        }
+      ]
+    },
+    {
+      "name": "未分类",
+      "directory": "core_api/未分类",
+      "files": [
+        {
+          "name": "未分类.json",
+          "path": "core_api/未分类/未分类.json",
+          "type": "module"
+        }
+      ]
+    }
+  ]
+}

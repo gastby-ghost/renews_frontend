@@ -1,0 +1,890 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "写作助手核心服务",
+    "description": "提供写作助手的核心功能API",
+    "version": "1.0.0"
+  },
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    },
+    "schemas": {
+      "PreferenceExportResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "操作是否成功"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "响应消息"
+          },
+          "export_data": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Export Data",
+            "description": "导出的数据"
+          },
+          "format": {
+            "type": "string",
+            "title": "Format",
+            "description": "导出格式"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp",
+            "description": "时间戳"
+          }
+        },
+        "type": "object",
+        "required": ["success", "message", "format"],
+        "title": "PreferenceExportResponse",
+        "description": "导出用户偏好响应"
+      },
+      "PreferenceUpdateRequest": {
+        "properties": {
+          "theme": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ThemeType"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "界面主题"
+          },
+          "font_size": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FontSize"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "字体大小"
+          },
+          "auto_save_frequency": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AutoSaveFrequency"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "自动保存频率"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language",
+            "description": "界面语言"
+          },
+          "timezone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timezone",
+            "description": "时区设置"
+          },
+          "notifications_enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notifications Enabled",
+            "description": "是否启用通知"
+          },
+          "sound_enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sound Enabled",
+            "description": "是否启用声音"
+          },
+          "compact_mode": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Compact Mode",
+            "description": "是否启用紧凑模式"
+          },
+          "show_tooltips": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Show Tooltips",
+            "description": "是否显示工具提示"
+          },
+          "auto_complete": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Auto Complete",
+            "description": "是否启用自动完成"
+          },
+          "spell_check": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spell Check",
+            "description": "是否启用拼写检查"
+          },
+          "custom_settings": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Custom Settings",
+            "description": "自定义设置"
+          }
+        },
+        "type": "object",
+        "title": "PreferenceUpdateRequest",
+        "description": "更新用户偏好请求"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "PreferenceUpdateResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "操作是否成功"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "响应消息"
+          },
+          "updated_preference": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserPreference"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "更新后的用户偏好"
+          },
+          "changes": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Changes",
+            "description": "变更内容",
+            "default": {}
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp",
+            "description": "时间戳"
+          }
+        },
+        "type": "object",
+        "required": ["success", "message"],
+        "title": "PreferenceUpdateResponse",
+        "description": "更新用户偏好响应"
+      },
+      "PreferenceExportRequest": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "title": "User Id",
+            "description": "用户ID"
+          },
+          "format": {
+            "type": "string",
+            "title": "Format",
+            "description": "导出格式：json, yaml, xml",
+            "default": "json"
+          }
+        },
+        "type": "object",
+        "required": ["user_id"],
+        "title": "PreferenceExportRequest",
+        "description": "导出用户偏好请求"
+      },
+      "PreferenceImportResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "操作是否成功"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "响应消息"
+          },
+          "imported_preference": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserPreference"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "导入后的用户偏好"
+          },
+          "conflicts": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Conflicts",
+            "description": "冲突信息",
+            "default": {}
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp",
+            "description": "时间戳"
+          }
+        },
+        "type": "object",
+        "required": ["success", "message"],
+        "title": "PreferenceImportResponse",
+        "description": "导入用户偏好响应"
+      },
+      "UserPreference": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "title": "User Id",
+            "description": "用户ID"
+          },
+          "theme": {
+            "$ref": "#/components/schemas/ThemeType",
+            "description": "界面主题",
+            "default": "light"
+          },
+          "font_size": {
+            "$ref": "#/components/schemas/FontSize",
+            "description": "字体大小",
+            "default": "medium"
+          },
+          "auto_save_frequency": {
+            "$ref": "#/components/schemas/AutoSaveFrequency",
+            "description": "自动保存频率",
+            "default": "5"
+          },
+          "language": {
+            "type": "string",
+            "title": "Language",
+            "description": "界面语言",
+            "default": "zh-CN"
+          },
+          "timezone": {
+            "type": "string",
+            "title": "Timezone",
+            "description": "时区设置",
+            "default": "Asia/Shanghai"
+          },
+          "notifications_enabled": {
+            "type": "boolean",
+            "title": "Notifications Enabled",
+            "description": "是否启用通知",
+            "default": true
+          },
+          "sound_enabled": {
+            "type": "boolean",
+            "title": "Sound Enabled",
+            "description": "是否启用声音",
+            "default": true
+          },
+          "compact_mode": {
+            "type": "boolean",
+            "title": "Compact Mode",
+            "description": "是否启用紧凑模式",
+            "default": false
+          },
+          "show_tooltips": {
+            "type": "boolean",
+            "title": "Show Tooltips",
+            "description": "是否显示工具提示",
+            "default": true
+          },
+          "auto_complete": {
+            "type": "boolean",
+            "title": "Auto Complete",
+            "description": "是否启用自动完成",
+            "default": true
+          },
+          "spell_check": {
+            "type": "boolean",
+            "title": "Spell Check",
+            "description": "是否启用拼写检查",
+            "default": true
+          },
+          "custom_settings": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Custom Settings",
+            "description": "自定义设置",
+            "default": {}
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "创建时间"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At",
+            "description": "更新时间"
+          }
+        },
+        "type": "object",
+        "required": ["user_id"],
+        "title": "UserPreference",
+        "description": "用户偏好设置"
+      },
+      "PreferenceResetResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "操作是否成功"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "响应消息"
+          },
+          "reset_preference": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserPreference"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "重置后的用户偏好"
+          },
+          "reset_type": {
+            "type": "string",
+            "title": "Reset Type",
+            "description": "重置类型"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp",
+            "description": "时间戳"
+          }
+        },
+        "type": "object",
+        "required": ["success", "message", "reset_type"],
+        "title": "PreferenceResetResponse",
+        "description": "重置用户偏好响应"
+      },
+      "PreferenceResetRequest": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "title": "User Id",
+            "description": "用户ID"
+          },
+          "reset_type": {
+            "type": "string",
+            "title": "Reset Type",
+            "description": "重置类型：all(全部), theme(主题), font(字体), auto_save(自动保存)",
+            "default": "all"
+          }
+        },
+        "type": "object",
+        "required": ["user_id"],
+        "title": "PreferenceResetRequest",
+        "description": "重置用户偏好请求"
+      },
+      "PreferenceImportRequest": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "title": "User Id",
+            "description": "用户ID"
+          },
+          "import_data": {
+            "type": "string",
+            "title": "Import Data",
+            "description": "导入的数据"
+          },
+          "format": {
+            "type": "string",
+            "title": "Format",
+            "description": "导入格式：json, yaml, xml",
+            "default": "json"
+          },
+          "overwrite": {
+            "type": "boolean",
+            "title": "Overwrite",
+            "description": "是否覆盖现有设置",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": ["user_id", "import_data"],
+        "title": "PreferenceImportRequest",
+        "description": "导入用户偏好请求"
+      }
+    }
+  },
+  "paths": {
+    "/api/v1/core/preferences/": {
+      "put": {
+        "tags": ["用户偏好设置"],
+        "summary": "Update User Preference",
+        "description": "更新当前用户的偏好设置",
+        "operationId": "update_user_preference_api_v1_core_preferences__put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreferenceUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreferenceUpdateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/core/preferences/reset": {
+      "post": {
+        "tags": ["用户偏好设置"],
+        "summary": "Reset User Preference",
+        "description": "重置当前用户的偏好设置",
+        "operationId": "reset_user_preference_api_v1_core_preferences_reset_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreferenceResetRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreferenceResetResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/core/preferences/export": {
+      "post": {
+        "tags": ["用户偏好设置"],
+        "summary": "Export User Preference",
+        "description": "导出当前用户的偏好设置",
+        "operationId": "export_user_preference_api_v1_core_preferences_export_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreferenceExportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreferenceExportResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/core/preferences/import": {
+      "post": {
+        "tags": ["用户偏好设置"],
+        "summary": "Import User Preference",
+        "description": "导入当前用户的偏好设置",
+        "operationId": "import_user_preference_api_v1_core_preferences_import_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreferenceImportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreferenceImportResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/core/preferences/themes": {
+      "get": {
+        "tags": ["用户偏好设置"],
+        "summary": "Get Available Themes",
+        "description": "获取可用的界面主题列表",
+        "operationId": "get_available_themes_api_v1_core_preferences_themes_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array",
+                  "title": "Response Get Available Themes Api V1 Core Preferences Themes Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/core/preferences/font-sizes": {
+      "get": {
+        "tags": ["用户偏好设置"],
+        "summary": "Get Available Font Sizes",
+        "description": "获取可用的字体大小列表",
+        "operationId": "get_available_font_sizes_api_v1_core_preferences_font_sizes_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array",
+                  "title": "Response Get Available Font Sizes Api V1 Core Preferences Font Sizes Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/core/preferences/auto-save-frequencies": {
+      "get": {
+        "tags": ["用户偏好设置"],
+        "summary": "Get Available Auto Save Frequencies",
+        "description": "获取可用的自动保存频率列表",
+        "operationId": "get_available_auto_save_frequencies_api_v1_core_preferences_auto_save_frequencies_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array",
+                  "title": "Response Get Available Auto Save Frequencies Api V1 Core Preferences Auto Save Frequencies Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/core/preferences/languages": {
+      "get": {
+        "tags": ["用户偏好设置"],
+        "summary": "Get Available Languages",
+        "description": "获取可用的语言列表",
+        "operationId": "get_available_languages_api_v1_core_preferences_languages_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array",
+                  "title": "Response Get Available Languages Api V1 Core Preferences Languages Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/core/preferences/timezones": {
+      "get": {
+        "tags": ["用户偏好设置"],
+        "summary": "Get Available Timezones",
+        "description": "获取可用的时区列表",
+        "operationId": "get_available_timezones_api_v1_core_preferences_timezones_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array",
+                  "title": "Response Get Available Timezones Api V1 Core Preferences Timezones Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/core/preferences/admin/all": {
+      "get": {
+        "tags": ["用户偏好设置"],
+        "summary": "Get All User Preferences",
+        "description": "获取所有用户的偏好设置（管理员功能）",
+        "operationId": "get_all_user_preferences_api_v1_core_preferences_admin_all_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/UserPreference"
+                  },
+                  "type": "array",
+                  "title": "Response Get All User Preferences Api V1 Core Preferences Admin All Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/core/preferences/admin/{user_id}": {
+      "delete": {
+        "tags": ["用户偏好设置"],
+        "summary": "Delete User Preference Admin",
+        "description": "删除指定用户的偏好设置（管理员功能）",
+        "operationId": "delete_user_preference_admin_api_v1_core_preferences_admin__user_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "用户偏好设置",
+      "description": "用户偏好设置 相关的 API"
+    }
+  ]
+}

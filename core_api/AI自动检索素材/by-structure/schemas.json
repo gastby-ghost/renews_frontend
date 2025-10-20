@@ -1,0 +1,158 @@
+{
+  "AIRetrievalRequest": {
+    "properties": {
+      "requirement": {
+        "$ref": "#/components/schemas/AIRequirement",
+        "description": "检索需求"
+      },
+      "user_id": {
+        "type": "string",
+        "title": "User Id",
+        "description": "用户ID"
+      }
+    },
+    "type": "object",
+    "required": ["requirement", "user_id"],
+    "title": "AIRetrievalRequest",
+    "description": "AI检索请求模型"
+  },
+  "HTTPValidationError": {
+    "properties": {
+      "detail": {
+        "items": {
+          "$ref": "#/components/schemas/ValidationError"
+        },
+        "type": "array",
+        "title": "Detail"
+      }
+    },
+    "type": "object",
+    "title": "HTTPValidationError"
+  },
+  "AIRequirement": {
+    "properties": {
+      "project_id": {
+        "type": "string",
+        "title": "Project Id",
+        "description": "项目ID"
+      },
+      "keywords": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array",
+        "title": "Keywords",
+        "description": "关键词列表",
+        "default": []
+      },
+      "topic": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Topic",
+        "description": "主题描述"
+      },
+      "industry": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Industry",
+        "description": "行业领域"
+      },
+      "content_type": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Content Type",
+        "description": "内容类型"
+      },
+      "language": {
+        "type": "string",
+        "title": "Language",
+        "description": "语言要求",
+        "default": "zh-CN"
+      },
+      "max_results": {
+        "type": "integer",
+        "title": "Max Results",
+        "description": "最大检索结果数",
+        "default": 100
+      },
+      "similarity_threshold": {
+        "type": "number",
+        "title": "Similarity Threshold",
+        "description": "相似度阈值",
+        "default": 0.7
+      }
+    },
+    "type": "object",
+    "required": ["project_id"],
+    "title": "AIRequirement",
+    "description": "AI检索需求模型"
+  },
+  "AIRetrievalResponse": {
+    "properties": {
+      "success": {
+        "type": "boolean",
+        "title": "Success",
+        "description": "操作是否成功"
+      },
+      "message": {
+        "type": "string",
+        "title": "Message",
+        "description": "响应消息"
+      },
+      "materials": {
+        "items": {
+          "$ref": "#/components/schemas/TitleMaterial"
+        },
+        "type": "array",
+        "title": "Materials",
+        "description": "检索到的素材列表",
+        "default": []
+      },
+      "total_count": {
+        "type": "integer",
+        "title": "Total Count",
+        "description": "检索结果总数"
+      },
+      "retrieval_metadata": {
+        "additionalProperties": true,
+        "type": "object",
+        "title": "Retrieval Metadata",
+        "description": "检索元数据",
+        "default": {}
+      },
+      "processing_time": {
+        "type": "number",
+        "title": "Processing Time",
+        "description": "处理时间（秒）"
+      },
+      "timestamp": {
+        "type": "string",
+        "format": "date-time",
+        "title": "Timestamp",
+        "description": "时间戳"
+      }
+    },
+    "type": "object",
+    "required": ["success", "message", "total_count", "processing_time"],
+    "title": "AIRetrievalResponse",
+    "description": "AI检索响应模型"
+  }
+}

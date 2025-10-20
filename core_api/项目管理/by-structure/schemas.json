@@ -1,0 +1,1578 @@
+{
+  "ProjectResponse": {
+    "properties": {
+      "id": {
+        "type": "integer",
+        "title": "Id"
+      },
+      "name": {
+        "type": "string",
+        "title": "Name"
+      },
+      "status": {
+        "$ref": "#/components/schemas/ProjectStatus"
+      },
+      "current_component": {
+        "type": "string",
+        "title": "Current Component"
+      },
+      "last_modified": {
+        "type": "string",
+        "format": "date-time",
+        "title": "Last Modified"
+      },
+      "created_at": {
+        "type": "string",
+        "format": "date-time",
+        "title": "Created At"
+      },
+      "updated_at": {
+        "type": "string",
+        "format": "date-time",
+        "title": "Updated At"
+      }
+    },
+    "type": "object",
+    "required": [
+      "id",
+      "name",
+      "status",
+      "current_component",
+      "last_modified",
+      "created_at",
+      "updated_at"
+    ],
+    "title": "ProjectResponse",
+    "description": "项目响应"
+  },
+  "MainstreamMediaSearchRequest": {
+    "properties": {
+      "project_id": {
+        "type": "integer",
+        "title": "Project Id"
+      },
+      "keywords": {
+        "type": "string",
+        "maxLength": 100,
+        "minLength": 1,
+        "title": "Keywords",
+        "description": "检索关键词"
+      },
+      "context_relevant": {
+        "type": "boolean",
+        "title": "Context Relevant",
+        "description": "是否与当前内容相关",
+        "default": false
+      },
+      "current_component_context": {
+        "anyOf": [
+          {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Current Component Context",
+        "description": "当前组件上下文"
+      },
+      "page": {
+        "type": "integer",
+        "minimum": 1.0,
+        "title": "Page",
+        "description": "页码",
+        "default": 1
+      },
+      "page_size": {
+        "type": "integer",
+        "maximum": 100.0,
+        "minimum": 1.0,
+        "title": "Page Size",
+        "description": "每页数量",
+        "default": 20
+      }
+    },
+    "type": "object",
+    "required": ["project_id", "keywords"],
+    "title": "MainstreamMediaSearchRequest",
+    "description": "主流媒体素材搜索请求"
+  },
+  "MoveProjectsRequest": {
+    "properties": {
+      "project_ids": {
+        "items": {
+          "type": "integer"
+        },
+        "type": "array",
+        "minItems": 1,
+        "title": "Project Ids",
+        "description": "项目ID列表，至少包含一个项目"
+      },
+      "target_folder_id": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Target Folder Id",
+        "description": "目标文件夹ID，null表示移动到根级"
+      }
+    },
+    "type": "object",
+    "required": ["project_ids"],
+    "title": "MoveProjectsRequest",
+    "description": "移动项目请求 (F005_项目移动)"
+  },
+  "ProjectListResponse": {
+    "properties": {
+      "projects": {
+        "items": {
+          "$ref": "#/components/schemas/ProjectResponse"
+        },
+        "type": "array",
+        "title": "Projects"
+      },
+      "total_count": {
+        "type": "integer",
+        "title": "Total Count"
+      },
+      "page": {
+        "type": "integer",
+        "title": "Page"
+      },
+      "page_size": {
+        "type": "integer",
+        "title": "Page Size"
+      },
+      "total_pages": {
+        "type": "integer",
+        "title": "Total Pages"
+      }
+    },
+    "type": "object",
+    "required": ["projects", "total_count", "page", "page_size", "total_pages"],
+    "title": "ProjectListResponse",
+    "description": "项目列表响应 (F002_项目列表管理)"
+  },
+  "AIChatResponse": {
+    "properties": {
+      "success": {
+        "type": "boolean",
+        "title": "Success"
+      },
+      "reply": {
+        "type": "string",
+        "title": "Reply"
+      },
+      "history": {
+        "items": {
+          "$ref": "#/components/schemas/ChatHistoryItem"
+        },
+        "type": "array",
+        "title": "History"
+      },
+      "suggestions": {
+        "anyOf": [
+          {
+            "items": {
+              "$ref": "#/components/schemas/AISuggestionItem"
+            },
+            "type": "array"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Suggestions"
+      }
+    },
+    "type": "object",
+    "required": ["success", "reply", "history"],
+    "title": "AIChatResponse",
+    "description": "AI对话响应 (F026_AI对话)"
+  },
+  "ProjectDetailResponse": {
+    "properties": {
+      "project": {
+        "$ref": "#/components/schemas/ProjectResponse"
+      },
+      "components": {
+        "additionalProperties": true,
+        "type": "object",
+        "title": "Components",
+        "description": "项目组件内容"
+      },
+      "current_component_data": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/RequirementContent"
+          },
+          {
+            "$ref": "#/components/schemas/TitleContent"
+          },
+          {
+            "$ref": "#/components/schemas/OutlineContent"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Current Component Data",
+        "description": "当前编辑组件的数据"
+      }
+    },
+    "type": "object",
+    "required": ["project", "components"],
+    "title": "ProjectDetailResponse",
+    "description": "项目详情响应 (F003_项目打开)"
+  },
+  "TitleAnalysisResult": {
+    "properties": {
+      "title_text": {
+        "type": "string",
+        "title": "Title Text",
+        "description": "分析的标题文本"
+      },
+      "keyword_analysis": {
+        "items": {
+          "$ref": "#/components/schemas/KeywordAnalysis"
+        },
+        "type": "array",
+        "title": "Keyword Analysis",
+        "description": "关键词分析结果",
+        "default": []
+      },
+      "sentiment_analysis": {
+        "$ref": "#/components/schemas/SentimentAnalysis",
+        "description": "情感分析结果"
+      },
+      "attractiveness_analysis": {
+        "$ref": "#/components/schemas/AttractivenessAnalysis",
+        "description": "吸引力分析结果"
+      },
+      "seo_analysis": {
+        "$ref": "#/components/schemas/SEOAnalysis",
+        "description": "SEO分析结果"
+      },
+      "analysis_summary": {
+        "type": "string",
+        "title": "Analysis Summary",
+        "description": "分析总结"
+      },
+      "created_at": {
+        "type": "string",
+        "format": "date-time",
+        "title": "Created At",
+        "description": "分析时间"
+      }
+    },
+    "type": "object",
+    "required": [
+      "title_text",
+      "sentiment_analysis",
+      "attractiveness_analysis",
+      "seo_analysis",
+      "analysis_summary",
+      "created_at"
+    ],
+    "title": "TitleAnalysisResult",
+    "description": "标题分析结果"
+  },
+  "OutlineResponse": {
+    "properties": {
+      "project_id": {
+        "type": "integer",
+        "title": "Project Id"
+      },
+      "structure": {
+        "$ref": "#/components/schemas/OutlineStructure"
+      },
+      "created_at": {
+        "type": "string",
+        "format": "date-time",
+        "title": "Created At"
+      },
+      "updated_at": {
+        "type": "string",
+        "format": "date-time",
+        "title": "Updated At"
+      }
+    },
+    "type": "object",
+    "required": ["project_id", "structure", "created_at", "updated_at"],
+    "title": "OutlineResponse",
+    "description": "大纲响应"
+  },
+  "BindMaterialsToSectionRequest": {
+    "properties": {
+      "material_ids": {
+        "items": {
+          "type": "integer"
+        },
+        "type": "array",
+        "minItems": 1,
+        "title": "Material Ids",
+        "description": "素材ID列表，至少一个"
+      }
+    },
+    "type": "object",
+    "required": ["material_ids"],
+    "title": "BindMaterialsToSectionRequest",
+    "description": "绑定素材到章节请求 (F016_素材绑定到章节)"
+  },
+  "AIEditRequest": {
+    "properties": {
+      "selected_text": {
+        "type": "string",
+        "minLength": 1,
+        "title": "Selected Text",
+        "description": "选中的原始文本"
+      },
+      "operation": {
+        "$ref": "#/components/schemas/AIEditOperation",
+        "description": "操作类型：polish/rewrite/expand/shorten"
+      },
+      "context": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Context",
+        "description": "可选上下文信息，用于更好地生成建议"
+      }
+    },
+    "type": "object",
+    "required": ["selected_text", "operation"],
+    "title": "AIEditRequest",
+    "description": "AI辅助编辑请求 (F025_AI辅助编辑)"
+  },
+  "SectionPreviewResponse": {
+    "properties": {
+      "success": {
+        "type": "boolean",
+        "title": "Success"
+      },
+      "message": {
+        "type": "string",
+        "title": "Message"
+      },
+      "section_id": {
+        "type": "integer",
+        "title": "Section Id"
+      },
+      "title": {
+        "type": "string",
+        "title": "Title"
+      },
+      "content_html": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Content Html"
+      },
+      "has_content": {
+        "type": "boolean",
+        "title": "Has Content"
+      },
+      "updated_at": {
+        "anyOf": [
+          {
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Updated At"
+      }
+    },
+    "type": "object",
+    "required": ["success", "message", "section_id", "title", "has_content"],
+    "title": "SectionPreviewResponse",
+    "description": "章节预览响应 (F015_章节预览)"
+  },
+  "AIChatRequest": {
+    "properties": {
+      "message": {
+        "type": "string",
+        "minLength": 1,
+        "title": "Message",
+        "description": "用户输入的消息"
+      },
+      "context": {
+        "anyOf": [
+          {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Context",
+        "description": "项目上下文，可选"
+      },
+      "command": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/AIChatCommand"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "可选的修改命令"
+      }
+    },
+    "type": "object",
+    "required": ["message"],
+    "title": "AIChatRequest",
+    "description": "AI对话请求 (F026_AI对话)"
+  },
+  "GenerateOutlineRequest": {
+    "properties": {
+      "generation_mode": {
+        "type": "string",
+        "title": "Generation Mode",
+        "description": "生成模式：manual/AI"
+      },
+      "title_text": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Title Text",
+        "description": "标题文本，用于AI生成"
+      },
+      "requirement_data": {
+        "anyOf": [
+          {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Requirement Data",
+        "description": "需求数据，用于AI生成"
+      },
+      "outline_style": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Outline Style",
+        "description": "大纲风格：standard/detailed/simple",
+        "default": "standard"
+      }
+    },
+    "type": "object",
+    "required": ["generation_mode"],
+    "title": "GenerateOutlineRequest",
+    "description": "生成大纲请求 (F014_大纲结构管理)"
+  },
+  "SaveSectionContentRequest": {
+    "properties": {
+      "content_html": {
+        "type": "string",
+        "title": "Content Html",
+        "description": "章节正文HTML"
+      }
+    },
+    "type": "object",
+    "required": ["content_html"],
+    "title": "SaveSectionContentRequest",
+    "description": "保存章节正文请求 (F024_正文编辑)"
+  },
+  "GenerateTitleResponse": {
+    "properties": {
+      "success": {
+        "type": "boolean",
+        "title": "Success"
+      },
+      "message": {
+        "type": "string",
+        "title": "Message"
+      },
+      "title_options": {
+        "items": {
+          "$ref": "#/components/schemas/TitleOptionResponse"
+        },
+        "type": "array",
+        "title": "Title Options"
+      },
+      "total_count": {
+        "type": "integer",
+        "title": "Total Count"
+      },
+      "generation_params": {
+        "additionalProperties": true,
+        "type": "object",
+        "title": "Generation Params"
+      }
+    },
+    "type": "object",
+    "required": ["success", "message", "title_options", "total_count", "generation_params"],
+    "title": "GenerateTitleResponse",
+    "description": "生成标题响应 (F010_标题生成)"
+  },
+  "SaveOutlineRequest": {
+    "properties": {
+      "outline_structure": {
+        "$ref": "#/components/schemas/OutlineStructure"
+      },
+      "auto_save": {
+        "type": "boolean",
+        "title": "Auto Save",
+        "description": "是否自动保存",
+        "default": false
+      }
+    },
+    "type": "object",
+    "required": ["outline_structure"],
+    "title": "SaveOutlineRequest",
+    "description": "保存大纲请求 (F014_大纲结构管理)"
+  },
+  "ApplyRequirementTemplateResponse": {
+    "properties": {
+      "success": {
+        "type": "boolean",
+        "title": "Success"
+      },
+      "message": {
+        "type": "string",
+        "title": "Message"
+      },
+      "requirement": {
+        "$ref": "#/components/schemas/RequirementContent"
+      },
+      "template_info": {
+        "$ref": "#/components/schemas/RequirementTemplateResponse"
+      }
+    },
+    "type": "object",
+    "required": ["success", "message", "requirement", "template_info"],
+    "title": "ApplyRequirementTemplateResponse",
+    "description": "应用需求模板响应 (F008_需求模板应用)"
+  },
+  "ApplyRequirementTemplateRequest": {
+    "properties": {
+      "project_id": {
+        "type": "integer",
+        "title": "Project Id",
+        "description": "项目ID"
+      },
+      "template_id": {
+        "type": "integer",
+        "title": "Template Id",
+        "description": "模板ID"
+      }
+    },
+    "type": "object",
+    "required": ["project_id", "template_id"],
+    "title": "ApplyRequirementTemplateRequest",
+    "description": "应用需求模板请求 (F008_需求模板应用)"
+  },
+  "RenameTemplateRequest": {
+    "properties": {
+      "template_id": {
+        "type": "integer",
+        "title": "Template Id",
+        "description": "模板ID"
+      },
+      "new_name": {
+        "type": "string",
+        "maxLength": 30,
+        "minLength": 1,
+        "title": "New Name",
+        "description": "新模板名称，1-30个字符"
+      }
+    },
+    "type": "object",
+    "required": ["template_id", "new_name"],
+    "title": "RenameTemplateRequest",
+    "description": "重命名模板请求 (F009_需求模板管理)"
+  },
+  "FolderDetailResponse": {
+    "properties": {
+      "id": {
+        "type": "integer",
+        "title": "Id"
+      },
+      "name": {
+        "type": "string",
+        "title": "Name"
+      },
+      "parent_folder_id": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Parent Folder Id"
+      },
+      "created_at": {
+        "type": "string",
+        "format": "date-time",
+        "title": "Created At"
+      },
+      "updated_at": {
+        "type": "string",
+        "format": "date-time",
+        "title": "Updated At"
+      },
+      "sub_folders": {
+        "items": {
+          "$ref": "#/components/schemas/FolderResponse"
+        },
+        "type": "array",
+        "title": "Sub Folders",
+        "description": "子文件夹列表",
+        "default": []
+      },
+      "projects": {
+        "items": {
+          "$ref": "#/components/schemas/ProjectResponse"
+        },
+        "type": "array",
+        "title": "Projects",
+        "description": "文件夹下的项目列表",
+        "default": []
+      },
+      "total_items": {
+        "type": "integer",
+        "title": "Total Items",
+        "description": "文件夹下总项目数"
+      }
+    },
+    "type": "object",
+    "required": ["id", "name", "parent_folder_id", "created_at", "updated_at", "total_items"],
+    "title": "FolderDetailResponse",
+    "description": "文件夹详情响应 (包含子内容)"
+  },
+  "SelectTitleRequest": {
+    "properties": {
+      "title_option_id": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Title Option Id",
+        "description": "标题选项ID，选择生成标题时必填"
+      },
+      "custom_title": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Custom Title",
+        "description": "自定义标题，自定义时必填"
+      }
+    },
+    "type": "object",
+    "title": "SelectTitleRequest",
+    "description": "选择标题请求 (F012_标题选择)"
+  },
+  "DraftGenerationRequest": {
+    "properties": {
+      "outline_structure": {
+        "additionalProperties": true,
+        "type": "object",
+        "title": "Outline Structure",
+        "description": "大纲结构数据"
+      },
+      "associated_materials": {
+        "anyOf": [
+          {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Associated Materials",
+        "description": "关联素材数据，可选"
+      },
+      "requirement_data": {
+        "anyOf": [
+          {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Requirement Data",
+        "description": "需求数据，可选"
+      }
+    },
+    "type": "object",
+    "required": ["outline_structure"],
+    "title": "DraftGenerationRequest",
+    "description": "初稿生成请求 (F027_初稿生成)"
+  },
+  "AnalyzeTitleRequest": {
+    "properties": {
+      "title_text": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Title Text",
+        "description": "标题文本，如果不传则分析已选择的标题"
+      }
+    },
+    "type": "object",
+    "title": "AnalyzeTitleRequest",
+    "description": "标题分析请求 (F013_标题分析)"
+  },
+  "SaveRequirementTemplateResponse": {
+    "properties": {
+      "success": {
+        "type": "boolean",
+        "title": "Success"
+      },
+      "message": {
+        "type": "string",
+        "title": "Message"
+      },
+      "template": {
+        "$ref": "#/components/schemas/RequirementTemplateResponse"
+      }
+    },
+    "type": "object",
+    "required": ["success", "message", "template"],
+    "title": "SaveRequirementTemplateResponse",
+    "description": "保存需求模板响应 (F007_需求模板保存)"
+  },
+  "GenerateOutlineResponse": {
+    "properties": {
+      "success": {
+        "type": "boolean",
+        "title": "Success"
+      },
+      "message": {
+        "type": "string",
+        "title": "Message"
+      },
+      "outline": {
+        "$ref": "#/components/schemas/OutlineResponse"
+      },
+      "generation_info": {
+        "additionalProperties": true,
+        "type": "object",
+        "title": "Generation Info",
+        "description": "生成信息"
+      }
+    },
+    "type": "object",
+    "required": ["success", "message", "outline", "generation_info"],
+    "title": "GenerateOutlineResponse",
+    "description": "生成大纲响应 (F014_大纲结构管理)"
+  },
+  "SaveRequirementTemplateRequest": {
+    "properties": {
+      "project_id": {
+        "type": "integer",
+        "title": "Project Id",
+        "description": "项目ID"
+      },
+      "template_name": {
+        "type": "string",
+        "maxLength": 30,
+        "minLength": 1,
+        "title": "Template Name",
+        "description": "模板名称，1-30个字符"
+      }
+    },
+    "type": "object",
+    "required": ["project_id", "template_name"],
+    "title": "SaveRequirementTemplateRequest",
+    "description": "保存需求模板请求 (F007_需求模板保存)"
+  },
+  "UnbindMaterialFromTitleResponse": {
+    "properties": {
+      "success": {
+        "type": "boolean",
+        "title": "Success"
+      },
+      "message": {
+        "type": "string",
+        "title": "Message"
+      },
+      "remaining_materials": {
+        "items": {
+          "$ref": "#/components/schemas/MaterialBindingResponse"
+        },
+        "type": "array",
+        "title": "Remaining Materials"
+      },
+      "total_count": {
+        "type": "integer",
+        "title": "Total Count"
+      }
+    },
+    "type": "object",
+    "required": ["success", "message", "remaining_materials", "total_count"],
+    "title": "UnbindMaterialFromTitleResponse",
+    "description": "解绑素材响应 (F011_素材绑定到标题)"
+  },
+  "SelectTitleResponse": {
+    "properties": {
+      "success": {
+        "type": "boolean",
+        "title": "Success"
+      },
+      "message": {
+        "type": "string",
+        "title": "Message"
+      },
+      "title": {
+        "$ref": "#/components/schemas/TitleResponse"
+      },
+      "outline_updated": {
+        "type": "boolean",
+        "title": "Outline Updated"
+      },
+      "materials_added": {
+        "type": "integer",
+        "title": "Materials Added"
+      }
+    },
+    "type": "object",
+    "required": ["success", "message", "title", "outline_updated", "materials_added"],
+    "title": "SelectTitleResponse",
+    "description": "选择标题响应 (F012_标题选择)"
+  },
+  "UpdateRequirementRequest": {
+    "properties": {
+      "writing_objective": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Writing Objective",
+        "description": "写作目标，可选"
+      },
+      "title_length_min": {
+        "type": "integer",
+        "title": "Title Length Min",
+        "description": "标题最小字数，5-50字，必须小于最大字数"
+      },
+      "title_length_max": {
+        "type": "integer",
+        "title": "Title Length Max",
+        "description": "标题最大字数，5-50字，必须大于最小字数"
+      },
+      "content_length_min": {
+        "type": "integer",
+        "title": "Content Length Min",
+        "description": "正文最小字数，500-5000字，必须小于最大字数"
+      },
+      "content_length_max": {
+        "type": "integer",
+        "title": "Content Length Max",
+        "description": "正文最大字数，500-5000字，必须大于最小字数"
+      },
+      "genre": {
+        "type": "string",
+        "title": "Genre",
+        "description": "题材（领域），必填"
+      },
+      "writing_style": {
+        "type": "string",
+        "title": "Writing Style",
+        "description": "写作风格（文风），必填"
+      },
+      "type": {
+        "type": "string",
+        "title": "Type",
+        "description": "类型（消息、通讯、评论等），必填"
+      },
+      "target_audience": {
+        "additionalProperties": true,
+        "type": "object",
+        "title": "Target Audience",
+        "description": "目标受众，至少包含一个属性"
+      },
+      "keywords": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array",
+        "title": "Keywords",
+        "description": "关键词列表，最多10个",
+        "default": []
+      }
+    },
+    "type": "object",
+    "required": [
+      "title_length_min",
+      "title_length_max",
+      "content_length_min",
+      "content_length_max",
+      "genre",
+      "writing_style",
+      "type",
+      "target_audience"
+    ],
+    "title": "UpdateRequirementRequest",
+    "description": "更新需求定义请求 (F006_需求定义)"
+  },
+  "BindMaterialsToTitleRequest": {
+    "properties": {
+      "material_ids": {
+        "items": {
+          "type": "integer"
+        },
+        "type": "array",
+        "minItems": 1,
+        "title": "Material Ids",
+        "description": "素材ID列表，至少包含一个素材"
+      },
+      "material_weights": {
+        "anyOf": [
+          {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Material Weights",
+        "description": "素材权重，可选",
+        "default": {}
+      }
+    },
+    "type": "object",
+    "required": ["material_ids"],
+    "title": "BindMaterialsToTitleRequest",
+    "description": "绑定素材到标题请求 (F011_素材绑定到标题)"
+  },
+  "HTTPValidationError": {
+    "properties": {
+      "detail": {
+        "items": {
+          "$ref": "#/components/schemas/ValidationError"
+        },
+        "type": "array",
+        "title": "Detail"
+      }
+    },
+    "type": "object",
+    "title": "HTTPValidationError"
+  },
+  "ChatHistoryResponse": {
+    "properties": {
+      "history": {
+        "items": {
+          "$ref": "#/components/schemas/ChatHistoryItem"
+        },
+        "type": "array",
+        "title": "History"
+      },
+      "total_count": {
+        "type": "integer",
+        "title": "Total Count"
+      }
+    },
+    "type": "object",
+    "required": ["history", "total_count"],
+    "title": "ChatHistoryResponse",
+    "description": "AI对话历史响应"
+  },
+  "TemplateOperationResponse": {
+    "properties": {
+      "success": {
+        "type": "boolean",
+        "title": "Success"
+      },
+      "message": {
+        "type": "string",
+        "title": "Message"
+      },
+      "template": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/RequirementTemplateResponse"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "type": "object",
+    "required": ["success", "message"],
+    "title": "TemplateOperationResponse",
+    "description": "模板操作响应 (F009_需求模板管理)"
+  },
+  "OptimizeOutlineRequest": {
+    "properties": {
+      "outline_structure": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/OutlineStructure"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "可选，若不传则使用当前项目的大纲"
+      },
+      "requirement_data": {
+        "anyOf": [
+          {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Requirement Data",
+        "description": "可选的需求数据，辅助AI分析"
+      }
+    },
+    "type": "object",
+    "title": "OptimizeOutlineRequest",
+    "description": "大纲AI优化请求 (F017_大纲AI优化)"
+  },
+  "UpdateRequirementResponse": {
+    "properties": {
+      "success": {
+        "type": "boolean",
+        "title": "Success"
+      },
+      "message": {
+        "type": "string",
+        "title": "Message"
+      },
+      "requirement": {
+        "$ref": "#/components/schemas/RequirementContent"
+      }
+    },
+    "type": "object",
+    "required": ["success", "message", "requirement"],
+    "title": "UpdateRequirementResponse",
+    "description": "更新需求定义响应 (F006_需求定义)"
+  },
+  "SaveSectionContentResponse": {
+    "properties": {
+      "success": {
+        "type": "boolean",
+        "title": "Success"
+      },
+      "message": {
+        "type": "string",
+        "title": "Message"
+      },
+      "content": {
+        "$ref": "#/components/schemas/SectionContentResponse"
+      }
+    },
+    "type": "object",
+    "required": ["success", "message", "content"],
+    "title": "SaveSectionContentResponse",
+    "description": "保存章节正文响应 (F024_正文编辑)"
+  },
+  "GenerateTitleRequest": {
+    "properties": {
+      "project_id": {
+        "type": "integer",
+        "title": "Project Id",
+        "description": "项目ID"
+      },
+      "material_ids": {
+        "anyOf": [
+          {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Material Ids",
+        "description": "绑定素材ID列表，可选",
+        "default": []
+      },
+      "material_weights": {
+        "anyOf": [
+          {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Material Weights",
+        "description": "素材权重，可选",
+        "default": {}
+      },
+      "title_style": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/TitleStyle"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "标题风格，可选",
+        "default": "default"
+      }
+    },
+    "type": "object",
+    "required": ["project_id"],
+    "title": "GenerateTitleRequest",
+    "description": "生成标题请求 (F010_标题生成)"
+  },
+  "FolderResponse": {
+    "properties": {
+      "id": {
+        "type": "integer",
+        "title": "Id"
+      },
+      "name": {
+        "type": "string",
+        "title": "Name"
+      },
+      "parent_folder_id": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Parent Folder Id"
+      },
+      "created_at": {
+        "type": "string",
+        "format": "date-time",
+        "title": "Created At"
+      },
+      "updated_at": {
+        "type": "string",
+        "format": "date-time",
+        "title": "Updated At"
+      }
+    },
+    "type": "object",
+    "required": ["id", "name", "parent_folder_id", "created_at", "updated_at"],
+    "title": "FolderResponse",
+    "description": "文件夹响应 (F004_文件夹管理)"
+  },
+  "MoveProjectsResponse": {
+    "properties": {
+      "success": {
+        "type": "boolean",
+        "title": "Success"
+      },
+      "message": {
+        "type": "string",
+        "title": "Message"
+      },
+      "moved_count": {
+        "type": "integer",
+        "title": "Moved Count",
+        "description": "成功移动的项目数量"
+      },
+      "failed_count": {
+        "type": "integer",
+        "title": "Failed Count",
+        "description": "移动失败的项目数量"
+      },
+      "details": {
+        "items": {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        "type": "array",
+        "title": "Details",
+        "description": "移动详情"
+      }
+    },
+    "type": "object",
+    "required": ["success", "message", "moved_count", "failed_count", "details"],
+    "title": "MoveProjectsResponse",
+    "description": "移动项目响应 (F005_项目移动)"
+  },
+  "OptimizeOutlineResponse": {
+    "properties": {
+      "success": {
+        "type": "boolean",
+        "title": "Success"
+      },
+      "message": {
+        "type": "string",
+        "title": "Message"
+      },
+      "suggestions": {
+        "items": {
+          "$ref": "#/components/schemas/OptimizationSuggestion"
+        },
+        "type": "array",
+        "title": "Suggestions"
+      },
+      "total_count": {
+        "type": "integer",
+        "title": "Total Count"
+      }
+    },
+    "type": "object",
+    "required": ["success", "message", "suggestions", "total_count"],
+    "title": "OptimizeOutlineResponse",
+    "description": "大纲AI优化响应 (F017_大纲AI优化)"
+  },
+  "AIEditResponse": {
+    "properties": {
+      "success": {
+        "type": "boolean",
+        "title": "Success"
+      },
+      "message": {
+        "type": "string",
+        "title": "Message"
+      },
+      "suggestions": {
+        "items": {
+          "$ref": "#/components/schemas/AIEditSuggestion"
+        },
+        "type": "array",
+        "title": "Suggestions"
+      },
+      "total_count": {
+        "type": "integer",
+        "title": "Total Count"
+      }
+    },
+    "type": "object",
+    "required": ["success", "message", "suggestions", "total_count"],
+    "title": "AIEditResponse",
+    "description": "AI辅助编辑响应 (F025_AI辅助编辑)"
+  },
+  "AddMainstreamMediaResponse": {
+    "properties": {
+      "success": {
+        "type": "boolean",
+        "title": "Success"
+      },
+      "message": {
+        "type": "string",
+        "title": "Message"
+      },
+      "added_materials": {
+        "items": {
+          "$ref": "#/components/schemas/MainstreamMediaMaterial"
+        },
+        "type": "array",
+        "title": "Added Materials"
+      },
+      "total_added": {
+        "type": "integer",
+        "title": "Total Added"
+      },
+      "auto_tags_added": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array",
+        "title": "Auto Tags Added",
+        "description": "自动添加的标签"
+      }
+    },
+    "type": "object",
+    "required": ["success", "message", "added_materials", "total_added"],
+    "title": "AddMainstreamMediaResponse",
+    "description": "添加主流媒体素材到项目响应"
+  },
+  "AnalyzeTitleResponse": {
+    "properties": {
+      "success": {
+        "type": "boolean",
+        "title": "Success"
+      },
+      "message": {
+        "type": "string",
+        "title": "Message"
+      },
+      "analysis_result": {
+        "$ref": "#/components/schemas/TitleAnalysisResult"
+      }
+    },
+    "type": "object",
+    "required": ["success", "message", "analysis_result"],
+    "title": "AnalyzeTitleResponse",
+    "description": "标题分析响应 (F013_标题分析)"
+  },
+  "GetTemplatesResponse": {
+    "properties": {
+      "success": {
+        "type": "boolean",
+        "title": "Success"
+      },
+      "message": {
+        "type": "string",
+        "title": "Message"
+      },
+      "templates": {
+        "items": {
+          "$ref": "#/components/schemas/RequirementTemplateResponse"
+        },
+        "type": "array",
+        "title": "Templates"
+      },
+      "total_count": {
+        "type": "integer",
+        "title": "Total Count"
+      }
+    },
+    "type": "object",
+    "required": ["success", "message", "templates", "total_count"],
+    "title": "GetTemplatesResponse",
+    "description": "获取模板列表响应 (F009_需求模板管理)"
+  },
+  "BindMaterialsToSectionResponse": {
+    "properties": {
+      "success": {
+        "type": "boolean",
+        "title": "Success"
+      },
+      "message": {
+        "type": "string",
+        "title": "Message"
+      },
+      "section_id": {
+        "type": "integer",
+        "title": "Section Id"
+      },
+      "bound_materials": {
+        "items": {
+          "$ref": "#/components/schemas/SimpleMaterialRef"
+        },
+        "type": "array",
+        "title": "Bound Materials"
+      },
+      "total_count": {
+        "type": "integer",
+        "title": "Total Count"
+      }
+    },
+    "type": "object",
+    "required": ["success", "message", "section_id", "bound_materials", "total_count"],
+    "title": "BindMaterialsToSectionResponse",
+    "description": "绑定素材到章节响应 (F016_素材绑定到章节)"
+  },
+  "MainstreamMediaSearchResponse": {
+    "properties": {
+      "success": {
+        "type": "boolean",
+        "title": "Success"
+      },
+      "message": {
+        "type": "string",
+        "title": "Message"
+      },
+      "materials": {
+        "items": {
+          "$ref": "#/components/schemas/MainstreamMediaMaterial"
+        },
+        "type": "array",
+        "title": "Materials"
+      },
+      "total_count": {
+        "type": "integer",
+        "title": "Total Count"
+      },
+      "page": {
+        "type": "integer",
+        "title": "Page"
+      },
+      "page_size": {
+        "type": "integer",
+        "title": "Page Size"
+      },
+      "total_pages": {
+        "type": "integer",
+        "title": "Total Pages"
+      }
+    },
+    "type": "object",
+    "required": [
+      "success",
+      "message",
+      "materials",
+      "total_count",
+      "page",
+      "page_size",
+      "total_pages"
+    ],
+    "title": "MainstreamMediaSearchResponse",
+    "description": "主流媒体素材搜索响应"
+  },
+  "BindMaterialsToTitleResponse": {
+    "properties": {
+      "success": {
+        "type": "boolean",
+        "title": "Success"
+      },
+      "message": {
+        "type": "string",
+        "title": "Message"
+      },
+      "bound_materials": {
+        "items": {
+          "$ref": "#/components/schemas/MaterialBindingResponse"
+        },
+        "type": "array",
+        "title": "Bound Materials"
+      },
+      "total_count": {
+        "type": "integer",
+        "title": "Total Count"
+      }
+    },
+    "type": "object",
+    "required": ["success", "message", "bound_materials", "total_count"],
+    "title": "BindMaterialsToTitleResponse",
+    "description": "绑定素材到标题响应 (F011_素材绑定到标题)"
+  },
+  "AddMainstreamMediaRequest": {
+    "properties": {
+      "project_id": {
+        "type": "integer",
+        "title": "Project Id"
+      },
+      "material_ids": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array",
+        "minItems": 1,
+        "title": "Material Ids",
+        "description": "要添加的素材ID列表"
+      }
+    },
+    "type": "object",
+    "required": ["project_id", "material_ids"],
+    "title": "AddMainstreamMediaRequest",
+    "description": "添加主流媒体素材到项目请求"
+  },
+  "DraftGenerationResponse": {
+    "properties": {
+      "success": {
+        "type": "boolean",
+        "title": "Success"
+      },
+      "message": {
+        "type": "string",
+        "title": "Message"
+      },
+      "draft_content": {
+        "items": {
+          "$ref": "#/components/schemas/DraftSection"
+        },
+        "type": "array",
+        "title": "Draft Content"
+      },
+      "total_sections": {
+        "type": "integer",
+        "title": "Total Sections"
+      },
+      "total_words": {
+        "type": "integer",
+        "title": "Total Words"
+      },
+      "generation_time": {
+        "anyOf": [
+          {
+            "type": "number"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Generation Time"
+      }
+    },
+    "type": "object",
+    "required": ["success", "message", "draft_content", "total_sections", "total_words"],
+    "title": "DraftGenerationResponse",
+    "description": "初稿生成响应 (F027_初稿生成)"
+  },
+  "SaveOutlineResponse": {
+    "properties": {
+      "success": {
+        "type": "boolean",
+        "title": "Success"
+      },
+      "message": {
+        "type": "string",
+        "title": "Message"
+      },
+      "outline": {
+        "$ref": "#/components/schemas/OutlineResponse"
+      },
+      "sections_count": {
+        "type": "integer",
+        "title": "Sections Count",
+        "description": "章节数量"
+      }
+    },
+    "type": "object",
+    "required": ["success", "message", "outline", "sections_count"],
+    "title": "SaveOutlineResponse",
+    "description": "保存大纲响应 (F014_大纲结构管理)"
+  }
+}
