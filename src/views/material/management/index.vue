@@ -77,8 +77,13 @@
       </div>
     </div>
 
+    <!-- 加载状态 -->
+    <div v-if="materialStore.loading" class="material-management__loading">
+      <el-skeleton :rows="3" animated />
+    </div>
+
     <!-- 素材网格 -->
-    <div class="material-management__grid" v-if="filteredMaterials.length > 0">
+    <div v-else-if="filteredMaterials.length > 0" class="material-management__grid">
       <MaterialCard
         v-for="material in filteredMaterials"
         :key="material.id"
@@ -88,12 +93,27 @@
         @select="toggleMaterialSelection"
         @preview="showPreview"
         @download="downloadMaterial"
+        @edit="handleEdit"
         @click="selectMaterial(material)"
       />
     </div>
 
+    <!-- 分页 -->
+    <div v-if="totalCount > 0 && !materialStore.loading" class="material-management__pagination">
+      <el-pagination
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
+        :page-sizes="[10, 20, 50, 100]"
+        :total="totalCount"
+        layout="total, sizes, prev, pager, next, jumper"
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+      />
+    </div>
+
     <!-- 空状态 -->
-    <el-empty v-else description="暂无素材" :image-size="200"> </el-empty>
+    <el-empty v-else-if="!materialStore.loading" description="暂无素材" :image-size="200">
+    </el-empty>
 
     <!-- 预览对话框 -->
     <el-dialog
@@ -148,10 +168,11 @@
 <script setup lang="ts">
   import { ref, computed, onMounted, onUnmounted } from 'vue'
   import { useRouter } from 'vue-router'
-  import { ElMessage } from 'element-plus'
+  import { ElMessage, ElMessageBox } from 'element-plus'
   import { Search, Refresh, Delete, Download, Picture } from '@element-plus/icons-vue'
   import MaterialCard from '@/components/custom/material-card/MaterialCard.vue'
   import { useMaterialStore } from '@/store/material'
+  import { materialApiService } from '@/services/materialApi'
   import type { Material } from '@/types/material'
 
   const router = useRouter()
@@ -170,26 +191,17 @@
   const loadingMaterials = ref<string[]>([])
   const deleteDialogVisible = ref(false)
 
+  // 分页状态
+  const currentPage = ref(1)
+  const pageSize = ref(20)
+  const totalCount = ref(0)
+
   // 计算属性
   const materials = computed(() => materialStore.materials)
   const selectedMaterials = computed(() => materialStore.selectedMaterials)
 
-  const filteredMaterials = computed(() => {
-    return materials.value.filter((material) => {
-      const matchesSearch =
-        !filterForm.value.search ||
-        material.title.toLowerCase().includes(filterForm.value.search.toLowerCase()) ||
-        material.tags.some((tag) =>
-          tag.toLowerCase().includes(filterForm.value.search.toLowerCase())
-        ) ||
-        material.summary.toLowerCase().includes(filterForm.value.search.toLowerCase())
-
-      const matchesType = !filterForm.value.type || material.type === filterForm.value.type
-      const matchesSource = !filterForm.value.source || material.source === filterForm.value.source
-
-      return matchesSearch && matchesType && matchesSource
-    })
-  })
+  // 由于现在使用API进行筛选，filteredMaterials 直接返回 materials
+  const filteredMaterials = computed(() => materials.value)
 
   const availableSources = computed(() => {
     const sources = new Set(materials.value.map((m) => m.source))
@@ -198,8 +210,14 @@
 
   // 方法
   function applyFilters() {
-    // 筛选逻辑已通过计算属性实现
-    ElMessage.success(`筛选结果：${filteredMaterials.value.length} 个素材`)
+    currentPage.value = 1
+    loadMaterials()
+      .then(() => {
+        ElMessage.success(`筛选结果：${filteredMaterials.value.length} 个素材`)
+      })
+      .catch(() => {
+        // 错误已在loadMaterials中处理
+      })
   }
 
   function resetFilters() {
@@ -208,7 +226,14 @@
       type: '',
       source: ''
     }
-    ElMessage.info('已重置筛选条件')
+    currentPage.value = 1
+    loadMaterials()
+      .then(() => {
+        ElMessage.info('已重置筛选条件')
+      })
+      .catch(() => {
+        // 错误已在loadMaterials中处理
+      })
   }
 
   function toggleMaterialSelection(id: string) {
@@ -241,6 +266,8 @@
       await materialStore.deleteMaterialsFromDatabase(selectedMaterials.value)
       ElMessage.success(`已删除 ${selectedMaterials.value.length} 个素材`)
       deleteDialogVisible.value = false
+      // 重新加载数据
+      await loadMaterials()
     } catch (err) {
       console.error('删除失败:', err)
       ElMessage.error('删除失败')
@@ -274,6 +301,39 @@
       ElMessage.error('下载失败')
     } finally {
       loadingMaterials.value = loadingMaterials.value.filter((id) => id !== material.id)
+    }
+  }
+
+  async function handleEdit(material: Material) {
+    try {
+      // 使用Element Plus的MessageBox作为简单的编辑对话框
+      const { value: newTitle } = await ElMessageBox.prompt('请输入新的素材标题', '编辑素材', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        inputValue: material.title,
+        inputPattern: /^.{1,255}$/,
+        inputErrorMessage: '标题长度应在1-255个字符之间'
+      })
+
+      if (newTitle && newTitle !== material.title) {
+        // 调用API更新素材
+        await materialApiService.updateMaterial(parseInt(material.id, 10), {
+          title: newTitle
+        })
+
+        // 更新本地状态
+        materialStore.updateMaterial({
+          id: material.id,
+          title: newTitle
+        })
+
+        ElMessage.success('素材更新成功')
+      }
+    } catch (err) {
+      if (err !== 'cancel') {
+        console.error('编辑素材失败:', err)
+        ElMessage.error('编辑素材失败')
+      }
     }
   }
 
@@ -312,11 +372,49 @@
     }).format(date)
   }
 
+  // 分页处理方法
+  function handleSizeChange(size: number) {
+    pageSize.value = size
+    currentPage.value = 1
+    loadMaterials()
+  }
+
+  function handleCurrentChange(page: number) {
+    currentPage.value = page
+    loadMaterials()
+  }
+
+  // 加载素材数据
+  async function loadMaterials() {
+    try {
+      // 构建标签数组，包含类型和来源筛选
+      const tags: string[] = []
+      if (filterForm.value.type) {
+        tags.push(filterForm.value.type)
+      }
+      if (filterForm.value.source) {
+        tags.push(filterForm.value.source)
+      }
+
+      const params = {
+        page: currentPage.value,
+        page_size: pageSize.value,
+        keywords: filterForm.value.search || undefined,
+        tags: tags.length > 0 ? tags : undefined
+      }
+
+      const result = await materialStore.loadAllMaterialsFromDatabase(params)
+      totalCount.value = result.totalCount
+    } catch (err) {
+      console.error('加载素材失败:', err)
+      ElMessage.error('加载素材失败')
+    }
+  }
+
   // 生命周期
   onMounted(async () => {
     try {
-      // 使用新的API从数据库加载素材
-      await materialStore.loadProjectMaterialsFromDatabase()
+      await loadMaterials()
     } catch (err) {
       console.error('加载素材库失败:', err)
       ElMessage.error('加载素材库失败')
@@ -326,8 +424,7 @@
     const unwatch = router.afterEach(async (to) => {
       if (to.path === '/material/management') {
         try {
-          // 使用新的API从数据库加载素材
-          await materialStore.loadProjectMaterialsFromDatabase()
+          await loadMaterials()
         } catch (err) {
           console.error('刷新素材库失败:', err)
         }
@@ -410,6 +507,14 @@
           margin: 8px 0;
           line-height: 1.6;
         }
+      }
+
+      &__pagination {
+        display: flex;
+        justify-content: center;
+        padding-top: 20px;
+        margin-top: 20px;
+        border-top: 1px solid var(--el-border-color-lighter);
       }
     }
   }

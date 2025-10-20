@@ -595,6 +595,46 @@ export const useMaterialStore = defineStore('material', () => {
   }
 
   /**
+   * 从数据库加载所有素材
+   * @param params 查询参数
+   * @returns 素材列表
+   */
+  async function loadAllMaterialsFromDatabase(params?: {
+    page?: number
+    page_size?: number
+    keywords?: string
+    tags?: string[]
+  }) {
+    state.value.loading = true
+    state.value.error = null
+
+    try {
+      const response = await materialApiService.getAllMaterials(params)
+
+      // 将API返回的素材转换为前端格式
+      const materials = response.materials.map((apiMaterial) =>
+        MaterialApiService.convertApiMaterialToMaterial(apiMaterial)
+      )
+
+      // 更新本地状态
+      state.value.materials = materials
+
+      return {
+        materials,
+        totalCount: response.total_count,
+        page: response.page,
+        pageSize: response.page_size,
+        totalPages: response.total_pages
+      }
+    } catch (error) {
+      state.value.error = error instanceof Error ? error.message : '从数据库加载素材失败'
+      throw error
+    } finally {
+      state.value.loading = false
+    }
+  }
+
+  /**
    * 从数据库删除素材
    * @param materialIds 素材ID列表（字符串格式）
    * @returns 删除结果
@@ -694,6 +734,7 @@ export const useMaterialStore = defineStore('material', () => {
     loadLibraryMaterials,
     addSearchResultsToDatabase,
     loadProjectMaterialsFromDatabase,
+    loadAllMaterialsFromDatabase,
     deleteMaterialsFromDatabase,
 
     // Search-tools 相关方法

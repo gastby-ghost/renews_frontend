@@ -154,6 +154,30 @@ class MaterialApiService {
   }
 
   /**
+   * 获取所有素材列表
+   * @param params 查询参数
+   * @returns 素材列表
+   */
+  async getAllMaterials(params?: {
+    page?: number
+    page_size?: number
+    keywords?: string
+    tags?: string[]
+  }): Promise<MaterialListResponse> {
+    try {
+      const response = await http.get<MaterialListResponse>({
+        url: `${this.baseUrl}/materials`,
+        params
+      })
+
+      return response
+    } catch (error) {
+      console.error('Get all materials error:', error)
+      throw new Error('获取素材列表失败')
+    }
+  }
+
+  /**
    * 更新素材
    * @param materialId 素材ID
    * @param updateData 更新数据
@@ -191,7 +215,7 @@ class MaterialApiService {
         material_ids: materialIds
       }
 
-      const response = await http.delete<MaterialDeleteResponse>({
+      const response = await http.del<MaterialDeleteResponse>({
         url: `${this.baseUrl}/materials`,
         data: request
       })
