@@ -690,21 +690,6 @@ export const asyncRoutes: AppRouteRecord[] = [
     },
     children: [
       {
-        path: 'fetch',
-        name: 'MaterialFetch',
-        component: RoutesAlias.MaterialFetch,
-        meta: {
-          title: 'menus.material.fetch',
-          keepAlive: true,
-          authList: [
-            {
-              title: '抓取',
-              authMark: 'fetch'
-            }
-          ]
-        }
-      },
-      {
         path: 'search',
         name: 'MaterialSearch',
         component: RoutesAlias.MaterialSearch,
@@ -729,23 +714,6 @@ export const asyncRoutes: AppRouteRecord[] = [
             {
               title: '删除',
               authMark: 'delete'
-            }
-          ]
-        }
-      },
-      {
-        path: 'edit/:id',
-        name: 'MaterialEdit',
-        component: RoutesAlias.MaterialEdit,
-        meta: {
-          title: 'menus.material.edit',
-          keepAlive: true,
-          isHide: true,
-          activePath: '/material/management',
-          authList: [
-            {
-              title: '编辑',
-              authMark: 'edit'
             }
           ]
         }

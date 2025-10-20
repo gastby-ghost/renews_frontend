@@ -74,18 +74,6 @@
           <el-icon><Download /></el-icon>
           导出
         </el-button>
-        <el-button
-          type="primary"
-          @click="editSelectedMaterial"
-          :disabled="selectedMaterials.length !== 1"
-        >
-          <el-icon><Edit /></el-icon>
-          编辑素材
-        </el-button>
-        <el-button type="primary" @click="goToFetch">
-          <el-icon><Plus /></el-icon>
-          抓取素材
-        </el-button>
       </div>
     </div>
 
@@ -99,16 +87,13 @@
         :loading="loadingMaterials.includes(material.id)"
         @select="toggleMaterialSelection"
         @preview="showPreview"
-        @edit="handleMaterialEdit"
         @download="downloadMaterial"
         @click="selectMaterial(material)"
       />
     </div>
 
     <!-- 空状态 -->
-    <el-empty v-else description="暂无素材" :image-size="200">
-      <el-button type="primary" @click="goToFetch"> 去抓取素材 </el-button>
-    </el-empty>
+    <el-empty v-else description="暂无素材" :image-size="200"> </el-empty>
 
     <!-- 预览对话框 -->
     <el-dialog
@@ -164,7 +149,7 @@
   import { ref, computed, onMounted, onUnmounted } from 'vue'
   import { useRouter } from 'vue-router'
   import { ElMessage } from 'element-plus'
-  import { Search, Refresh, Delete, Download, Plus, Edit, Picture } from '@element-plus/icons-vue'
+  import { Search, Refresh, Delete, Download, Picture } from '@element-plus/icons-vue'
   import MaterialCard from '@/components/custom/material-card/MaterialCard.vue'
   import { useMaterialStore } from '@/store/material'
   import type { Material } from '@/types/material'
@@ -303,24 +288,6 @@
     setTimeout(() => {
       ElMessage.success('导出完成')
     }, 1000)
-  }
-
-  function goToFetch() {
-    router.push('/material/fetch')
-  }
-
-  function editSelectedMaterial() {
-    if (selectedMaterials.value.length !== 1) {
-      ElMessage.warning('请选择一个素材进行编辑')
-      return
-    }
-
-    const materialId = selectedMaterials.value[0]
-    router.push(`/material/edit/${materialId}`)
-  }
-
-  function handleMaterialEdit(material: Material) {
-    router.push(`/material/edit/${material.id}`)
   }
 
   function getTypeLabel(type: Material['type']) {
