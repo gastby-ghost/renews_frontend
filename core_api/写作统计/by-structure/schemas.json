@@ -1,4 +1,139 @@
 {
+  "app__statistics__schemas__ComponentType": {
+    "type": "string",
+    "enum": ["requirement", "title", "outline", "content", "material"],
+    "title": "ComponentType",
+    "description": "组件类型"
+  },
+  "ReportExportRequest": {
+    "properties": {
+      "project_id": {
+        "type": "integer",
+        "title": "Project Id",
+        "description": "项目ID"
+      },
+      "export_format": {
+        "$ref": "#/components/schemas/app__statistics__schemas__ExportFormat"
+      },
+      "include_content": {
+        "additionalProperties": {
+          "type": "boolean"
+        },
+        "type": "object",
+        "title": "Include Content",
+        "description": "包含的内容选项"
+      },
+      "report_title": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Report Title",
+        "description": "自定义报告标题"
+      },
+      "include_charts": {
+        "type": "boolean",
+        "title": "Include Charts",
+        "description": "是否包含图表",
+        "default": true
+      }
+    },
+    "type": "object",
+    "required": ["project_id", "export_format"],
+    "title": "ReportExportRequest",
+    "description": "报告导出请求"
+  },
+  "ReportExportResponse": {
+    "properties": {
+      "success": {
+        "type": "boolean",
+        "title": "Success",
+        "description": "导出是否成功"
+      },
+      "task_id": {
+        "type": "string",
+        "title": "Task Id",
+        "description": "导出任务ID"
+      },
+      "status": {
+        "type": "string",
+        "title": "Status",
+        "description": "导出状态"
+      },
+      "message": {
+        "type": "string",
+        "title": "Message",
+        "description": "响应消息"
+      },
+      "estimated_time": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Estimated Time",
+        "description": "预估完成时间"
+      }
+    },
+    "type": "object",
+    "required": ["success", "task_id", "status", "message"],
+    "title": "ReportExportResponse",
+    "description": "报告导出响应"
+  },
+  "WritingStatisticsResponse": {
+    "properties": {
+      "success": {
+        "type": "boolean",
+        "title": "Success",
+        "description": "请求是否成功"
+      },
+      "project_stats": {
+        "$ref": "#/components/schemas/ProjectOverallStats"
+      },
+      "component_stats": {
+        "items": {
+          "$ref": "#/components/schemas/ComponentStats"
+        },
+        "type": "array",
+        "title": "Component Stats",
+        "description": "组件统计列表"
+      },
+      "current_component_stats": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/ComponentStats"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "当前组件统计"
+      },
+      "summary": {
+        "additionalProperties": true,
+        "type": "object",
+        "title": "Summary",
+        "description": "统计摘要"
+      },
+      "generated_at": {
+        "type": "string",
+        "format": "date-time",
+        "title": "Generated At",
+        "description": "统计生成时间"
+      }
+    },
+    "type": "object",
+    "required": ["success", "project_stats", "component_stats", "summary", "generated_at"],
+    "title": "WritingStatisticsResponse",
+    "description": "写作统计响应"
+  },
   "ReportExportStatus": {
     "properties": {
       "task_id": {
@@ -108,6 +243,42 @@
     "title": "ComponentStats",
     "description": "组件统计"
   },
+  "HTTPValidationError": {
+    "properties": {
+      "detail": {
+        "items": {
+          "$ref": "#/components/schemas/ValidationError"
+        },
+        "type": "array",
+        "title": "Detail"
+      }
+    },
+    "type": "object",
+    "title": "HTTPValidationError"
+  },
+  "WritingStatisticsRequest": {
+    "properties": {
+      "project_id": {
+        "type": "integer",
+        "title": "Project Id",
+        "description": "项目ID"
+      },
+      "component_type": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/app__statistics__schemas__ComponentType"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "type": "object",
+    "required": ["project_id"],
+    "title": "WritingStatisticsRequest",
+    "description": "写作统计请求"
+  },
   "ReportExportResult": {
     "properties": {
       "task_id": {
@@ -190,176 +361,5 @@
     ],
     "title": "ReportExportResult",
     "description": "报告导出结果"
-  },
-  "HTTPValidationError": {
-    "properties": {
-      "detail": {
-        "items": {
-          "$ref": "#/components/schemas/ValidationError"
-        },
-        "type": "array",
-        "title": "Detail"
-      }
-    },
-    "type": "object",
-    "title": "HTTPValidationError"
-  },
-  "app__statistics__schemas__ComponentType": {
-    "type": "string",
-    "enum": ["requirement", "title", "outline", "content", "material"],
-    "title": "ComponentType",
-    "description": "组件类型"
-  },
-  "WritingStatisticsResponse": {
-    "properties": {
-      "success": {
-        "type": "boolean",
-        "title": "Success",
-        "description": "请求是否成功"
-      },
-      "project_stats": {
-        "$ref": "#/components/schemas/ProjectOverallStats"
-      },
-      "component_stats": {
-        "items": {
-          "$ref": "#/components/schemas/ComponentStats"
-        },
-        "type": "array",
-        "title": "Component Stats",
-        "description": "组件统计列表"
-      },
-      "current_component_stats": {
-        "anyOf": [
-          {
-            "$ref": "#/components/schemas/ComponentStats"
-          },
-          {
-            "type": "null"
-          }
-        ],
-        "description": "当前组件统计"
-      },
-      "summary": {
-        "additionalProperties": true,
-        "type": "object",
-        "title": "Summary",
-        "description": "统计摘要"
-      },
-      "generated_at": {
-        "type": "string",
-        "format": "date-time",
-        "title": "Generated At",
-        "description": "统计生成时间"
-      }
-    },
-    "type": "object",
-    "required": ["success", "project_stats", "component_stats", "summary", "generated_at"],
-    "title": "WritingStatisticsResponse",
-    "description": "写作统计响应"
-  },
-  "ReportExportResponse": {
-    "properties": {
-      "success": {
-        "type": "boolean",
-        "title": "Success",
-        "description": "导出是否成功"
-      },
-      "task_id": {
-        "type": "string",
-        "title": "Task Id",
-        "description": "导出任务ID"
-      },
-      "status": {
-        "type": "string",
-        "title": "Status",
-        "description": "导出状态"
-      },
-      "message": {
-        "type": "string",
-        "title": "Message",
-        "description": "响应消息"
-      },
-      "estimated_time": {
-        "anyOf": [
-          {
-            "type": "string"
-          },
-          {
-            "type": "null"
-          }
-        ],
-        "title": "Estimated Time",
-        "description": "预估完成时间"
-      }
-    },
-    "type": "object",
-    "required": ["success", "task_id", "status", "message"],
-    "title": "ReportExportResponse",
-    "description": "报告导出响应"
-  },
-  "ReportExportRequest": {
-    "properties": {
-      "project_id": {
-        "type": "integer",
-        "title": "Project Id",
-        "description": "项目ID"
-      },
-      "export_format": {
-        "$ref": "#/components/schemas/app__statistics__schemas__ExportFormat"
-      },
-      "include_content": {
-        "additionalProperties": {
-          "type": "boolean"
-        },
-        "type": "object",
-        "title": "Include Content",
-        "description": "包含的内容选项"
-      },
-      "report_title": {
-        "anyOf": [
-          {
-            "type": "string"
-          },
-          {
-            "type": "null"
-          }
-        ],
-        "title": "Report Title",
-        "description": "自定义报告标题"
-      },
-      "include_charts": {
-        "type": "boolean",
-        "title": "Include Charts",
-        "description": "是否包含图表",
-        "default": true
-      }
-    },
-    "type": "object",
-    "required": ["project_id", "export_format"],
-    "title": "ReportExportRequest",
-    "description": "报告导出请求"
-  },
-  "WritingStatisticsRequest": {
-    "properties": {
-      "project_id": {
-        "type": "integer",
-        "title": "Project Id",
-        "description": "项目ID"
-      },
-      "component_type": {
-        "anyOf": [
-          {
-            "$ref": "#/components/schemas/app__statistics__schemas__ComponentType"
-          },
-          {
-            "type": "null"
-          }
-        ]
-      }
-    },
-    "type": "object",
-    "required": ["project_id"],
-    "title": "WritingStatisticsRequest",
-    "description": "写作统计请求"
   }
 }

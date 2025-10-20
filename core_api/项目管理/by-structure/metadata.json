@@ -6,6 +6,6 @@
       "description": "项目管理 相关的 API"
     }
   ],
-  "paths_count": 36,
+  "paths_count": 6,
   "components": ["securitySchemes", "schemas"]
 }

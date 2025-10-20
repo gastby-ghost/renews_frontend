@@ -14,30 +14,64 @@
       }
     },
     "schemas": {
-      "TitleMaterialToggleRequest": {
+      "TitleMaterialFilterRequest": {
         "properties": {
           "project_id": {
             "type": "string",
             "title": "Project Id",
             "description": "项目ID"
           },
-          "material_id": {
-            "type": "string",
-            "title": "Material Id",
-            "description": "素材ID"
+          "source": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TitleMaterialSource"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "素材来源筛选"
+          },
+          "tags": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tags",
+            "description": "标签筛选"
           },
           "is_folded": {
-            "type": "boolean",
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Is Folded",
-            "description": "是否折叠"
+            "description": "折叠状态筛选"
           }
         },
         "type": "object",
-        "required": ["project_id", "material_id", "is_folded"],
-        "title": "TitleMaterialToggleRequest",
-        "description": "标题素材折叠切换请求模型"
+        "required": ["project_id"],
+        "title": "TitleMaterialFilterRequest",
+        "description": "标题素材筛选请求模型"
       },
-      "TitleMaterialFilterResponse": {
+      "TitleMaterialSource": {
+        "type": "string",
+        "enum": ["mainstream_media", "external", "local"],
+        "title": "TitleMaterialSource",
+        "description": "标题素材来源类型"
+      },
+      "TitleMaterialResponse": {
         "properties": {
           "success": {
             "type": "boolean",
@@ -55,19 +89,19 @@
             },
             "type": "array",
             "title": "Materials",
-            "description": "筛选后的素材列表",
+            "description": "素材列表",
             "default": []
           },
           "total_count": {
             "type": "integer",
             "title": "Total Count",
-            "description": "筛选后的素材总数"
+            "description": "素材总数"
           },
-          "filter_criteria": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Filter Criteria",
-            "description": "筛选条件"
+          "folded_count": {
+            "type": "integer",
+            "title": "Folded Count",
+            "description": "折叠的素材数量",
+            "default": 0
           },
           "timestamp": {
             "type": "string",
@@ -77,9 +111,37 @@
           }
         },
         "type": "object",
-        "required": ["success", "message", "total_count", "filter_criteria"],
-        "title": "TitleMaterialFilterResponse",
-        "description": "标题素材筛选响应模型"
+        "required": ["success", "message", "total_count"],
+        "title": "TitleMaterialResponse",
+        "description": "标题素材响应模型"
+      },
+      "TitleMaterialToggleResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "操作是否成功"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "响应消息"
+          },
+          "material": {
+            "$ref": "#/components/schemas/TitleMaterial",
+            "description": "更新后的素材"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp",
+            "description": "时间戳"
+          }
+        },
+        "type": "object",
+        "required": ["success", "message", "material"],
+        "title": "TitleMaterialToggleResponse",
+        "description": "标题素材折叠切换响应模型"
       },
       "TitleMaterial": {
         "properties": {
@@ -147,6 +209,29 @@
         "title": "TitleMaterial",
         "description": "标题素材模型"
       },
+      "TitleMaterialToggleRequest": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "title": "Project Id",
+            "description": "项目ID"
+          },
+          "material_id": {
+            "type": "string",
+            "title": "Material Id",
+            "description": "素材ID"
+          },
+          "is_folded": {
+            "type": "boolean",
+            "title": "Is Folded",
+            "description": "是否折叠"
+          }
+        },
+        "type": "object",
+        "required": ["project_id", "material_id", "is_folded"],
+        "title": "TitleMaterialToggleRequest",
+        "description": "标题素材折叠切换请求模型"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -160,92 +245,7 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
-      "TitleMaterialSource": {
-        "type": "string",
-        "enum": ["mainstream_media", "external", "local"],
-        "title": "TitleMaterialSource",
-        "description": "标题素材来源类型"
-      },
-      "TitleMaterialFilterRequest": {
-        "properties": {
-          "project_id": {
-            "type": "string",
-            "title": "Project Id",
-            "description": "项目ID"
-          },
-          "source": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/TitleMaterialSource"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "素材来源筛选"
-          },
-          "tags": {
-            "anyOf": [
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Tags",
-            "description": "标签筛选"
-          },
-          "is_folded": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Is Folded",
-            "description": "折叠状态筛选"
-          }
-        },
-        "type": "object",
-        "required": ["project_id"],
-        "title": "TitleMaterialFilterRequest",
-        "description": "标题素材筛选请求模型"
-      },
-      "TitleMaterialToggleResponse": {
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "title": "Success",
-            "description": "操作是否成功"
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "description": "响应消息"
-          },
-          "material": {
-            "$ref": "#/components/schemas/TitleMaterial",
-            "description": "更新后的素材"
-          },
-          "timestamp": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Timestamp",
-            "description": "时间戳"
-          }
-        },
-        "type": "object",
-        "required": ["success", "message", "material"],
-        "title": "TitleMaterialToggleResponse",
-        "description": "标题素材折叠切换响应模型"
-      },
-      "TitleMaterialResponse": {
+      "TitleMaterialFilterResponse": {
         "properties": {
           "success": {
             "type": "boolean",
@@ -263,19 +263,19 @@
             },
             "type": "array",
             "title": "Materials",
-            "description": "素材列表",
+            "description": "筛选后的素材列表",
             "default": []
           },
           "total_count": {
             "type": "integer",
             "title": "Total Count",
-            "description": "素材总数"
+            "description": "筛选后的素材总数"
           },
-          "folded_count": {
-            "type": "integer",
-            "title": "Folded Count",
-            "description": "折叠的素材数量",
-            "default": 0
+          "filter_criteria": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Filter Criteria",
+            "description": "筛选条件"
           },
           "timestamp": {
             "type": "string",
@@ -285,9 +285,9 @@
           }
         },
         "type": "object",
-        "required": ["success", "message", "total_count"],
-        "title": "TitleMaterialResponse",
-        "description": "标题素材响应模型"
+        "required": ["success", "message", "total_count", "filter_criteria"],
+        "title": "TitleMaterialFilterResponse",
+        "description": "标题素材筛选响应模型"
       }
     }
   },

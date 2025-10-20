@@ -1,5 +1,42 @@
 {
-  "AutoSaveRequest": {
+  "AutoSaveStatus": {
+    "type": "string",
+    "enum": ["pending", "saving", "success", "failed", "conflict"],
+    "title": "AutoSaveStatus",
+    "description": "自动保存状态枚举"
+  },
+  "AutoSaveConfig": {
+    "properties": {
+      "enabled": {
+        "type": "boolean",
+        "title": "Enabled",
+        "description": "是否启用自动保存",
+        "default": true
+      },
+      "interval_minutes": {
+        "type": "integer",
+        "title": "Interval Minutes",
+        "description": "自动保存间隔（分钟）",
+        "default": 5
+      },
+      "max_versions": {
+        "type": "integer",
+        "title": "Max Versions",
+        "description": "最大保存版本数",
+        "default": 10
+      },
+      "auto_cleanup": {
+        "type": "boolean",
+        "title": "Auto Cleanup",
+        "description": "是否自动清理旧版本",
+        "default": true
+      }
+    },
+    "type": "object",
+    "title": "AutoSaveConfig",
+    "description": "自动保存配置模型"
+  },
+  "AutoSaveRestoreRequest": {
     "properties": {
       "project_id": {
         "type": "string",
@@ -10,77 +47,16 @@
         "$ref": "#/components/schemas/app__autosave__schemas__ComponentType",
         "description": "组件类型"
       },
-      "component_data": {
-        "additionalProperties": true,
-        "type": "object",
-        "title": "Component Data",
-        "description": "组件数据"
-      },
-      "version": {
-        "anyOf": [
-          {
-            "type": "string"
-          },
-          {
-            "type": "null"
-          }
-        ],
-        "title": "Version",
-        "description": "数据版本号"
-      },
-      "last_modified": {
-        "anyOf": [
-          {
-            "type": "string",
-            "format": "date-time"
-          },
-          {
-            "type": "null"
-          }
-        ],
-        "title": "Last Modified",
-        "description": "最后修改时间"
+      "save_id": {
+        "type": "string",
+        "title": "Save Id",
+        "description": "要恢复的保存记录ID"
       }
     },
     "type": "object",
-    "required": ["project_id", "component_type", "component_data"],
-    "title": "AutoSaveRequest",
-    "description": "自动保存请求模型"
-  },
-  "AutoSaveRestoreResponse": {
-    "properties": {
-      "success": {
-        "type": "boolean",
-        "title": "Success",
-        "description": "是否成功"
-      },
-      "message": {
-        "type": "string",
-        "title": "Message",
-        "description": "响应消息"
-      },
-      "restored_data": {
-        "additionalProperties": true,
-        "type": "object",
-        "title": "Restored Data",
-        "description": "恢复的数据"
-      },
-      "version": {
-        "type": "string",
-        "title": "Version",
-        "description": "恢复的版本号"
-      },
-      "restored_at": {
-        "type": "string",
-        "format": "date-time",
-        "title": "Restored At",
-        "description": "恢复时间"
-      }
-    },
-    "type": "object",
-    "required": ["success", "message", "restored_data", "version", "restored_at"],
-    "title": "AutoSaveRestoreResponse",
-    "description": "自动保存恢复响应模型"
+    "required": ["project_id", "component_type", "save_id"],
+    "title": "AutoSaveRestoreRequest",
+    "description": "自动保存恢复请求模型"
   },
   "AutoSaveHistoryResponse": {
     "properties": {
@@ -128,137 +104,6 @@
     ],
     "title": "AutoSaveHistoryResponse",
     "description": "自动保存历史响应模型"
-  },
-  "HTTPValidationError": {
-    "properties": {
-      "detail": {
-        "items": {
-          "$ref": "#/components/schemas/ValidationError"
-        },
-        "type": "array",
-        "title": "Detail"
-      }
-    },
-    "type": "object",
-    "title": "HTTPValidationError"
-  },
-  "AutoSaveRestoreRequest": {
-    "properties": {
-      "project_id": {
-        "type": "string",
-        "title": "Project Id",
-        "description": "项目ID"
-      },
-      "component_type": {
-        "$ref": "#/components/schemas/app__autosave__schemas__ComponentType",
-        "description": "组件类型"
-      },
-      "save_id": {
-        "type": "string",
-        "title": "Save Id",
-        "description": "要恢复的保存记录ID"
-      }
-    },
-    "type": "object",
-    "required": ["project_id", "component_type", "save_id"],
-    "title": "AutoSaveRestoreRequest",
-    "description": "自动保存恢复请求模型"
-  },
-  "AutoSaveStatus": {
-    "type": "string",
-    "enum": ["pending", "saving", "success", "failed", "conflict"],
-    "title": "AutoSaveStatus",
-    "description": "自动保存状态枚举"
-  },
-  "AutoSaveResponse": {
-    "properties": {
-      "success": {
-        "type": "boolean",
-        "title": "Success",
-        "description": "是否成功"
-      },
-      "message": {
-        "type": "string",
-        "title": "Message",
-        "description": "响应消息"
-      },
-      "save_id": {
-        "anyOf": [
-          {
-            "type": "string"
-          },
-          {
-            "type": "null"
-          }
-        ],
-        "title": "Save Id",
-        "description": "保存记录ID"
-      },
-      "version": {
-        "anyOf": [
-          {
-            "type": "string"
-          },
-          {
-            "type": "null"
-          }
-        ],
-        "title": "Version",
-        "description": "新版本号"
-      },
-      "saved_at": {
-        "anyOf": [
-          {
-            "type": "string",
-            "format": "date-time"
-          },
-          {
-            "type": "null"
-          }
-        ],
-        "title": "Saved At",
-        "description": "保存时间"
-      },
-      "status": {
-        "$ref": "#/components/schemas/AutoSaveStatus",
-        "description": "保存状态"
-      }
-    },
-    "type": "object",
-    "required": ["success", "message", "status"],
-    "title": "AutoSaveResponse",
-    "description": "自动保存响应模型"
-  },
-  "AutoSaveConfig": {
-    "properties": {
-      "enabled": {
-        "type": "boolean",
-        "title": "Enabled",
-        "description": "是否启用自动保存",
-        "default": true
-      },
-      "interval_minutes": {
-        "type": "integer",
-        "title": "Interval Minutes",
-        "description": "自动保存间隔（分钟）",
-        "default": 5
-      },
-      "max_versions": {
-        "type": "integer",
-        "title": "Max Versions",
-        "description": "最大保存版本数",
-        "default": 10
-      },
-      "auto_cleanup": {
-        "type": "boolean",
-        "title": "Auto Cleanup",
-        "description": "是否自动清理旧版本",
-        "default": true
-      }
-    },
-    "type": "object",
-    "title": "AutoSaveConfig",
-    "description": "自动保存配置模型"
   },
   "AutoSaveStatusResponse": {
     "properties": {
@@ -322,5 +167,160 @@
     "required": ["success", "project_id", "component_type", "status", "message"],
     "title": "AutoSaveStatusResponse",
     "description": "自动保存状态响应模型"
+  },
+  "AutoSaveRequest": {
+    "properties": {
+      "project_id": {
+        "type": "string",
+        "title": "Project Id",
+        "description": "项目ID"
+      },
+      "component_type": {
+        "$ref": "#/components/schemas/app__autosave__schemas__ComponentType",
+        "description": "组件类型"
+      },
+      "component_data": {
+        "additionalProperties": true,
+        "type": "object",
+        "title": "Component Data",
+        "description": "组件数据"
+      },
+      "version": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Version",
+        "description": "数据版本号"
+      },
+      "last_modified": {
+        "anyOf": [
+          {
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Last Modified",
+        "description": "最后修改时间"
+      }
+    },
+    "type": "object",
+    "required": ["project_id", "component_type", "component_data"],
+    "title": "AutoSaveRequest",
+    "description": "自动保存请求模型"
+  },
+  "AutoSaveResponse": {
+    "properties": {
+      "success": {
+        "type": "boolean",
+        "title": "Success",
+        "description": "是否成功"
+      },
+      "message": {
+        "type": "string",
+        "title": "Message",
+        "description": "响应消息"
+      },
+      "save_id": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Save Id",
+        "description": "保存记录ID"
+      },
+      "version": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Version",
+        "description": "新版本号"
+      },
+      "saved_at": {
+        "anyOf": [
+          {
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Saved At",
+        "description": "保存时间"
+      },
+      "status": {
+        "$ref": "#/components/schemas/AutoSaveStatus",
+        "description": "保存状态"
+      }
+    },
+    "type": "object",
+    "required": ["success", "message", "status"],
+    "title": "AutoSaveResponse",
+    "description": "自动保存响应模型"
+  },
+  "HTTPValidationError": {
+    "properties": {
+      "detail": {
+        "items": {
+          "$ref": "#/components/schemas/ValidationError"
+        },
+        "type": "array",
+        "title": "Detail"
+      }
+    },
+    "type": "object",
+    "title": "HTTPValidationError"
+  },
+  "AutoSaveRestoreResponse": {
+    "properties": {
+      "success": {
+        "type": "boolean",
+        "title": "Success",
+        "description": "是否成功"
+      },
+      "message": {
+        "type": "string",
+        "title": "Message",
+        "description": "响应消息"
+      },
+      "restored_data": {
+        "additionalProperties": true,
+        "type": "object",
+        "title": "Restored Data",
+        "description": "恢复的数据"
+      },
+      "version": {
+        "type": "string",
+        "title": "Version",
+        "description": "恢复的版本号"
+      },
+      "restored_at": {
+        "type": "string",
+        "format": "date-time",
+        "title": "Restored At",
+        "description": "恢复时间"
+      }
+    },
+    "type": "object",
+    "required": ["success", "message", "restored_data", "version", "restored_at"],
+    "title": "AutoSaveRestoreResponse",
+    "description": "自动保存恢复响应模型"
   }
 }

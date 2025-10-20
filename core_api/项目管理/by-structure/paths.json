@@ -3,7 +3,7 @@
     "get": {
       "tags": ["项目管理"],
       "summary": "Get User Projects",
-      "description": "获取用户项目列表 (F002_项目列表管理)\n\n业务规则：\n1. 项目按最后修改时间倒序排列\n2. 支持按项目状态筛选\n3. 支持项目名称搜索",
+      "description": "获取用户项目列表\n\n支持功能：\n1. 分页查询\n2. 状态筛选\n3. 关键词搜索\n4. 文件夹筛选\n\n排序规则：按最后修改时间倒序排列",
       "operationId": "get_user_projects_api_v1_core_projects_get",
       "security": [
         {
@@ -12,22 +12,31 @@
       ],
       "parameters": [
         {
-          "name": "keyword",
+          "name": "page",
           "in": "query",
           "required": false,
           "schema": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "搜索关键词",
-            "title": "Keyword"
+            "type": "integer",
+            "minimum": 1,
+            "description": "页码",
+            "default": 1,
+            "title": "Page"
           },
-          "description": "搜索关键词"
+          "description": "页码"
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "maximum": 100,
+            "minimum": 1,
+            "description": "每页数量",
+            "default": 20,
+            "title": "Page Size"
+          },
+          "description": "每页数量"
         },
         {
           "name": "status",
@@ -43,10 +52,27 @@
               }
             ],
             "description": "项目状态筛选",
-            "enum": ["draft", "editing", "completed"],
             "title": "Status"
           },
           "description": "项目状态筛选"
+        },
+        {
+          "name": "keywords",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "关键词搜索（项目名称）",
+            "title": "Keywords"
+          },
+          "description": "关键词搜索（项目名称）"
         },
         {
           "name": "folder_id",
@@ -61,51 +87,10 @@
                 "type": "null"
               }
             ],
-            "description": "文件夹ID筛选，0表示根级项目",
+            "description": "文件夹ID筛选",
             "title": "Folder Id"
           },
-          "description": "文件夹ID筛选，0表示根级项目"
-        },
-        {
-          "name": "page",
-          "in": "query",
-          "required": false,
-          "schema": {
-            "anyOf": [
-              {
-                "type": "integer",
-                "minimum": 1
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "页码，默认为1",
-            "default": 1,
-            "title": "Page"
-          },
-          "description": "页码，默认为1"
-        },
-        {
-          "name": "page_size",
-          "in": "query",
-          "required": false,
-          "schema": {
-            "anyOf": [
-              {
-                "type": "integer",
-                "maximum": 100,
-                "minimum": 1
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "每页数量，默认为20，最大100",
-            "default": 20,
-            "title": "Page Size"
-          },
-          "description": "每页数量，默认为20，最大100"
+          "description": "文件夹ID筛选"
         }
       ],
       "responses": {
@@ -133,11 +118,11 @@
     }
   },
   "/api/v1/core/projects/{project_id}": {
-    "get": {
+    "put": {
       "tags": ["项目管理"],
-      "summary": "Get Project",
-      "description": "获取项目详情",
-      "operationId": "get_project_api_v1_core_projects__project_id__get",
+      "summary": "Update Project",
+      "description": "更新项目信息\n\n业务规则：\n1. 项目名称必须唯一（用户维度，排除当前项目）\n2. 更新时自动更新最后修改时间\n\n异常处理：\n- 项目不存在 → 404错误\n- 项目名称已存在 → 提示\"项目名称已存在\"",
+      "operationId": "update_project_api_v1_core_projects__project_id__put",
       "security": [
         {
           "HTTPBearer": []
@@ -150,56 +135,23 @@
           "required": true,
           "schema": {
             "type": "integer",
+            "exclusiveMinimum": 0,
+            "description": "项目ID",
             "title": "Project Id"
-          }
+          },
+          "description": "项目ID"
         }
       ],
-      "responses": {
-        "200": {
-          "description": "Successful Response",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ProjectResponse"
-              }
-            }
-          }
-        },
-        "422": {
-          "description": "Validation Error",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HTTPValidationError"
-              }
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ProjectUpdate"
             }
           }
         }
-      }
-    }
-  },
-  "/api/v1/core/projects/{project_id}/open": {
-    "get": {
-      "tags": ["项目管理"],
-      "summary": "Open Project",
-      "description": "打开项目 (F003_项目打开)\n\n业务规则：\n1. 打开项目时默认显示上次编辑的组件\n2. 首次打开项目时显示需求定义组件\n3. 记录项目打开时间（更新last_modified）",
-      "operationId": "open_project_api_v1_core_projects__project_id__open_get",
-      "security": [
-        {
-          "HTTPBearer": []
-        }
-      ],
-      "parameters": [
-        {
-          "name": "project_id",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "integer",
-            "title": "Project Id"
-          }
-        }
-      ],
+      },
       "responses": {
         "200": {
           "description": "Successful Response",
@@ -224,12 +176,57 @@
       }
     }
   },
-  "/api/v1/core/folders": {
-    "get": {
+  "/api/v1/core/projects/batch": {
+    "delete": {
       "tags": ["项目管理"],
-      "summary": "Get User Folders",
-      "description": "获取用户文件夹列表 (F004_文件夹管理)\n\n支持获取根级文件夹或指定父文件夹下的子文件夹",
-      "operationId": "get_user_folders_api_v1_core_folders_get",
+      "summary": "Delete Projects",
+      "description": "批量删除项目\n\n业务规则：\n1. 支持批量删除，最多100个项目\n2. 只删除用户拥有的项目\n3. 返回详细的删除结果",
+      "operationId": "delete_projects_api_v1_core_projects_batch_delete",
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ProjectDeleteRequest"
+            }
+          }
+        },
+        "required": true
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectDeleteResponse"
+              }
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ]
+    }
+  },
+  "/api/v1/core/projects/{project_id}/status": {
+    "patch": {
+      "tags": ["项目管理"],
+      "summary": "Update Project Status",
+      "description": "更新项目状态\n\n支持的常用状态：draft, active, completed, archived",
+      "operationId": "update_project_status_api_v1_core_projects__project_id__status_patch",
       "security": [
         {
           "HTTPBearer": []
@@ -237,35 +234,35 @@
       ],
       "parameters": [
         {
-          "name": "parent_folder_id",
-          "in": "query",
-          "required": false,
+          "name": "project_id",
+          "in": "path",
+          "required": true,
           "schema": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "父文件夹ID，不传或为空则获取根级文件夹",
-            "title": "Parent Folder Id"
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "description": "项目ID",
+            "title": "Project Id"
           },
-          "description": "父文件夹ID，不传或为空则获取根级文件夹"
+          "description": "项目ID"
         }
       ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ProjectStatusUpdateRequest"
+            }
+          }
+        }
+      },
       "responses": {
         "200": {
           "description": "Successful Response",
           "content": {
             "application/json": {
               "schema": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/FolderResponse"
-                },
-                "title": "Response Get User Folders Api V1 Core Folders Get"
+                "$ref": "#/components/schemas/ProjectDetailResponse"
               }
             }
           }
@@ -283,1037 +280,71 @@
       }
     }
   },
-  "/api/v1/core/folders/{folder_id}": {
+  "/api/v1/core/projects/{project_id}/component": {
+    "patch": {
+      "tags": ["项目管理"],
+      "summary": "Update Project Component",
+      "description": "更新项目当前组件\n\n支持的常用组件：requirement, title, outline, content, review",
+      "operationId": "update_project_component_api_v1_core_projects__project_id__component_patch",
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "project_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "description": "项目ID",
+            "title": "Project Id"
+          },
+          "description": "项目ID"
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ProjectComponentUpdateRequest"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Successful Response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectDetailResponse"
+              }
+            }
+          }
+        },
+        "422": {
+          "description": "Validation Error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/api/v1/core/projects/statistics/status": {
     "get": {
       "tags": ["项目管理"],
-      "summary": "Get Folder",
-      "description": "获取文件夹详情 (包含子内容)\n\n返回文件夹的基本信息以及其下的子文件夹和项目列表",
-      "operationId": "get_folder_api_v1_core_folders__folder_id__get",
-      "security": [
-        {
-          "HTTPBearer": []
-        }
-      ],
-      "parameters": [
-        {
-          "name": "folder_id",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "integer",
-            "title": "Folder Id"
-          }
-        }
-      ],
-      "responses": {
-        "200": {
-          "description": "Successful Response",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/FolderDetailResponse"
-              }
-            }
-          }
-        },
-        "422": {
-          "description": "Validation Error",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HTTPValidationError"
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-  "/api/v1/core/projects/move": {
-    "post": {
-      "tags": ["项目管理"],
-      "summary": "Move Projects",
-      "description": "移动项目 (F005_项目移动)\n\n业务规则：\n1. 项目不能移动到自身文件夹或其子文件夹中\n2. 移动操作保留项目所有数据\n3. 支持批量移动多个项目",
-      "operationId": "move_projects_api_v1_core_projects_move_post",
-      "requestBody": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/MoveProjectsRequest"
-            }
-          }
-        },
-        "required": true
-      },
-      "responses": {
-        "200": {
-          "description": "Successful Response",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/MoveProjectsResponse"
-              }
-            }
-          }
-        },
-        "422": {
-          "description": "Validation Error",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HTTPValidationError"
-              }
-            }
-          }
-        }
-      },
-      "security": [
-        {
-          "HTTPBearer": []
-        }
-      ]
-    }
-  },
-  "/api/v1/core/projects/{project_id}/requirement": {
-    "put": {
-      "tags": ["项目管理"],
-      "summary": "Update Requirement",
-      "description": "更新项目需求定义 (F006_需求定义)\n\n业务规则：\n1. 写作目标为用户手动输入（可选）\n2. 标题字数范围在5-50字之间，最小字数必须小于最大字数\n3. 正文字数范围在500-5000字之间，最小字数必须小于最大字数\n4. 关键词最多可添加10个\n5. 目标受众至少包含一个属性",
-      "operationId": "update_requirement_api_v1_core_projects__project_id__requirement_put",
-      "security": [
-        {
-          "HTTPBearer": []
-        }
-      ],
-      "parameters": [
-        {
-          "name": "project_id",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "integer",
-            "title": "Project Id"
-          }
-        }
-      ],
-      "requestBody": {
-        "required": true,
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/UpdateRequirementRequest"
-            }
-          }
-        }
-      },
-      "responses": {
-        "200": {
-          "description": "Successful Response",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateRequirementResponse"
-              }
-            }
-          }
-        },
-        "422": {
-          "description": "Validation Error",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HTTPValidationError"
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-  "/api/v1/core/projects/{project_id}/save-template": {
-    "post": {
-      "tags": ["项目管理"],
-      "summary": "Save Requirement Template",
-      "description": "保存需求模板 (F007_需求模板保存)\n\n业务规则：\n1. 模板名称不能为空且不超过30个字符\n2. 同一用户下模板名称必须唯一\n3. 保存模板时保存所有需求参数\n4. 前置条件：用户已填写需求定义\n\n异常处理：\n- 模板名称为空 → 提示\"请输入模板名称\"\n- 模板名称过长 → 提示\"模板名称不能超过30个字符\"\n- 模板名称重复 → 提示\"该模板名称已存在\"",
-      "operationId": "save_requirement_template_api_v1_core_projects__project_id__save_template_post",
-      "security": [
-        {
-          "HTTPBearer": []
-        }
-      ],
-      "parameters": [
-        {
-          "name": "project_id",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "integer",
-            "title": "Project Id"
-          }
-        }
-      ],
-      "requestBody": {
-        "required": true,
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/SaveRequirementTemplateRequest"
-            }
-          }
-        }
-      },
-      "responses": {
-        "200": {
-          "description": "Successful Response",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SaveRequirementTemplateResponse"
-              }
-            }
-          }
-        },
-        "422": {
-          "description": "Validation Error",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HTTPValidationError"
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-  "/api/v1/core/projects/{project_id}/apply-template": {
-    "post": {
-      "tags": ["项目管理"],
-      "summary": "Apply Requirement Template",
-      "description": "应用需求模板 (F008_需求模板应用)\n\n业务规则：\n1. 应用模板会覆盖当前需求定义\n2. 应用后用户仍可修改需求参数\n3. 前置条件：用户已打开需求定义组件，且存在已保存的模板\n\n异常处理：\n- 模板数据无效 → 提示\"模板数据异常，请选择其他模板\"\n- 应用失败 → 提示\"应用失败，请重试\"",
-      "operationId": "apply_requirement_template_api_v1_core_projects__project_id__apply_template_post",
-      "security": [
-        {
-          "HTTPBearer": []
-        }
-      ],
-      "parameters": [
-        {
-          "name": "project_id",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "integer",
-            "title": "Project Id"
-          }
-        }
-      ],
-      "requestBody": {
-        "required": true,
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/ApplyRequirementTemplateRequest"
-            }
-          }
-        }
-      },
-      "responses": {
-        "200": {
-          "description": "Successful Response",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ApplyRequirementTemplateResponse"
-              }
-            }
-          }
-        },
-        "422": {
-          "description": "Validation Error",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HTTPValidationError"
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-  "/api/v1/core/templates": {
-    "get": {
-      "tags": ["项目管理"],
-      "summary": "Get User Templates",
-      "description": "获取用户的需求模板列表 (F009_需求模板管理)\n\n业务规则：\n1. 返回当前用户的所有需求模板\n2. 按最后修改时间倒序排列\n3. 前置条件：用户已保存至少一个需求模板",
-      "operationId": "get_user_templates_api_v1_core_templates_get",
-      "responses": {
-        "200": {
-          "description": "Successful Response",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GetTemplatesResponse"
-              }
-            }
-          }
-        }
-      },
-      "security": [
-        {
-          "HTTPBearer": []
-        }
-      ]
-    }
-  },
-  "/api/v1/core/templates/rename": {
-    "put": {
-      "tags": ["项目管理"],
-      "summary": "Rename Template",
-      "description": "重命名需求模板 (F009_需求模板管理)\n\n业务规则：\n1. 重命名时不能与其他模板重名\n2. 删除模板不可恢复\n3. 前置条件：用户已保存至少一个需求模板\n\n异常处理：\n- 重命名失败 → 提示\"重命名失败，请重试\"",
-      "operationId": "rename_template_api_v1_core_templates_rename_put",
-      "requestBody": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/RenameTemplateRequest"
-            }
-          }
-        },
-        "required": true
-      },
-      "responses": {
-        "200": {
-          "description": "Successful Response",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TemplateOperationResponse"
-              }
-            }
-          }
-        },
-        "422": {
-          "description": "Validation Error",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HTTPValidationError"
-              }
-            }
-          }
-        }
-      },
-      "security": [
-        {
-          "HTTPBearer": []
-        }
-      ]
-    }
-  },
-  "/api/v1/core/templates/{template_id}": {
-    "delete": {
-      "tags": ["项目管理"],
-      "summary": "Delete Template",
-      "description": "删除需求模板 (F009_需求模板管理)\n\n业务规则：\n1. 删除模板不可恢复\n2. 前置条件：用户已保存至少一个需求模板\n\n异常处理：\n- 删除失败 → 提示\"删除失败，请重试\"",
-      "operationId": "delete_template_api_v1_core_templates__template_id__delete",
-      "security": [
-        {
-          "HTTPBearer": []
-        }
-      ],
-      "parameters": [
-        {
-          "name": "template_id",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "integer",
-            "title": "Template Id"
-          }
-        }
-      ],
-      "responses": {
-        "200": {
-          "description": "Successful Response",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TemplateOperationResponse"
-              }
-            }
-          }
-        },
-        "422": {
-          "description": "Validation Error",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HTTPValidationError"
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-  "/api/v1/core/projects/{project_id}/generate-title": {
-    "post": {
-      "tags": ["项目管理"],
-      "summary": "Generate Title Options",
-      "description": "生成标题选项 (F010_标题生成)\n\n业务规则：\n1. 生成5-8个标题选项\n2. 标题长度根据用户设置控制在合理范围内\n3. 标题生成考虑绑定素材的权重\n4. 每个标题卡片标注基于几个素材生成\n\n异常处理：\n- 生成失败 → 提示\"标题生成失败，请重试\"\n- 无素材绑定 → 提示\"请先绑定素材\"",
-      "operationId": "generate_title_options_api_v1_core_projects__project_id__generate_title_post",
-      "security": [
-        {
-          "HTTPBearer": []
-        }
-      ],
-      "parameters": [
-        {
-          "name": "project_id",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "integer",
-            "title": "Project Id"
-          }
-        }
-      ],
-      "requestBody": {
-        "required": true,
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/GenerateTitleRequest"
-            }
-          }
-        }
-      },
-      "responses": {
-        "200": {
-          "description": "Successful Response",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GenerateTitleResponse"
-              }
-            }
-          }
-        },
-        "422": {
-          "description": "Validation Error",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HTTPValidationError"
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-  "/api/v1/core/projects/{project_id}/title-options": {
-    "get": {
-      "tags": ["项目管理"],
-      "summary": "Get Title Options",
-      "description": "获取标题选项列表 (F010_标题生成)",
-      "operationId": "get_title_options_api_v1_core_projects__project_id__title_options_get",
-      "security": [
-        {
-          "HTTPBearer": []
-        }
-      ],
-      "parameters": [
-        {
-          "name": "project_id",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "integer",
-            "title": "Project Id"
-          }
-        }
-      ],
-      "responses": {
-        "200": {
-          "description": "Successful Response",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GenerateTitleResponse"
-              }
-            }
-          }
-        },
-        "422": {
-          "description": "Validation Error",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HTTPValidationError"
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-  "/api/v1/core/projects/{project_id}/bind-materials": {
-    "post": {
-      "tags": ["项目管理"],
-      "summary": "Bind Materials To Title",
-      "description": "绑定素材到标题 (F011_素材绑定到标题)\n\n业务规则：\n1. 支持绑定多个素材到标题\n2. 每个素材可设置权重（0-100%）\n3. 绑定信息与当前文档关联\n\n异常处理：\n- 未选择素材 → 提示\"请选择要绑定的素材\"\n- 权重设置无效 → 提示\"权重应在0-100%之间\"",
-      "operationId": "bind_materials_to_title_api_v1_core_projects__project_id__bind_materials_post",
-      "security": [
-        {
-          "HTTPBearer": []
-        }
-      ],
-      "parameters": [
-        {
-          "name": "project_id",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "integer",
-            "title": "Project Id"
-          }
-        }
-      ],
-      "requestBody": {
-        "required": true,
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/BindMaterialsToTitleRequest"
-            }
-          }
-        }
-      },
-      "responses": {
-        "200": {
-          "description": "Successful Response",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/BindMaterialsToTitleResponse"
-              }
-            }
-          }
-        },
-        "422": {
-          "description": "Validation Error",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HTTPValidationError"
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-  "/api/v1/core/projects/{project_id}/unbind-material/{material_id}": {
-    "delete": {
-      "tags": ["项目管理"],
-      "summary": "Unbind Material From Title",
-      "description": "解绑素材 (F011_素材绑定到标题)",
-      "operationId": "unbind_material_from_title_api_v1_core_projects__project_id__unbind_material__material_id__delete",
-      "security": [
-        {
-          "HTTPBearer": []
-        }
-      ],
-      "parameters": [
-        {
-          "name": "project_id",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "integer",
-            "title": "Project Id"
-          }
-        },
-        {
-          "name": "material_id",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "integer",
-            "title": "Material Id"
-          }
-        }
-      ],
-      "responses": {
-        "200": {
-          "description": "Successful Response",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UnbindMaterialFromTitleResponse"
-              }
-            }
-          }
-        },
-        "422": {
-          "description": "Validation Error",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HTTPValidationError"
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-  "/api/v1/core/projects/{project_id}/bound-materials": {
-    "get": {
-      "tags": ["项目管理"],
-      "summary": "Get Bound Materials For Title",
-      "description": "获取标题绑定的素材列表 (F011_素材绑定到标题)",
-      "operationId": "get_bound_materials_for_title_api_v1_core_projects__project_id__bound_materials_get",
-      "security": [
-        {
-          "HTTPBearer": []
-        }
-      ],
-      "parameters": [
-        {
-          "name": "project_id",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "integer",
-            "title": "Project Id"
-          }
-        }
-      ],
-      "responses": {
-        "200": {
-          "description": "Successful Response",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/BindMaterialsToTitleResponse"
-              }
-            }
-          }
-        },
-        "422": {
-          "description": "Validation Error",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HTTPValidationError"
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-  "/api/v1/core/projects/{project_id}/select-title": {
-    "post": {
-      "tags": ["项目管理"],
-      "summary": "Select Title",
-      "description": "选择标题 (F012_标题选择)\n\n业务规则：\n1. 用户只能选择一个标题\n2. 选择后可进一步编辑标题\n3. 标题选择后自动更新大纲结构\n4. 标题对应的素材自动添加到素材管理区，并带有来源标签",
-      "operationId": "select_title_api_v1_core_projects__project_id__select_title_post",
-      "security": [
-        {
-          "HTTPBearer": []
-        }
-      ],
-      "parameters": [
-        {
-          "name": "project_id",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "integer",
-            "title": "Project Id"
-          }
-        }
-      ],
-      "requestBody": {
-        "required": true,
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/SelectTitleRequest"
-            }
-          }
-        }
-      },
-      "responses": {
-        "200": {
-          "description": "Successful Response",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SelectTitleResponse"
-              }
-            }
-          }
-        },
-        "422": {
-          "description": "Validation Error",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HTTPValidationError"
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-  "/api/v1/core/projects/{project_id}/selected-title": {
-    "get": {
-      "tags": ["项目管理"],
-      "summary": "Get Selected Title",
-      "description": "获取项目已选择的标题 (F012_标题选择)",
-      "operationId": "get_selected_title_api_v1_core_projects__project_id__selected_title_get",
-      "security": [
-        {
-          "HTTPBearer": []
-        }
-      ],
-      "parameters": [
-        {
-          "name": "project_id",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "integer",
-            "title": "Project Id"
-          }
-        }
-      ],
-      "responses": {
-        "200": {
-          "description": "Successful Response",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SelectTitleResponse"
-              }
-            }
-          }
-        },
-        "422": {
-          "description": "Validation Error",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HTTPValidationError"
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-  "/api/v1/core/projects/{project_id}/analyze-title": {
-    "post": {
-      "tags": ["项目管理"],
-      "summary": "Analyze Title",
-      "description": "分析标题 (F013_标题分析)\n\n业务规则：\n1. 分析包括关键词提取、情感分析、吸引力评分\n2. 提供SEO优化建议\n3. 支持分析已选择的标题或自定义标题\n4. 保存分析结果到数据库",
-      "operationId": "analyze_title_api_v1_core_projects__project_id__analyze_title_post",
-      "security": [
-        {
-          "HTTPBearer": []
-        }
-      ],
-      "parameters": [
-        {
-          "name": "project_id",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "integer",
-            "title": "Project Id"
-          }
-        }
-      ],
-      "requestBody": {
-        "required": true,
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/AnalyzeTitleRequest"
-            }
-          }
-        }
-      },
-      "responses": {
-        "200": {
-          "description": "Successful Response",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AnalyzeTitleResponse"
-              }
-            }
-          }
-        },
-        "422": {
-          "description": "Validation Error",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HTTPValidationError"
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-  "/api/v1/core/projects/{project_id}/title-analysis-history": {
-    "get": {
-      "tags": ["项目管理"],
-      "summary": "Get Title Analysis History",
-      "description": "获取标题分析历史记录 (F013_标题分析)",
-      "operationId": "get_title_analysis_history_api_v1_core_projects__project_id__title_analysis_history_get",
-      "security": [
-        {
-          "HTTPBearer": []
-        }
-      ],
-      "parameters": [
-        {
-          "name": "project_id",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "integer",
-            "title": "Project Id"
-          }
-        }
-      ],
-      "responses": {
-        "200": {
-          "description": "Successful Response",
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/TitleAnalysisResult"
-                },
-                "title": "Response Get Title Analysis History Api V1 Core Projects  Project Id  Title Analysis History Get"
-              }
-            }
-          }
-        },
-        "422": {
-          "description": "Validation Error",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HTTPValidationError"
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-  "/api/v1/core/projects/{project_id}/generate-outline": {
-    "post": {
-      "tags": ["项目管理"],
-      "summary": "Generate Outline",
-      "description": "生成大纲 (F014_大纲结构管理)\n\n业务规则：\n1. 支持手动和AI两种生成模式\n2. AI生成基于标题和需求数据\n3. 支持三种大纲风格：standard/detailed/simple\n4. 前置条件：用户已选择标题\n5. 生成后自动保存到数据库",
-      "operationId": "generate_outline_api_v1_core_projects__project_id__generate_outline_post",
-      "security": [
-        {
-          "HTTPBearer": []
-        }
-      ],
-      "parameters": [
-        {
-          "name": "project_id",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "integer",
-            "title": "Project Id"
-          }
-        }
-      ],
-      "requestBody": {
-        "required": true,
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/GenerateOutlineRequest"
-            }
-          }
-        }
-      },
-      "responses": {
-        "200": {
-          "description": "Successful Response",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GenerateOutlineResponse"
-              }
-            }
-          }
-        },
-        "422": {
-          "description": "Validation Error",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HTTPValidationError"
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-  "/api/v1/core/projects/{project_id}/save-outline": {
-    "post": {
-      "tags": ["项目管理"],
-      "summary": "Save Outline",
-      "description": "保存大纲 (F014_大纲结构管理)\n\n业务规则：\n1. 大纲不能为空\n2. 章节层级必须在1-5之间\n3. 支持自动保存模式\n4. 保存后更新项目状态",
-      "operationId": "save_outline_api_v1_core_projects__project_id__save_outline_post",
-      "security": [
-        {
-          "HTTPBearer": []
-        }
-      ],
-      "parameters": [
-        {
-          "name": "project_id",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "integer",
-            "title": "Project Id"
-          }
-        }
-      ],
-      "requestBody": {
-        "required": true,
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/SaveOutlineRequest"
-            }
-          }
-        }
-      },
-      "responses": {
-        "200": {
-          "description": "Successful Response",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SaveOutlineResponse"
-              }
-            }
-          }
-        },
-        "422": {
-          "description": "Validation Error",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HTTPValidationError"
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-  "/api/v1/core/projects/{project_id}/outline": {
-    "get": {
-      "tags": ["项目管理"],
-      "summary": "Get Outline",
-      "description": "获取项目大纲 (F014_大纲结构管理)",
-      "operationId": "get_outline_api_v1_core_projects__project_id__outline_get",
-      "security": [
-        {
-          "HTTPBearer": []
-        }
-      ],
-      "parameters": [
-        {
-          "name": "project_id",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "integer",
-            "title": "Project Id"
-          }
-        }
-      ],
-      "responses": {
-        "200": {
-          "description": "Successful Response",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/OutlineResponse"
-              }
-            }
-          }
-        },
-        "422": {
-          "description": "Validation Error",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HTTPValidationError"
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-  "/api/v1/core/projects/{project_id}/sections/{section_id}": {
-    "delete": {
-      "tags": ["项目管理"],
-      "summary": "Delete Section",
-      "description": "删除章节 (F014_大纲结构管理)\n\n业务规则：\n1. 无法删除包含子章节的章节\n2. 删除前需要先删除子章节\n3. 删除后自动更新项目状态",
-      "operationId": "delete_section_api_v1_core_projects__project_id__sections__section_id__delete",
-      "security": [
-        {
-          "HTTPBearer": []
-        }
-      ],
-      "parameters": [
-        {
-          "name": "project_id",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "integer",
-            "title": "Project Id"
-          }
-        },
-        {
-          "name": "section_id",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "integer",
-            "title": "Section Id"
-          }
-        }
-      ],
+      "summary": "Get Project Statistics",
+      "description": "获取用户项目统计信息\n\n返回各状态的项目数量统计",
+      "operationId": "get_project_statistics_api_v1_core_projects_statistics_status_get",
       "responses": {
         "200": {
           "description": "Successful Response",
@@ -1322,655 +353,13 @@
               "schema": {}
             }
           }
-        },
-        "422": {
-          "description": "Validation Error",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HTTPValidationError"
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-  "/api/v1/core/projects/{project_id}/reorder-sections": {
-    "post": {
-      "tags": ["项目管理"],
-      "summary": "Reorder Sections",
-      "description": "重新排序章节 (F014_大纲结构管理)\n\n业务规则：\n1. 支持批量更新章节顺序\n2. 支持调整章节层级关系\n3. 每个章节信息包含section_id、order_index、parent_id\n4. 更新后自动保存到数据库",
-      "operationId": "reorder_sections_api_v1_core_projects__project_id__reorder_sections_post",
-      "security": [
-        {
-          "HTTPBearer": []
-        }
-      ],
-      "parameters": [
-        {
-          "name": "project_id",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "integer",
-            "title": "Project Id"
-          }
-        }
-      ],
-      "requestBody": {
-        "required": true,
-        "content": {
-          "application/json": {
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "object",
-                "additionalProperties": true
-              },
-              "title": "Section Orders"
-            }
-          }
         }
       },
-      "responses": {
-        "200": {
-          "description": "Successful Response",
-          "content": {
-            "application/json": {
-              "schema": {}
-            }
-          }
-        },
-        "422": {
-          "description": "Validation Error",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HTTPValidationError"
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-  "/api/v1/core/projects/{project_id}/sections/{section_id}/preview": {
-    "get": {
-      "tags": ["项目管理"],
-      "summary": "Preview Section",
-      "description": "章节预览 (F015_章节预览)\n- 只读返回该章节的 HTML 正文\n- 若无内容，返回 has_content=False 与 message 提示",
-      "operationId": "preview_section_api_v1_core_projects__project_id__sections__section_id__preview_get",
       "security": [
         {
           "HTTPBearer": []
         }
-      ],
-      "parameters": [
-        {
-          "name": "project_id",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "integer",
-            "title": "Project Id"
-          }
-        },
-        {
-          "name": "section_id",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "integer",
-            "title": "Section Id"
-          }
-        }
-      ],
-      "responses": {
-        "200": {
-          "description": "Successful Response",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SectionPreviewResponse"
-              }
-            }
-          }
-        },
-        "422": {
-          "description": "Validation Error",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HTTPValidationError"
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-  "/api/v1/core/projects/{project_id}/sections/{section_id}/materials": {
-    "post": {
-      "tags": ["项目管理"],
-      "summary": "Bind Materials To Section",
-      "description": "绑定素材到章节 (F016_素材绑定到章节)\n- 一个素材可绑定到多个章节；一个章节可绑定多个素材\n- 绑定信息与当前文档关联",
-      "operationId": "bind_materials_to_section_api_v1_core_projects__project_id__sections__section_id__materials_post",
-      "security": [
-        {
-          "HTTPBearer": []
-        }
-      ],
-      "parameters": [
-        {
-          "name": "project_id",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "integer",
-            "title": "Project Id"
-          }
-        },
-        {
-          "name": "section_id",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "integer",
-            "title": "Section Id"
-          }
-        }
-      ],
-      "requestBody": {
-        "required": true,
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/BindMaterialsToSectionRequest"
-            }
-          }
-        }
-      },
-      "responses": {
-        "200": {
-          "description": "Successful Response",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/BindMaterialsToSectionResponse"
-              }
-            }
-          }
-        },
-        "422": {
-          "description": "Validation Error",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HTTPValidationError"
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-  "/api/v1/core/projects/{project_id}/optimize-outline": {
-    "post": {
-      "tags": ["项目管理"],
-      "summary": "Optimize Outline",
-      "description": "使用AI对大纲结构进行优化，提供结构逻辑和完整性建议 (F017)\n- 若请求未提供大纲，则使用项目现有大纲\n- 返回建议列表",
-      "operationId": "optimize_outline_api_v1_core_projects__project_id__optimize_outline_post",
-      "security": [
-        {
-          "HTTPBearer": []
-        }
-      ],
-      "parameters": [
-        {
-          "name": "project_id",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "integer",
-            "title": "Project Id"
-          }
-        }
-      ],
-      "requestBody": {
-        "required": true,
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/OptimizeOutlineRequest"
-            }
-          }
-        }
-      },
-      "responses": {
-        "200": {
-          "description": "Successful Response",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/OptimizeOutlineResponse"
-              }
-            }
-          }
-        },
-        "422": {
-          "description": "Validation Error",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HTTPValidationError"
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-  "/api/v1/core/projects/{project_id}/sections/{section_id}/content": {
-    "post": {
-      "tags": ["项目管理"],
-      "summary": "Save Section Content",
-      "description": "保存章节正文内容 (F024)\n支持富文本HTML，自动保存由前端定时调用",
-      "operationId": "save_section_content_api_v1_core_projects__project_id__sections__section_id__content_post",
-      "security": [
-        {
-          "HTTPBearer": []
-        }
-      ],
-      "parameters": [
-        {
-          "name": "project_id",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "integer",
-            "title": "Project Id"
-          }
-        },
-        {
-          "name": "section_id",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "integer",
-            "title": "Section Id"
-          }
-        }
-      ],
-      "requestBody": {
-        "required": true,
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/SaveSectionContentRequest"
-            }
-          }
-        }
-      },
-      "responses": {
-        "200": {
-          "description": "Successful Response",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SaveSectionContentResponse"
-              }
-            }
-          }
-        },
-        "422": {
-          "description": "Validation Error",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HTTPValidationError"
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-  "/api/v1/core/projects/{project_id}/ai-edit": {
-    "post": {
-      "tags": ["项目管理"],
-      "summary": "Ai Assisted Edit",
-      "description": "AI辅助编辑：润色/重写/扩展/缩减 (F025)\n输入：选中文本 + 操作类型；输出：多条修改建议",
-      "operationId": "ai_assisted_edit_api_v1_core_projects__project_id__ai_edit_post",
-      "security": [
-        {
-          "HTTPBearer": []
-        }
-      ],
-      "parameters": [
-        {
-          "name": "project_id",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "integer",
-            "title": "Project Id"
-          }
-        }
-      ],
-      "requestBody": {
-        "required": true,
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/AIEditRequest"
-            }
-          }
-        }
-      },
-      "responses": {
-        "200": {
-          "description": "Successful Response",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AIEditResponse"
-              }
-            }
-          }
-        },
-        "422": {
-          "description": "Validation Error",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HTTPValidationError"
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-  "/api/v1/core/projects/{project_id}/ai-chat/history": {
-    "get": {
-      "tags": ["项目管理"],
-      "summary": "Get Ai Chat History",
-      "operationId": "get_ai_chat_history_api_v1_core_projects__project_id__ai_chat_history_get",
-      "security": [
-        {
-          "HTTPBearer": []
-        }
-      ],
-      "parameters": [
-        {
-          "name": "project_id",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "integer",
-            "title": "Project Id"
-          }
-        },
-        {
-          "name": "limit",
-          "in": "query",
-          "required": false,
-          "schema": {
-            "type": "integer",
-            "maximum": 200,
-            "minimum": 1,
-            "default": 50,
-            "title": "Limit"
-          }
-        }
-      ],
-      "responses": {
-        "200": {
-          "description": "Successful Response",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ChatHistoryResponse"
-              }
-            }
-          }
-        },
-        "422": {
-          "description": "Validation Error",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HTTPValidationError"
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-  "/api/v1/core/projects/{project_id}/ai-chat": {
-    "post": {
-      "tags": ["项目管理"],
-      "summary": "Ai Chat Endpoint",
-      "description": "AI对话 (F026)\n用户与AI助手进行写作相关的对话，并可通过命令修改不同模块内容",
-      "operationId": "ai_chat_endpoint_api_v1_core_projects__project_id__ai_chat_post",
-      "security": [
-        {
-          "HTTPBearer": []
-        }
-      ],
-      "parameters": [
-        {
-          "name": "project_id",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "integer",
-            "title": "Project Id"
-          }
-        }
-      ],
-      "requestBody": {
-        "required": true,
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/AIChatRequest"
-            }
-          }
-        }
-      },
-      "responses": {
-        "200": {
-          "description": "Successful Response",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AIChatResponse"
-              }
-            }
-          }
-        },
-        "422": {
-          "description": "Validation Error",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HTTPValidationError"
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-  "/api/v1/core/projects/{project_id}/generate-draft": {
-    "post": {
-      "tags": ["项目管理"],
-      "summary": "Generate Draft",
-      "description": "生成初稿 (F027)\n基于大纲结构和关联素材，自动生成文章初稿",
-      "operationId": "generate_draft_api_v1_core_projects__project_id__generate_draft_post",
-      "security": [
-        {
-          "HTTPBearer": []
-        }
-      ],
-      "parameters": [
-        {
-          "name": "project_id",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "integer",
-            "title": "Project Id"
-          }
-        }
-      ],
-      "requestBody": {
-        "required": true,
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/DraftGenerationRequest"
-            }
-          }
-        }
-      },
-      "responses": {
-        "200": {
-          "description": "Successful Response",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DraftGenerationResponse"
-              }
-            }
-          }
-        },
-        "422": {
-          "description": "Validation Error",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HTTPValidationError"
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-  "/api/v1/core/projects/{project_id}/mainstream-media/search": {
-    "post": {
-      "tags": ["项目管理"],
-      "summary": "Search Mainstream Media Materials",
-      "description": "搜索主流媒体素材 (F046_主流媒体素材抓取)\n\n业务规则：\n1. 通过\"主流媒体素材\"按钮触发检索\n2. 检索主流媒体向量数据库\n3. 支持关键词搜索和分页\n4. 可选择是否与当前内容相关\n\n异常处理：\n- 检索失败 → 提示\"素材检索失败，请重试\"\n- 无匹配结果 → 提示\"未找到匹配的素材\"",
-      "operationId": "search_mainstream_media_materials_api_v1_core_projects__project_id__mainstream_media_search_post",
-      "security": [
-        {
-          "HTTPBearer": []
-        }
-      ],
-      "parameters": [
-        {
-          "name": "project_id",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "integer",
-            "title": "Project Id"
-          }
-        }
-      ],
-      "requestBody": {
-        "required": true,
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/MainstreamMediaSearchRequest"
-            }
-          }
-        }
-      },
-      "responses": {
-        "200": {
-          "description": "Successful Response",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/MainstreamMediaSearchResponse"
-              }
-            }
-          }
-        },
-        "422": {
-          "description": "Validation Error",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HTTPValidationError"
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-  "/api/v1/core/projects/{project_id}/mainstream-media/add": {
-    "post": {
-      "tags": ["项目管理"],
-      "summary": "Add Mainstream Media To Project",
-      "description": "将主流媒体素材添加到项目 (F046_主流媒体素材抓取)\n\n业务规则：\n1. 素材添加到项目后自动添加\"主流媒体\"标签\n2. 支持批量添加多个素材\n3. 自动建立项目与素材的关联关系\n\n异常处理：\n- 未选择素材 → 提示\"请至少选择一个素材\"\n- 添加失败 → 提示\"添加素材失败，请重试\"",
-      "operationId": "add_mainstream_media_to_project_api_v1_core_projects__project_id__mainstream_media_add_post",
-      "security": [
-        {
-          "HTTPBearer": []
-        }
-      ],
-      "parameters": [
-        {
-          "name": "project_id",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "integer",
-            "title": "Project Id"
-          }
-        }
-      ],
-      "requestBody": {
-        "required": true,
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/AddMainstreamMediaRequest"
-            }
-          }
-        }
-      },
-      "responses": {
-        "200": {
-          "description": "Successful Response",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AddMainstreamMediaResponse"
-              }
-            }
-          }
-        },
-        "422": {
-          "description": "Validation Error",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HTTPValidationError"
-              }
-            }
-          }
-        }
-      }
+      ]
     }
   }
 }

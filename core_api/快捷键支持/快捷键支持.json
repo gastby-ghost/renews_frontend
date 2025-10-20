@@ -14,6 +14,180 @@
       }
     },
     "schemas": {
+      "ShortcutListResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "操作是否成功"
+          },
+          "shortcuts": {
+            "items": {
+              "$ref": "#/components/schemas/ShortcutDefinition"
+            },
+            "type": "array",
+            "title": "Shortcuts",
+            "description": "快捷键列表"
+          },
+          "categories": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Categories",
+            "description": "分类列表"
+          },
+          "total_count": {
+            "type": "integer",
+            "title": "Total Count",
+            "description": "总数量"
+          },
+          "context": {
+            "$ref": "#/components/schemas/ShortcutContext",
+            "description": "当前上下文"
+          }
+        },
+        "type": "object",
+        "required": ["success", "shortcuts", "categories", "total_count", "context"],
+        "title": "ShortcutListResponse",
+        "description": "快捷键列表响应"
+      },
+      "ShortcutConfig-Output": {
+        "properties": {
+          "enable_global_shortcuts": {
+            "type": "boolean",
+            "title": "Enable Global Shortcuts",
+            "description": "是否启用全局快捷键",
+            "default": true
+          },
+          "enable_sound_feedback": {
+            "type": "boolean",
+            "title": "Enable Sound Feedback",
+            "description": "是否启用声音反馈",
+            "default": true
+          },
+          "enable_visual_feedback": {
+            "type": "boolean",
+            "title": "Enable Visual Feedback",
+            "description": "是否启用视觉反馈",
+            "default": true
+          },
+          "default_context": {
+            "$ref": "#/components/schemas/ShortcutContext",
+            "description": "默认上下文",
+            "default": "global"
+          },
+          "custom_shortcuts": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ShortcutDefinition"
+            },
+            "type": "object",
+            "title": "Custom Shortcuts",
+            "description": "自定义快捷键",
+            "default": {}
+          }
+        },
+        "type": "object",
+        "title": "ShortcutConfig",
+        "description": "快捷键配置"
+      },
+      "ShortcutContext": {
+        "type": "string",
+        "enum": ["global", "project", "component", "editor"],
+        "title": "ShortcutContext",
+        "description": "快捷键上下文枚举"
+      },
+      "ShortcutHelpResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "操作是否成功"
+          },
+          "shortcuts_by_category": {
+            "additionalProperties": {
+              "items": {
+                "$ref": "#/components/schemas/ShortcutDefinition"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Shortcuts By Category",
+            "description": "按分类组织的快捷键"
+          },
+          "total_shortcuts": {
+            "type": "integer",
+            "title": "Total Shortcuts",
+            "description": "总快捷键数量"
+          },
+          "categories": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Categories",
+            "description": "所有分类"
+          }
+        },
+        "type": "object",
+        "required": ["success", "shortcuts_by_category", "total_shortcuts", "categories"],
+        "title": "ShortcutHelpResponse",
+        "description": "快捷键帮助响应"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "ShortcutCustomizeRequest": {
+        "properties": {
+          "shortcut_id": {
+            "type": "string",
+            "title": "Shortcut Id",
+            "description": "快捷键ID"
+          },
+          "new_key_combination": {
+            "type": "string",
+            "title": "New Key Combination",
+            "description": "新的按键组合"
+          },
+          "context": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ShortcutContext"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "新的上下文"
+          },
+          "is_enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Enabled",
+            "description": "是否启用"
+          }
+        },
+        "type": "object",
+        "required": ["shortcut_id", "new_key_combination"],
+        "title": "ShortcutCustomizeRequest",
+        "description": "自定义快捷键请求"
+      },
       "ShortcutResponse": {
         "properties": {
           "success": {
@@ -74,174 +248,6 @@
         "title": "ShortcutResponse",
         "description": "快捷键响应"
       },
-      "ShortcutCustomizeRequest": {
-        "properties": {
-          "shortcut_id": {
-            "type": "string",
-            "title": "Shortcut Id",
-            "description": "快捷键ID"
-          },
-          "new_key_combination": {
-            "type": "string",
-            "title": "New Key Combination",
-            "description": "新的按键组合"
-          },
-          "context": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/ShortcutContext"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "新的上下文"
-          },
-          "is_enabled": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Is Enabled",
-            "description": "是否启用"
-          }
-        },
-        "type": "object",
-        "required": ["shortcut_id", "new_key_combination"],
-        "title": "ShortcutCustomizeRequest",
-        "description": "自定义快捷键请求"
-      },
-      "ShortcutCustomizeResponse": {
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "title": "Success",
-            "description": "操作是否成功"
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "description": "响应消息"
-          },
-          "updated_shortcut": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/ShortcutDefinition"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "更新后的快捷键"
-          },
-          "conflicts": {
-            "items": {
-              "$ref": "#/components/schemas/ShortcutConflict"
-            },
-            "type": "array",
-            "title": "Conflicts",
-            "description": "冲突信息",
-            "default": []
-          }
-        },
-        "type": "object",
-        "required": ["success", "message"],
-        "title": "ShortcutCustomizeResponse",
-        "description": "自定义快捷键响应"
-      },
-      "HTTPValidationError": {
-        "properties": {
-          "detail": {
-            "items": {
-              "$ref": "#/components/schemas/ValidationError"
-            },
-            "type": "array",
-            "title": "Detail"
-          }
-        },
-        "type": "object",
-        "title": "HTTPValidationError"
-      },
-      "ShortcutConfig-Output": {
-        "properties": {
-          "enable_global_shortcuts": {
-            "type": "boolean",
-            "title": "Enable Global Shortcuts",
-            "description": "是否启用全局快捷键",
-            "default": true
-          },
-          "enable_sound_feedback": {
-            "type": "boolean",
-            "title": "Enable Sound Feedback",
-            "description": "是否启用声音反馈",
-            "default": true
-          },
-          "enable_visual_feedback": {
-            "type": "boolean",
-            "title": "Enable Visual Feedback",
-            "description": "是否启用视觉反馈",
-            "default": true
-          },
-          "default_context": {
-            "$ref": "#/components/schemas/ShortcutContext",
-            "description": "默认上下文",
-            "default": "global"
-          },
-          "custom_shortcuts": {
-            "additionalProperties": {
-              "$ref": "#/components/schemas/ShortcutDefinition"
-            },
-            "type": "object",
-            "title": "Custom Shortcuts",
-            "description": "自定义快捷键",
-            "default": {}
-          }
-        },
-        "type": "object",
-        "title": "ShortcutConfig",
-        "description": "快捷键配置"
-      },
-      "ShortcutHelpResponse": {
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "title": "Success",
-            "description": "操作是否成功"
-          },
-          "shortcuts_by_category": {
-            "additionalProperties": {
-              "items": {
-                "$ref": "#/components/schemas/ShortcutDefinition"
-              },
-              "type": "array"
-            },
-            "type": "object",
-            "title": "Shortcuts By Category",
-            "description": "按分类组织的快捷键"
-          },
-          "total_shortcuts": {
-            "type": "integer",
-            "title": "Total Shortcuts",
-            "description": "总快捷键数量"
-          },
-          "categories": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Categories",
-            "description": "所有分类"
-          }
-        },
-        "type": "object",
-        "required": ["success", "shortcuts_by_category", "total_shortcuts", "categories"],
-        "title": "ShortcutHelpResponse",
-        "description": "快捷键帮助响应"
-      },
       "ShortcutConfig-Input": {
         "properties": {
           "enable_global_shortcuts": {
@@ -280,50 +286,6 @@
         "type": "object",
         "title": "ShortcutConfig",
         "description": "快捷键配置"
-      },
-      "ShortcutListResponse": {
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "title": "Success",
-            "description": "操作是否成功"
-          },
-          "shortcuts": {
-            "items": {
-              "$ref": "#/components/schemas/ShortcutDefinition"
-            },
-            "type": "array",
-            "title": "Shortcuts",
-            "description": "快捷键列表"
-          },
-          "categories": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Categories",
-            "description": "分类列表"
-          },
-          "total_count": {
-            "type": "integer",
-            "title": "Total Count",
-            "description": "总数量"
-          },
-          "context": {
-            "$ref": "#/components/schemas/ShortcutContext",
-            "description": "当前上下文"
-          }
-        },
-        "type": "object",
-        "required": ["success", "shortcuts", "categories", "total_count", "context"],
-        "title": "ShortcutListResponse",
-        "description": "快捷键列表响应"
-      },
-      "ShortcutContext": {
-        "type": "string",
-        "enum": ["global", "project", "component", "editor"],
-        "title": "ShortcutContext",
-        "description": "快捷键上下文枚举"
       },
       "ShortcutRequest": {
         "properties": {
@@ -387,6 +349,44 @@
         "required": ["key_combination"],
         "title": "ShortcutRequest",
         "description": "快捷键请求"
+      },
+      "ShortcutCustomizeResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "操作是否成功"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "响应消息"
+          },
+          "updated_shortcut": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ShortcutDefinition"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "更新后的快捷键"
+          },
+          "conflicts": {
+            "items": {
+              "$ref": "#/components/schemas/ShortcutConflict"
+            },
+            "type": "array",
+            "title": "Conflicts",
+            "description": "冲突信息",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": ["success", "message"],
+        "title": "ShortcutCustomizeResponse",
+        "description": "自定义快捷键响应"
       }
     }
   },

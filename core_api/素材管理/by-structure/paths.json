@@ -48,19 +48,46 @@
     "delete": {
       "tags": ["素材管理"],
       "summary": "Delete Materials",
-      "description": "批量删除素材",
+      "description": "批量删除素材\n\n支持两种方式：\n1. 请求体：{\"material_ids\": [1, 2, 3]}\n2. 查询参数：?material_ids=1,2,3",
       "operationId": "delete_materials_api_v1_core_materials_delete",
       "security": [
         {
           "HTTPBearer": []
         }
       ],
+      "parameters": [
+        {
+          "name": "material_ids",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "要删除的素材ID列表，逗号分隔，如：1,2,3",
+            "title": "Material Ids"
+          },
+          "description": "要删除的素材ID列表，逗号分隔，如：1,2,3"
+        }
+      ],
       "requestBody": {
-        "required": true,
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/MaterialDeleteRequest"
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/MaterialDeleteRequest"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Request"
             }
           }
         }

@@ -1,58 +1,4 @@
 {
-  "ExportProgress": {
-    "properties": {
-      "task_id": {
-        "type": "string",
-        "title": "Task Id",
-        "description": "导出任务ID"
-      },
-      "status": {
-        "type": "string",
-        "title": "Status",
-        "description": "导出状态"
-      },
-      "progress": {
-        "type": "number",
-        "maximum": 100.0,
-        "minimum": 0.0,
-        "title": "Progress",
-        "description": "导出进度百分比"
-      },
-      "current_step": {
-        "type": "string",
-        "title": "Current Step",
-        "description": "当前步骤"
-      },
-      "estimated_time": {
-        "anyOf": [
-          {
-            "type": "string"
-          },
-          {
-            "type": "null"
-          }
-        ],
-        "title": "Estimated Time",
-        "description": "预估剩余时间"
-      },
-      "created_at": {
-        "type": "string",
-        "format": "date-time",
-        "title": "Created At",
-        "description": "创建时间"
-      },
-      "updated_at": {
-        "type": "string",
-        "format": "date-time",
-        "title": "Updated At",
-        "description": "更新时间"
-      }
-    },
-    "type": "object",
-    "required": ["task_id", "status", "progress", "current_step", "created_at", "updated_at"],
-    "title": "ExportProgress",
-    "description": "导出进度模型"
-  },
   "ExportResult": {
     "properties": {
       "task_id": {
@@ -181,19 +127,6 @@
     "title": "ExportRequest",
     "description": "导出请求模型"
   },
-  "HTTPValidationError": {
-    "properties": {
-      "detail": {
-        "items": {
-          "$ref": "#/components/schemas/ValidationError"
-        },
-        "type": "array",
-        "title": "Detail"
-      }
-    },
-    "type": "object",
-    "title": "HTTPValidationError"
-  },
   "ExportHistory": {
     "properties": {
       "id": {
@@ -291,5 +224,72 @@
     ],
     "title": "ExportHistory",
     "description": "导出历史记录模型"
+  },
+  "HTTPValidationError": {
+    "properties": {
+      "detail": {
+        "items": {
+          "$ref": "#/components/schemas/ValidationError"
+        },
+        "type": "array",
+        "title": "Detail"
+      }
+    },
+    "type": "object",
+    "title": "HTTPValidationError"
+  },
+  "ExportProgress": {
+    "properties": {
+      "task_id": {
+        "type": "string",
+        "title": "Task Id",
+        "description": "导出任务ID"
+      },
+      "status": {
+        "type": "string",
+        "title": "Status",
+        "description": "导出状态"
+      },
+      "progress": {
+        "type": "number",
+        "maximum": 100.0,
+        "minimum": 0.0,
+        "title": "Progress",
+        "description": "导出进度百分比"
+      },
+      "current_step": {
+        "type": "string",
+        "title": "Current Step",
+        "description": "当前步骤"
+      },
+      "estimated_time": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Estimated Time",
+        "description": "预估剩余时间"
+      },
+      "created_at": {
+        "type": "string",
+        "format": "date-time",
+        "title": "Created At",
+        "description": "创建时间"
+      },
+      "updated_at": {
+        "type": "string",
+        "format": "date-time",
+        "title": "Updated At",
+        "description": "更新时间"
+      }
+    },
+    "type": "object",
+    "required": ["task_id", "status", "progress", "current_step", "created_at", "updated_at"],
+    "title": "ExportProgress",
+    "description": "导出进度模型"
   }
 }

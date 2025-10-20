@@ -56,6 +56,62 @@
         "title": "ManualSelectionResponse",
         "description": "手动选择响应模型"
       },
+      "ManualSelectionRequest": {
+        "properties": {
+          "filter_conditions": {
+            "$ref": "#/components/schemas/ManualSelectionFilter",
+            "description": "筛选条件"
+          },
+          "user_id": {
+            "type": "string",
+            "title": "User Id",
+            "description": "用户ID"
+          }
+        },
+        "type": "object",
+        "required": ["filter_conditions", "user_id"],
+        "title": "ManualSelectionRequest",
+        "description": "手动选择请求模型"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "MaterialSelectionRequest": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "title": "Project Id",
+            "description": "项目ID"
+          },
+          "selected_material_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Selected Material Ids",
+            "description": "选中的素材ID列表"
+          },
+          "user_id": {
+            "type": "string",
+            "title": "User Id",
+            "description": "用户ID"
+          }
+        },
+        "type": "object",
+        "required": ["project_id", "selected_material_ids", "user_id"],
+        "title": "MaterialSelectionRequest",
+        "description": "素材选择请求模型"
+      },
       "MaterialSelectionResponse": {
         "properties": {
           "success": {
@@ -102,62 +158,6 @@
         "required": ["success", "message", "total_added"],
         "title": "MaterialSelectionResponse",
         "description": "素材选择响应模型"
-      },
-      "HTTPValidationError": {
-        "properties": {
-          "detail": {
-            "items": {
-              "$ref": "#/components/schemas/ValidationError"
-            },
-            "type": "array",
-            "title": "Detail"
-          }
-        },
-        "type": "object",
-        "title": "HTTPValidationError"
-      },
-      "ManualSelectionRequest": {
-        "properties": {
-          "filter_conditions": {
-            "$ref": "#/components/schemas/ManualSelectionFilter",
-            "description": "筛选条件"
-          },
-          "user_id": {
-            "type": "string",
-            "title": "User Id",
-            "description": "用户ID"
-          }
-        },
-        "type": "object",
-        "required": ["filter_conditions", "user_id"],
-        "title": "ManualSelectionRequest",
-        "description": "手动选择请求模型"
-      },
-      "MaterialSelectionRequest": {
-        "properties": {
-          "project_id": {
-            "type": "string",
-            "title": "Project Id",
-            "description": "项目ID"
-          },
-          "selected_material_ids": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Selected Material Ids",
-            "description": "选中的素材ID列表"
-          },
-          "user_id": {
-            "type": "string",
-            "title": "User Id",
-            "description": "用户ID"
-          }
-        },
-        "type": "object",
-        "required": ["project_id", "selected_material_ids", "user_id"],
-        "title": "MaterialSelectionRequest",
-        "description": "素材选择请求模型"
       }
     }
   },
