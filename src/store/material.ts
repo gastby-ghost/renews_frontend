@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { materialSearchService } from '@/services/materialSearch'
 import { agentService } from '@/services/agentService'
+import { materialApiService, MaterialApiService } from '@/services/materialApi'
 import type {
   Material,
   SearchResultMaterial,
@@ -148,8 +149,8 @@ export const useMaterialStore = defineStore('material', () => {
         pageSize: 50
       }
 
-      // For now, use mock search service
-      const result = await materialSearchService.mockSearch(searchParams)
+      // Use the search service
+      const result = await materialSearchService.searchWithSearchTools(searchParams)
 
       addMaterials(result.materials)
       return result.materials
@@ -478,6 +479,7 @@ export const useMaterialStore = defineStore('material', () => {
 
   async function addToLibrary(materialIds: string[]) {
     try {
+      // 使用旧的API作为备用
       await materialSearchService.addToLibrary(materialIds)
       // Update local state to mark materials as in library
       materialIds.forEach((id) => {
@@ -485,6 +487,139 @@ export const useMaterialStore = defineStore('material', () => {
       })
     } catch (error) {
       state.value.error = error instanceof Error ? error.message : '添加到素材库失败'
+      throw error
+    }
+  }
+
+  /**
+   * 将搜索结果添加到数据库
+   * @param searchResults 搜索结果素材列表
+   * @param projectId 项目ID，默认为1
+   * @returns 添加结果
+   */
+  async function addSearchResultsToDatabase(
+    searchResults: SearchResultMaterial[],
+    projectId: number = 1
+  ) {
+    try {
+      // 添加调试日志：检查原始搜索结果的tags
+      console.log('[MaterialStore] 原始搜索结果的tags情况:', {
+        searchResultsCount: searchResults.length,
+        searchResultsWithTags: searchResults.map((result) => ({
+          title: result.title,
+          tags: result.tags,
+          tagsLength: result.tags ? result.tags.length : 0
+        }))
+      })
+
+      // 将搜索结果转换为API所需格式
+      const materialsData = searchResults.map((result) =>
+        MaterialApiService.convertSearchResultToMaterialData(result)
+      )
+
+      // 添加调试日志：检查转换后的materialsData的tags
+      console.log('[MaterialStore] 转换后的materialsData的tags情况:', {
+        materialsDataCount: materialsData.length,
+        materialsDataWithTags: materialsData.map((material) => ({
+          title: material.title,
+          tags: material.tags,
+          tagsLength: material.tags ? material.tags.length : 0
+        }))
+      })
+
+      // 调用API批量创建素材
+      const response = await materialApiService.createMaterials(projectId, materialsData)
+
+      // 将API返回的素材转换为前端格式并添加到本地状态
+      const newMaterials = response.materials.map((apiMaterial) =>
+        MaterialApiService.convertApiMaterialToMaterial(apiMaterial)
+      )
+
+      // 添加到本地状态
+      addMaterials(newMaterials)
+
+      return {
+        success: response.success,
+        message: response.message,
+        addedCount: newMaterials.length,
+        materials: newMaterials
+      }
+    } catch (error) {
+      state.value.error = error instanceof Error ? error.message : '添加素材到数据库失败'
+      throw error
+    }
+  }
+
+  /**
+   * 从数据库加载项目素材
+   * @param projectId 项目ID，默认为1
+   * @param params 查询参数
+   * @returns 素材列表
+   */
+  async function loadProjectMaterialsFromDatabase(
+    projectId: number = 1,
+    params?: {
+      page?: number
+      page_size?: number
+      keywords?: string
+      tags?: string[]
+    }
+  ) {
+    state.value.loading = true
+    state.value.error = null
+
+    try {
+      const response = await materialApiService.getProjectMaterials(projectId, params)
+
+      // 将API返回的素材转换为前端格式
+      const materials = response.materials.map((apiMaterial) =>
+        MaterialApiService.convertApiMaterialToMaterial(apiMaterial)
+      )
+
+      // 更新本地状态
+      state.value.materials = materials
+
+      return {
+        materials,
+        totalCount: response.total_count,
+        page: response.page,
+        pageSize: response.page_size,
+        totalPages: response.total_pages
+      }
+    } catch (error) {
+      state.value.error = error instanceof Error ? error.message : '从数据库加载素材失败'
+      throw error
+    } finally {
+      state.value.loading = false
+    }
+  }
+
+  /**
+   * 从数据库删除素材
+   * @param materialIds 素材ID列表（字符串格式）
+   * @returns 删除结果
+   */
+  async function deleteMaterialsFromDatabase(materialIds: string[]) {
+    try {
+      // 将字符串ID转换为数字ID
+      const numericIds = materialIds.map((id) => parseInt(id, 10))
+
+      // 调用API删除素材
+      const response = await materialApiService.deleteMaterials(numericIds)
+
+      // 从本地状态中移除已删除的素材
+      materialIds.forEach((id) => {
+        removeMaterial(id)
+      })
+
+      return {
+        success: response.success,
+        message: response.message,
+        deletedCount: response.deleted_count,
+        failedCount: response.failed_count
+      }
+    } catch (error) {
+      state.value.error = error instanceof Error ? error.message : '从数据库删除素材失败'
       throw error
     }
   }
@@ -557,6 +692,9 @@ export const useMaterialStore = defineStore('material', () => {
     addToLibrary,
     removeFromLibrary,
     loadLibraryMaterials,
+    addSearchResultsToDatabase,
+    loadProjectMaterialsFromDatabase,
+    deleteMaterialsFromDatabase,
 
     // Search-tools 相关方法
     checkSearchToolsStatus,

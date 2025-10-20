@@ -321,8 +321,24 @@ class MaterialSearchService {
     // 确定素材类型（基于URL和内容）
     const type = this.determineMaterialType(result.url, result.summary)
 
+    // 添加调试日志：检查API返回的tags
+    console.log('[MaterialSearchService] API返回的原始tags数据:', {
+      url: result.url,
+      title: result.webtitle,
+      tags: result.tags,
+      tagsType: typeof result.tags,
+      tagsLength: result.tags ? result.tags.length : 'N/A'
+    })
+
     // 只使用API返回的tags，不生成虚假标签
     const tags = result.tags && result.tags.length > 0 ? result.tags : []
+
+    // 添加调试日志：检查处理后的tags
+    console.log('[MaterialSearchService] 处理后的tags数据:', {
+      url: result.url,
+      finalTags: tags,
+      finalTagsLength: tags.length
+    })
 
     return {
       id,

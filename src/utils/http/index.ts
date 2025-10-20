@@ -88,7 +88,38 @@ axiosInstance.interceptors.request.use(
 
     if (request.data && !(request.data instanceof FormData) && !request.headers['Content-Type']) {
       request.headers.set('Content-Type', 'application/json')
+
+      // 添加调试日志：检查即将序列化的请求数据
+      if (request.url && request.url.includes('/materials/batch')) {
+        console.log('[HTTP Request] 批量创建素材前的请求数据:', {
+          url: request.url,
+          data: request.data,
+          dataType: typeof request.data,
+          isArray: Array.isArray(request.data),
+          dataKeys: request.data ? Object.keys(request.data) : []
+        })
+
+        // 特别检查materials数组中的tags
+        if (request.data && request.data.materials) {
+          console.log('[HTTP Request] materials数组中的tags详情:', {
+            materialsCount: request.data.materials.length,
+            materialsTags: request.data.materials.map((material: any, index: number) => ({
+              index,
+              title: material.title,
+              tags: material.tags,
+              tagsType: typeof material.tags,
+              tagsLength: material.tags ? material.tags.length : 0
+            }))
+          })
+        }
+      }
+
       request.data = JSON.stringify(request.data)
+
+      // 添加调试日志：检查序列化后的数据
+      if (request.url && request.url.includes('/materials/batch')) {
+        console.log('[HTTP Request] 序列化后的请求数据:', request.data)
+      }
     }
 
     return request

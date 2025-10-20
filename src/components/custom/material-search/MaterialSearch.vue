@@ -727,7 +727,7 @@
     addProgress.value = {
       percentage: 0,
       status: 'success',
-      message: '准备添加素材...',
+      message: '准备添加素材到数据库...',
       processed: 0,
       total: selectedMaterials.value.length
     }
@@ -736,39 +736,25 @@
       // 获取选中的素材对象
       const materialsToAdd = selectedMaterials.value
         .map((id) => searchResults.value.find((material) => material.id === id))
-        .filter(Boolean) as Material[]
+        .filter(Boolean) as SearchResultMaterial[]
 
-      // 分批处理，避免一次性处理太多素材
-      const batchSize = 5
-      const batches = []
+      // 使用新的API将搜索结果添加到数据库
+      addProgress.value.message = '正在将素材添加到数据库...'
+      addProgress.value.percentage = 30
 
-      for (let i = 0; i < materialsToAdd.length; i += batchSize) {
-        batches.push(materialsToAdd.slice(i, i + batchSize))
-      }
+      const result = await materialStore.addSearchResultsToDatabase(materialsToAdd)
 
-      for (let i = 0; i < batches.length; i++) {
-        const batch = batches[i]
+      // 更新进度
+      addProgress.value.percentage = 80
+      addProgress.value.message = `已成功添加 ${result.addedCount} 个素材到数据库`
+      addProgress.value.processed = result.addedCount
 
-        // 更新进度
-        addProgress.value.message = `正在添加第 ${i + 1}/${batches.length} 批素材...`
-        addProgress.value.percentage = Math.round((i / batches.length) * 80)
-
-        // 直接添加素材到store
-        materialStore.addMaterials(batch)
-
-        // 同时调用API添加到素材库
-        await materialStore.addToLibrary(batch.map((m) => m.id))
-
-        // 更新已处理数量
-        addProgress.value.processed += batch.length
-
-        // 添加延迟，让用户看到进度
-        await new Promise((resolve) => setTimeout(resolve, 300))
-      }
+      // 添加延迟，让用户看到进度
+      await new Promise((resolve) => setTimeout(resolve, 1000))
 
       // 完成添加
       addProgress.value.percentage = 100
-      addProgress.value.message = `成功添加 ${selectedMaterials.value.length} 个素材到素材库`
+      addProgress.value.message = `成功添加 ${result.addedCount} 个素材到数据库`
 
       // 根据选项执行后续操作
       if (addToLibraryOptions.value.autoClear) {
@@ -783,18 +769,18 @@
         if (addToLibraryOptions.value.goToLibrary) {
           goToLibrary()
         } else {
-          ElMessage.success(`已添加 ${selectedMaterials.value.length} 个素材到素材库`)
+          ElMessage.success(`已添加 ${result.addedCount} 个素材到数据库`)
         }
       }, 1500)
     } catch (error) {
-      console.error('添加到素材库失败:', error)
+      console.error('添加到数据库失败:', error)
       addProgress.value.status = 'exception'
-      addProgress.value.message = '添加到素材库失败'
+      addProgress.value.message = '添加到数据库失败'
 
       setTimeout(() => {
         addProgressDialogVisible.value = false
         addingToLibrary.value = false
-        ElMessage.error('添加到素材库失败')
+        ElMessage.error('添加到数据库失败')
       }, 2000)
     }
   }

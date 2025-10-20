@@ -237,7 +237,8 @@
 
   async function confirmBatchDelete() {
     try {
-      await materialStore.removeFromLibrary(selectedMaterials.value)
+      // 使用新的API从数据库删除素材
+      await materialStore.deleteMaterialsFromDatabase(selectedMaterials.value)
       ElMessage.success(`已删除 ${selectedMaterials.value.length} 个素材`)
       deleteDialogVisible.value = false
     } catch (err) {
@@ -314,7 +315,8 @@
   // 生命周期
   onMounted(async () => {
     try {
-      await materialStore.loadLibraryMaterials()
+      // 使用新的API从数据库加载素材
+      await materialStore.loadProjectMaterialsFromDatabase()
     } catch (err) {
       console.error('加载素材库失败:', err)
       ElMessage.error('加载素材库失败')
@@ -324,7 +326,8 @@
     const unwatch = router.afterEach(async (to) => {
       if (to.path === '/material/management') {
         try {
-          await materialStore.loadLibraryMaterials()
+          // 使用新的API从数据库加载素材
+          await materialStore.loadProjectMaterialsFromDatabase()
         } catch (err) {
           console.error('刷新素材库失败:', err)
         }
