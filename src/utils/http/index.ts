@@ -14,9 +14,8 @@ const UNAUTHORIZED_DEBOUNCE_TIME = 3000
 
 /** 认证API路径配置 */
 const AUTH_API_PATTERNS = [
-  '/api/v1/core/',
   '/api/v1/ai/'
-  // 未来可以轻松添加更多路径
+  // 移除 /api/v1/core/ 因为项目管理API使用标准响应格式
 ]
 
 /** 401防抖状态 */

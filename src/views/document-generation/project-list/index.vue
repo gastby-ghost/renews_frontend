@@ -26,7 +26,35 @@
       </div>
     </div>
 
-    <div class="project-grid">
+    <!-- 加载状态 -->
+    <div v-if="projectStore.loading" class="loading-container" v-loading="true">
+      <p>正在加载项目列表...</p>
+    </div>
+
+    <!-- 错误状态 -->
+    <div v-else-if="projectStore.hasError" class="error-container">
+      <el-result icon="warning" title="加载失败" :sub-title="projectStore.error">
+        <template #extra>
+          <el-button type="primary" @click="projectStore.fetchProjects()"> 重新加载 </el-button>
+        </template>
+      </el-result>
+    </div>
+
+    <!-- 空状态 -->
+    <div v-else-if="projectStore.isEmpty" class="empty-container">
+      <el-result
+        icon="info"
+        title="暂无项目"
+        sub-title="您还没有创建任何项目，点击上方按钮创建第一个项目吧"
+      >
+        <template #extra>
+          <el-button type="primary" @click="dialogVisible = true"> 创建项目 </el-button>
+        </template>
+      </el-result>
+    </div>
+
+    <!-- 项目列表 -->
+    <div v-else class="project-grid">
       <div
         v-for="project in filteredProjectList"
         :key="project.id"
@@ -112,31 +140,47 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, reactive, onMounted } from 'vue'
+  import { ref, reactive, onMounted, computed } from 'vue'
   import { useRouter } from 'vue-router'
   import { ElMessage, ElMessageBox } from 'element-plus'
   import type { FormInstance, FormRules } from 'element-plus'
+  import { useProjectStore } from '@/store/modules/project'
+  import type { Api } from '@/typings/api'
+  import { debounce } from 'lodash-es'
 
-  interface Project {
-    id: string
+  // 从Api.Project命名空间导入类型
+  type ProjectResponse = Api.Project.ProjectResponse
+  type ProjectCreate = Api.Project.ProjectCreate
+
+  // 扩展项目接口以兼容现有UI
+  interface Project extends ProjectResponse {
+    description?: string
+    type?: string
+    currentStep?: number
+    createTime?: string
+    updateTime?: string
+  }
+
+  // 项目表单接口
+  interface ProjectForm {
     name: string
     description: string
     type: string
-    status: 'draft' | 'in_progress' | 'completed'
-    currentStep: number
-    createTime: string
-    updateTime: string
-    requirements?: any
-    titles?: any[]
-    outline?: any
-    content?: any
+  }
+
+  // 项目步骤接口
+  interface ProjectStep {
+    key: number
+    label: string
+    icon: string
   }
 
   const router = useRouter()
+  const projectStore = useProjectStore()
   const dialogVisible = ref(false)
   const projectFormRef = ref<FormInstance>()
 
-  const projectForm = reactive({
+  const projectForm = reactive<ProjectForm>({
     name: '',
     description: '',
     type: 'article'
@@ -154,84 +198,50 @@
     type: [{ required: true, message: '请选择项目类型', trigger: 'change' }]
   }
 
-  const projectSteps = [
+  const projectSteps: ProjectStep[] = [
     { key: 1, label: '需求', icon: 'el-icon-edit' },
     { key: 2, label: '标题', icon: 'el-icon-document' },
     { key: 3, label: '大纲', icon: 'el-icon-tickets' },
     { key: 4, label: '正文', icon: 'el-icon-notebook' }
   ]
 
-  const projectList = ref<Project[]>([])
   const searchKeyword = ref('')
-  const filteredProjectList = ref<Project[]>([])
 
-  // Mock data
-  const mockProjects: Project[] = [
-    {
-      id: '1',
-      name: '人工智能发展趋势分析报告',
-      description:
-        '分析2024年人工智能技术的最新发展趋势，包括机器学习、深度学习、自然语言处理等领域的技术突破和应用场景。',
-      type: 'report',
-      status: 'in_progress',
-      currentStep: 2,
-      createTime: '2024-01-15T10:30:00Z',
-      updateTime: '2024-01-16T14:20:00Z',
-      requirements: {
-        topic: '人工智能发展趋势分析',
-        targetAudience: '企业决策者和技术管理者',
-        wordCount: 5000,
-        tone: 'professional',
-        keyPoints: ['技术突破', '应用场景', '市场前景', '挑战分析']
-      },
-      titles: [
-        { id: 1, text: '2024年人工智能技术发展全景分析报告', selected: true },
-        { id: 2, text: 'AI技术革新：从实验室到商业化的跨越', selected: false }
-      ]
-    },
-    {
-      id: '2',
-      name: '新能源汽车营销策略文案',
-      description: '为新能源汽车品牌创作营销推广文案，突出环保理念、科技感和用户体验。',
-      type: 'marketing',
-      status: 'draft',
-      currentStep: 1,
-      createTime: '2024-01-14T09:15:00Z',
-      updateTime: '2024-01-14T09:15:00Z'
-    },
-    {
-      id: '3',
-      name: 'Vue3组件开发最佳实践',
-      description:
-        '介绍Vue3组件开发的最佳实践，包括Composition API使用、性能优化、代码组织等方面。',
-      type: 'technical',
-      status: 'completed',
-      currentStep: 4,
-      createTime: '2024-01-10T16:45:00Z',
-      updateTime: '2024-01-12T11:30:00Z'
-    }
-  ]
-
-  const handleSearch = () => {
-    const keyword = searchKeyword.value.toLowerCase().trim()
-    if (!keyword) {
-      filteredProjectList.value = [...projectList.value]
-    } else {
-      filteredProjectList.value = projectList.value.filter(
-        (project) =>
-          project.name.toLowerCase().includes(keyword) ||
-          project.description.toLowerCase().includes(keyword)
-      )
-    }
-  }
-
-  onMounted(() => {
-    // Load mock data
-    projectList.value = mockProjects
-    filteredProjectList.value = [...mockProjects]
+  // 计算属性：使用store中的数据转换逻辑
+  const projectList = computed(() => {
+    return projectStore.projectsWithUiData as Project[]
   })
 
-  const getStatusType = (status: string) => {
+  // 计算属性：直接使用项目列表，移除本地过滤逻辑
+  const filteredProjectList = computed(() => {
+    return projectList.value
+  })
+
+  // 防抖搜索函数
+  const debouncedSearch = debounce(() => {
+    // 统一使用store的搜索功能，移除本地过滤
+    if (searchKeyword.value.trim()) {
+      projectStore.searchProjects(searchKeyword.value.trim())
+    } else {
+      projectStore.fetchProjects()
+    }
+  }, 300)
+
+  const handleSearch = () => {
+    debouncedSearch()
+  }
+
+  // 初始化加载项目列表
+  onMounted(async () => {
+    try {
+      await projectStore.fetchProjects()
+    } catch (error) {
+      console.error('加载项目列表失败:', error)
+      ElMessage.error('加载项目列表失败')
+    }
+  })
+
+  const getStatusType = (status: string): 'info' | 'warning' | 'success' => {
     switch (status) {
       case 'draft':
         return 'info'
@@ -244,7 +254,7 @@
     }
   }
 
-  const getStatusText = (status: string) => {
+  const getStatusText = (status: string): string => {
     switch (status) {
       case 'draft':
         return '草稿'
@@ -257,7 +267,7 @@
     }
   }
 
-  const getActionText = (status: string) => {
+  const getActionText = (status: string): string => {
     switch (status) {
       case 'draft':
         return '开始创作'
@@ -270,7 +280,8 @@
     }
   }
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return '-'
     return new Date(dateString).toLocaleDateString('zh-CN')
   }
 
@@ -279,18 +290,19 @@
   }
 
   const continueProject = (project: Project) => {
-    const nextStep = project.currentStep
-    switch (nextStep) {
-      case 1:
+    // 使用current_component而不是currentStep
+    const component = project.current_component
+    switch (component) {
+      case 'requirements':
         router.push(`/document-generation/requirements/${project.id}`)
         break
-      case 2:
+      case 'title':
         router.push(`/document-generation/title/${project.id}`)
         break
-      case 3:
+      case 'outline':
         router.push(`/document-generation/outline/${project.id}`)
         break
-      case 4:
+      case 'content':
         router.push(`/document-generation/content/${project.id}`)
         break
       default:
@@ -315,13 +327,13 @@
         }
       )
 
-      // Remove from list
-      const index = projectList.value.findIndex((p) => p.id === project.id)
-      if (index > -1) {
-        projectList.value.splice(index, 1)
+      // 使用store删除项目
+      const success = await projectStore.deleteProjects([project.id])
+      if (success) {
+        ElMessage.success('项目删除成功')
+      } else {
+        ElMessage.error(projectStore.error || '项目删除失败')
       }
-
-      ElMessage.success('项目删除成功')
     } catch {
       // User cancelled
     }
@@ -333,29 +345,31 @@
     try {
       await projectFormRef.value.validate()
 
-      const newProject: Project = {
-        id: Date.now().toString(),
+      // 准备创建项目的数据 - 只发送API需要的字段
+      const projectData: ProjectCreate = {
         name: projectForm.name,
-        description: projectForm.description,
-        type: projectForm.type,
         status: 'draft',
-        currentStep: 1,
-        createTime: new Date().toISOString(),
-        updateTime: new Date().toISOString()
+        current_component: 'requirements'
       }
 
-      projectList.value.unshift(newProject)
-      dialogVisible.value = false
+      // 使用store创建项目
+      const newProject = await projectStore.createProject(projectData)
 
-      // Reset form
-      projectForm.name = ''
-      projectForm.description = ''
-      projectForm.type = 'article'
+      if (newProject) {
+        dialogVisible.value = false
 
-      ElMessage.success('项目创建成功')
+        // Reset form
+        projectForm.name = ''
+        projectForm.description = ''
+        projectForm.type = 'article'
 
-      // Navigate to requirements page
-      router.push(`/document-generation/requirements/${newProject.id}`)
+        ElMessage.success('项目创建成功')
+
+        // Navigate to requirements page
+        router.push(`/document-generation/requirements/${newProject.id}`)
+      } else {
+        ElMessage.error(projectStore.error || '项目创建失败')
+      }
     } catch (error) {
       console.error('Form validation failed:', error)
     }
@@ -365,6 +379,24 @@
 <style scoped lang="scss">
   .project-list-container {
     padding: 20px;
+  }
+
+  .loading-container,
+  .error-container,
+  .empty-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    margin-top: 20px;
+  }
+
+  .loading-container {
+    p {
+      margin-top: 16px;
+      color: var(--el-text-color-secondary);
+    }
   }
 
   .project-grid {

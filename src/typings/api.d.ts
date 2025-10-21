@@ -251,4 +251,85 @@ declare namespace Api {
       shortcut_settings: Record<string, any>
     }
   }
+
+  /** 项目管理类型 */
+  namespace Project {
+    /** 创建项目请求 */
+    interface ProjectCreate {
+      name: string
+      status?: string
+      current_component?: string
+      folder_id?: number | null
+    }
+
+    /** 更新项目请求 */
+    interface ProjectUpdate {
+      name?: string | null
+      status?: string | null
+      current_component?: string | null
+      folder_id?: number | null
+    }
+
+    /** 项目响应 */
+    interface ProjectResponse {
+      id: number
+      name: string
+      status: string
+      current_component: string
+      folder_id?: number | null
+      user_id: number
+      last_modified: string
+      created_at: string
+      updated_at: string
+    }
+
+    /** 项目详情响应 */
+    interface ProjectDetailResponse {
+      success: boolean
+      message: string
+      project: ProjectResponse
+    }
+
+    /** 项目列表响应 */
+    interface ProjectListResponse {
+      success: boolean
+      message: string
+      projects: ProjectResponse[]
+      total_count: number
+      page: number
+      page_size: number
+      total_pages: number
+    }
+
+    /** 项目删除请求 */
+    interface ProjectDeleteRequest {
+      project_ids: number[]
+    }
+
+    /** 项目删除响应 */
+    interface ProjectDeleteResponse {
+      success: boolean
+      message: string
+      deleted_count: number
+      failed_count: number
+      details?: any[]
+    }
+
+    /** 项目状态更新请求 */
+    interface ProjectStatusUpdateRequest {
+      status: string
+    }
+
+    /** 项目组件更新请求 */
+    interface ProjectComponentUpdateRequest {
+      current_component: string
+    }
+
+    /** 项目统计响应 */
+    interface ProjectStatisticsResponse {
+      success: boolean
+      message: string
+      data: Record<string, number>
+    }
+  }
 }
