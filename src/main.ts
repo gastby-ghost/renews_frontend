@@ -18,6 +18,11 @@ import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import { setupGlobDirectives } from './directives'
 import language from './locales'
 
+// 开发工具初始化（只在开发模式下导入）
+if (import.meta.env.DEV) {
+  import('./utils/dev/index.ts')
+}
+
 document.addEventListener(
   'touchstart',
   function () {},

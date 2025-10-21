@@ -1,5 +1,7 @@
-import http from '@/utils/http'
+import BaseApiService from './base/apiService'
+import { mockDataManager } from '@/mock'
 import type { Material, SearchResultMaterial } from '@/types/material'
+import type { ApiRequestConfig } from '@/config/api/types'
 
 // 素材API响应类型定义
 export interface MaterialResponse {
@@ -80,8 +82,10 @@ export interface TagResponse {
  * 素材API服务类
  * 用于与素材管理后端API交互
  */
-class MaterialApiService {
-  private baseUrl = '/api/v1/core'
+class MaterialApiService extends BaseApiService {
+  constructor() {
+    super('material')
+  }
 
   /**
    * 批量创建素材
@@ -93,36 +97,12 @@ class MaterialApiService {
     projectId: number,
     materials: CompleteMaterialData[]
   ): Promise<MaterialListResponse> {
-    try {
-      // 添加调试日志：检查发送到后端的完整请求
-      console.log('[MaterialApiService] 准备发送到后端的完整请求:', {
-        projectId,
-        materialsCount: materials.length,
-        materialsWithTags: materials.map((material) => ({
-          title: material.title,
-          tags: material.tags,
-          tagsLength: material.tags ? material.tags.length : 0
-        }))
-      })
-
-      const request: AddCompleteMaterialRequest = {
-        project_id: projectId,
-        materials
-      }
-
-      // 添加调试日志：检查最终请求数据
-      console.log('[MaterialApiService] 最终请求数据:', JSON.stringify(request, null, 2))
-
-      const response = await http.post<MaterialListResponse>({
-        url: `${this.baseUrl}/materials/batch`,
-        data: request
-      })
-
-      return response
-    } catch (error) {
-      console.error('Create materials error:', error)
-      throw new Error('创建素材失败')
+    const request: AddCompleteMaterialRequest = {
+      project_id: projectId,
+      materials
     }
+
+    return this.post<MaterialListResponse>('/materials/batch', request)
   }
 
   /**
@@ -140,17 +120,7 @@ class MaterialApiService {
       tags?: string[]
     }
   ): Promise<MaterialListResponse> {
-    try {
-      const response = await http.get<MaterialListResponse>({
-        url: `${this.baseUrl}/projects/${projectId}/materials`,
-        params
-      })
-
-      return response
-    } catch (error) {
-      console.error('Get project materials error:', error)
-      throw new Error('获取项目素材失败')
-    }
+    return this.get<MaterialListResponse>(`/projects/${projectId}/materials`, params)
   }
 
   /**
@@ -164,17 +134,7 @@ class MaterialApiService {
     keywords?: string
     tags?: string[]
   }): Promise<MaterialListResponse> {
-    try {
-      const response = await http.get<MaterialListResponse>({
-        url: `${this.baseUrl}/materials`,
-        params
-      })
-
-      return response
-    } catch (error) {
-      console.error('Get all materials error:', error)
-      throw new Error('获取素材列表失败')
-    }
+    return this.get<MaterialListResponse>('/materials', params)
   }
 
   /**
@@ -187,21 +147,11 @@ class MaterialApiService {
     materialId: number,
     updateData: Partial<MaterialCreateRequest>
   ): Promise<MaterialResponse> {
-    try {
-      const request: MaterialUpdateRequest = {
-        update_data: updateData
-      }
-
-      const response = await http.put<MaterialResponse>({
-        url: `${this.baseUrl}/materials/${materialId}`,
-        data: request
-      })
-
-      return response
-    } catch (error) {
-      console.error('Update material error:', error)
-      throw new Error('更新素材失败')
+    const request: MaterialUpdateRequest = {
+      update_data: updateData
     }
+
+    return this.put<MaterialResponse>(`/materials/${materialId}`, request)
   }
 
   /**
@@ -210,21 +160,11 @@ class MaterialApiService {
    * @returns 删除结果
    */
   async deleteMaterials(materialIds: number[]): Promise<MaterialDeleteResponse> {
-    try {
-      const request: MaterialDeleteRequest = {
-        material_ids: materialIds
-      }
-
-      const response = await http.del<MaterialDeleteResponse>({
-        url: `${this.baseUrl}/materials`,
-        data: request
-      })
-
-      return response
-    } catch (error) {
-      console.error('Delete materials error:', error)
-      throw new Error('删除素材失败')
+    const request: MaterialDeleteRequest = {
+      material_ids: materialIds
     }
+
+    return this.delete<MaterialDeleteResponse>('/materials', request)
   }
 
   /**
@@ -233,19 +173,8 @@ class MaterialApiService {
    * @returns 创建的标签
    */
   async createTag(name: string): Promise<TagResponse> {
-    try {
-      const request: TagCreateRequest = { name }
-
-      const response = await http.post<TagResponse>({
-        url: `${this.baseUrl}/tags`,
-        data: request
-      })
-
-      return response
-    } catch (error) {
-      console.error('Create tag error:', error)
-      throw new Error('创建标签失败')
-    }
+    const request: TagCreateRequest = { name }
+    return this.post<TagResponse>('/tags', request)
   }
 
   /**
@@ -304,6 +233,54 @@ class MaterialApiService {
       score: apiMaterial.score,
       key_excerpts: apiMaterial.key_excerpts
     } as Material
+  }
+
+  /**
+   * Mock实现方法
+   */
+  protected async mockImplementation(config: ApiRequestConfig): Promise<any> {
+    const { url, method, data, params } = config
+
+    // 根据不同的API端点返回相应的Mock数据
+    if (url?.includes('/materials/batch') && method === 'POST') {
+      return mockDataManager.getMockData('material-list', 1, data.materials.length)
+    }
+
+    if (url?.includes('/projects/') && url?.includes('/materials') && method === 'GET') {
+      return mockDataManager.getMockData(
+        'material-list',
+        params?.page || 1,
+        params?.page_size || 20,
+        params?.keywords
+      )
+    }
+
+    if (url?.includes('/materials') && method === 'GET' && !url?.includes('/projects/')) {
+      return mockDataManager.getMockData(
+        'material-list',
+        params?.page || 1,
+        params?.page_size || 20,
+        params?.keywords
+      )
+    }
+
+    if (url?.includes('/materials/') && method === 'PUT') {
+      return mockDataManager.getMockData('material-update')
+    }
+
+    if (url?.includes('/materials') && method === 'DELETE') {
+      return mockDataManager.getMockData('batch-delete-materials', data.material_ids)
+    }
+
+    if (url?.includes('/tags') && method === 'POST') {
+      return mockDataManager.getMockData('create-tag', data.name)
+    }
+
+    if (url?.includes('/tags') && method === 'GET') {
+      return mockDataManager.getMockData('material-tags')
+    }
+
+    throw new Error(`未实现的Mock API: ${method} ${url}`)
   }
 }
 
