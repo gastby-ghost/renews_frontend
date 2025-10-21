@@ -1,16 +1,5 @@
 <template>
   <div class="art-material-search">
-    <!-- 搜索模式切换 -->
-    <div class="art-material-search__mode-switch">
-      <el-radio-group
-        v-model="searchMode"
-        @change="(val) => handleModeChange(val as 'simple' | 'agent')"
-      >
-        <el-radio-button label="simple">简单搜索</el-radio-button>
-        <el-radio-button label="agent">Agent搜索</el-radio-button>
-      </el-radio-group>
-    </div>
-
     <!-- 搜索表单区域 -->
     <div class="art-material-search__form">
       <el-card class="art-material-search__card">
@@ -18,7 +7,7 @@
           <div class="art-material-search__header">
             <h3 class="art-material-search__title">
               <el-icon><Search /></el-icon>
-              {{ searchMode === 'agent' ? 'Agent智能检索' : '素材检索' }}
+              素材检索
             </h3>
             <div class="art-material-search__header-actions">
               <el-button
@@ -27,14 +16,6 @@
                 @click="showHistory = !showHistory"
               >
                 搜索历史
-              </el-button>
-              <el-button
-                v-if="searchMode === 'agent'"
-                size="small"
-                type="primary"
-                @click="showAgentPanel = !showAgentPanel"
-              >
-                Agent配置
               </el-button>
             </div>
           </div>
@@ -113,79 +94,15 @@
             />
           </el-form-item>
 
-          <!-- Agent模式特有选项 -->
-          <el-form-item v-if="searchMode === 'agent'" label="Agent类型">
-            <el-select
-              v-model="agentForm.agentType"
-              placeholder="选择Agent类型"
-              style="width: 100%"
-            >
-              <el-option
-                v-for="agent in availableAgents"
-                :key="agent.id"
-                :label="agent.name"
-                :value="agent.type"
-              >
-                <div class="art-material-search__agent-option">
-                  <span>{{ agent.name }}</span>
-                  <el-tag size="small" type="warning">{{ agent.type }}</el-tag>
-                </div>
-              </el-option>
-            </el-select>
-          </el-form-item>
-
-          <el-form-item v-if="searchMode === 'agent'" label="AI增强">
-            <el-switch
-              v-model="agentForm.enableAIEnhancement"
-              active-text="启用"
-              inactive-text="禁用"
-            />
-          </el-form-item>
-
           <el-form-item>
             <div class="art-material-search__actions">
               <el-button type="primary" @click="handleSearch" :loading="searching">
-                {{ searchMode === 'agent' ? '开始Agent搜索' : '开始搜索' }}
+                开始搜索
               </el-button>
               <el-button @click="resetForm">重置</el-button>
-              <el-button v-if="searchMode === 'agent'" @click="showAgentPanel = true" type="info">
-                高级Agent配置
-              </el-button>
             </div>
           </el-form-item>
         </el-form>
-      </el-card>
-    </div>
-
-    <!-- Agent配置面板 -->
-    <div v-if="searchMode === 'agent' && showAgentPanel" class="art-material-search__agent-panel">
-      <el-card class="art-material-search__card">
-        <template #header>
-          <div class="art-material-search__header">
-            <h3 class="art-material-search__title">
-              <el-icon><Setting /></el-icon>
-              Agent高级配置
-            </h3>
-            <el-button size="small" @click="showAgentPanel = false">
-              <el-icon><Close /></el-icon>
-            </el-button>
-          </div>
-        </template>
-
-        <!-- AgentPanel组件将在下一步创建 -->
-        <div v-if="false" class="art-material-search__agent-placeholder">
-          <el-empty description="Agent功能开发中">
-            <el-button type="primary">敬请期待</el-button>
-          </el-empty>
-        </div>
-        <!--
-        <AgentPanel
-          :config="agentForm"
-          :available-agents="availableAgents"
-          @update:config="updateAgentConfig"
-          @search="handleAgentSearch"
-        />
-        -->
       </el-card>
     </div>
 
@@ -350,21 +267,14 @@
 <script setup lang="ts">
   import { ref, reactive, computed, onMounted } from 'vue'
   import { ElMessage } from 'element-plus'
-  import { Search, Setting, Close } from '@element-plus/icons-vue'
+  import { Search } from '@element-plus/icons-vue'
   import type { FormInstance, FormRules } from 'element-plus'
   import { materialSearchService, type SearchToolsResult } from '@/services/materialSearch'
   import { useMaterialStore } from '@/store/material'
-  import type {
-    Material,
-    SearchProgress,
-    AgentSearchConfig,
-    AgentService,
-    SearchResultMaterial
-  } from '@/types/material'
+  import type { Material, SearchProgress, SearchResultMaterial } from '@/types/material'
   import SearchResultCard from '@/components/custom/material-card/UnifiedMaterialCard.vue'
   import SearchProgressComponent from '@/components/custom/search-progress/SearchProgress.vue'
   import MaterialPreviewDialog from '@/components/custom/material-card/MaterialPreviewDialog.vue'
-  // import AgentPanel from './AgentPanel.vue' // 暂时注释，等组件创建后再启用
   import { useRouter } from 'vue-router'
   import { HttpError } from '@/utils/http/error'
 
@@ -372,12 +282,6 @@
     keywords: string
     providers: string[]
     maxResults: number
-  }
-
-  interface AgentForm {
-    agentType: 'search' | 'scope' | 'custom'
-    enableAIEnhancement: boolean
-    agentConfig: Record<string, any>
   }
 
   // 响应式数据
@@ -395,10 +299,6 @@
   const searchResults = ref<SearchResultMaterial[]>([])
   const selectedMaterials = ref<string[]>([])
   const loadingMaterials = ref<string[]>([])
-
-  const showAgentPanel = ref(false)
-  const searchMode = ref<'simple' | 'agent'>('simple')
-  const availableAgents = ref<AgentService[]>([])
 
   // 添加到素材库相关状态
   const addToLibraryDialogVisible = ref(false)
@@ -431,13 +331,6 @@
     maxResults: 20
   })
 
-  // Agent表单数据
-  const agentForm = reactive<AgentForm>({
-    agentType: 'search',
-    enableAIEnhancement: true,
-    agentConfig: {}
-  })
-
   // 搜索进度
   const searchProgress = reactive<SearchProgress>({
     stage: 'config',
@@ -455,38 +348,6 @@
   // 可用的搜索提供商
   const availableProviders = computed(() => materialStore.providers)
 
-  // 获取可用的Agent服务
-  const fetchAvailableAgents = async () => {
-    try {
-      // 模拟Agent服务数据
-      availableAgents.value = [
-        {
-          id: 'search-agent',
-          name: '搜索Agent',
-          type: 'search',
-          description: '智能搜索和分析素材',
-          capabilities: ['智能搜索', '内容分析', '相关性评估']
-        },
-        {
-          id: 'scope-agent',
-          name: '范围Agent',
-          type: 'scope',
-          description: '深度搜索特定领域素材',
-          capabilities: ['深度搜索', '领域专业', '精准匹配']
-        },
-        {
-          id: 'custom-agent',
-          name: '自定义Agent',
-          type: 'custom',
-          description: '根据需求自定义搜索策略',
-          capabilities: ['自定义策略', '灵活配置', '个性化推荐']
-        }
-      ]
-    } catch (error) {
-      console.error('获取Agent服务失败:', error)
-    }
-  }
-
   // 搜索历史
   const searchHistory = computed(() => materialStore.searchHistory)
 
@@ -497,69 +358,6 @@
       { min: 2, max: 100, message: '关键词长度应在 2 到 100 个字符之间', trigger: 'blur' }
     ],
     providers: [{ required: true, message: '请选择至少一个搜索提供商', trigger: 'change' }]
-  }
-
-  // 处理搜索模式切换
-  const handleModeChange = (mode: 'simple' | 'agent') => {
-    searchMode.value = mode
-    materialStore.setSearchMode(mode)
-    if (mode === 'agent' && availableAgents.value.length === 0) {
-      fetchAvailableAgents()
-    }
-  }
-
-  // 更新Agent配置
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const updateAgentConfig = (config: Partial<AgentForm>) => {
-    Object.assign(agentForm, config)
-    console.log('Agent配置已更新:', config)
-  }
-
-  // 暂时注释未使用的函数，等AgentPanel组件创建后启用
-  // const handleAgentSearch = async (config: AgentSearchConfig) => {
-  //   console.log('Agent搜索配置:', config)
-  // }
-
-  // 处理Agent搜索
-  const handleAgentSearch = async (config: AgentSearchConfig) => {
-    searching.value = true
-    hasSearched.value = true
-    currentPage.value = 1
-
-    try {
-      // 更新搜索进度
-      updateSearchProgress('config', 0, 100, '配置Agent搜索参数...')
-
-      // 更新搜索进度
-      updateSearchProgress('searching', 20, 100, 'Agent正在分析需求...')
-
-      // 使用真实API进行Agent搜索
-      const result: SearchToolsResult = await materialSearchService.searchWithSearchTools({
-        keywords: config.keywords,
-        providers: config.providers,
-        searchScope: config.searchScope,
-        filters: config.filters,
-        page: currentPage.value,
-        pageSize: config.maxResults || 20
-      })
-
-      // 更新搜索进度
-      updateSearchProgress('processing', 80, 100, 'Agent正在处理搜索结果...')
-
-      // 更新结果
-      searchResults.value = result.materials
-      totalResults.value = result.total
-
-      // 更新搜索进度
-      updateSearchProgress('completed', 100, 100, 'Agent搜索完成')
-
-      ElMessage.success(`Agent找到 ${result.total} 个相关素材`)
-    } catch (error) {
-      console.error('Agent search error:', error)
-      ElMessage.error(error instanceof Error ? error.message : 'Agent搜索失败，请稍后重试')
-    } finally {
-      searching.value = false
-    }
   }
 
   // 处理搜索
@@ -574,62 +372,46 @@
       hasSearched.value = true
       currentPage.value = 1
 
-      if (searchMode.value === 'agent') {
-        // Agent搜索模式
-        const agentConfig: AgentSearchConfig = {
-          keywords: searchForm.keywords,
-          providers: searchForm.providers,
-          searchScope: '',
-          agentType: agentForm.agentType,
-          agentConfig: agentForm.agentConfig,
-          filters: { type: [] },
-          maxResults: searchForm.maxResults,
-          enableAIEnhancement: agentForm.enableAIEnhancement
-        }
+      // 简单搜索模式
+      // 更新搜索进度
+      updateSearchProgress('config', 0, 100, '配置搜索参数...')
 
-        await handleAgentSearch(agentConfig)
-      } else {
-        // 简单搜索模式
-        // 更新搜索进度
-        updateSearchProgress('config', 0, 100, '配置搜索参数...')
-
-        // 构建搜索参数
-        const searchParams = {
-          keywords: searchForm.keywords,
-          providers: searchForm.providers,
-          searchScope: '',
-          filters: { type: [] },
-          page: currentPage.value,
-          pageSize: searchForm.maxResults
-        }
-
-        // 更新搜索进度
-        updateSearchProgress('searching', 20, 100, '正在搜索素材...')
-
-        // 执行搜索
-        const result: SearchToolsResult =
-          await materialSearchService.searchWithSearchTools(searchParams)
-
-        // 更新搜索进度
-        updateSearchProgress('processing', 80, 100, '处理搜索结果...')
-
-        // 更新结果
-        searchResults.value = result.materials
-        totalResults.value = result.total
-
-        // 更新搜索进度
-        updateSearchProgress('completed', 100, 100, '搜索完成')
-
-        // 添加到搜索历史
-        materialStore.searchMaterials({
-          keywords: searchForm.keywords,
-          providers: searchForm.providers,
-          searchScope: '',
-          filters: { type: [] }
-        })
-
-        ElMessage.success(`找到 ${result.total} 个相关素材`)
+      // 构建搜索参数
+      const searchParams = {
+        keywords: searchForm.keywords,
+        providers: searchForm.providers,
+        searchScope: '',
+        filters: { type: [] },
+        page: currentPage.value,
+        pageSize: searchForm.maxResults
       }
+
+      // 更新搜索进度
+      updateSearchProgress('searching', 20, 100, '正在搜索素材...')
+
+      // 执行搜索
+      const result: SearchToolsResult =
+        await materialSearchService.searchWithSearchTools(searchParams)
+
+      // 更新搜索进度
+      updateSearchProgress('processing', 80, 100, '处理搜索结果...')
+
+      // 更新结果
+      searchResults.value = result.materials
+      totalResults.value = result.total
+
+      // 更新搜索进度
+      updateSearchProgress('completed', 100, 100, '搜索完成')
+
+      // 添加到搜索历史
+      materialStore.searchMaterials({
+        keywords: searchForm.keywords,
+        providers: searchForm.providers,
+        searchScope: '',
+        filters: { type: [] }
+      })
+
+      ElMessage.success(`找到 ${result.total} 个相关素材`)
     } catch (error) {
       console.error('Search error:', error)
       ElMessage.error(error instanceof Error ? error.message : '搜索失败，请稍后重试')
@@ -665,15 +447,9 @@
     searchForm.providers = ['tavily']
     searchForm.maxResults = 20
 
-    // 重置Agent表单
-    agentForm.agentType = 'search'
-    agentForm.enableAIEnhancement = true
-    agentForm.agentConfig = {}
-
     searchResults.value = []
     selectedMaterials.value = []
     hasSearched.value = false
-    showAgentPanel.value = false
   }
 
   // 使用历史记录
@@ -851,12 +627,6 @@
         console.log('[MaterialSearch] 搜索工具未配置，显示警告')
         ElMessage.warning('搜索工具未配置，请联系管理员')
       }
-
-      // 初始化搜索模式
-      searchMode.value = materialStore.searchMode
-      if (searchMode.value === 'agent') {
-        await fetchAvailableAgents()
-      }
     } catch (error) {
       console.error('[MaterialSearch] Check search tools status error:', error)
       console.error('[MaterialSearch] 错误详情:', {
@@ -906,17 +676,6 @@
           color: var(--el-color-primary);
         }
       }
-    }
-
-    &__agent-panel {
-      margin-bottom: 20px;
-    }
-
-    &__agent-option {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      width: 100%;
     }
 
     &__history {
