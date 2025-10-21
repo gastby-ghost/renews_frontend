@@ -13,465 +13,17 @@ import type {
   MockDataConfig,
   ApiRequestConfig
 } from './types'
+import { API_MODULES } from './modules'
 
 const STORAGE_KEY = 'api-config'
 
 /**
- * API注册表 - 集中管理所有API配置
+ * API注册表 - 基于OpenAPI的模块化配置
  */
 const API_REGISTRY: ApiRegistry = {
   services: {
-    // Agent服务配置
-    agent: {
-      name: 'Agent服务',
-      baseUrl: '/api/agent',
-      methods: ['GET', 'POST', 'PUT', 'DELETE'],
-      enableMock: true,
-      mockPath: '/mock/data/agent',
-      defaults: {
-        timeout: 15000,
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        retryCount: 2,
-        enableCache: false
-      },
-      paths: {
-        // 获取可用Agent服务
-        '/services': {
-          description: '获取可用的Agent服务列表',
-          methods: ['GET'],
-          request: {
-            requireAuth: true
-          },
-          response: {
-            dataType: 'AgentService[]'
-          }
-        },
-        // Agent搜索
-        '/search': {
-          description: '使用Agent进行搜索',
-          methods: ['POST'],
-          request: {
-            bodyType: 'json',
-            requireAuth: true,
-            params: {
-              keywords: 'string',
-              agentType: 'string',
-              filters: 'object'
-            }
-          },
-          response: {
-            dataType: 'AgentSearchResult'
-          }
-        },
-        // Agent任务管理
-        '/tasks': {
-          description: 'Agent任务管理',
-          methods: ['POST', 'GET'],
-          request: {
-            bodyType: 'json',
-            requireAuth: true
-          },
-          response: {
-            dataType: 'AgentTask | AgentTask[]'
-          }
-        },
-        // 具体任务操作
-        '/tasks/{taskId}': {
-          description: '获取或取消特定Agent任务',
-          methods: ['GET', 'POST'],
-          request: {
-            requireAuth: true
-          },
-          response: {
-            dataType: 'AgentTask'
-          }
-        },
-        // 任务历史
-        '/tasks/history': {
-          description: '获取Agent任务历史',
-          methods: ['GET'],
-          request: {
-            requireAuth: true
-          },
-          response: {
-            dataType: 'AgentTask[]'
-          }
-        },
-        // Agent推荐
-        '/recommendations/{materialId}': {
-          description: '获取Agent推荐内容',
-          methods: ['GET'],
-          request: {
-            requireAuth: true
-          },
-          response: {
-            dataType: 'Material[]'
-          }
-        },
-        // 内容分析
-        '/analyze/{materialId}': {
-          description: '分析素材内容',
-          methods: ['GET'],
-          request: {
-            requireAuth: true
-          },
-          response: {
-            dataType: 'AnalysisResult'
-          }
-        },
-        // Agent能力配置
-        '/capabilities': {
-          description: '获取Agent能力配置',
-          methods: ['GET'],
-          request: {
-            requireAuth: true
-          },
-          response: {
-            dataType: 'Record<string, string[]>'
-          }
-        }
-      }
-    },
-
-    // 素材管理服务配置
-    material: {
-      name: '素材管理服务',
-      baseUrl: '/api/v1/core',
-      methods: ['GET', 'POST', 'PUT', 'DELETE'],
-      enableMock: true,
-      mockPath: '/mock/data/material',
-      defaults: {
-        timeout: 10000,
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        retryCount: 3,
-        enableCache: true
-      },
-      paths: {
-        // 批量创建素材
-        '/materials/batch': {
-          description: '批量创建素材',
-          methods: ['POST'],
-          request: {
-            bodyType: 'json',
-            requireAuth: true,
-            params: {
-              project_id: 'number',
-              materials: 'CompleteMaterialData[]'
-            }
-          },
-          response: {
-            dataType: 'MaterialListResponse'
-          }
-        },
-        // 获取项目素材
-        '/projects/{projectId}/materials': {
-          description: '获取项目素材列表',
-          methods: ['GET'],
-          request: {
-            requireAuth: true,
-            params: {
-              page: 'number',
-              page_size: 'number',
-              keywords: 'string',
-              tags: 'string[]'
-            }
-          },
-          response: {
-            dataType: 'MaterialListResponse'
-          }
-        },
-        // 获取所有素材
-        '/materials/list': {
-          description: '获取所有素材列表',
-          methods: ['GET'],
-          request: {
-            requireAuth: true,
-            params: {
-              page: 'number',
-              page_size: 'number',
-              keywords: 'string',
-              tags: 'string[]'
-            }
-          },
-          response: {
-            dataType: 'MaterialListResponse'
-          }
-        },
-        // 更新素材
-        '/materials/{materialId}': {
-          description: '更新素材',
-          methods: ['PUT'],
-          request: {
-            bodyType: 'json',
-            requireAuth: true,
-            params: {
-              update_data: 'Partial<MaterialCreateRequest>'
-            }
-          },
-          response: {
-            dataType: 'MaterialResponse'
-          }
-        },
-        // 删除素材
-        '/materials': {
-          description: '批量删除素材',
-          methods: ['DELETE'],
-          request: {
-            bodyType: 'json',
-            requireAuth: true,
-            params: {
-              material_ids: 'number[]'
-            }
-          },
-          response: {
-            dataType: 'MaterialDeleteResponse'
-          }
-        },
-        // 标签管理
-        '/tags': {
-          description: '标签管理',
-          methods: ['GET', 'POST'],
-          request: {
-            bodyType: 'json',
-            requireAuth: true
-          },
-          response: {
-            dataType: 'TagResponse | TagResponse[]'
-          }
-        }
-      }
-    },
-
-    // 搜索服务配置
-    search: {
-      name: '搜索服务',
-      baseUrl: '/api/materials',
-      methods: ['GET', 'POST', 'DELETE'],
-      enableMock: true,
-      mockPath: '/mock/data/search',
-      defaults: {
-        timeout: 120000,
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        retryCount: 1,
-        enableCache: false
-      },
-      paths: {
-        // 通用搜索
-        '/search': {
-          description: '通用搜索接口',
-          methods: ['POST'],
-          request: {
-            bodyType: 'json',
-            requireAuth: true,
-            params: {
-              keywords: 'string',
-              providers: 'string[]',
-              searchScope: 'string',
-              filters: 'object'
-            }
-          },
-          response: {
-            dataType: 'SearchResult'
-          }
-        },
-        // 提供商搜索
-        '/search/{providerId}': {
-          description: '通过指定提供商搜索',
-          methods: ['POST'],
-          request: {
-            bodyType: 'json',
-            requireAuth: true
-          },
-          response: {
-            dataType: 'SearchResult'
-          }
-        },
-        // 获取提供商列表
-        '/providers': {
-          description: '获取搜索提供商列表',
-          methods: ['GET'],
-          request: {
-            requireAuth: true
-          },
-          response: {
-            dataType: 'SearchProvider[]'
-          }
-        },
-        // 素材库操作
-        '/add-to-library': {
-          description: '添加到素材库',
-          methods: ['POST'],
-          request: {
-            bodyType: 'json',
-            requireAuth: true
-          }
-        },
-        '/remove-from-library': {
-          description: '从素材库删除',
-          methods: ['DELETE'],
-          request: {
-            bodyType: 'json',
-            requireAuth: true
-          }
-        },
-        '/library': {
-          description: '获取素材库内容',
-          methods: ['GET'],
-          request: {
-            requireAuth: true,
-            params: {
-              type: 'string',
-              source: 'string',
-              tags: 'string[]',
-              search: 'string'
-            }
-          },
-          response: {
-            dataType: 'SearchResult'
-          }
-        },
-        // 下载素材
-        '/{materialId}/download': {
-          description: '下载素材',
-          methods: ['GET'],
-          request: {
-            requireAuth: true
-          },
-          response: {
-            dataType: '{ url: string }'
-          }
-        },
-        // 素材详情
-        '/{materialId}': {
-          description: '获取素材详情',
-          methods: ['GET'],
-          request: {
-            requireAuth: true
-          },
-          response: {
-            dataType: 'Material'
-          }
-        }
-      }
-    },
-
-    // Search Agent服务配置
-    searchAgent: {
-      name: 'Search Agent服务',
-      baseUrl: '/api/v1/ai/search-agent',
-      methods: ['GET', 'POST'],
-      enableMock: true,
-      mockPath: '/mock/data/agent',
-      defaults: {
-        timeout: 300000, // 5分钟超时
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        retryCount: 1,
-        enableCache: false
-      },
-      paths: {
-        // 执行Agent搜索
-        '/execute': {
-          description: '执行Search Agent搜索',
-          methods: ['POST'],
-          request: {
-            bodyType: 'json',
-            requireAuth: true,
-            params: {
-              brief: 'string',
-              max_concurrent_research_units: 'number',
-              max_researcher_iterations: 'number'
-            }
-          },
-          response: {
-            dataType: 'SearchAgentResponse'
-          }
-        },
-        // 查询任务状态
-        '/status/{taskId}': {
-          description: '查询Agent任务状态',
-          methods: ['GET'],
-          request: {
-            requireAuth: true,
-            params: {
-              user_id: 'string',
-              project_id: 'string'
-            }
-          },
-          response: {
-            dataType: 'SearchAgentStatusResponse'
-          }
-        },
-        // 取消任务
-        '/cancel/{taskId}': {
-          description: '取消Agent任务',
-          methods: ['POST'],
-          request: {
-            requireAuth: true,
-            params: {
-              user_id: 'string',
-              project_id: 'string'
-            }
-          }
-        }
-      }
-    },
-
-    // Search Tools服务配置
-    searchTools: {
-      name: 'Search Tools服务',
-      baseUrl: '/api/v1/ai/search-tools',
-      methods: ['GET', 'POST'],
-      enableMock: true,
-      mockPath: '/mock/data/search',
-      defaults: {
-        timeout: 120000,
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        retryCount: 2,
-        enableCache: false
-      },
-      paths: {
-        // 搜索工具搜索
-        '/search': {
-          description: '使用搜索工具进行搜索',
-          methods: ['POST'],
-          request: {
-            bodyType: 'json',
-            requireAuth: true,
-            params: {
-              queries: 'string[]',
-              provider: 'tavily | bocha',
-              max_results: 'number',
-              enable_structured_summaries: 'boolean',
-              summarization_model: 'string'
-            }
-          },
-          response: {
-            dataType: 'SearchToolsResponse'
-          }
-        },
-        // 检查状态
-        '/status': {
-          description: '检查搜索工具状态',
-          methods: ['GET'],
-          request: {
-            requireAuth: true
-          },
-          response: {
-            dataType: 'SearchToolsStatusResponse'
-          }
-        }
-      }
-    }
+    // 基于OpenAPI的模块化服务配置
+    ...API_MODULES
   },
   globalDefaults: {
     timeout: 10000,
@@ -716,30 +268,6 @@ class ApiConfigManager {
   }
 
   /**
-   * 获取服务信息摘要
-   */
-  getServiceInfo(serviceName: string): {
-    name: string
-    baseUrl: string
-    methods: HttpMethod[]
-    paths: string[]
-    enableMock: boolean
-    mockPath: string
-  } | null {
-    const service = this.getServiceConfig(serviceName)
-    if (!service) return null
-
-    return {
-      name: service.name,
-      baseUrl: service.baseUrl,
-      methods: service.methods,
-      paths: Object.keys(service.paths),
-      enableMock: service.enableMock,
-      mockPath: service.mockPath
-    }
-  }
-
-  /**
    * 获取所有服务的摘要信息
    */
   getAllServicesInfo(): Record<
@@ -756,9 +284,16 @@ class ApiConfigManager {
     const result: Record<string, any> = {}
 
     this.getAllServices().forEach((serviceName) => {
-      const info = this.getServiceInfo(serviceName)
-      if (info) {
-        result[serviceName] = info
+      const service = this.getServiceConfig(serviceName)
+      if (service) {
+        result[serviceName] = {
+          name: service.name,
+          baseUrl: service.baseUrl,
+          methods: service.methods,
+          paths: Object.keys(service.paths),
+          enableMock: service.enableMock,
+          mockPath: service.mockPath
+        }
       }
     })
 
@@ -864,6 +399,90 @@ class ApiConfigManager {
   }
 
   /**
+   * 获取服务列表
+   */
+  getServices(): string[] {
+    return Object.keys(API_MODULES)
+  }
+
+  /**
+   * 获取服务信息
+   */
+  getServiceInfo(moduleName: keyof typeof API_MODULES) {
+    const service = API_MODULES[moduleName]
+    if (!service) return null
+
+    return {
+      name: service.name,
+      baseUrl: service.baseUrl,
+      methods: service.methods,
+      paths: Object.keys(service.paths),
+      enableMock: service.enableMock,
+      mockPath: service.mockPath,
+      totalEndpoints: Object.keys(service.paths).length
+    }
+  }
+
+  /**
+   * 获取所有服务信息
+   */
+  getAllServicesDetailedInfo() {
+    const services = this.getServices()
+    const allServices = this.getAllServicesInfo()
+
+    return {
+      allServices,
+      services: services.map((name) => ({
+        name,
+        ...this.getServiceInfo(name as keyof typeof API_MODULES)
+      })),
+      totalServices: Object.keys(allServices).length,
+      totalApiServices: services.length
+    }
+  }
+
+  /**
+   * 验证模块配置
+   */
+  validateModules(): { isValid: boolean; errors: string[] } {
+    const errors: string[] = []
+
+    Object.entries(API_MODULES).forEach(([moduleName, service]) => {
+      if (!service.name) {
+        errors.push(`模块 ${moduleName} 缺少名称`)
+      }
+
+      if (!service.baseUrl) {
+        errors.push(`模块 ${moduleName} 缺少基础URL`)
+      }
+
+      if (!service.methods || service.methods.length === 0) {
+        errors.push(`模块 ${moduleName} 缺少HTTP方法配置`)
+      }
+
+      if (!service.paths || Object.keys(service.paths).length === 0) {
+        errors.push(`模块 ${moduleName} 缺少路径配置`)
+      }
+
+      // 检查路径配置
+      Object.entries(service.paths).forEach(([path, pathConfig]) => {
+        if (!pathConfig.description) {
+          errors.push(`模块 ${moduleName} 路径 ${path} 缺少描述`)
+        }
+
+        if (!pathConfig.methods || pathConfig.methods.length === 0) {
+          errors.push(`模块 ${moduleName} 路径 ${path} 缺少HTTP方法配置`)
+        }
+      })
+    })
+
+    return {
+      isValid: errors.length === 0,
+      errors
+    }
+  }
+
+  /**
    * 导入配置
    */
   importConfig(configJson: string): boolean {
@@ -902,3 +521,4 @@ export type {
 }
 export { ApiConfigManager }
 export { API_REGISTRY }
+export { API_MODULES } from './modules'

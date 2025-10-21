@@ -141,6 +141,31 @@ function registerGlobalDebugMethods(): void {
     // 构建API URL
     buildUrl: (serviceName: string, path: string, params?: Record<string, string>) => {
       return apiConfigManager.buildApiUrl(serviceName, path, params)
+    },
+
+    // 获取服务列表
+    getServices: () => {
+      return apiConfigManager.getServices()
+    },
+
+    // 获取服务信息
+    getServiceInfo: (moduleName: string) => {
+      return apiConfigManager.getServiceInfo(moduleName as any)
+    },
+
+    // 获取所有服务的详细信息
+    getAllServicesDetailedInfo: () => {
+      return apiConfigManager.getAllServicesDetailedInfo()
+    },
+
+    // 验证模块配置
+    validateModules: () => {
+      return apiConfigManager.validateModules()
+    },
+
+    // 获取开发环境详细信息
+    getDevInfo: () => {
+      return getDevInfo()
     }
   }
 
