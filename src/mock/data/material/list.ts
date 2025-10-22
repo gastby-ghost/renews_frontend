@@ -2,7 +2,11 @@
  * 素材管理Mock数据
  */
 
-import type { MaterialResponse, MaterialListResponse, TagResponse } from '@/services/materialApi'
+import type {
+  MaterialResponse,
+  MaterialListResponse,
+  TagResponse
+} from '@/services/materialService'
 
 // 生成Mock素材数据
 const generateMockMaterial = (index: number): MaterialResponse => {

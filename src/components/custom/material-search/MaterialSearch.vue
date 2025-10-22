@@ -269,7 +269,8 @@
   import { ElMessage } from 'element-plus'
   import { Search } from '@element-plus/icons-vue'
   import type { FormInstance, FormRules } from 'element-plus'
-  import { materialSearchService, type SearchToolsResult } from '@/services/materialSearch'
+  import { aiService } from '@/services/aiService'
+  import type { SearchToolsResponse } from '@/types/ai'
   import { useMaterialStore } from '@/store/material'
   import type { Material, SearchProgress, SearchResultMaterial } from '@/types/material'
   import SearchResultCard from '@/components/custom/material-card/UnifiedMaterialCard.vue'
@@ -378,27 +379,38 @@
 
       // 构建搜索参数
       const searchParams = {
-        keywords: searchForm.keywords,
-        providers: searchForm.providers,
-        searchScope: '',
-        filters: { type: [] },
-        page: currentPage.value,
-        pageSize: searchForm.maxResults
+        queries: [searchForm.keywords],
+        provider: searchForm.providers[0] || 'tavily',
+        max_results: searchForm.maxResults
       }
 
       // 更新搜索进度
       updateSearchProgress('searching', 20, 100, '正在搜索素材...')
 
       // 执行搜索
-      const result: SearchToolsResult =
-        await materialSearchService.searchWithSearchTools(searchParams)
+      const result: SearchToolsResponse = await aiService.searchTools(searchParams)
 
       // 更新搜索进度
       updateSearchProgress('processing', 80, 100, '处理搜索结果...')
 
-      // 更新结果
-      searchResults.value = result.materials
-      totalResults.value = result.total
+      // 转换搜索结果格式
+      searchResults.value = result.results.map((item, index) => ({
+        id: `search-${Date.now()}-${index}`,
+        title: item.aititle || (item as any).webtitle,
+        source: new URL(item.url).hostname,
+        summary: item.summary || item.key_excerpts.join(' '),
+        url: item.url,
+        tags: item.tags || [],
+        type: 'text' as const,
+        createdAt: item.published_date ? new Date(item.published_date) : new Date(),
+        score: item.score,
+        query: item.query,
+        aititle: item.aititle,
+        key_excerpts: item.key_excerpts,
+        published_date: item.published_date,
+        webtitle: (item as any).webtitle
+      }))
+      totalResults.value = result.total_results
 
       // 更新搜索进度
       updateSearchProgress('completed', 100, 100, '搜索完成')
@@ -411,7 +423,7 @@
         filters: { type: [] }
       })
 
-      ElMessage.success(`找到 ${result.total} 个相关素材`)
+      ElMessage.success(`找到 ${result.total_results} 个相关素材`)
     } catch (error) {
       console.error('Search error:', error)
       ElMessage.error(error instanceof Error ? error.message : '搜索失败，请稍后重试')

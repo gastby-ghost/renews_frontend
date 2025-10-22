@@ -1,9 +1,8 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
-import { materialSearchService } from '@/services/materialSearch'
-import { agentService } from '@/services/agentService'
-import { materialApiService, MaterialApiService } from '@/services/materialApi'
+import { aiService } from '@/services/aiService'
+import { materialApiService, MaterialApiService } from '@/services/materialService'
 import type {
   Material,
   SearchResultMaterial,
@@ -15,7 +14,7 @@ import type {
   AgentService,
   AgentState
 } from '@/types/material'
-import type { SearchToolsStatusResponse } from '@/services/materialSearch'
+import type { SearchToolsStatusResponse } from '@/types/ai'
 
 export const useMaterialStore = defineStore('material', () => {
   const state = ref<MaterialLibraryState>({
@@ -151,7 +150,7 @@ export const useMaterialStore = defineStore('material', () => {
       }
 
       // Use the search service
-      const result = await materialSearchService.searchWithSearchTools(searchParams)
+      const result = await aiService.searchTools(searchParams)
 
       addMaterials(result.materials)
       return result.materials
@@ -192,7 +191,7 @@ export const useMaterialStore = defineStore('material', () => {
       // 更新搜索进度
       updateSearchProgress('searching', 20, 100, '正在搜索素材...')
 
-      const result = await materialSearchService.searchWithSearchTools(searchParams)
+      const result = await aiService.searchTools(searchParams)
 
       // 更新搜索进度
       updateSearchProgress('processing', 80, 100, '处理搜索结果...')
@@ -226,7 +225,7 @@ export const useMaterialStore = defineStore('material', () => {
 
       console.log('[material store] checkSearchToolsStatus: 开始检查搜索工具状态')
       console.log('[material store] 时间戳:', new Date().toISOString())
-      const status = await materialSearchService.checkSearchToolsStatus()
+      const status = await aiService.getSearchToolsStatus()
       console.log('[material store] checkSearchToolsStatus: 搜索工具状态检查完成')
       console.log('[material store] 完成时间戳:', new Date().toISOString())
       searchToolsStatus.value = status
@@ -241,7 +240,7 @@ export const useMaterialStore = defineStore('material', () => {
   // 获取搜索提供商信息
   async function getSearchToolsProviders() {
     try {
-      const providers = await materialSearchService.getProviders()
+      const providers = await aiService.getSearchProviders()
       return providers
     } catch (error) {
       state.value.error = error instanceof Error ? error.message : '获取搜索提供商信息失败'
@@ -287,7 +286,8 @@ export const useMaterialStore = defineStore('material', () => {
       agentState.value.loading = true
       agentState.value.error = null
 
-      const agents = await agentService.getAvailableAgents()
+      // 使用AI服务获取Scope Agent任务列表作为替代
+      const agents = await aiService.getScopeAgentTasks('system')
       availableAgents.value = agents
       agentState.value.activeAgents = agents
 
@@ -481,7 +481,16 @@ export const useMaterialStore = defineStore('material', () => {
   async function addToLibrary(materialIds: string[]) {
     try {
       // 使用旧的API作为备用
-      await materialSearchService.addToLibrary(materialIds)
+      // 使用素材API服务添加到素材库
+      await materialApiService.createMaterials(
+        1,
+        materialIds.map((id) => ({
+          title: `素材-${id}`,
+          summary: '从搜索结果导入的素材',
+          url: '',
+          tags: []
+        }))
+      )
       // Update local state to mark materials as in library
       materialIds.forEach((id) => {
         updateMaterial({ id, selected: false })
@@ -700,7 +709,12 @@ export const useMaterialStore = defineStore('material', () => {
 
   async function removeFromLibrary(materialIds: string[]) {
     try {
-      await materialSearchService.removeFromLibrary(materialIds)
+      // 由于移除了materialSearchService，这里使用素材API删除功能
+      // 需要根据实际的素材ID数组来删除，这里简化处理
+      const idsToDelete = materialIds.map((id) => parseInt(id)).filter((id) => !isNaN(id))
+      if (idsToDelete.length > 0) {
+        await materialApiService.deleteMaterials(idsToDelete)
+      }
       materialIds.forEach((id) => {
         removeMaterial(id)
       })
@@ -722,7 +736,8 @@ export const useMaterialStore = defineStore('material', () => {
     state.value.error = null
 
     try {
-      const result = await materialSearchService.getLibraryMaterials(params)
+      // 由于移除了materialSearchService，这里使用素材API获取项目素材作为替代
+      const result = await materialApiService.getProjectMaterials(1, params)
       state.value.materials = result.materials
       return result.materials
     } catch (error) {

@@ -143,57 +143,6 @@ declare namespace Api {
     }
   }
 
-  /** 用户类型 - 已废弃，使用 Auth.UserResponse 代替 */
-  namespace User {
-    /** @deprecated 使用 Auth.UserResponse 代替 */
-    interface UserInfo {
-      userId: number
-      userName: string
-      roles: string[]
-      buttons: string[]
-      avatar?: string
-      email?: string
-      phone?: string
-      // 扩展字段
-      id?: number
-      nickName?: string
-      userGender?: string
-      userPhone?: string
-      userEmail?: string
-      userRoles?: string[]
-      status?: '1' | '2' | '3' | '4' // 1: 在线 2: 离线 3: 异常 4: 注销
-      createBy?: string
-      createTime?: string
-      updateBy?: string
-      updateTime?: string
-    }
-
-    /** @deprecated 用户列表数据 */
-    interface UserListData {
-      records: UserListItem[]
-      current: number
-      size: number
-      total: number
-    }
-
-    /** @deprecated 用户列表项 */
-    interface UserListItem {
-      id: number
-      avatar: string
-      createBy: string
-      createTime: string
-      updateBy: string
-      updateTime: string
-      status: '1' | '2' | '3' | '4' // 1: 在线 2: 离线 3: 异常 4: 注销
-      userName: string
-      userGender: string
-      nickName: string
-      userPhone: string
-      userEmail: string
-      userRoles: string[]
-    }
-  }
-
   /** 用户偏好类型 */
   namespace Preferences {
     /** 用户偏好设置 */
@@ -332,4 +281,365 @@ declare namespace Api {
       data: Record<string, number>
     }
   }
+
+  /** AI 服务类型 */
+  namespace Ai {
+    /** 基础响应类型 */
+    interface BaseResponse {
+      success: boolean
+      message?: string
+      error?: string | null
+    }
+
+    /** 任务响应基础类型 */
+    interface TaskResponse extends BaseResponse {
+      task_id: string
+    }
+
+    /** 网页总结相关类型 */
+    interface WebpageSummaryAsyncRequest {
+      url: string
+      model_name?: string
+      max_tokens?: number
+      scraping_timeout?: number
+      max_content_length?: number
+      target_format?: Record<string, any>
+    }
+
+    interface WebpageSummaryAsyncResponse extends TaskResponse {
+      url: string
+    }
+
+    interface WebpageSummaryStatusResponse extends BaseResponse {
+      task_id: string
+      status: string
+      progress: number
+      result?: {
+        summary: string
+        key_excerpts: string[]
+        word_count: number
+        reading_time: number
+        topics: string[]
+      } | null
+    }
+
+    /** Scope Agent 相关类型 */
+    interface ScopeAgentRequest {
+      query: string
+    }
+
+    interface ScopeAgentResponse extends TaskResponse {
+      user_id: string
+      project_id: string
+      agent_type: string
+    }
+
+    interface ScopeAgentStatusResponse {
+      task_id: string
+      status: string
+      progress: number
+      result?: Record<string, any> | null
+      error?: string | null
+      user_id: string
+      project_id: string
+      agent_type: string
+      created_at: number
+      updated_at: number
+    }
+
+    interface ScopeAgentListResponse {
+      tasks: ScopeAgentStatusResponse[]
+      total_count: number
+      user_id: string
+      project_id?: string | null
+    }
+
+    /** Search Agent 相关类型 */
+    interface SearchAgentRequest {
+      brief: string
+      max_concurrent_research_units?: number | null
+      max_researcher_iterations?: number | null
+    }
+
+    interface SearchAgentResponse extends TaskResponse {
+      user_id: string
+      project_id: string
+      agent_type: string
+    }
+
+    interface SearchAgentStatusResponse {
+      task_id: string
+      status: string
+      progress: number
+      result?: Record<string, any> | null
+      error?: string | null
+      user_id: string
+      project_id: string
+      agent_type: string
+      created_at: number
+      updated_at: number
+    }
+
+    interface SearchAgentListResponse {
+      tasks: SearchAgentStatusResponse[]
+      total_count: number
+      user_id: string
+      project_id?: string | null
+    }
+
+    /** 搜索工具相关类型 */
+    interface SearchResultItem {
+      url: string
+      score: number
+      query: string
+      aititle?: string | null
+      summary?: string | null
+      tags: string[]
+      key_excerpts: string[]
+      published_date?: string | null
+    }
+
+    interface SearchToolsRequest {
+      queries: string[]
+      provider: 'tavily' | 'bocha'
+      max_results?: number
+      enable_structured_summaries?: boolean
+      summarization_model?: string | null
+      max_content_length?: number
+      topic?: 'general' | 'news' | 'finance' | null
+      include_raw_content?: boolean | null
+      freshness?: string | null
+      summary?: boolean | null
+      include?: string | null
+      exclude?: string | null
+    }
+
+    interface SearchToolsResponse extends BaseResponse {
+      provider: string
+      results: SearchResultItem[]
+      total_results: number
+      search_queries: string[]
+      search_time: number
+      api_execution_time: number
+      query_count: number
+    }
+
+    interface SearchToolsStatusResponse {
+      tavily_configured: boolean
+      bocha_configured: boolean
+      tavily_api_key_status: string
+      bocha_api_key_status: string
+      default_provider: string
+      available_providers: string[]
+    }
+
+    /** 标题生成相关类型 */
+    interface Title {
+      title: string
+      angle: string
+      why_now: string
+      news_values: string[]
+      verifiability: string
+      sources: string[]
+      risk_notes: string
+      feasibility: string
+    }
+
+    interface TitleGenerationRequest {
+      research_brief: string
+      web_search_data: SearchResultItem[] | string[]
+    }
+
+    interface TitleGenerationResponse extends BaseResponse {
+      titles: Title[]
+      title_sources_details: Record<string, any[]>
+      generation_time: number
+      title_count: number
+      generation_summary: string
+      total_candidates: number
+      final_report: string
+    }
+
+    interface TitleToolsStatusResponse {
+      configured: boolean
+      available_models: string[]
+      default_model: string
+    }
+
+    /** 大纲生成相关类型 */
+    interface OutlineSection {
+      level: number
+      title: string
+      content_direction: string
+      data_requirements: string[]
+      estimated_word_count?: number | null
+      priority: 'high' | 'medium' | 'low'
+      sources: string[]
+    }
+
+    interface OutlineGenerationRequest {
+      title: Title
+      research_brief: string
+      web_search_data: SearchResultItem[] | string[]
+    }
+
+    interface OutlineGenerationResponse extends BaseResponse {
+      outline: OutlineSection[]
+      outline_sources_details: Record<string, any[]>
+      generation_time: number
+      section_count: number
+      generation_summary: string
+      total_word_estimate?: number | null
+      final_report: string
+    }
+
+    interface OutlineGenerationStatusResponse {
+      configured: boolean
+      available_models: string[]
+      default_model: string
+    }
+
+    /** 任务取消相关类型 */
+    interface TaskCancelRequest {
+      task_id: string
+      terminate?: boolean
+      signal?: string | null
+    }
+
+    /** 验证错误类型 */
+    interface ValidationError {
+      loc: (string | number)[]
+      msg: string
+      type: string
+    }
+
+    interface HTTPValidationError {
+      detail: ValidationError[]
+    }
+
+    /** 通用任务状态类型 */
+    interface TaskStatus {
+      task_id: string
+      status: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled'
+      progress: number
+      result?: any
+      error?: string
+      created_at: number
+      updated_at: number
+    }
+
+    /** 提供商信息类型 */
+    interface ProviderInfo {
+      name: string
+      description: string
+      capabilities: string[]
+      status: 'active' | 'inactive' | 'error'
+    }
+
+    interface ProvidersResponse {
+      [providerName: string]: ProviderInfo
+    }
+  }
+
+  /** 素材管理类型 */
+  namespace Material {
+    /** 素材响应 */
+    interface MaterialResponse {
+      id: number
+      title: string
+      summary: string
+      url?: string
+      score?: number
+      key_excerpts?: string[]
+      user_id: number
+      created_at: string
+      updated_at: string
+      tags: string[]
+    }
+
+    /** 素材列表响应 */
+    interface MaterialListResponse {
+      success: boolean
+      message: string
+      materials: MaterialResponse[]
+      total_count: number
+      page: number
+      page_size: number
+      total_pages: number
+    }
+
+    /** 创建素材请求 */
+    interface MaterialCreateRequest {
+      title: string
+      summary: string
+      url?: string
+      score?: number
+      key_excerpts?: string[]
+      tags?: string[]
+    }
+
+    /** 批量添加完整素材请求 */
+    interface AddCompleteMaterialRequest {
+      project_id: number
+      materials: CompleteMaterialData[]
+    }
+
+    interface CompleteMaterialData {
+      title: string
+      summary: string
+      url?: string
+      score?: number
+      key_excerpts?: string[]
+      tags?: string[]
+    }
+
+    /** 更新素材请求 */
+    interface MaterialUpdateRequest {
+      update_data: Partial<MaterialCreateRequest>
+    }
+
+    /** 删除素材请求 */
+    interface MaterialDeleteRequest {
+      material_ids: number[]
+    }
+
+    /** 删除素材响应 */
+    interface MaterialDeleteResponse {
+      success: boolean
+      message: string
+      deleted_count: number
+      failed_count: number
+      details?: any[]
+    }
+
+    /** 创建标签请求 */
+    interface TagCreateRequest {
+      name: string
+    }
+
+    /** 标签响应 */
+    interface TagResponse {
+      id: number
+      name: string
+      is_system: boolean
+      material_count: number
+      created_at: string
+    }
+
+    /** 搜索素材请求 */
+    interface MaterialSearchRequest {
+      keywords: string
+      filters?: object
+      project_id?: number
+    }
+
+    /** 素材统计请求 */
+    interface MaterialStatsRequest {
+      project_id?: number
+      group_by?: string
+    }
+  }
 }
+
+// 导出命名空间作为模块
+export { Api }

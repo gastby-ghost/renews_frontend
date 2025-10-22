@@ -2,12 +2,8 @@
  * 搜索功能Mock数据
  */
 
-import type {
-  SearchResult,
-  SearchResultItem,
-  SearchToolsResult,
-  SearchProvider
-} from '@/services/materialSearch'
+import type { SearchToolsResponse, SearchResultItem } from '@/types/ai'
+import type { SearchProvider } from '@/types/material'
 import type { SearchResultMaterial } from '@/types/material'
 
 // 生成搜索结果项
@@ -17,7 +13,7 @@ const generateSearchResultItem = (keywords: string, index: number): SearchResult
 
   return {
     url: `https://${domain}/article-${index + 1}`,
-    webtitle: `${keywords} - 相关文章 ${index + 1}`,
+    webtitle: `${keywords} - 相关文章 ${index + 1}` as any,
     score: Math.random() * 0.5 + 0.5, // 0.5-1.0之间
     query: keywords,
     aititle: `AI优化: ${keywords}深度分析 ${index + 1}`,
@@ -37,7 +33,7 @@ export const generateMockSearchResult = (
   keywords: string,
   page: number = 1,
   pageSize: number = 20
-): SearchResult => {
+): SearchToolsResponse => {
   const totalCount = 100
   const startIndex = (page - 1) * pageSize
 
@@ -46,10 +42,14 @@ export const generateMockSearchResult = (
   )
 
   return {
-    materials: results.map((item, index) => transformToSearchResultMaterial(item, index)),
-    total: totalCount,
-    page,
-    pageSize
+    success: true,
+    provider: 'tavily',
+    results,
+    total_results: totalCount,
+    search_queries: [keywords],
+    search_time: 1.5,
+    api_execution_time: 1.2,
+    query_count: 1
   }
 }
 
@@ -78,7 +78,7 @@ const transformToSearchResultMaterial = (
 
   return {
     id: `search-${Date.now()}-${index}`,
-    title: item.aititle || item.webtitle,
+    title: item.aititle || (item as any).webtitle,
     source,
     summary: item.summary,
     tags: item.tags || [],
@@ -94,7 +94,7 @@ const transformToSearchResultMaterial = (
     aititle: item.aititle,
     key_excerpts: item.key_excerpts,
     published_date: item.published_date,
-    webtitle: item.webtitle
+    webtitle: (item as any).webtitle
   }
 }
 

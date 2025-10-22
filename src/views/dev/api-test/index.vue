@@ -100,7 +100,7 @@
   import { ElMessage } from 'element-plus'
   import { apiConfigManager } from '@/config/api'
   import { agentService } from '@/services/agentService'
-  import { materialApiService } from '@/services/materialApi'
+  import { materialApiService } from '@/services/materialService'
   import { materialSearchService } from '@/services/materialSearch'
 
   defineOptions({ name: 'ApiTest' })

@@ -273,7 +273,7 @@
   import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
   import { Link, Document, CollectionTag, InfoFilled, Star, Search } from '@element-plus/icons-vue'
   import type { Material, SearchResultMaterial } from '@/types/material'
-  import { materialApiService } from '@/services/materialApi'
+  import { materialApiService } from '@/services/materialService'
 
   // 联合类型，支持两种素材类型
   type UnifiedMaterial = Material | SearchResultMaterial
