@@ -35,13 +35,51 @@ export function parseToken(token: string): { [key: string]: any } {
 }
 
 /**
+ * 检查mock令牌是否过期
+ * @param token Mock令牌
+ * @param bufferSeconds 缓冲时间（秒），默认30秒
+ * @returns 是否过期
+ */
+export function isMockTokenExpired(token: string, bufferSeconds: number = 30): boolean {
+  try {
+    // mock token格式: mock-时间戳-随机字符串
+    const parts = token.split('-')
+    if (parts.length < 2 || parts[0] !== 'mock') {
+      return true // 格式错误，认为过期
+    }
+
+    const timestamp = parseInt(parts[1])
+    if (isNaN(timestamp)) {
+      return true // 时间戳无效，认为过期
+    }
+
+    // 检查创建时间是否超过有效期（默认24小时）
+    const creationTime = timestamp
+    const currentTime = Date.now()
+    const maxAge = 24 * 60 * 60 * 1000 // 24小时
+    const bufferTime = bufferSeconds * 1000 // 转换为毫秒
+
+    return currentTime - creationTime >= maxAge - bufferTime
+  } catch (error) {
+    console.warn('检查mock令牌过期状态失败:', error)
+    return true
+  }
+}
+
+/**
  * 检查令牌是否过期
- * @param token JWT令牌
+ * @param token JWT令牌或Mock令牌
  * @param bufferSeconds 缓冲时间（秒），默认30秒
  * @returns 是否过期
  */
 export function isTokenExpired(token: string, bufferSeconds: number = 30): boolean {
   try {
+    // 如果是mock token，使用特殊的过期检查逻辑
+    if (token.startsWith('mock-')) {
+      return isMockTokenExpired(token, bufferSeconds)
+    }
+
+    // JWT token的正常过期检查
     const tokenData = parseToken(token)
 
     // 如果没有过期时间，认为未过期

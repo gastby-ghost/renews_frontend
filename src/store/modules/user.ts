@@ -10,6 +10,7 @@ import { resetRouterState } from '@/router/guards/beforeEach'
 import { RoutesAlias } from '@/router/routesAlias'
 import { useMenuStore } from './menu'
 import { authService } from '@/services/authService'
+import { apiConfigManager } from '@/config/api'
 import { isTokenExpired, parseToken } from '@/utils/auth'
 
 /**
@@ -39,6 +40,8 @@ export const useUserStore = defineStore(
     const tokenExpiresAt = ref<number>(0)
     // 令牌刷新定时器
     let tokenRefreshTimer: NodeJS.Timeout | null = null
+    // 用户类型：'real' | 'mock' - 用于区分真实用户和模拟用户
+    const userType = ref<'real' | 'mock'>('real')
 
     // 计算属性：获取用户信息
     const getUserInfo = computed(() => info.value)
@@ -46,6 +49,19 @@ export const useUserStore = defineStore(
     const getSettingState = computed(() => useSettingStore().$state)
     // 计算属性：获取工作台状态
     const getWorktabState = computed(() => useWorktabStore().$state)
+
+    /**
+     * 设置用户类型
+     * @param type 用户类型：'real' | 'mock'
+     */
+    const setUserType = (type: 'real' | 'mock') => {
+      userType.value = type
+    }
+
+    /**
+     * 获取用户类型
+     */
+    const getUserType = computed(() => userType.value)
 
     /**
      * 设置用户信息 - 仅存储来自 core API 的必要字段
@@ -246,6 +262,14 @@ export const useUserStore = defineStore(
       console.log('[UserStore] 处理登录响应:', authResponse)
 
       if (authResponse.success && authResponse.token) {
+        // 获取当前API配置，判断用户类型
+        const apiConfig = apiConfigManager.getConfig()
+        const currentUserType = apiConfig.useMock ? 'mock' : 'real'
+
+        // 设置用户类型
+        setUserType(currentUserType)
+        console.log(`[UserStore] 用户类型设置为: ${currentUserType}`)
+
         // 设置令牌
         setToken(
           authResponse.token,
@@ -313,6 +337,8 @@ export const useUserStore = defineStore(
       refreshToken.value = ''
       // 清空令牌过期时间
       tokenExpiresAt.value = 0
+      // 重置用户类型为默认值
+      userType.value = 'real'
 
       // 清空工作台已打开页面
       useWorktabStore().opened = []
@@ -339,6 +365,15 @@ export const useUserStore = defineStore(
         console.log('[UserStore] 没有访问令牌，设置登录状态为false')
         setLoginStatus(false)
         return false
+      }
+
+      // 根据token类型设置用户类型
+      if (accessToken.value.startsWith('mock-')) {
+        console.log('[UserStore] 检测到Mock token，设置用户类型为mock')
+        setUserType('mock')
+      } else {
+        console.log('[UserStore] 检测到真实token，设置用户类型为real')
+        setUserType('real')
       }
 
       // 检查令牌是否过期
@@ -438,9 +473,11 @@ export const useUserStore = defineStore(
       accessToken,
       refreshToken,
       tokenExpiresAt,
+      userType,
       getUserInfo,
       getSettingState,
       getWorktabState,
+      getUserType,
       setUserInfo,
       setLoginStatus,
       setLanguage,
@@ -448,6 +485,7 @@ export const useUserStore = defineStore(
       setLockStatus,
       setLockPassword,
       setToken,
+      setUserType,
       refreshAccessToken,
       setupTokenRefresh,
       loginWithAuthResponse,
@@ -460,7 +498,20 @@ export const useUserStore = defineStore(
   {
     persist: {
       key: 'user',
-      storage: localStorage
+      storage: localStorage,
+      // 持久化用户类型，以便在页面刷新后保持用户类型信息
+      paths: [
+        'language',
+        'isLogin',
+        'isLock',
+        'lockPassword',
+        'info',
+        'searchHistory',
+        'accessToken',
+        'refreshToken',
+        'tokenExpiresAt',
+        'userType'
+      ]
     }
   }
 )

@@ -14,6 +14,7 @@ import type {
   ApiRequestConfig
 } from './types'
 import { API_MODULES } from './modules'
+import { useUserStore } from '@/store/modules/user'
 
 const STORAGE_KEY = 'api-config'
 
@@ -117,8 +118,63 @@ class ApiConfigManager {
 
   /**
    * 设置是否使用Mock数据
+   * 实现单向逻辑：
+   * - 真实用户登录后，切换到mock模式，保持登录状态
+   * - mock用户登录后，切换到真实API模式，需要重新登录
    */
   setUseMock(useMock: boolean): void {
+    const currentConfig = this.getConfig()
+
+    // 如果模式没有变化，直接返回
+    if (currentConfig.useMock === useMock) {
+      return
+    }
+
+    // 获取用户store，检查当前用户状态
+    const userStore = useUserStore()
+
+    // 如果当前有用户登录
+    if (userStore.isLogin) {
+      const userType = userStore.getUserType
+
+      // 如果是从Mock模式切换到真实API模式，且当前是Mock用户
+      if (!useMock && userType === 'mock') {
+        console.warn('[API配置] Mock用户无法切换到真实API模式，需要重新登录')
+
+        // 执行登出操作
+        userStore.logOut()
+
+        // 显示提示信息
+        if (typeof window !== 'undefined') {
+          // 使用定时器确保在Vue组件上下文之外执行
+          setTimeout(() => {
+            alert('Mock用户无法使用真实API，请使用真实账户重新登录')
+          }, 100)
+        }
+
+        // 不更新配置，保持当前模式
+        return
+      }
+
+      // 如果是从真实API切换到Mock模式，且当前是真实用户
+      if (useMock && userType === 'real') {
+        console.log('[API配置] 真实用户切换到Mock模式，保持登录状态')
+
+        // 真实用户可以切换到Mock模式，保持登录状态
+        this.updateConfig({ useMock })
+
+        // 显示提示信息
+        if (typeof window !== 'undefined') {
+          setTimeout(() => {
+            console.log('已切换到Mock模式，当前用户数据保持不变')
+          }, 100)
+        }
+
+        return
+      }
+    }
+
+    // 如果没有用户登录，直接更新配置
     this.updateConfig({ useMock })
   }
 
