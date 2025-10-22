@@ -13,6 +13,9 @@ export * from './data/material/list'
 // 搜索相关Mock数据
 export * from './data/search/results'
 
+// AI服务相关Mock数据
+export * from './data/ai'
+
 // Mock数据管理器
 export class MockDataManager {
   private static instance: MockDataManager
@@ -107,6 +110,97 @@ export class MockDataManager {
       case 'download-url': {
         const { generateMockDownloadUrl } = require('./data/search/results')
         data = generateMockDownloadUrl(args[0])
+        break
+      }
+
+      // AI服务Mock数据
+      case 'ai-webpage-summary-async': {
+        const { generateMockWebpageSummaryAsync } = require('./data/ai')
+        data = generateMockWebpageSummaryAsync(args[0])
+        break
+      }
+
+      case 'ai-webpage-summary-status': {
+        const { generateMockWebpageSummaryStatus } = require('./data/ai')
+        data = generateMockWebpageSummaryStatus(args[0])
+        break
+      }
+
+      case 'ai-scope-agent-execute': {
+        const { generateMockScopeAgentResponse } = require('./data/ai')
+        data = generateMockScopeAgentResponse(args[0], args[1], args[2])
+        break
+      }
+
+      case 'ai-scope-agent-status': {
+        const { generateMockScopeAgentStatus } = require('./data/ai')
+        data = generateMockScopeAgentStatus(args[0])
+        break
+      }
+
+      case 'ai-scope-agent-list': {
+        const { generateMockScopeAgentList } = require('./data/ai')
+        data = generateMockScopeAgentList(args[0], args[1])
+        break
+      }
+
+      case 'ai-search-agent-execute': {
+        const { generateMockSearchAgentResponse } = require('./data/ai')
+        data = generateMockSearchAgentResponse(args[0], args[1], args[2])
+        break
+      }
+
+      case 'ai-search-agent-status': {
+        const { generateMockSearchAgentStatus } = require('./data/ai')
+        data = generateMockSearchAgentStatus(args[0])
+        break
+      }
+
+      case 'ai-search-agent-list': {
+        const { generateMockSearchAgentList } = require('./data/ai')
+        data = generateMockSearchAgentList(args[0], args[1])
+        break
+      }
+
+      case 'ai-search-tools': {
+        const { generateMockSearchToolsResponse } = require('./data/ai')
+        data = generateMockSearchToolsResponse(args[0], args[1])
+        break
+      }
+
+      case 'ai-search-tools-status': {
+        const { generateMockSearchToolsStatus } = require('./data/ai')
+        data = generateMockSearchToolsStatus()
+        break
+      }
+
+      case 'ai-title-generation': {
+        const { generateMockTitleGenerationResponse } = require('./data/ai')
+        data = generateMockTitleGenerationResponse(args[0], args[1])
+        break
+      }
+
+      case 'ai-title-tools-status': {
+        const { generateMockTitleToolsStatus } = require('./data/ai')
+        data = generateMockTitleToolsStatus()
+        break
+      }
+
+      case 'ai-outline-generation': {
+        const { generateMockOutlineGenerationResponse } = require('./data/ai')
+        data = generateMockOutlineGenerationResponse(args[0], args[1], args[2])
+        break
+      }
+
+      case 'ai-outline-tools-status': {
+        const { generateMockOutlineToolsStatus } = require('./data/ai')
+        data = generateMockOutlineToolsStatus()
+        break
+      }
+
+      case 'ai-providers': {
+        const { generateMockAIProviders } = require('./data/ai')
+        data = generateMockAIProviders()
         break
       }
 

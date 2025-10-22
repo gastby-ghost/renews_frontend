@@ -5,6 +5,7 @@
 
 import { apiConfigManager } from '@/config/api'
 import { mockDataManager } from '@/mock'
+import { aiTestUtils } from './testAiApi'
 
 /**
  * 初始化开发工具
@@ -161,6 +162,20 @@ function registerGlobalDebugMethods(): void {
     // 获取开发环境详细信息
     getDevInfo: () => {
       return getDevInfo()
+    },
+
+    // AI测试工具
+    aiTest: aiTestUtils,
+
+    // 快速AI API测试
+    testAiApi: () => {
+      return aiTestUtils.runAllAiTests()
+    },
+
+    // 获取AI服务实例
+    getAiService: async () => {
+      const { aiService } = await import('@/services/aiService')
+      return aiService
     }
   }
 
