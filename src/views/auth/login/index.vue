@@ -205,7 +205,7 @@
       })
 
       const authResponse = await authService.login({
-        email: login,
+        login: login,
         password,
         remember_me: formData.remember_me
       })
