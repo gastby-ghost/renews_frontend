@@ -13,11 +13,11 @@ export const titleGenerateService: ApiEndpointConfig = {
   enableMock: true,
   mockPath: '/mock/data/ai',
   defaults: {
-    timeout: 30000, // AI服务可能需要更长时间
+    timeout: 120000, // AI服务可能需要更长时间，设置为120秒
     headers: {
       'Content-Type': 'application/json'
     },
-    retryCount: 1,
+    retryCount: 2, // 增加重试次数以配合更长的超时时间
     enableCache: false
   },
   paths: {

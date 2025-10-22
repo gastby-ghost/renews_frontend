@@ -4,6 +4,7 @@ import { ApiStatus } from './status'
 import { HttpError, handleError, showError } from './error'
 import { $t } from '@/locales'
 import { isTokenExpired } from '@/utils/auth'
+import { AiErrorFactory } from './ai-error'
 
 /** 请求配置常量 */
 const REQUEST_TIMEOUT = 15000
@@ -216,10 +217,34 @@ axiosInstance.interceptors.response.use(
     })
 
     const originalRequest = error.config as ExtendedAxiosRequestConfig
+    const requestUrl = error.config?.url || ''
+
+    // 检查是否为AI服务请求
+    const isAiServiceRequest = AUTH_API_PATTERNS.some((pattern) => requestUrl.includes(pattern))
 
     // 处理401错误和令牌刷新
     if (error.response?.status === ApiStatus.unauthorized && !originalRequest._retry) {
       return handleTokenRefreshError(originalRequest)
+    }
+
+    // AI服务错误特殊处理
+    if (isAiServiceRequest) {
+      const aiError = AiErrorFactory.createFromHttpResponse(
+        error.response?.status || 0,
+        error.response?.data || {},
+        requestUrl,
+        'ai'
+      )
+
+      console.log('[HTTP Response] AI服务错误处理:', {
+        url: requestUrl,
+        statusCode: error.response?.status,
+        aiErrorCode: aiError.aiErrorCode,
+        errorType: aiError.errorType,
+        retryable: aiError.retryable
+      })
+
+      return Promise.reject(aiError)
     }
 
     return Promise.reject(handleError(error))

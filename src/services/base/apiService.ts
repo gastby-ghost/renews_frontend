@@ -12,14 +12,21 @@ import type {
   ApiPathConfig
 } from '@/config/api/types'
 import http from '@/utils/http'
+import {
+  AiErrorHandler,
+  createAiServiceRequest,
+  handleAiError
+} from '@/utils/http/ai-error-handler'
 
 abstract class BaseApiService {
   protected serviceName: string
   private serviceConfig: ApiEndpointConfig | null = null
+  protected aiErrorHandler: AiErrorHandler
 
   constructor(serviceName: string) {
     this.serviceName = serviceName
     this.serviceConfig = apiConfigManager.getServiceConfig(serviceName)
+    this.aiErrorHandler = new AiErrorHandler()
 
     if (!this.serviceConfig) {
       throw new Error(`服务配置未找到: ${serviceName}`)
@@ -87,7 +94,7 @@ abstract class BaseApiService {
       await this.simulateDelay(apiConfig.mockDelay || mockConfig.defaultDelay)
 
       // 调用Mock实现
-      const result = await this.mockImplementation(config)
+      const result = await this.mockImplementation?.(config)
 
       // 包装Mock响应
       const mockResponse: ApiResponse<T> = {
@@ -124,6 +131,9 @@ abstract class BaseApiService {
       })
     }
 
+    // 检查是否为AI服务
+    const isAiService = this.isAiServiceName(this.serviceName)
+
     try {
       // 构建HTTP请求配置
       const httpConfig = {
@@ -138,8 +148,26 @@ abstract class BaseApiService {
         timeout: config.timeout || serviceDefaults.timeout
       }
 
-      // 发送HTTP请求
-      const result = await http.request<T>(httpConfig)
+      let result: T
+
+      if (isAiService) {
+        // AI服务使用带重试机制的请求
+        result = await createAiServiceRequest(() => http.request<T>(httpConfig), {
+          service: this.serviceName,
+          endpoint: config.url,
+          operation: `${config.method} ${config.url}`,
+          retryConfig: {
+            maxRetries: serviceDefaults.retryCount || 2,
+            baseDelay: 1000,
+            maxDelay: 30000,
+            backoffFactor: 2,
+            retryableErrors: [1001, 1002, 1003, 1400, 1500, 1501] // AI服务可重试错误码
+          }
+        })
+      } else {
+        // 非AI服务使用普通请求
+        result = await http.request<T>(httpConfig)
+      }
 
       if (apiConfig.showDebugInfo) {
         console.log(`[API-${this.serviceName}] 真实API响应:`, result)
@@ -148,8 +176,39 @@ abstract class BaseApiService {
       return result
     } catch (error) {
       console.error(`[API-${this.serviceName}] 真实API请求失败:`, error)
-      throw error
+
+      if (isAiService) {
+        // AI服务错误处理
+        const aiError = await handleAiError(error, {
+          service: this.serviceName,
+          endpoint: config.url,
+          operation: `${config.method} ${config.url}`
+        })
+        throw aiError
+      } else {
+        // 非AI服务错误处理
+        throw error
+      }
     }
+  }
+
+  /**
+   * 判断是否为AI服务
+   */
+  private isAiServiceName(serviceName: string): boolean {
+    const aiServiceNames = [
+      'ai',
+      'webpage-summary',
+      'retrieval',
+      'tasks',
+      'scope-agent',
+      'search-agent',
+      'search-tools',
+      'title-generate',
+      'outline-generate',
+      'health'
+    ]
+    return aiServiceNames.includes(serviceName)
   }
 
   /**

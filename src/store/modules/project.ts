@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { projectService } from '@/api/projectApi'
+import { projectService } from '@/services/projectService'
 import type { Api } from '@/typings/api'
 
 // 从Api.Project命名空间导入类型
@@ -170,7 +170,9 @@ export const useProjectStore = defineStore(
         const params = {
           page: pagination.value.page,
           page_size: pagination.value.page_size,
-          ...filters.value
+          status: filters.value.status || undefined,
+          keywords: filters.value.keywords || undefined,
+          name: filters.value.keywords || undefined
         }
 
         const response: ProjectListResponse = await projectService.getProjects(params)
@@ -338,7 +340,7 @@ export const useProjectStore = defineStore(
         setLoading(true)
         clearError()
 
-        const response: ProjectDeleteResponse = await projectService.deleteProjects(projectIds)
+        const response: ProjectDeleteResponse = await projectService.batchDeleteProjects(projectIds)
 
         // 添加响应验证逻辑
         if (!response || typeof response !== 'object') {
@@ -384,7 +386,7 @@ export const useProjectStore = defineStore(
 
         const response: ProjectDetailResponse = await projectService.updateProjectStatus(
           projectId,
-          status
+          { status, reason: '状态更新' }
         )
 
         // 添加响应验证逻辑
@@ -424,18 +426,18 @@ export const useProjectStore = defineStore(
      * @param component 当前组件
      * @returns 是否更新成功
      */
-    const updateProjectComponent = async (
-      projectId: number,
-      component: string
-    ): Promise<boolean> => {
+    const updateProjectComponent = async (projectId: number): Promise<boolean> => {
       try {
         setLoading(true)
         clearError()
 
-        const response: ProjectDetailResponse = await projectService.updateProjectComponent(
-          projectId,
-          component
-        )
+        // 注意：新架构中没有updateProjectComponent方法，这里暂时注释掉
+        // const response: ProjectDetailResponse = await projectService.updateProjectComponent(
+        //   projectId,
+        //   component
+        // )
+        console.warn('updateProjectComponent方法在新架构中不可用，需要手动实现')
+        return null
 
         // 添加响应验证逻辑
         if (!response || typeof response !== 'object') {
@@ -477,7 +479,7 @@ export const useProjectStore = defineStore(
         setLoading(true)
         clearError()
 
-        const response: ProjectStatisticsResponse = await projectService.getProjectStatistics()
+        const response: ProjectStatisticsResponse = await projectService.getProjectStats(projectId)
 
         // 添加响应验证逻辑
         if (!response || typeof response !== 'object') {
@@ -510,7 +512,12 @@ export const useProjectStore = defineStore(
         setLoading(true)
         clearError()
 
-        const response: ProjectListResponse = await projectService.searchProjects(keywords, filters)
+        const response: ProjectListResponse = await projectService.searchProjects({
+          keywords,
+          ...filters,
+          page: pagination.value.page,
+          page_size: pagination.value.page_size
+        })
 
         // 添加响应验证逻辑
         if (!response || typeof response !== 'object') {

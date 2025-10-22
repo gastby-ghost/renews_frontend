@@ -539,6 +539,70 @@ declare namespace Api {
     interface ProvidersResponse {
       [providerName: string]: ProviderInfo
     }
+
+    /** AI服务错误处理相关类型 */
+    interface AiErrorDetails {
+      service?: string
+      endpoint?: string
+      taskId?: string
+      model?: string
+      provider?: string
+      retryable?: boolean
+      retryAfter?: number
+      suggestedAction?: string
+      originalError?: any
+    }
+
+    interface AiErrorResponse {
+      success: boolean
+      message: string
+      error_code: number
+      error_type: string
+      severity: 'low' | 'medium' | 'high' | 'critical'
+      details: AiErrorDetails
+      timestamp: string
+      retryable: boolean
+      retry_after?: number
+    }
+
+    interface AiServiceStatus {
+      service: string
+      status: 'healthy' | 'degraded' | 'unavailable'
+      last_check: string
+      response_time: number
+      error_rate: number
+      uptime: number
+    }
+
+    interface AiTaskStatus {
+      task_id: string
+      status: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled'
+      progress: number
+      created_at: number
+      updated_at: number
+      started_at?: number
+      completed_at?: number
+      error?: string
+      result?: any
+      metadata?: Record<string, any>
+    }
+
+    interface AiServiceMetrics {
+      total_requests: number
+      successful_requests: number
+      failed_requests: number
+      average_response_time: number
+      error_rate: number
+      last_updated: string
+      by_service: Record<
+        string,
+        {
+          requests: number
+          errors: number
+          avg_response_time: number
+        }
+      >
+    }
   }
 
   /** 素材管理类型 */

@@ -13,7 +13,7 @@ export const searchToolsService: ApiEndpointConfig = {
   enableMock: true,
   mockPath: '/mock/data/ai',
   defaults: {
-    timeout: 30000, // AI服务可能需要更长时间
+    timeout: 120000, // AI服务可能需要更长时间
     headers: {
       'Content-Type': 'application/json'
     },

@@ -10,8 +10,14 @@ export { default as BaseApiService } from './base/apiService'
 // 用户认证服务 - 基于OpenAPI配置
 export * from './authService'
 
+// 项目管理服务 - 基于OpenAPI配置
+export * from './projectService'
+
 // 素材管理服务 - 基于OpenAPI配置
 export * from './materialService'
 
 // AI智能服务 - 基于OpenAPI配置
 export * from './aiService'
+
+// 系统偏好设置服务 - 基于OpenAPI配置
+export * from './systemPreferencesService'

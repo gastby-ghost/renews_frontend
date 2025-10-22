@@ -6,7 +6,6 @@ import { useUserStore } from '@/store/modules/user'
 import { useMenuStore } from '@/store/modules/menu'
 import { setWorktab } from '@/utils/navigation'
 import { setPageTitle, setSystemTheme } from '../utils/utils'
-import { menuService } from '@/api/menuApi'
 import { registerDynamicRoutes } from '../utils/registerRoutes'
 import { AppRouteRecord } from '@/types/router'
 import { RoutesAlias } from '../routesAlias'
@@ -265,11 +264,15 @@ async function processFrontendMenu(router: Router): Promise<void> {
 
 /**
  * 处理后端控制模式的菜单逻辑
+ * 由于config/api中没有menu模块，这里转为前端实现
  */
 async function processBackendMenu(router: Router): Promise<void> {
-  const { menuList } = await menuService.getMenuList()
-  // 简化权限检查，不再基于角色过滤菜单
-  // 直接使用后端返回的菜单，所有登录用户都可以访问
+  // 使用前端菜单数据替代后端菜单API
+  const menuList = asyncRoutes.map((route) => menuDataToRouter(route))
+
+  // 添加延时以提升用户体验
+  await new Promise((resolve) => setTimeout(resolve, LOADING_DELAY))
+
   await registerAndStoreMenu(router, menuList)
 }
 

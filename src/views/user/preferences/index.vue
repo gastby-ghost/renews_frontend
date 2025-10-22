@@ -225,7 +225,7 @@
 <script setup lang="ts">
   import { Setting, Clock, Bell, Tools } from '@element-plus/icons-vue'
   import { ElMessage, ElMessageBox } from 'element-plus'
-  import { PreferencesService } from '@/api/preferencesApi'
+  import { systemPreferencesService } from '@/services/systemPreferencesService'
   // import { useUserStore } from '@/store/modules/user'
   // import { useSettingStore } from '@/store/modules/setting'
   import { useI18n } from 'vue-i18n'
@@ -239,7 +239,7 @@
   const fileInput = ref<HTMLInputElement>()
 
   // 用户偏好设置
-  const preferences = ref<Api.Preferences.UserPreference>({
+  const preferences = ref({
     user_id: '',
     theme: 'light',
     font_size: 'medium',
@@ -256,7 +256,7 @@
   })
 
   // 默认偏好设置
-  const defaultPreferences = ref<Api.Preferences.UserPreference>({
+  const defaultPreferences = ref({
     user_id: '',
     theme: 'light',
     font_size: 'medium',
@@ -278,7 +278,7 @@
   // 获取用户偏好设置
   const fetchPreferences = async () => {
     try {
-      const response = await PreferencesService.getUserPreferences()
+      const response = await systemPreferencesService.getUserPreferences()
 
       if (response && response.user_id) {
         preferences.value = { ...defaultPreferences.value, ...response }
@@ -308,7 +308,7 @@
     try {
       saving.value = true
 
-      const updateData: Api.Preferences.UpdateUserPreferenceRequest = {
+      const updateData = {
         theme: preferences.value.theme,
         font_size: preferences.value.font_size,
         auto_save_interval: parseInt(preferences.value.auto_save_frequency || '5'),
@@ -323,7 +323,7 @@
         custom_settings: preferences.value.custom_settings
       }
 
-      await PreferencesService.updateUserPreferences(updateData)
+      await systemPreferencesService.updateUserPreferences(updateData)
       ElMessage.success(t('userPreferences.messages.saveSuccess'))
     } catch (error) {
       if (error instanceof HttpError) {
@@ -346,7 +346,7 @@
         type: 'warning'
       })
 
-      const response = await PreferencesService.resetUserPreferences()
+      const response = await systemPreferencesService.resetUserPreferences()
 
       if (response && response.theme) {
         preferences.value = {
@@ -418,7 +418,7 @@
     reader.onload = async (e) => {
       try {
         const content = e.target?.result as string
-        const importedPrefs = JSON.parse(content) as Api.Preferences.UserPreference
+        const importedPrefs = JSON.parse(content)
 
         // 验证导入的数据
         if (importedPrefs && typeof importedPrefs === 'object') {

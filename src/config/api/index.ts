@@ -266,6 +266,12 @@ class ApiConfigManager {
 
     let url = service.baseUrl + path
 
+    // 添加环境变量中的baseURL，确保返回完整URL
+    const envBaseUrl = import.meta.env.VITE_API_URL
+    if (envBaseUrl && !url.startsWith('http')) {
+      url = envBaseUrl.replace(/\/$/, '') + url
+    }
+
     // 替换路径参数
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
