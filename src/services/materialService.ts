@@ -75,7 +75,7 @@ class MaterialApiService extends BaseApiService {
     },
     options?: ApiRequestConfig
   ) {
-    return this.get<MaterialListResponse | MaterialResponse>('/materials', params, options)
+    return this.get<MaterialListResponse>('/materials', params, options)
   }
 
   /**
