@@ -50,7 +50,7 @@
   import { ElMessage, ElNotification } from 'element-plus'
   import type { FormInstance, FormRules } from 'element-plus'
   import { useI18n } from 'vue-i18n'
-  import { AuthService } from '@/api/authApi'
+  import { authService } from '@/services/authService'
   import { HttpError } from '@/utils/http/error'
 
   defineOptions({ name: 'ForgetPassword' })
@@ -93,7 +93,7 @@
       // 忘记密码请求
       const { email } = formData
 
-      const response = await AuthService.forgotPassword(
+      const response = await authService.forgotPassword(
         {
           email,
           newpassword: '' // 这个字段在API中是必需的，但在忘记密码流程中通常由用户在邮件中设置

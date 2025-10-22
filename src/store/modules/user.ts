@@ -9,7 +9,7 @@ import { setPageTitle } from '@/router/utils/utils'
 import { resetRouterState } from '@/router/guards/beforeEach'
 import { RoutesAlias } from '@/router/routesAlias'
 import { useMenuStore } from './menu'
-import { AuthService } from '@/api/authApi'
+import { authService } from '@/services/authService'
 import { isTokenExpired, parseToken } from '@/utils/auth'
 
 /**
@@ -163,7 +163,7 @@ export const useUserStore = defineStore(
           return false
         }
 
-        const response = await AuthService.refreshToken(refreshToken.value)
+        const response = await authService.refreshToken(refreshToken.value)
 
         // 根据API规范，刷新令牌API返回空对象 RefreshTokenResponse
         // 如果请求成功，说明刷新令牌有效，新的访问令牌应该已经在HTTP响应头中
@@ -294,7 +294,7 @@ export const useUserStore = defineStore(
 
       // 调用登出API
       try {
-        await AuthService.logout()
+        await authService.logout()
       } catch (error) {
         console.error('登出API调用失败:', error)
       }
@@ -385,7 +385,7 @@ export const useUserStore = defineStore(
           return false
         }
 
-        const response = await AuthService.getAccountSettings()
+        const response = await authService.getAccount()
 
         if (response && response.success && response.data) {
           console.log('[UserStore] 成功获取用户信息:', response.data)

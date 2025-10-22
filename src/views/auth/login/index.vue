@@ -115,7 +115,7 @@
   import { useI18n } from 'vue-i18n'
   import { HttpError } from '@/utils/http/error'
   import { themeAnimation } from '@/utils/theme/animation'
-  import { AuthService } from '@/api/authApi'
+  import { authService } from '@/services/authService'
 
   defineOptions({ name: 'Login' })
 
@@ -204,17 +204,11 @@
         apiUrl: import.meta.env.VITE_API_URL
       })
 
-      const authResponse = await AuthService.login(
-        {
-          login,
-          password,
-          remember_me: formData.remember_me
-        },
-        {
-          // 禁用自动错误显示，因为我们将在catch块中处理
-          showErrorMessage: false
-        }
-      )
+      const authResponse = await authService.login({
+        email: login,
+        password,
+        remember_me: formData.remember_me
+      })
 
       console.log('[Login] 登录响应:', authResponse)
 

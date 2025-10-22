@@ -151,7 +151,7 @@
 
 <script setup lang="ts">
   import { useUserStore } from '@/store/modules/user'
-  import { AuthService } from '@/api/authApi'
+  import { authService } from '@/services/authService'
   import { ElForm, FormInstance, FormRules, ElMessage } from 'element-plus'
 
   defineOptions({ name: 'UserCenter' })
@@ -234,7 +234,7 @@
         avatar: form.avatar
       }
 
-      const response = await AuthService.updateAccountSettings(updateData)
+      const response = await authService.updateAccount(updateData)
 
       if (response.success) {
         ElMessage.success('用户信息更新成功')

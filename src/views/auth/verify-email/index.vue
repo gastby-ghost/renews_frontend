@@ -63,7 +63,7 @@
   import { ElMessage } from 'element-plus'
   import { Loading, CircleCheck, CircleClose } from '@element-plus/icons-vue'
   import { useI18n } from 'vue-i18n'
-  import { AuthService } from '@/api/authApi'
+  import { authService } from '@/services/authService'
   import { HttpError } from '@/utils/http/error'
 
   defineOptions({ name: 'VerifyEmail' })
@@ -89,7 +89,7 @@
         return
       }
 
-      const response = await AuthService.verifyEmail(token)
+      const response = await authService.verifyEmail(token)
 
       if (response.success) {
         status.value = 'success'

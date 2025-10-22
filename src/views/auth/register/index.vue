@@ -96,7 +96,7 @@
   import { ElMessage, ElNotification } from 'element-plus'
   import type { FormInstance, FormRules } from 'element-plus'
   import { useI18n } from 'vue-i18n'
-  import { AuthService } from '@/api/authApi'
+  import { authService } from '@/services/authService'
   import { HttpError } from '@/utils/http/error'
 
   defineOptions({ name: 'Register' })
@@ -224,7 +224,7 @@
         agree_to_terms: formData.agree_to_terms
       })
 
-      const registerResponse = await AuthService.register(
+      const registerResponse = await authService.register(
         {
           username,
           email,

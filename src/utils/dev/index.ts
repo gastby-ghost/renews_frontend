@@ -148,11 +148,6 @@ function registerGlobalDebugMethods(): void {
       return apiConfigManager.getServices()
     },
 
-    // 获取服务信息
-    getServiceInfo: (moduleName: string) => {
-      return apiConfigManager.getServiceInfo(moduleName as any)
-    },
-
     // 获取所有服务的详细信息
     getAllServicesDetailedInfo: () => {
       return apiConfigManager.getAllServicesDetailedInfo()
