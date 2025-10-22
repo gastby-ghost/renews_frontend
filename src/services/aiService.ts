@@ -6,6 +6,7 @@
 import BaseApiService from './base/apiService'
 import type { ApiRequestConfig } from '@/config/api/types'
 import type { Api } from '@/typings/api'
+import { mockDataManager } from '@/mock'
 
 // AI服务相关类型
 type WebpageSummaryAsyncResponse = Api.Ai.WebpageSummaryAsyncResponse
@@ -389,6 +390,162 @@ class AiService extends BaseApiService {
    */
   async healthCheck(options?: ApiRequestConfig) {
     return this.get('/health', undefined, options)
+  }
+
+  /**
+   * Mock实现方法
+   * 为AI服务提供Mock数据支持
+   * 使用外部的Mock数据管理器
+   */
+  protected async mockImplementation(config: ApiRequestConfig): Promise<any> {
+    const apiConfig = this.getCurrentConfig()
+
+    if (apiConfig.showDebugInfo) {
+      console.log(`[API-${this.serviceName}] 执行Mock实现:`, {
+        url: config.url,
+        method: config.method,
+        data: config.data
+      })
+    }
+
+    // 模拟网络延迟
+    await new Promise((resolve) => setTimeout(resolve, apiConfig.mockDelay || 1000))
+
+    // 根据不同的API路径返回相应的Mock数据
+    const url = config.url
+    const method = config.method
+
+    try {
+      // 搜索工具相关API
+      if (method === 'GET' && url.includes('/search-tools/status')) {
+        return mockDataManager.getMockData('ai-search-tools-status')
+      }
+
+      if (method === 'GET' && url.includes('/search-tools/providers')) {
+        return mockDataManager.getMockData('ai-providers')
+      }
+
+      if (method === 'POST' && url.includes('/search-tools/search')) {
+        const requestData = config.data
+        return mockDataManager.getMockData(
+          'ai-search-tools',
+          requestData.queries || [],
+          requestData.provider || 'tavily'
+        )
+      }
+
+      // Scope Agent相关API
+      if (method === 'POST' && url.includes('/scope-agent/execute')) {
+        const requestData = config.data
+        const params = config.params || {}
+        return mockDataManager.getMockData(
+          'ai-scope-agent-execute',
+          params.user_id,
+          params.project_id,
+          requestData.query
+        )
+      }
+
+      if (method === 'GET' && url.includes('/scope-agent/status/')) {
+        const taskId = url.split('/').pop()
+        return mockDataManager.getMockData('ai-scope-agent-status', taskId)
+      }
+
+      if (method === 'GET' && url.includes('/scope-agent/tasks')) {
+        const params = config.params || {}
+        return mockDataManager.getMockData('ai-scope-agent-list', params.user_id, params.project_id)
+      }
+
+      // Search Agent相关API
+      if (method === 'POST' && url.includes('/search-agent/execute')) {
+        const requestData = config.data
+        const params = config.params || {}
+        return mockDataManager.getMockData(
+          'ai-search-agent-execute',
+          params.user_id,
+          params.project_id,
+          requestData.brief
+        )
+      }
+
+      if (method === 'GET' && url.includes('/search-agent/status/')) {
+        const taskId = url.split('/').pop()
+        return mockDataManager.getMockData('ai-search-agent-status', taskId)
+      }
+
+      if (method === 'GET' && url.includes('/search-agent/tasks')) {
+        const params = config.params || {}
+        return mockDataManager.getMockData(
+          'ai-search-agent-list',
+          params.user_id,
+          params.project_id
+        )
+      }
+
+      // 网页总结相关API
+      if (method === 'POST' && url.includes('/webpage-summary/summarize-async')) {
+        const requestData = config.data
+        return mockDataManager.getMockData('ai-webpage-summary-async', requestData.url)
+      }
+
+      if (method === 'GET' && url.includes('/webpage-summary/status/')) {
+        const taskId = url.split('/').pop()
+        return mockDataManager.getMockData('ai-webpage-summary-status', taskId)
+      }
+
+      // 标题生成相关API
+      if (method === 'POST' && url.includes('/title-generate/generate')) {
+        const requestData = config.data
+        return mockDataManager.getMockData(
+          'ai-title-generation',
+          requestData.research_brief,
+          requestData.web_search_data
+        )
+      }
+
+      if (method === 'GET' && url.includes('/title-generate/status')) {
+        return mockDataManager.getMockData('ai-title-tools-status')
+      }
+
+      // 大纲生成相关API
+      if (method === 'POST' && url.includes('/outline-generate/generate')) {
+        const requestData = config.data
+        return mockDataManager.getMockData(
+          'ai-outline-generation',
+          requestData.title,
+          requestData.research_brief,
+          requestData.web_search_data
+        )
+      }
+
+      if (method === 'GET' && url.includes('/outline-generate/status')) {
+        return mockDataManager.getMockData('ai-outline-tools-status')
+      }
+
+      // 默认Mock响应
+      return {
+        success: true,
+        message: `AI服务Mock响应 - ${method} ${url}`,
+        data: {
+          mock: true,
+          timestamp: Date.now(),
+          request_info: {
+            url,
+            method,
+            data: config.data
+          }
+        }
+      }
+    } catch (error) {
+      console.error(`[API-${this.serviceName}] Mock数据获取失败:`, error)
+
+      // 返回错误响应
+      return {
+        success: false,
+        message: `Mock数据获取失败: ${error instanceof Error ? error.message : '未知错误'}`,
+        error: error instanceof Error ? error.message : '未知错误'
+      }
+    }
   }
 }
 

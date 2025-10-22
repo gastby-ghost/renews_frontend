@@ -2,8 +2,6 @@
  * Mock数据统一导出文件
  */
 
-/* eslint-disable @typescript-eslint/no-require-imports */
-
 // Agent相关Mock数据
 export * from './data/agent/searchResult'
 
@@ -15,6 +13,43 @@ export * from './data/search/results'
 
 // AI服务相关Mock数据
 export * from './data/ai'
+
+// 导入所有Mock数据生成函数
+import {
+  generateMockAgentSearchResult,
+  mockAgentServices,
+  mockAgentCapabilities
+} from './data/agent/searchResult'
+
+import { generateMockMaterialList, generateMockTags } from './data/material/list'
+
+import {
+  generateMockSearchResult,
+  generateMockSearchToolsResult,
+  generateMockSearchProviders,
+  generateMockSearchToolsStatus,
+  generateMockLibraryMaterials,
+  generateMockMaterialDetails,
+  generateMockDownloadUrl
+} from './data/search/results'
+
+import {
+  generateMockWebpageSummaryAsync,
+  generateMockWebpageSummaryStatus,
+  generateMockScopeAgentResponse,
+  generateMockScopeAgentStatus,
+  generateMockScopeAgentList,
+  generateMockSearchAgentResponse,
+  generateMockSearchAgentStatus,
+  generateMockSearchAgentList,
+  generateMockSearchToolsResponse,
+  generateMockSearchToolsStatus,
+  generateMockTitleGenerationResponse,
+  generateMockTitleToolsStatus,
+  generateMockOutlineGenerationResponse,
+  generateMockOutlineToolsStatus,
+  generateMockAIProviders
+} from './data/ai'
 
 // Mock数据管理器
 export class MockDataManager {
@@ -42,164 +77,137 @@ export class MockDataManager {
 
     switch (key) {
       case 'agent-search-result': {
-        const { generateMockAgentSearchResult } = require('./data/agent/searchResult')
         data = generateMockAgentSearchResult(args[0], args[1])
         break
       }
 
       case 'agent-services': {
-        const { mockAgentServices } = require('./data/agent/searchResult')
         data = mockAgentServices
         break
       }
 
       case 'agent-capabilities': {
-        const { mockAgentCapabilities } = require('./data/agent/searchResult')
         data = mockAgentCapabilities
         break
       }
 
       case 'material-list': {
-        const { generateMockMaterialList } = require('./data/material/list')
         data = generateMockMaterialList(args[0], args[1], args[2])
         break
       }
 
       case 'material-tags': {
-        const { generateMockTags } = require('./data/material/list')
         data = generateMockTags()
         break
       }
 
       case 'search-result': {
-        const { generateMockSearchResult } = require('./data/search/results')
         data = generateMockSearchResult(args[0], args[1], args[2])
         break
       }
 
       case 'search-tools-result': {
-        const { generateMockSearchToolsResult } = require('./data/search/results')
         data = generateMockSearchToolsResult(args[0], args[1], args[2])
         break
       }
 
       case 'search-providers': {
-        const { generateMockSearchProviders } = require('./data/search/results')
         data = generateMockSearchProviders()
         break
       }
 
       case 'search-tools-status': {
-        const { generateMockSearchToolsStatus } = require('./data/search/results')
         data = generateMockSearchToolsStatus()
         break
       }
 
       case 'library-materials': {
-        const { generateMockLibraryMaterials } = require('./data/search/results')
         data = generateMockLibraryMaterials(args[0], args[1], args[2], args[3], args[4])
         break
       }
 
       case 'material-details': {
-        const { generateMockMaterialDetails } = require('./data/search/results')
         data = generateMockMaterialDetails(args[0])
         break
       }
 
       case 'download-url': {
-        const { generateMockDownloadUrl } = require('./data/search/results')
         data = generateMockDownloadUrl(args[0])
         break
       }
 
       // AI服务Mock数据
       case 'ai-webpage-summary-async': {
-        const { generateMockWebpageSummaryAsync } = require('./data/ai')
         data = generateMockWebpageSummaryAsync(args[0])
         break
       }
 
       case 'ai-webpage-summary-status': {
-        const { generateMockWebpageSummaryStatus } = require('./data/ai')
         data = generateMockWebpageSummaryStatus(args[0])
         break
       }
 
       case 'ai-scope-agent-execute': {
-        const { generateMockScopeAgentResponse } = require('./data/ai')
         data = generateMockScopeAgentResponse(args[0], args[1], args[2])
         break
       }
 
       case 'ai-scope-agent-status': {
-        const { generateMockScopeAgentStatus } = require('./data/ai')
         data = generateMockScopeAgentStatus(args[0])
         break
       }
 
       case 'ai-scope-agent-list': {
-        const { generateMockScopeAgentList } = require('./data/ai')
         data = generateMockScopeAgentList(args[0], args[1])
         break
       }
 
       case 'ai-search-agent-execute': {
-        const { generateMockSearchAgentResponse } = require('./data/ai')
         data = generateMockSearchAgentResponse(args[0], args[1], args[2])
         break
       }
 
       case 'ai-search-agent-status': {
-        const { generateMockSearchAgentStatus } = require('./data/ai')
         data = generateMockSearchAgentStatus(args[0])
         break
       }
 
       case 'ai-search-agent-list': {
-        const { generateMockSearchAgentList } = require('./data/ai')
         data = generateMockSearchAgentList(args[0], args[1])
         break
       }
 
       case 'ai-search-tools': {
-        const { generateMockSearchToolsResponse } = require('./data/ai')
         data = generateMockSearchToolsResponse(args[0], args[1])
         break
       }
 
       case 'ai-search-tools-status': {
-        const { generateMockSearchToolsStatus } = require('./data/ai')
         data = generateMockSearchToolsStatus()
         break
       }
 
       case 'ai-title-generation': {
-        const { generateMockTitleGenerationResponse } = require('./data/ai')
         data = generateMockTitleGenerationResponse(args[0], args[1])
         break
       }
 
       case 'ai-title-tools-status': {
-        const { generateMockTitleToolsStatus } = require('./data/ai')
         data = generateMockTitleToolsStatus()
         break
       }
 
       case 'ai-outline-generation': {
-        const { generateMockOutlineGenerationResponse } = require('./data/ai')
         data = generateMockOutlineGenerationResponse(args[0], args[1], args[2])
         break
       }
 
       case 'ai-outline-tools-status': {
-        const { generateMockOutlineToolsStatus } = require('./data/ai')
         data = generateMockOutlineToolsStatus()
         break
       }
 
       case 'ai-providers': {
-        const { generateMockAIProviders } = require('./data/ai')
         data = generateMockAIProviders()
         break
       }

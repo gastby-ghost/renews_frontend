@@ -163,7 +163,8 @@ class AuthService extends BaseApiService {
       return { valid: false, userType: 'real' }
     }
   }
-  protected async mockImplementation(): Promise<any> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  protected async mockImplementation(_config: ApiRequestConfig): Promise<any> {
     // 模拟网络延迟
     await new Promise((resolve) => setTimeout(resolve, 1000))
 

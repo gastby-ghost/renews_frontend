@@ -34,9 +34,33 @@ abstract class BaseApiService {
   protected async request<T>(config: ApiRequestConfig): Promise<T> {
     const apiConfig = apiConfigManager.getConfig()
 
+    // 添加调试日志
+    if (apiConfig.showDebugInfo) {
+      console.log(`[API-${this.serviceName}] 请求开始:`, {
+        url: config.url,
+        method: config.method,
+        useMock: config.useMock,
+        globalMockEnabled: apiConfig.useMock,
+        hasMockImplementation: !!this.mockImplementation,
+        serviceName: this.serviceName
+      })
+    }
+
     // 检查是否启用Mock模式
     if (config.useMock !== false && apiConfig.useMock && this.mockImplementation) {
+      if (apiConfig.showDebugInfo) {
+        console.log(`[API-${this.serviceName}] 使用Mock模式`)
+      }
       return this.handleMockRequest<T>(config)
+    }
+
+    // 添加调试信息
+    if (apiConfig.showDebugInfo) {
+      console.log(`[API-${this.serviceName}] 使用真实API模式. 原因:`, {
+        useMockDisabled: config.useMock === false,
+        globalMockDisabled: !apiConfig.useMock,
+        noMockImplementation: !this.mockImplementation
+      })
     }
 
     // 使用真实API
@@ -147,7 +171,8 @@ abstract class BaseApiService {
   /**
    * Mock实现方法（子类需要重写）
    */
-  protected async mockImplementation?(): Promise<any> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  protected async mockImplementation?(_config: ApiRequestConfig): Promise<any> {
     throw new Error(`Mock实现未定义: ${this.serviceName}`)
   }
 

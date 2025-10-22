@@ -235,7 +235,8 @@ export function getDevInfo(): Record<string, any> {
     cacheStats: mockDataManager.getCacheStats(),
     servicesInfo: apiConfigManager.getAllServicesInfo(),
     apiRegistry: apiConfigManager.getApiRegistry(),
-    validation: apiConfigManager.validateApiConfig()
+    validation: apiConfigManager.validateApiConfig(),
+    testAiMock: testAiMockFunctionality
   }
 }
 
