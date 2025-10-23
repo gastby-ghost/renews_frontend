@@ -4,6 +4,7 @@ import { ApiStatus } from './status'
 import { HttpError, handleError, showError } from './error'
 import { $t } from '@/locales'
 import { isTokenExpired } from '@/utils/auth'
+import type { Api } from '@/typings/api'
 
 /** 请求配置常量 */
 const REQUEST_TIMEOUT = 15000
@@ -12,10 +13,14 @@ const MAX_RETRIES = 2
 const RETRY_DELAY = 1000
 const UNAUTHORIZED_DEBOUNCE_TIME = 3000
 
-/** 认证API路径配置 */
+/** 认证API路径配置 - 基于OpenAPI规范 */
 const AUTH_API_PATTERNS = [
-  '/api/v1/ai/'
-  // 移除 /api/v1/core/ 因为项目管理API使用标准响应格式
+  '/api/v1/ai/', // AI服务使用success字段格式
+  '/api/v1/core/login',
+  '/api/v1/core/register',
+  '/api/v1/core/forgot-password',
+  '/api/v1/core/verify',
+  '/api/v1/core/refresh-token'
 ]
 
 /** 401防抖状态 */
@@ -73,7 +78,7 @@ axiosInstance.interceptors.request.use(
         // 令牌已过期，尝试刷新令牌
         useUserStore()
           .refreshAccessToken()
-          .then((success) => {
+          .then((success: boolean) => {
             if (!success) {
               console.log('[HTTP Request] 令牌刷新失败，重新初始化认证状态')
               initializeAuthState()
@@ -130,9 +135,9 @@ axiosInstance.interceptors.request.use(
   }
 )
 
-/** 响应拦截器 */
+/** 响应拦截器 - 基于OpenAPI规范优化 */
 axiosInstance.interceptors.response.use(
-  (response: AxiosResponse<Api.Http.BaseResponse>) => {
+  (response: AxiosResponse<Api.Http.BaseResponse | Api.Ai.BaseResponse | any>) => {
     console.log('[HTTP Response] 成功响应:', {
       url: response.config.url,
       status: response.status,
@@ -151,60 +156,67 @@ axiosInstance.interceptors.response.use(
       hasCode: response.data && 'code' in response.data,
       hasSuccess: response.data && 'success' in response.data,
       codeValue: response.data?.code,
-      successValue: (response.data as any)?.success
+      successValue: response.data?.success
     })
 
-    if (isAuthAPI) {
-      // 认证API的特殊处理
-      const responseData = response.data as any
-      console.log('[HTTP Response] 认证API响应数据:', responseData)
+    // AI服务响应处理 (基于ai_openapi.json)
+    if (response.config.url?.includes('/api/v1/ai/')) {
+      const aiResponse = response.data as Api.Ai.BaseResponse
 
-      // 检查是否是AuthResponse格式 (success字段而不是code字段)
-      if (Object.prototype.hasOwnProperty.call(responseData, 'success')) {
-        console.log('[HTTP Response] 检测到AuthResponse格式，success值:', responseData.success)
-
-        // 如果success为true，直接返回响应
-        if (responseData.success === true) {
-          console.log('[HTTP Response] AuthResponse成功，返回响应')
+      if (aiResponse && 'success' in aiResponse) {
+        if (aiResponse.success === true) {
+          console.log('[HTTP Response] AI服务响应成功')
           return response
         } else {
-          // 如果success为false，抛出错误
-          const errorMessage =
-            responseData.message || responseData.msg || $t('httpMsg.requestFailed')
-          console.log('[HTTP Response] AuthResponse失败，错误信息:', errorMessage)
+          const errorMessage = aiResponse.message || aiResponse.error || $t('httpMsg.requestFailed')
+          console.log('[HTTP Response] AI服务响应失败:', errorMessage)
           throw createHttpError(errorMessage, ApiStatus.error)
         }
       }
     }
 
-    // 标准API响应处理
-    const { code, msg } = response.data
-    console.log('[HTTP Response] 标准API处理:', { code, msg, expectedCode: ApiStatus.success })
+    // 认证API响应处理 (基于core_openapi.json)
+    if (isAuthAPI && response.config.url?.includes('/api/v1/core/')) {
+      const authResponse = response.data as Api.Auth.AuthResponse
 
-    // 处理没有code和msg字段的响应（直接返回数据）
-    if (code === undefined && msg === undefined) {
-      console.log('[HTTP Response] 检测到无code/msg字段的响应，直接返回数据')
-      return response
+      if (authResponse && 'success' in authResponse) {
+        if (authResponse.success === true) {
+          console.log('[HTTP Response] 认证API响应成功')
+          return response
+        } else {
+          const errorMessage = authResponse.message || $t('httpMsg.requestFailed')
+          console.log('[HTTP Response] 认证API响应失败:', errorMessage)
+          throw createHttpError(errorMessage, ApiStatus.error)
+        }
+      }
     }
 
-    if (code === ApiStatus.success) {
-      console.log('[HTTP Response] 标准API成功，返回响应')
-      return response
+    // 标准API响应处理 (基于core_openapi.json)
+    const standardResponse = response.data as Api.Http.BaseResponse
+    if (standardResponse && 'code' in standardResponse) {
+      const { code, msg } = standardResponse
+      console.log('[HTTP Response] 标准API处理:', { code, msg, expectedCode: ApiStatus.success })
+
+      if (code === ApiStatus.success) {
+        console.log('[HTTP Response] 标准API成功，返回响应')
+        return response
+      }
+
+      if (code === ApiStatus.unauthorized) {
+        console.log('[HTTP Response] 处理未授权错误')
+        handleUnauthorizedError(msg)
+      }
+
+      // 获取响应数据中的detail字段作为具体错误信息
+      const detailMessage = (response.data as any)?.detail
+      const errorMessage = detailMessage || msg || $t('httpMsg.requestFailed')
+      console.log('[HTTP Response] 标准API错误处理:', { errorMessage, code, detailMessage, msg })
+      throw createHttpError(errorMessage, code)
     }
 
-    if (code === ApiStatus.unauthorized) {
-      console.log('[HTTP Response] 处理未授权错误')
-      handleUnauthorizedError(msg)
-    }
-
-    // 获取响应数据中的detail字段作为具体错误信息
-    const responseData = response.data as any
-    const detailMessage = responseData?.detail
-
-    // 优先使用detail字段，其次使用msg字段
-    const errorMessage = detailMessage || msg || $t('httpMsg.requestFailed')
-    console.log('[HTTP Response] 标准API错误处理:', { errorMessage, code, detailMessage, msg })
-    throw createHttpError(errorMessage, code)
+    // 无标准结构的数据直接返回
+    console.log('[HTTP Response] 无标准结构响应，直接返回数据')
+    return response
   },
   async (error) => {
     console.log('[HTTP Response] 错误响应:', {
@@ -218,27 +230,72 @@ axiosInstance.interceptors.response.use(
     const originalRequest = error.config as ExtendedAxiosRequestConfig
     const requestUrl = error.config?.url || ''
 
-    // 检查是否为AI服务请求
-    const isAiServiceRequest = AUTH_API_PATTERNS.some((pattern) => requestUrl.includes(pattern))
-
     // 处理401错误和令牌刷新
     if (error.response?.status === ApiStatus.unauthorized && !originalRequest._retry) {
       return handleTokenRefreshError(originalRequest)
     }
 
-    // 特殊API错误处理（保持原有逻辑，但使用通用错误处理）
-    if (isAiServiceRequest) {
-      const errorMessage =
-        error.response?.data?.message || error.response?.data?.msg || $t('httpMsg.requestFailed')
-      const statusCode = error.response?.status || ApiStatus.error
+    // AI服务特定错误处理 (基于ai_openapi.json)
+    if (requestUrl.includes('/api/v1/ai/')) {
+      const aiErrorData = error.response?.data
+      let errorMessage = 'AI服务请求失败'
+      let errorCode = ApiStatus.error
 
-      console.log('[HTTP Response] 特殊API错误处理:', {
+      if (aiErrorData) {
+        if ('message' in aiErrorData) {
+          errorMessage = aiErrorData.message
+        } else if ('error' in aiErrorData) {
+          errorMessage = aiErrorData.error
+        } else if ('detail' in aiErrorData) {
+          // 处理验证错误
+          if (Array.isArray(aiErrorData.detail)) {
+            errorMessage = aiErrorData.detail.map((item: any) => item.msg).join(', ')
+          } else {
+            errorMessage = aiErrorData.detail
+          }
+        }
+        errorCode = error.response?.status || ApiStatus.error
+      }
+
+      console.log('[HTTP Response] AI服务错误处理:', {
         url: requestUrl,
-        statusCode: statusCode,
-        errorMessage: errorMessage
+        errorCode,
+        errorMessage
       })
 
-      return Promise.reject(handleError(error))
+      return Promise.reject(createHttpError(errorMessage, errorCode))
+    }
+
+    // 认证API错误处理 (基于core_openapi.json)
+    if (
+      AUTH_API_PATTERNS.some(
+        (pattern) => requestUrl.includes(pattern) && requestUrl.includes('/api/v1/core/')
+      )
+    ) {
+      const authErrorData = error.response?.data
+      let errorMessage = '认证服务请求失败'
+      let errorCode = ApiStatus.error
+
+      if (authErrorData) {
+        if ('message' in authErrorData) {
+          errorMessage = authErrorData.message
+        } else if ('detail' in authErrorData) {
+          if (Array.isArray(authErrorData.detail)) {
+            errorMessage = authErrorData.detail.map((item: any) => item.msg).join(', ')
+          } else {
+            errorMessage = authErrorData.detail
+          }
+        }
+        errorCode = error.response?.status || ApiStatus.error
+      }
+
+      console.log('[HTTP Response] 认证API错误处理:', {
+        url: requestUrl,
+        errorCode,
+        errorMessage
+      })
+
+      return Promise.reject(createHttpError(errorMessage, errorCode))
     }
 
     return Promise.reject(handleError(error))
@@ -378,7 +435,7 @@ function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-/** 请求函数 */
+/** 请求函数 - 基于OpenAPI规范优化 */
 async function request<T = any>(config: ExtendedAxiosRequestConfig): Promise<T> {
   // POST | PUT 参数自动填充
   if (
@@ -391,38 +448,63 @@ async function request<T = any>(config: ExtendedAxiosRequestConfig): Promise<T> 
   }
 
   try {
-    const res = await axiosInstance.request<Api.Http.BaseResponse<T>>(config)
+    const res = await axiosInstance.request<Api.Http.BaseResponse<T> | Api.Ai.BaseResponse | any>(
+      config
+    )
 
-    // 检查是否是认证相关的API，这些API可能有不同的响应格式
-    const isAuthAPI = AUTH_API_PATTERNS.some((pattern) => config.url?.includes(pattern))
-    console.log('[Request] 检查API类型:', { url: config.url, isAuthAPI })
+    // 基于OpenAPI规范的响应处理
+    const responseData = res.data
+    const url = config.url || ''
 
-    // 检查响应数据结构
-    const responseData = res.data as any
-    const hasCodeField = responseData && 'code' in responseData
-    const hasDataField = responseData && 'data' in responseData
-    const hasSuccessField = responseData && 'success' in responseData
-
-    console.log('[Request] 响应数据结构分析:', {
-      hasCodeField,
-      hasDataField,
-      hasSuccessField,
-      isAuthAPI
+    console.log('[Request] 响应处理:', {
+      url,
+      hasCode: 'code' in responseData,
+      hasSuccess: 'success' in responseData,
+      hasData: 'data' in responseData
     })
 
-    if (isAuthAPI) {
-      // 认证API的特殊处理，直接返回整个响应数据
-      console.log('[Request] 认证API，返回完整响应数据:', res.data)
-      return res.data as T
-    } else if (hasCodeField && hasDataField) {
-      // 标准API响应处理，返回data字段
-      console.log('[Request] 标准API，返回data字段:', res.data.data)
-      return res.data.data as T
-    } else {
-      // 没有标准结构，直接返回响应数据
-      console.log('[Request] 非标准API响应，直接返回响应数据:', res.data)
-      return res.data as T
+    // AI服务响应处理 (基于ai_openapi.json)
+    if (url.includes('/api/v1/ai/')) {
+      const aiResponse = responseData as Api.Ai.BaseResponse
+      if (aiResponse && 'success' in aiResponse) {
+        if (aiResponse.success) {
+          // 对于AI服务，返回整个响应数据
+          return responseData as T
+        } else {
+          throw createHttpError(
+            aiResponse.message || aiResponse.error || 'AI服务请求失败',
+            ApiStatus.error
+          )
+        }
+      }
     }
+
+    // 认证API响应处理 (基于core_openapi.json)
+    if (
+      AUTH_API_PATTERNS.some((pattern) => url.includes(pattern) && url.includes('/api/v1/core/'))
+    ) {
+      const authResponse = responseData as Api.Auth.AuthResponse
+      if (authResponse && 'success' in authResponse) {
+        if (authResponse.success) {
+          return responseData as T
+        } else {
+          throw createHttpError(authResponse.message || '认证服务请求失败', ApiStatus.error)
+        }
+      }
+    }
+
+    // 标准API响应处理 (基于core_openapi.json)
+    const standardResponse = responseData as Api.Http.BaseResponse<T>
+    if (standardResponse && 'code' in standardResponse && 'data' in standardResponse) {
+      if (standardResponse.code === ApiStatus.success) {
+        return standardResponse.data
+      } else {
+        throw createHttpError(standardResponse.msg || '请求失败', standardResponse.code)
+      }
+    }
+
+    // 无标准结构的响应直接返回
+    return responseData as T
   } catch (error) {
     if (error instanceof HttpError && error.code !== ApiStatus.unauthorized) {
       const showMsg = config.showErrorMessage !== false

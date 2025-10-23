@@ -284,7 +284,7 @@ declare namespace Api {
 
   /** AI 服务类型 */
   namespace Ai {
-    /** 基础响应类型 */
+    /** 基础响应类型 - 基于ai_openapi.json规范 */
     interface BaseResponse {
       success: boolean
       message?: string
