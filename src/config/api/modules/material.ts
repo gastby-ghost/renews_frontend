@@ -8,7 +8,7 @@ import type { ApiEndpointConfig } from '../types'
 export const materialService: ApiEndpointConfig = {
   name: '素材管理服务',
   baseUrl: '/api/v1/core',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
   enableMock: true,
   mockPath: '/mock/data/material',
   defaults: {
@@ -20,9 +20,65 @@ export const materialService: ApiEndpointConfig = {
     enableCache: true
   },
   paths: {
-    // 素材管理（GET/POST）
+    // 素材管理（GET/POST/DELETE）
     '/materials': {
-      description: '素材管理（获取列表/创建素材）',
+      description: '素材管理（获取列表/创建素材/批量删除）',
+      methods: ['GET', 'POST', 'DELETE'],
+      request: {
+        bodyType: 'json',
+        requireAuth: true,
+        params: {
+          page: 'number',
+          page_size: 'number',
+          keywords: 'string',
+          tags: 'string[]'
+        }
+      },
+      response: {
+        dataType: 'MaterialListResponse | MaterialResponse | MaterialDeleteResponse'
+      }
+    },
+    // 批量创建素材
+    '/materials/batch': {
+      description: '批量创建素材',
+      methods: ['POST'],
+      request: {
+        bodyType: 'json',
+        requireAuth: true,
+        params: {
+          project_id: 'number',
+          materials: 'CompleteMaterialData[]'
+        }
+      },
+      response: {
+        dataType: 'MaterialListResponse'
+      }
+    },
+    // 素材详情管理（GET/PUT/DELETE）
+    '/materials/{material_id}': {
+      description: '素材详情管理（获取/更新/删除）',
+      methods: ['GET', 'PUT', 'DELETE'],
+      request: {
+        bodyType: 'json',
+        requireAuth: true,
+        params: {
+          update_data: {
+            title: 'string',
+            summary: 'string',
+            url: 'string',
+            score: 'number',
+            key_excerpts: 'string[]',
+            tags: 'string[]'
+          }
+        }
+      },
+      response: {
+        dataType: 'MaterialResponse'
+      }
+    },
+    // 项目素材管理（GET/POST）
+    '/projects/{project_id}/materials': {
+      description: '项目素材管理（获取列表/添加素材）',
       methods: ['GET', 'POST'],
       request: {
         bodyType: 'json',
@@ -30,71 +86,13 @@ export const materialService: ApiEndpointConfig = {
         params: {
           page: 'number',
           page_size: 'number',
-          project_id: 'number',
-          type: 'string',
-          tags: 'string[]',
           keywords: 'string',
-          sort_by: 'string',
-          title: 'string',
-          content: 'string',
-          metadata: 'object'
-        }
-      },
-      response: {
-        dataType: 'MaterialListResponse | MaterialResponse'
-      }
-    },
-    // 批量操作素材（POST/DELETE）
-    '/materials/batch': {
-      description: '批量操作素材（创建/删除）',
-      methods: ['POST', 'DELETE'],
-      request: {
-        bodyType: 'json',
-        requireAuth: true,
-        params: {
-          project_id: 'number',
-          materials: 'CompleteMaterialData[]',
+          tags: 'string[]',
           material_ids: 'number[]'
         }
       },
       response: {
-        dataType: 'MaterialListResponse | MaterialDeleteResponse'
-      }
-    },
-    // 素材详情管理（GET/PUT/PATCH/DELETE）
-    '/materials/{material_id}': {
-      description: '素材详情管理（获取/更新/删除）',
-      methods: ['GET', 'PUT', 'PATCH', 'DELETE'],
-      request: {
-        bodyType: 'json',
-        requireAuth: true,
-        params: {
-          title: 'string',
-          content: 'string',
-          tags: 'string[]',
-          metadata: 'object'
-        }
-      },
-      response: {
-        dataType: 'MaterialResponse | DeleteResponse'
-      }
-    },
-    // 获取项目素材
-    '/projects/{project_id}/materials': {
-      description: '获取项目素材列表',
-      methods: ['GET'],
-      request: {
-        requireAuth: true,
-        params: {
-          page: 'number',
-          page_size: 'number',
-          keywords: 'string',
-          tags: 'string[]',
-          sort_by: 'string'
-        }
-      },
-      response: {
-        dataType: 'MaterialListResponse'
+        dataType: 'MaterialListResponse | MaterialAddToProjectResponse'
       }
     },
     // 标签管理
@@ -103,15 +101,21 @@ export const materialService: ApiEndpointConfig = {
       methods: ['GET', 'POST'],
       request: {
         bodyType: 'json',
-        requireAuth: true
+        requireAuth: true,
+        params: {
+          page: 'number',
+          page_size: 'number',
+          search_keyword: 'string',
+          name: 'string'
+        }
       },
       response: {
-        dataType: 'TagResponse | TagResponse[]'
+        dataType: 'TagResponse | TagResponse[] | TagListResponse'
       }
     },
-    // 素材搜索
+    // 素材搜索（扩展功能）
     '/materials/search': {
-      description: '搜索素材',
+      description: '搜索素材（扩展功能）',
       methods: ['POST'],
       request: {
         bodyType: 'json',
@@ -126,9 +130,9 @@ export const materialService: ApiEndpointConfig = {
         dataType: 'MaterialSearchResponse'
       }
     },
-    // 素材统计
+    // 素材统计（扩展功能）
     '/materials/stats': {
-      description: '获取素材统计数据',
+      description: '获取素材统计数据（扩展功能）',
       methods: ['GET'],
       request: {
         requireAuth: true,

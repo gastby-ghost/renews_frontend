@@ -15,6 +15,31 @@ type TagResponse = Api.Material.TagResponse
 type MaterialSearchRequest = Api.Material.MaterialSearchRequest
 type MaterialStatsRequest = Api.Material.MaterialStatsRequest
 
+// 扩展类型定义 - 为搜索和统计功能添加明确类型
+interface MaterialSearchResponse {
+  success: boolean
+  message: string
+  results: MaterialResponse[]
+  total_count: number
+  search_time?: number
+}
+
+interface MaterialStatsResponse {
+  success: boolean
+  message: string
+  data: Record<string, any>
+  total_materials?: number
+  last_updated?: string
+}
+
+// 标签列表响应类型
+interface TagListResponse {
+  success: boolean
+  message: string
+  tags: TagResponse[]
+  total_count: number
+}
+
 /**
  * 素材管理服务 - 基于OpenAPI配置
  * 使用新的BaseApiService架构，支持Mock/真实API切换
@@ -49,11 +74,19 @@ class MaterialApiService extends BaseApiService {
       page?: number
       page_size?: number
       keywords?: string
+    },
+    requestBody?: {
       tags?: string[]
-      sort_by?: string
     },
     options?: ApiRequestConfig
   ) {
+    // 根据OpenAPI规范，tags参数应该在请求体中传递
+    if (requestBody?.tags) {
+      return this.post<MaterialListResponse>(`/projects/${projectId}/materials`, requestBody, {
+        ...options,
+        params
+      })
+    }
     return this.get<MaterialListResponse>(`/projects/${projectId}/materials`, params, options)
   }
 
@@ -64,17 +97,17 @@ class MaterialApiService extends BaseApiService {
     params?: {
       page?: number
       page_size?: number
-      project_id?: number
-      type?: string
-      tags?: string[]
       keywords?: string
-      sort_by?: string
-      title?: string
-      content?: string
-      metadata?: object
+    },
+    requestBody?: {
+      tags?: string[]
     },
     options?: ApiRequestConfig
   ) {
+    // 根据OpenAPI规范，tags参数应该在请求体中传递
+    if (requestBody?.tags) {
+      return this.post<MaterialListResponse>('/materials', requestBody, { ...options, params })
+    }
     return this.get<MaterialListResponse>('/materials', params, options)
   }
 
@@ -115,22 +148,29 @@ class MaterialApiService extends BaseApiService {
   /**
    * 获取标签列表
    */
-  async getTags(options?: ApiRequestConfig) {
-    return this.get<TagResponse[]>('/tags', undefined, options)
+  async getTags(
+    params?: {
+      page?: number
+      page_size?: number
+      search_keyword?: string
+    },
+    options?: ApiRequestConfig
+  ) {
+    return this.get<TagListResponse>('/tags', params, options)
   }
 
   /**
    * 搜索素材
    */
   async searchMaterials(params: MaterialSearchRequest, options?: ApiRequestConfig) {
-    return this.post<any>('/materials/search', params, options)
+    return this.post<MaterialSearchResponse>('/materials/search', params, options)
   }
 
   /**
    * 获取素材统计数据
    */
   async getMaterialStats(params?: MaterialStatsRequest, options?: ApiRequestConfig) {
-    return this.get<any>('/materials/stats', params, options)
+    return this.get<MaterialStatsResponse>('/materials/stats', params, options)
   }
 
   /**
