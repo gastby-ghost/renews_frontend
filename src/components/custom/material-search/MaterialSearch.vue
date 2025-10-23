@@ -369,6 +369,7 @@
       const valid = await searchFormRef.value.validate()
       if (!valid) return
 
+      console.log('[MaterialSearch] 开始搜索，关键词:', searchForm.keywords)
       searching.value = true
       hasSearched.value = true
       currentPage.value = 1
@@ -384,11 +385,15 @@
         max_results: searchForm.maxResults
       }
 
+      console.log('[MaterialSearch] 搜索参数:', searchParams)
+
       // 更新搜索进度
       updateSearchProgress('searching', 20, 100, '正在搜索素材...')
 
       // 执行搜索
+      console.log('[MaterialSearch] 调用 aiService.searchTools')
       const result: SearchToolsResponse = await aiService.searchTools(searchParams)
+      console.log('[MaterialSearch] 搜索完成，结果数量:', result.results.length)
 
       // 更新搜索进度
       updateSearchProgress('processing', 80, 100, '处理搜索结果...')
@@ -415,8 +420,9 @@
       // 更新搜索进度
       updateSearchProgress('completed', 100, 100, '搜索完成')
 
-      // 添加到搜索历史
-      materialStore.searchMaterials({
+      // 添加到搜索历史（仅记录历史，不执行搜索）
+      console.log('[MaterialSearch] 添加搜索历史记录，不执行重复搜索')
+      materialStore.addToSearchHistory({
         keywords: searchForm.keywords,
         providers: searchForm.providers,
         searchScope: '',

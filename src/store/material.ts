@@ -278,6 +278,24 @@ export const useMaterialStore = defineStore('material', () => {
     state.value.searchHistory = []
   }
 
+  // 只添加搜索历史，不执行搜索
+  function addToSearchHistory(config: SearchConfig) {
+    console.log('[MaterialStore] 添加搜索历史记录:', {
+      keywords: config.keywords,
+      providers: config.providers,
+      searchScope: config.searchScope,
+      filters: config.filters
+    })
+    state.value.searchHistory.unshift({
+      ...config,
+      providers: [...config.providers]
+    })
+    console.log(
+      '[MaterialStore] 搜索历史已更新，当前历史记录数量:',
+      state.value.searchHistory.length
+    )
+  }
+
   // Agent 相关方法实现
 
   // 获取可用的Agent服务
@@ -793,6 +811,7 @@ export const useMaterialStore = defineStore('material', () => {
     setSearchMode,
     clearCurrentSearchResults,
     clearSearchHistory,
+    addToSearchHistory,
 
     // Agent 相关状态
     agentState,
