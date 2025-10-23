@@ -4,7 +4,6 @@ import { ApiStatus } from './status'
 import { HttpError, handleError, showError } from './error'
 import { $t } from '@/locales'
 import { isTokenExpired } from '@/utils/auth'
-import { AiErrorFactory } from './ai-error'
 
 /** 请求配置常量 */
 const REQUEST_TIMEOUT = 15000
@@ -227,24 +226,19 @@ axiosInstance.interceptors.response.use(
       return handleTokenRefreshError(originalRequest)
     }
 
-    // AI服务错误特殊处理
+    // 特殊API错误处理（保持原有逻辑，但使用通用错误处理）
     if (isAiServiceRequest) {
-      const aiError = AiErrorFactory.createFromHttpResponse(
-        error.response?.status || 0,
-        error.response?.data || {},
-        requestUrl,
-        'ai'
-      )
+      const errorMessage =
+        error.response?.data?.message || error.response?.data?.msg || $t('httpMsg.requestFailed')
+      const statusCode = error.response?.status || ApiStatus.error
 
-      console.log('[HTTP Response] AI服务错误处理:', {
+      console.log('[HTTP Response] 特殊API错误处理:', {
         url: requestUrl,
-        statusCode: error.response?.status,
-        aiErrorCode: aiError.aiErrorCode,
-        errorType: aiError.errorType,
-        retryable: aiError.retryable
+        statusCode: statusCode,
+        errorMessage: errorMessage
       })
 
-      return Promise.reject(aiError)
+      return Promise.reject(handleError(error))
     }
 
     return Promise.reject(handleError(error))
