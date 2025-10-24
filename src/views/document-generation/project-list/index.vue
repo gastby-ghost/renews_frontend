@@ -59,7 +59,7 @@
         v-for="project in filteredProjectList"
         :key="project.id"
         class="project-card"
-        @click="goToProject(project)"
+        @click="continueProject(project)"
       >
         <div class="project-header">
           <h3 class="project-name">{{ project.name }}</h3>
@@ -99,7 +99,7 @@
           <el-button type="primary" size="small" @click.stop="continueProject(project)">
             {{ getActionText(project.status) }}
           </el-button>
-          <el-button size="small" @click.stop="editProject(project)"> 编辑 </el-button>
+          <el-button size="small" @click.stop="editProject()"> 编辑 </el-button>
           <el-button size="small" type="danger" @click.stop="deleteProject(project)">
             删除
           </el-button>
@@ -149,30 +149,13 @@
   import { debounce } from 'lodash-es'
 
   // 从Api.Project命名空间导入类型
-  type ProjectResponse = Api.Project.ProjectResponse
   type ProjectCreate = Api.Project.ProjectCreate
-
-  // 扩展项目接口以兼容现有UI
-  interface Project extends ProjectResponse {
-    description?: string
-    type?: string
-    currentStep?: number
-    createTime?: string
-    updateTime?: string
-  }
 
   // 项目表单接口
   interface ProjectForm {
     name: string
     description: string
     type: string
-  }
-
-  // 项目步骤接口
-  interface ProjectStep {
-    key: number
-    label: string
-    icon: string
   }
 
   const router = useRouter()
@@ -198,7 +181,7 @@
     type: [{ required: true, message: '请选择项目类型', trigger: 'change' }]
   }
 
-  const projectSteps: ProjectStep[] = [
+  const projectSteps = [
     { key: 1, label: '需求', icon: 'el-icon-edit' },
     { key: 2, label: '标题', icon: 'el-icon-document' },
     { key: 3, label: '大纲', icon: 'el-icon-tickets' },
@@ -209,7 +192,7 @@
 
   // 计算属性：使用store中的数据转换逻辑
   const projectList = computed(() => {
-    return projectStore.projectsWithUiData as Project[]
+    return projectStore.projectsWithUiData
   })
 
   // 计算属性：直接使用项目列表，移除本地过滤逻辑
@@ -285,12 +268,8 @@
     return new Date(dateString).toLocaleDateString('zh-CN')
   }
 
-  const goToProject = (_project: Project) => {
-    continueProject(_project)
-  }
-
-  const continueProject = (project: Project) => {
-    // 使用current_component而不是currentStep
+  const continueProject = (project: any) => {
+    // 直接导航到当前组件对应的页面
     const component = project.current_component
     switch (component) {
       case 'requirements':
@@ -315,7 +294,7 @@
     ElMessage.info('编辑功能开发中')
   }
 
-  const deleteProject = async (project: Project) => {
+  const deleteProject = async (project: any) => {
     try {
       await ElMessageBox.confirm(
         `确定要删除项目 "${project.name}" 吗？此操作不可恢复。`,

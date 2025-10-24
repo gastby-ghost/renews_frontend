@@ -5,12 +5,12 @@ import type { Api } from '@/typings/api'
 
 // 从Api.Project命名空间导入类型
 type ProjectResponse = Api.Project.ProjectResponse
-type ProjectDetailResponse = Api.Project.ProjectDetailResponse
-type ProjectListResponse = Api.Project.ProjectListResponse
+// type ProjectDetailResponse = Api.Project.ProjectDetailResponse
+// type ProjectListResponse = Api.Project.ProjectListResponse
 type ProjectCreate = Api.Project.ProjectCreate
 type ProjectUpdate = Api.Project.ProjectUpdate
-type ProjectDeleteResponse = Api.Project.ProjectDeleteResponse
-type ProjectStatisticsResponse = Api.Project.ProjectStatisticsResponse
+// type ProjectDeleteResponse = Api.Project.ProjectDeleteResponse
+// type ProjectStatisticsResponse = Api.Project.ProjectStatisticsResponse
 
 /**
  * 项目状态管理
@@ -102,10 +102,20 @@ export const useProjectStore = defineStore(
      * @param status 加载状态
      */
     const setLoading = (status: boolean) => {
+      console.log('[Project Store] setLoading 被调用:', {
+        currentLoading: loading.value,
+        newStatus: status,
+        timestamp: new Date().toISOString()
+      })
       loading.value = status
       if (status) {
         error.value = null
       }
+      console.log('[Project Store] setLoading 完成:', {
+        loading: loading.value,
+        error: error.value,
+        timestamp: new Date().toISOString()
+      })
     }
 
     /**
@@ -113,8 +123,19 @@ export const useProjectStore = defineStore(
      * @param message 错误信息
      */
     const setError = (message: string | null) => {
+      console.log('[Project Store] setError 被调用:', {
+        currentError: error.value,
+        newError: message,
+        currentLoading: loading.value,
+        timestamp: new Date().toISOString()
+      })
       error.value = message
       loading.value = false
+      console.log('[Project Store] setError 完成:', {
+        error: error.value,
+        loading: loading.value,
+        timestamp: new Date().toISOString()
+      })
     }
 
     /**
@@ -161,7 +182,20 @@ export const useProjectStore = defineStore(
      * @param refresh 是否强制刷新
      */
     const fetchProjects = async (refresh = false) => {
-      if (loading.value && !refresh) return
+      console.log('[Project Store] fetchProjects 开始:', {
+        loading: loading.value,
+        refresh,
+        pagination: pagination.value,
+        filters: filters.value
+      })
+
+      // 添加强制重置逻辑，防止loading状态卡死
+      if (loading.value && !refresh) {
+        console.log('[Project Store] fetchProjects 检测到loading卡住，强制重置')
+        setLoading(false)
+        // 短暂延迟后继续，确保状态重置生效
+        await new Promise((resolve) => setTimeout(resolve, 100))
+      }
 
       try {
         setLoading(true)
@@ -175,28 +209,28 @@ export const useProjectStore = defineStore(
           name: filters.value.keywords || undefined
         }
 
-        const response: ProjectListResponse = await projectService.getProjects(params)
+        console.log('[Project Store] fetchProjects 发起请求:', params)
+        const response = await projectService.getProjects(params)
+        console.log('[Project Store] fetchProjects 收到响应:', response)
 
-        // 添加响应验证逻辑
-        if (!response || typeof response !== 'object') {
-          setError('响应数据格式错误')
-          return
+        // 响应已经在服务层验证过，直接使用
+        projects.value = response.projects || []
+        pagination.value = {
+          page: response.page || 1,
+          page_size: response.page_size || 20,
+          total_count: response.total_count || 0,
+          total_pages: response.total_pages || 0
         }
 
-        if (response.success === true) {
-          projects.value = response.projects || []
-          pagination.value = {
-            page: response.page || 1,
-            page_size: response.page_size || 20,
-            total_count: response.total_count || 0,
-            total_pages: response.total_pages || 0
-          }
-        } else {
-          setError(response.message || '获取项目列表失败')
-        }
+        console.log('[Project Store] fetchProjects 更新状态:', {
+          projectsCount: projects.value.length,
+          pagination: pagination.value
+        })
       } catch (err) {
+        console.error('[Project Store] fetchProjects 发生错误:', err)
         setError(err instanceof Error ? err.message : '获取项目列表失败')
       } finally {
+        console.log('[Project Store] fetchProjects 结束，设置loading为false')
         setLoading(false)
       }
     }
@@ -211,27 +245,17 @@ export const useProjectStore = defineStore(
         setLoading(true)
         clearError()
 
-        const response: ProjectDetailResponse = await projectService.createProject(projectData)
+        const response = await projectService.createProject(projectData)
 
-        // 添加响应验证逻辑
-        if (!response || typeof response !== 'object') {
-          setError('响应数据格式错误')
-          return null
+        // 响应已经在服务层验证过，直接使用
+        // 如果在第一页，直接添加到列表开头
+        if (pagination.value.page === 1) {
+          projects.value.unshift(response.project)
         }
+        // 更新总数
+        pagination.value.total_count += 1
 
-        if (response.success === true) {
-          // 如果在第一页，直接添加到列表开头
-          if (pagination.value.page === 1) {
-            projects.value.unshift(response.project)
-          }
-          // 更新总数
-          pagination.value.total_count += 1
-
-          return response.project
-        } else {
-          setError(response.message || '创建项目失败')
-          return null
-        }
+        return response.project
       } catch (err) {
         setError(err instanceof Error ? err.message : '创建项目失败')
         return null
@@ -250,28 +274,18 @@ export const useProjectStore = defineStore(
         setLoading(true)
         clearError()
 
-        const response: ProjectDetailResponse = await projectService.getProjectDetail(projectId)
+        const response = await projectService.getProjectDetail(projectId)
 
-        // 添加响应验证逻辑
-        if (!response || typeof response !== 'object') {
-          setError('响应数据格式错误')
-          return null
+        // 响应已经在服务层验证过，直接使用
+        currentProject.value = response.project
+
+        // 更新列表中的项目（如果存在）
+        const index = projects.value.findIndex((p: ProjectResponse) => p.id === projectId)
+        if (index !== -1) {
+          projects.value[index] = response.project
         }
 
-        if (response.success === true) {
-          currentProject.value = response.project
-
-          // 更新列表中的项目（如果存在）
-          const index = projects.value.findIndex((p: ProjectResponse) => p.id === projectId)
-          if (index !== -1) {
-            projects.value[index] = response.project
-          }
-
-          return response.project
-        } else {
-          setError(response.message || '获取项目详情失败')
-          return null
-        }
+        return response.project
       } catch (err) {
         setError(err instanceof Error ? err.message : '获取项目详情失败')
         return null
@@ -294,34 +308,21 @@ export const useProjectStore = defineStore(
         setLoading(true)
         clearError()
 
-        const response: ProjectDetailResponse = await projectService.updateProject(
-          projectId,
-          projectData
-        )
+        const response = await projectService.updateProject(projectId, projectData)
 
-        // 添加响应验证逻辑
-        if (!response || typeof response !== 'object') {
-          setError('响应数据格式错误')
-          return null
+        // 响应已经在服务层验证过，直接使用
+        // 更新当前项目
+        if (currentProject.value?.id === projectId) {
+          currentProject.value = response.project
         }
 
-        if (response.success === true) {
-          // 更新当前项目
-          if (currentProject.value?.id === projectId) {
-            currentProject.value = response.project
-          }
-
-          // 更新列表中的项目
-          const index = projects.value.findIndex((p: ProjectResponse) => p.id === projectId)
-          if (index !== -1) {
-            projects.value[index] = response.project
-          }
-
-          return response.project
-        } else {
-          setError(response.message || '更新项目失败')
-          return null
+        // 更新列表中的项目
+        const index = projects.value.findIndex((p: ProjectResponse) => p.id === projectId)
+        if (index !== -1) {
+          projects.value[index] = response.project
         }
+
+        return response.project
       } catch (err) {
         setError(err instanceof Error ? err.message : '更新项目失败')
         return null
@@ -340,31 +341,21 @@ export const useProjectStore = defineStore(
         setLoading(true)
         clearError()
 
-        const response: ProjectDeleteResponse = await projectService.batchDeleteProjects(projectIds)
+        const response = await projectService.batchDeleteProjects(projectIds)
 
-        // 添加响应验证逻辑
-        if (!response || typeof response !== 'object') {
-          setError('响应数据格式错误')
-          return false
+        // 响应已经在服务层验证过，直接使用
+        // 从列表中移除已删除的项目
+        projects.value = projects.value.filter((p: ProjectResponse) => !projectIds.includes(p.id))
+
+        // 如果当前项目被删除，清空当前项目
+        if (currentProject.value && projectIds.includes(currentProject.value.id)) {
+          currentProject.value = null
         }
 
-        if (response.success === true) {
-          // 从列表中移除已删除的项目
-          projects.value = projects.value.filter((p: ProjectResponse) => !projectIds.includes(p.id))
+        // 更新总数
+        pagination.value.total_count -= response.deleted_count || 0
 
-          // 如果当前项目被删除，清空当前项目
-          if (currentProject.value && projectIds.includes(currentProject.value.id)) {
-            currentProject.value = null
-          }
-
-          // 更新总数
-          pagination.value.total_count -= response.deleted_count || 0
-
-          return true
-        } else {
-          setError(response.message || '删除项目失败')
-          return false
-        }
+        return true
       } catch (err) {
         setError(err instanceof Error ? err.message : '删除项目失败')
         return false
@@ -384,34 +375,21 @@ export const useProjectStore = defineStore(
         setLoading(true)
         clearError()
 
-        const response: ProjectDetailResponse = await projectService.updateProjectStatus(
-          projectId,
-          { status, reason: '状态更新' }
-        )
+        const response = await projectService.updateProjectStatus(projectId, { status })
 
-        // 添加响应验证逻辑
-        if (!response || typeof response !== 'object') {
-          setError('响应数据格式错误')
-          return false
+        // 响应已经在服务层验证过，直接使用
+        // 更新当前项目
+        if (currentProject.value?.id === projectId) {
+          currentProject.value = response.project
         }
 
-        if (response.success === true) {
-          // 更新当前项目
-          if (currentProject.value?.id === projectId) {
-            currentProject.value = response.project
-          }
-
-          // 更新列表中的项目
-          const index = projects.value.findIndex((p: ProjectResponse) => p.id === projectId)
-          if (index !== -1) {
-            projects.value[index] = response.project
-          }
-
-          return true
-        } else {
-          setError(response.message || '更新项目状态失败')
-          return false
+        // 更新列表中的项目
+        const index = projects.value.findIndex((p: ProjectResponse) => p.id === projectId)
+        if (index !== -1) {
+          projects.value[index] = response.project
         }
+
+        return true
       } catch (err) {
         setError(err instanceof Error ? err.message : '更新项目状态失败')
         return false
@@ -426,42 +404,31 @@ export const useProjectStore = defineStore(
      * @param component 当前组件
      * @returns 是否更新成功
      */
-    const updateProjectComponent = async (projectId: number): Promise<boolean> => {
+    const updateProjectComponent = async (
+      projectId: number,
+      component: string
+    ): Promise<boolean> => {
       try {
         setLoading(true)
         clearError()
 
-        // 注意：新架构中没有updateProjectComponent方法，这里暂时注释掉
-        // const response: ProjectDetailResponse = await projectService.updateProjectComponent(
-        //   projectId,
-        //   component
-        // )
-        console.warn('updateProjectComponent方法在新架构中不可用，需要手动实现')
-        return null
+        const response = await projectService.updateProjectComponent(projectId, {
+          current_component: component
+        })
 
-        // 添加响应验证逻辑
-        if (!response || typeof response !== 'object') {
-          setError('响应数据格式错误')
-          return false
+        // 响应已经在服务层验证过，直接使用
+        // 更新当前项目
+        if (currentProject.value?.id === projectId) {
+          currentProject.value = response.project
         }
 
-        if (response.success === true) {
-          // 更新当前项目
-          if (currentProject.value?.id === projectId) {
-            currentProject.value = response.project
-          }
-
-          // 更新列表中的项目
-          const index = projects.value.findIndex((p: ProjectResponse) => p.id === projectId)
-          if (index !== -1) {
-            projects.value[index] = response.project
-          }
-
-          return true
-        } else {
-          setError(response.message || '更新项目组件失败')
-          return false
+        // 更新列表中的项目
+        const index = projects.value.findIndex((p: ProjectResponse) => p.id === projectId)
+        if (index !== -1) {
+          projects.value[index] = response.project
         }
+
+        return true
       } catch (err) {
         setError(err instanceof Error ? err.message : '更新项目组件失败')
         return false
@@ -479,19 +446,10 @@ export const useProjectStore = defineStore(
         setLoading(true)
         clearError()
 
-        const response: ProjectStatisticsResponse = await projectService.getProjectStats(projectId)
+        const response = await projectService.getProjectStatistics()
 
-        // 添加响应验证逻辑
-        if (!response || typeof response !== 'object') {
-          setError('响应数据格式错误')
-          return
-        }
-
-        if (response.success === true) {
-          statistics.value = response.data || {}
-        } else {
-          setError(response.message || '获取项目统计信息失败')
-        }
+        // 响应已经在服务层验证过，直接使用
+        statistics.value = response.data || {}
       } catch (err) {
         setError(err instanceof Error ? err.message : '获取项目统计信息失败')
       } finally {
@@ -512,36 +470,27 @@ export const useProjectStore = defineStore(
         setLoading(true)
         clearError()
 
-        const response: ProjectListResponse = await projectService.searchProjects({
+        const response = await projectService.searchProjects({
           keywords,
           ...filters,
           page: pagination.value.page,
           page_size: pagination.value.page_size
         })
 
-        // 添加响应验证逻辑
-        if (!response || typeof response !== 'object') {
-          setError('响应数据格式错误')
-          return
+        // 响应已经在服务层验证过，直接使用
+        projects.value = response.projects || []
+        pagination.value = {
+          page: response.page || 1,
+          page_size: response.page_size || 20,
+          total_count: response.total_count || 0,
+          total_pages: response.total_pages || 0
         }
 
-        if (response.success === true) {
-          projects.value = response.projects || []
-          pagination.value = {
-            page: response.page || 1,
-            page_size: response.page_size || 20,
-            total_count: response.total_count || 0,
-            total_pages: response.total_pages || 0
-          }
-
-          // 更新过滤条件
-          setFilters({
-            keywords,
-            ...filters
-          })
-        } else {
-          setError(response.message || '搜索项目失败')
-        }
+        // 更新过滤条件
+        setFilters({
+          keywords,
+          ...filters
+        })
       } catch (err) {
         setError(err instanceof Error ? err.message : '搜索项目失败')
       } finally {
@@ -563,30 +512,17 @@ export const useProjectStore = defineStore(
         setLoading(true)
         clearError()
 
-        const response: ProjectDetailResponse = await projectService.duplicateProject(
-          projectId,
-          newName
-        )
+        const response = await projectService.duplicateProject(projectId, newName)
 
-        // 添加响应验证逻辑
-        if (!response || typeof response !== 'object') {
-          setError('响应数据格式错误')
-          return null
+        // 响应已经在服务层验证过，直接使用
+        // 如果在第一页，直接添加到列表开头
+        if (pagination.value.page === 1) {
+          projects.value.unshift(response.project)
         }
+        // 更新总数
+        pagination.value.total_count += 1
 
-        if (response.success === true) {
-          // 如果在第一页，直接添加到列表开头
-          if (pagination.value.page === 1) {
-            projects.value.unshift(response.project)
-          }
-          // 更新总数
-          pagination.value.total_count += 1
-
-          return response.project
-        } else {
-          setError(response.message || '复制项目失败')
-          return null
-        }
+        return response.project
       } catch (err) {
         setError(err instanceof Error ? err.message : '复制项目失败')
         return null
