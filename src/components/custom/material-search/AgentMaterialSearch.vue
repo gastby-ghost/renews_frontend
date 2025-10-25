@@ -273,10 +273,11 @@
   import { useProjectStore } from '@/store/modules/project'
   import { useRouter } from 'vue-router'
   import { aiService } from '@/services/aiService'
-  import type { Material, SearchResultMaterial } from '@/types/material'
+  import type { Material } from '@/types/material'
   import SearchResultCard from '@/components/custom/material-card/UnifiedMaterialCard.vue'
   import MaterialPreviewDialog from '@/components/custom/material-card/MaterialPreviewDialog.vue'
   import AgentSearchProgress from './AgentSearchProgress.vue'
+  import CryptoJS from 'crypto-js'
 
   // Agent配置面板组件
   const AgentPanel = {
@@ -358,7 +359,7 @@
   const totalResults = ref(0)
   const currentTaskId = ref<string>('')
 
-  const searchResults = ref<SearchResultMaterial[]>([])
+  const searchResults = ref<Material[]>([])
   const selectedMaterials = ref<string[]>([])
   const loadingMaterials = ref<string[]>([])
   const researchPath = ref<string[]>([])
@@ -370,7 +371,7 @@
 
   // 预览对话框相关状态
   const previewDialogVisible = ref(false)
-  const previewMaterial = ref<SearchResultMaterial | null>(null)
+  const previewMaterial = ref<Material | null>(null)
 
   // 添加到素材库选项
   const addToLibraryOptions = ref({
@@ -595,8 +596,11 @@
 
     // 转换web_search_data为素材格式
     if (result.web_search_data && result.web_search_data.length > 0) {
+      // 获取当前用户ID
+      const currentUserId = getCurrentUserId()
+
       searchResults.value = result.web_search_data.map((searchItem, index) => {
-        return transformWebSearchDataToMaterial(searchItem, index)
+        return transformWebSearchDataToMaterial(searchItem, index, currentUserId)
       })
       totalResults.value = searchResults.value.length
     } else {
@@ -608,98 +612,22 @@
   // 转换web_search_data为素材格式
   const transformWebSearchDataToMaterial = (
     searchItem: any,
-    index: number
-  ): SearchResultMaterial => {
-    const id = `agent-${currentTaskId.value}-${index}`
-    const url = new URL(searchItem.url || '')
-    const source = url.hostname
-
-    // 确定素材类型
-    const type = determineMaterialType(searchItem.url, searchItem.summary)
-
+    index: number,
+    userId: string
+  ): Material => {
     return {
-      id,
+      id: CryptoJS.MD5(searchItem.url).toString(),
+      user_id: userId, // 使用传入的用户ID
       title: searchItem.aititle || searchItem.webtitle || '未命名素材',
-      source,
       summary: searchItem.summary || searchItem.key_excerpts?.join(' ') || '无可用摘要',
       tags: searchItem.tags || [],
-      type,
       url: searchItem.url,
-      thumbnail: generateThumbnailUrl(searchItem.url, type),
-      content: searchItem.key_excerpts?.join('\n\n') || '',
       createdAt: searchItem.published_date ? new Date(searchItem.published_date) : new Date(),
       selected: false,
-      // SearchResultMaterial特有字段
       score: searchItem.score || 0,
-      query: searchItem.query || '',
-      aititle: searchItem.aititle,
-      key_excerpts: searchItem.key_excerpts || [],
-      published_date: searchItem.published_date,
-      webtitle: searchItem.webtitle
+      key_excerpts: searchItem.key_excerpts || []
     }
   }
-
-  // 确定素材类型
-  const determineMaterialType = (url: string, summary?: string): Material['type'] => {
-    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg']
-    const videoExtensions = ['.mp4', '.avi', '.mov', '.wmv', '.flv', '.webm']
-    const audioExtensions = ['.mp3', '.wav', '.ogg', '.flac', '.aac']
-
-    const lowerUrl = url.toLowerCase()
-
-    if (imageExtensions.some((ext) => lowerUrl.includes(ext))) {
-      return 'image'
-    }
-
-    if (videoExtensions.some((ext) => lowerUrl.includes(ext))) {
-      return 'video'
-    }
-
-    if (audioExtensions.some((ext) => lowerUrl.includes(ext))) {
-      return 'audio'
-    }
-
-    // 基于摘要内容判断
-    if (
-      summary &&
-      (summary.includes('图片') || summary.includes('图像') || summary.includes('照片'))
-    ) {
-      return 'image'
-    }
-
-    if (summary && (summary.includes('视频') || summary.includes('影片'))) {
-      return 'video'
-    }
-
-    if (
-      summary &&
-      (summary.includes('音频') || summary.includes('音乐') || summary.includes('声音'))
-    ) {
-      return 'audio'
-    }
-
-    // 默认为文本类型
-    return 'text'
-  }
-
-  // 生成缩略图URL
-  const generateThumbnailUrl = (url: string, type: Material['type']): string | undefined => {
-    if (type === 'image') {
-      return url // 图片直接使用原URL
-    }
-
-    // 对于其他类型，可以生成占位图
-    if (type === 'video') {
-      return `https://picsum.photos/300/200?random=${encodeURIComponent(url)}&type=video`
-    }
-
-    if (type === 'audio') {
-      return `https://picsum.photos/300/200?random=${encodeURIComponent(url)}&type=audio`
-    }
-
-    return `https://picsum.photos/300/200?random=${encodeURIComponent(url)}`
-  }
-
   // 处理搜索
   const handleSearch = async () => {
     if (!searchFormRef.value) return
@@ -802,12 +730,16 @@
 
   // 选择素材
   const selectMaterial = (material: Material) => {
-    toggleMaterialSelection(material.id)
+    if (material.id) {
+      toggleMaterialSelection(material.id)
+    }
   }
 
   // 全选
   const selectAll = () => {
-    selectedMaterials.value = searchResults.value.map((material) => material.id)
+    selectedMaterials.value = searchResults.value
+      .map((material) => material.id)
+      .filter((id): id is string => id !== undefined)
   }
 
   // 取消选择
@@ -853,7 +785,7 @@
       // 获取选中的素材对象
       const materialsToAdd = selectedMaterials.value
         .map((id) => searchResults.value.find((material) => material.id === id))
-        .filter(Boolean) as SearchResultMaterial[]
+        .filter(Boolean) as Material[]
 
       // 使用新的API将搜索结果添加到数据库
       addProgress.value.message = '正在将素材添加到数据库...'
@@ -913,12 +845,12 @@
   }
 
   // 显示素材预览
-  const showMaterialPreview = (material: SearchResultMaterial) => {
+  const showMaterialPreview = (material: Material) => {
     console.log('[AgentSearch] showMaterialPreview 被调用:', {
       material,
       materialId: material?.id,
       materialType: typeof material,
-      isSearchResultMaterial: 'score' in material
+      isMaterial: 'score' in material
     })
 
     if (!material) {
@@ -948,14 +880,27 @@
 
   // 获取当前用户ID
   const getCurrentUserId = (): string => {
+    // 添加调试日志：验证用户ID获取逻辑
+    const userStore = useUserStore()
+    console.log('[AgentMaterialSearch] getCurrentUserId - 用户状态验证:', {
+      userStore存在: !!userStore,
+      用户信息: userStore.info,
+      用户ID: userStore.info?.id,
+      用户是否登录: userStore.isLogin,
+      用户类型: userStore.userType,
+      访问令牌存在: !!userStore.accessToken,
+      令牌过期时间: userStore.tokenExpiresAt
+    })
+
     // 从用户状态获取实际用户ID
     // 这里应该从用户store或localStorage获取
-    const userStore = useUserStore()
     if (userStore && userStore.info?.id) {
+      console.log('[AgentMaterialSearch] getCurrentUserId - 返回真实用户ID:', userStore.info.id)
       return userStore.info.id
     }
 
     // 临时返回默认值
+    console.log('[AgentMaterialSearch] getCurrentUserId - 返回默认用户ID: current-user')
     return 'current-user'
   }
 
@@ -965,7 +910,7 @@
     // 这里应该从项目store或localStorage获取
     const projectStore = useProjectStore()
     if (projectStore && projectStore.currentProject?.id) {
-      return projectStore.currentProject.id
+      return projectStore.currentProject.id.toString()
     }
 
     // 临时返回默认值

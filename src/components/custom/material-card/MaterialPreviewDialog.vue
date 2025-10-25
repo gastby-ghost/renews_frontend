@@ -16,9 +16,6 @@
             <el-tag size="small" :type="getTypeTagType" class="material-preview__type-tag">
               {{ getTypeLabel }}
             </el-tag>
-            <span class="material-preview__source" v-if="material.source">
-              来源：{{ material.source }}
-            </span>
           </div>
         </div>
         <div class="material-preview__mode-switch" v-if="context === 'management'">
@@ -138,48 +135,8 @@
                   />
                   <div class="material-preview__score-details">
                     <span class="material-preview__score-text">
-                      原始评分：{{ (material as SearchResultMaterial).score?.toFixed(3) }}
+                      原始评分：{{ (material as Material).score?.toFixed(3) }}
                     </span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 其他搜索信息 -->
-              <div class="material-preview__info-card" v-if="hasSearchDetails">
-                <h3 class="material-preview__info-card-title">
-                  <el-icon class="material-preview__section-icon"><Search /></el-icon>
-                  搜索详情
-                </h3>
-                <div class="material-preview__info-list">
-                  <div
-                    v-if="(material as SearchResultMaterial).published_date"
-                    class="material-preview__info-item"
-                  >
-                    <div class="material-preview__info-label">发布日期</div>
-                    <div class="material-preview__info-value">
-                      {{ formatDate((material as SearchResultMaterial).published_date!) }}
-                    </div>
-                  </div>
-                  <div
-                    v-if="(material as SearchResultMaterial).query"
-                    class="material-preview__info-item"
-                  >
-                    <div class="material-preview__info-label">搜索查询</div>
-                    <div class="material-preview__info-value">
-                      {{ (material as SearchResultMaterial).query }}
-                    </div>
-                  </div>
-                  <div
-                    v-if="
-                      (material as SearchResultMaterial).webtitle &&
-                      (material as SearchResultMaterial).webtitle !== material.title
-                    "
-                    class="material-preview__info-item"
-                  >
-                    <div class="material-preview__info-label">原始标题</div>
-                    <div class="material-preview__info-value">
-                      {{ (material as SearchResultMaterial).webtitle }}
-                    </div>
                   </div>
                 </div>
               </div>
@@ -217,22 +174,8 @@
             />
           </el-form-item>
 
-          <el-form-item label="来源" prop="source">
-            <el-input v-model="editForm.source" placeholder="请输入素材来源" maxlength="100" />
-          </el-form-item>
-
           <el-form-item label="链接" prop="url">
             <el-input v-model="editForm.url" placeholder="请输入素材链接" maxlength="500" />
-          </el-form-item>
-
-          <el-form-item label="类型" prop="type">
-            <el-select v-model="editForm.type" placeholder="请选择素材类型">
-              <el-option label="图片" value="image" />
-              <el-option label="视频" value="video" />
-              <el-option label="音频" value="audio" />
-              <el-option label="文本" value="text" />
-              <el-option label="其他" value="other" />
-            </el-select>
           </el-form-item>
 
           <el-form-item label="标签" prop="tags">
@@ -271,15 +214,12 @@
 <script setup lang="ts">
   import { ref, computed, watch } from 'vue'
   import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
-  import { Link, Document, CollectionTag, InfoFilled, Star, Search } from '@element-plus/icons-vue'
-  import type { Material, SearchResultMaterial } from '@/types/material'
+  import { Link, Document, CollectionTag, InfoFilled, Star } from '@element-plus/icons-vue'
+  import type { Material } from '@/types/material'
   import { materialApiService } from '@/services/materialService'
 
-  // 联合类型，支持两种素材类型
-  type UnifiedMaterial = Material | SearchResultMaterial
-
   interface Props {
-    material: UnifiedMaterial | null
+    material: Material | null
     visible: boolean
     context: 'search' | 'management'
     availableTags?: string[]
@@ -310,9 +250,7 @@
   const editForm = ref({
     title: '',
     summary: '',
-    source: '',
     url: '',
-    type: 'text' as Material['type'],
     tags: [] as string[]
   })
 
@@ -323,9 +261,7 @@
       { min: 1, max: 255, message: '标题长度应在 1 到 255 个字符之间', trigger: 'blur' }
     ],
     summary: [{ max: 1000, message: '摘要长度不能超过 1000 个字符', trigger: 'blur' }],
-    source: [{ max: 100, message: '来源长度不能超过 100 个字符', trigger: 'blur' }],
-    url: [{ type: 'url', message: '请输入有效的链接地址', trigger: 'blur' }],
-    type: [{ required: true, message: '请选择素材类型', trigger: 'change' }]
+    url: [{ type: 'url', message: '请输入有效的链接地址', trigger: 'blur' }]
   }
 
   // 计算属性
@@ -341,23 +277,14 @@
 
   // 判断是否有评分
   const hasScore = computed(() => {
-    return (
-      isSearchResult.value && typeof (props.material as SearchResultMaterial).score === 'number'
-    )
-  })
-
-  // 判断是否有搜索详情
-  const hasSearchDetails = computed(() => {
-    if (!isSearchResult.value) return false
-    const material = props.material as SearchResultMaterial
-    return !!(material.published_date || material.query || material.webtitle)
+    return isSearchResult.value && typeof (props.material as Material).score === 'number'
   })
 
   // 显示标题（优先使用AI标题）
   const displayTitle = computed(() => {
     if (!props.material) return ''
-    if ('aititle' in props.material && props.material.aititle) {
-      return props.material.aititle
+    if ('title' in props.material && props.material.title) {
+      return props.material.title
     }
     return props.material.title
   })
@@ -365,33 +292,7 @@
   // 评分转换
   const scoreRating = computed(() => {
     if (!hasScore.value) return 0
-    return Math.max(1, Math.round((props.material as SearchResultMaterial).score * 5))
-  })
-
-  // 类型标签样式
-  const getTypeTagType = computed(() => {
-    if (!props.material) return ''
-    const typeMap = {
-      image: 'success',
-      video: 'warning',
-      audio: 'info',
-      text: '',
-      other: 'danger'
-    }
-    return typeMap[props.material.type] || ''
-  })
-
-  // 类型标签文本
-  const getTypeLabel = computed(() => {
-    if (!props.material) return ''
-    const typeLabels = {
-      image: '图片',
-      video: '视频',
-      audio: '音频',
-      text: '文本',
-      other: '其他'
-    }
-    return typeLabels[props.material.type] || '其他'
+    return Math.max(1, Math.round((props.material as Material).score * 5))
   })
 
   // 监听素材变化，更新表单数据
@@ -402,9 +303,7 @@
         editForm.value = {
           title: newMaterial.title,
           summary: newMaterial.summary,
-          source: newMaterial.source || '',
           url: newMaterial.url || '',
-          type: newMaterial.type,
           tags: [...(newMaterial.tags || [])]
         }
         previewMode.value = 'preview'
@@ -448,9 +347,7 @@
         ...(props.material as Material),
         title: editForm.value.title,
         summary: editForm.value.summary,
-        source: editForm.value.source,
         url: editForm.value.url,
-        type: editForm.value.type,
         tags: editForm.value.tags,
         updatedAt: new Date()
       }

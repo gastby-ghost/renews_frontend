@@ -4,7 +4,7 @@
 
 import type { SearchToolsResponse, SearchResultItem } from '@/types/ai'
 import type { SearchProvider } from '@/types/material'
-import type { SearchResultMaterial } from '@/types/material'
+import type { Material } from '@/types/material'
 
 // 生成搜索结果项
 const generateSearchResultItem = (keywords: string, index: number): SearchResultItem => {
@@ -53,16 +53,13 @@ export const generateMockSearchResult = (
   }
 }
 
-// 转换为SearchResultMaterial格式
-const transformToSearchResultMaterial = (
-  item: SearchResultItem,
-  index: number
-): SearchResultMaterial => {
+// 转换为Material格式
+const transformToMaterial = (item: SearchResultItem, index: number): Material => {
   const url = new URL(item.url)
   const source = url.hostname
 
   // 确定素材类型
-  const determineType = (): SearchResultMaterial['type'] => {
+  const determineType = (): Material['type'] => {
     const lowerUrl = item.url.toLowerCase()
     if (lowerUrl.includes('.jpg') || lowerUrl.includes('.png') || lowerUrl.includes('.gif')) {
       return 'image'
@@ -88,7 +85,7 @@ const transformToSearchResultMaterial = (
     content: item.key_excerpts.join('\n\n'),
     createdAt: item.published_date ? new Date(item.published_date) : new Date(),
     selected: false,
-    // SearchResultMaterial特有字段
+    // Material特有字段
     score: item.score,
     query: item.query,
     aititle: item.aititle,
@@ -108,7 +105,7 @@ export const generateMockSearchToolsResult = (
   )
 
   return {
-    materials: results.map((item, index) => transformToSearchResultMaterial(item, index)),
+    materials: results.map((item, index) => transformToMaterial(item, index)),
     total: results.length,
     page: 1,
     pageSize: maxResults
@@ -162,7 +159,7 @@ export const generateMockSearchToolsStatus = () => ({
 
 // 生成素材库内容
 export const generateMockLibraryMaterials = (
-  type?: SearchResultMaterial['type'],
+  type?: Material['type'],
   source?: string,
   tags?: string[],
   page: number = 1,
@@ -174,7 +171,7 @@ export const generateMockLibraryMaterials = (
 
   let materials = Array.from({ length: totalCount }, (_, index) => {
     const item = generateSearchResultItem('素材', index)
-    return transformToSearchResultMaterial(item, index)
+    return transformToMaterial(item, index)
   })
 
   // 应用过滤条件
@@ -201,10 +198,10 @@ export const generateMockLibraryMaterials = (
 }
 
 // 生成素材详情
-export const generateMockMaterialDetails = (materialId: string): SearchResultMaterial => {
+export const generateMockMaterialDetails = (materialId: string): Material => {
   const index = parseInt(materialId.split('-').pop() || '0')
   const item = generateSearchResultItem('详细内容', index)
-  const material = transformToSearchResultMaterial(item, index)
+  const material = transformToMaterial(item, index)
 
   // 添加更多详细信息
   material.content = `

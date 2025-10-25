@@ -24,7 +24,7 @@
   import { ref, onMounted } from 'vue'
   import { useMaterialStore } from '@/store/material'
   import MaterialSearch from '@/components/custom/material-search/MaterialSearch.vue'
-  import AgentSearch from '@/components/custom/material-search/AgentSearch.vue'
+  import AgentSearch from '@/components/custom/material-search/AgentMaterialSearch.vue'
 
   const materialStore = useMaterialStore()
   const searchMode = ref<'simple' | 'agent'>('simple')

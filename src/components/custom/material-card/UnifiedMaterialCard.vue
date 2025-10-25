@@ -1,17 +1,17 @@
 <template>
   <div
-    class="unified-material-card"
+    class="material-card"
     :class="{
-      'unified-material-card--selected': isSelected,
-      'unified-material-card--loading': loading,
-      'unified-material-card--search': context === 'search',
-      'unified-material-card--management': context === 'management'
+      'material-card--selected': isSelected,
+      'material-card--loading': loading,
+      'material-card--search': context === 'search',
+      'material-card--management': context === 'management'
     }"
     @click="handleClick"
   >
     <!-- 顶部区域：选择框和匹配度评分 -->
-    <div class="unified-material-card__header">
-      <div class="unified-material-card__selection" v-if="showSelection">
+    <div class="material-card__header">
+      <div class="material-card__selection" v-if="showSelection">
         <el-checkbox
           :model-value="isSelected"
           @change="() => handleSelectionChange()"
@@ -20,9 +20,9 @@
         />
       </div>
 
-      <div class="unified-material-card__score" v-if="showScore && hasScore">
-        <div class="unified-material-card__score-label">匹配度</div>
-        <div class="unified-material-card__score-value">
+      <div class="material-card__score" v-if="showScore && hasScore">
+        <div class="material-card__score-label">匹配度</div>
+        <div class="material-card__score-value">
           <el-rate
             v-model="scoreRating"
             disabled
@@ -36,26 +36,26 @@
     </div>
 
     <!-- 主要内容区域 -->
-    <div class="unified-material-card__content">
+    <div class="material-card__content">
       <!-- 标题 -->
-      <h3 class="unified-material-card__title" :title="displayTitle">
+      <h3 class="material-card__title" :title="displayTitle">
         {{ displayTitle }}
       </h3>
 
       <!-- 摘要 -->
-      <p class="unified-material-card__summary" v-if="material.summary">
+      <p class="material-card__summary" v-if="material.summary">
         {{ material.summary }}
       </p>
 
       <!-- URL链接 -->
-      <div class="unified-material-card__url" v-if="material.url">
+      <div class="material-card__url" v-if="material.url">
         <el-icon><Link /></el-icon>
         <a
           :href="material.url"
           target="_blank"
           rel="noopener noreferrer"
           @click.stop
-          class="unified-material-card__url-link"
+          class="material-card__url-link"
         >
           {{ formatUrl(material.url) }}
         </a>
@@ -63,13 +63,13 @@
     </div>
 
     <!-- 底部区域：标签和操作按钮 -->
-    <div class="unified-material-card__footer">
-      <div class="unified-material-card__tags" v-if="material.tags && material.tags.length > 0">
+    <div class="material-card__footer">
+      <div class="material-card__tags" v-if="material.tags && material.tags.length > 0">
         <el-tag
           v-for="tag in material.tags.slice(0, 3)"
           :key="tag"
           size="small"
-          class="unified-material-card__tag"
+          class="material-card__tag"
         >
           {{ tag }}
         </el-tag>
@@ -78,13 +78,13 @@
         </el-tag>
       </div>
 
-      <div class="unified-material-card__actions">
+      <div class="material-card__actions">
         <el-button size="small" type="primary" @click.stop="handlePreview"> 预览 </el-button>
       </div>
     </div>
 
     <!-- 加载遮罩 -->
-    <div class="unified-material-card__overlay" v-if="loading">
+    <div class="material-card__overlay" v-if="loading">
       <el-icon class="is-loading"><Loading /></el-icon>
     </div>
   </div>
@@ -92,14 +92,11 @@
 
 <script setup lang="ts">
   import { computed } from 'vue'
-  import type { Material, SearchResultMaterial } from '@/types/material'
+  import type { Material } from '@/types/material'
   import { Link, Loading } from '@element-plus/icons-vue'
 
-  // 联合类型，支持两种素材类型
-  type UnifiedMaterial = Material | SearchResultMaterial
-
   interface Props {
-    material: UnifiedMaterial
+    material: Material
     selected?: boolean
     loading?: boolean
     showSelection?: boolean
@@ -109,9 +106,9 @@
 
   interface Emits {
     (e: 'select', id: string): void
-    (e: 'preview', material: UnifiedMaterial): void
-    (e: 'edit', material: UnifiedMaterial): void
-    (e: 'click', material: UnifiedMaterial): void
+    (e: 'preview', material: Material): void
+    (e: 'edit', material: Material): void
+    (e: 'click', material: Material): void
   }
 
   const props = withDefaults(defineProps<Props>(), {
@@ -134,13 +131,13 @@
   const scoreRating = computed(() => {
     if (!hasScore.value) return 0
     // 将0-1的评分映射到1-5的星级
-    return Math.max(1, Math.round((props.material as SearchResultMaterial).score * 5))
+    return Math.max(1, Math.round((props.material as Material).score * 5))
   })
 
-  // 显示标题（优先使用AI标题）
+  // 显示标题
   const displayTitle = computed(() => {
-    if ('aititle' in props.material && props.material.aititle) {
-      return props.material.aititle
+    if ('title' in props.material && props.material.title) {
+      return props.material.title
     }
     return props.material.title
   })
@@ -154,7 +151,7 @@
   }
 
   function handlePreview() {
-    console.log('[UnifiedMaterialCard] handlePreview 被调用:', {
+    console.log('[MaterialCard] handlePreview 被调用:', {
       material: props.material,
       materialId: props.material?.id,
       materialType: typeof props.material,
@@ -164,7 +161,7 @@
 
     emit('preview', props.material)
 
-    console.log('[UnifiedMaterialCard] preview 事件已发出')
+    console.log('[MaterialCard] preview 事件已发出')
   }
 
   function formatUrl(url: string): string {
@@ -179,7 +176,7 @@
 </script>
 
 <style scoped lang="scss">
-  .unified-material-card {
+  .material-card {
     position: relative;
     overflow: hidden;
     cursor: pointer;
@@ -206,14 +203,14 @@
 
     &--search {
       // 搜索结果界面特有样式
-      .unified-material-card__header {
+      .material-card__header {
         padding: 12px 16px 8px;
       }
     }
 
     &--management {
       // 素材管理界面特有样式
-      .unified-material-card__header {
+      .material-card__header {
         padding: 8px 16px 4px;
       }
     }
@@ -341,7 +338,7 @@
   }
 
   @media (width <= 768px) {
-    .unified-material-card {
+    .material-card {
       &__header {
         padding: 10px 12px 6px;
       }

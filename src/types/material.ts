@@ -3,20 +3,13 @@ export interface Material {
   user_id: string
   summary: string
   score: number // 相关性评分 (0-1)
-  title?: string // AI总结标题
+  title: string // AI总结标题
   key_excerpts: string[] // 关键摘录
   tags: string[]
   url?: string
   createdAt: Date
   updatedAt?: Date
   selected?: boolean
-}
-
-// 扩展Material接口，用于搜索结果
-export interface SearchResultMaterial extends Material {
-  score: number // 相关性评分 (0-1)
-  title?: string // AI总结标题
-  key_excerpts: string[] // 关键摘录
 }
 
 export interface SearchProvider {
@@ -63,8 +56,6 @@ export interface AgentSearchConfig {
   agentType: 'search' | 'scope' | 'custom'
   agentConfig?: Record<string, any>
   filters: {
-    type?: Material['type'][]
-    source?: string[]
     tags?: string[]
   }
   maxResults?: number

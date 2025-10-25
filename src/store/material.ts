@@ -5,7 +5,6 @@ import { aiService } from '@/services/aiService'
 import { materialApiService, MaterialApiService } from '@/services/materialService'
 import type {
   Material,
-  SearchResultMaterial,
   SearchConfig,
   SearchProgress,
   MaterialLibraryState,
@@ -48,7 +47,7 @@ export const useMaterialStore = defineStore('material', () => {
   // Search-tools 相关状态
   const searchToolsStatus = ref<SearchToolsStatusResponse | null>(null)
   const searchMode = ref<'simple' | 'agent'>('simple')
-  const currentSearchResults = ref<SearchResultMaterial[]>([])
+  const currentSearchResults = ref<Material[]>([])
   const searchProgress = ref<SearchProgress>({
     stage: 'config',
     current: 0,
@@ -197,7 +196,7 @@ export const useMaterialStore = defineStore('material', () => {
       updateSearchProgress('processing', 80, 100, '处理搜索结果...')
 
       // 保存当前搜索结果
-      currentSearchResults.value = result.materials as SearchResultMaterial[]
+      currentSearchResults.value = result.materials as Material[]
 
       // 添加到素材库
       addMaterials(result.materials)
@@ -205,7 +204,7 @@ export const useMaterialStore = defineStore('material', () => {
       // 更新搜索进度
       updateSearchProgress('completed', 100, 100, '搜索完成')
 
-      return result.materials as SearchResultMaterial[]
+      return result.materials as Material[]
     } catch (error) {
       state.value.error = error instanceof Error ? error.message : '搜索失败'
       throw error
@@ -525,10 +524,7 @@ export const useMaterialStore = defineStore('material', () => {
    * @param projectId 项目ID，默认为1
    * @returns 添加结果
    */
-  async function addSearchResultsToDatabase(
-    searchResults: SearchResultMaterial[],
-    projectId: number = 1
-  ) {
+  async function addSearchResultsToDatabase(searchResults: Material[], projectId: number = 1) {
     try {
       // 添加调试日志：检查原始搜索结果的tags
       console.log('[MaterialStore] 原始搜索结果的tags情况:', {

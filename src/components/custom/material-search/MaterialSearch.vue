@@ -269,19 +269,21 @@
   import { ElMessage } from 'element-plus'
   import { Search } from '@element-plus/icons-vue'
   import type { FormInstance, FormRules } from 'element-plus'
+  import { useUserStore } from '@/store/modules/user'
   import { aiService } from '@/services/aiService'
   import type { SearchToolsResponse } from '@/types/ai'
   import { useMaterialStore } from '@/store/material'
-  import type { Material, SearchProgress, SearchResultMaterial } from '@/types/material'
+  import type { Material, SearchProgress } from '@/types/material'
   import SearchResultCard from '@/components/custom/material-card/UnifiedMaterialCard.vue'
   import SearchProgressComponent from '@/components/custom/search-progress/SearchProgress.vue'
   import MaterialPreviewDialog from '@/components/custom/material-card/MaterialPreviewDialog.vue'
   import { useRouter } from 'vue-router'
   import { HttpError } from '@/utils/http/error'
+  import CryptoJS from 'crypto-js'
 
   interface SearchForm {
     keywords: string
-    providers: string[]
+    providers: ('tavily' | 'bocha')[]
     maxResults: number
   }
 
@@ -297,7 +299,7 @@
   const pageSize = ref(20)
   const totalResults = ref(0)
 
-  const searchResults = ref<SearchResultMaterial[]>([])
+  const searchResults = ref<Material[]>([])
   const selectedMaterials = ref<string[]>([])
   const loadingMaterials = ref<string[]>([])
 
@@ -308,7 +310,7 @@
 
   // 预览对话框相关状态
   const previewDialogVisible = ref(false)
-  const previewMaterial = ref<SearchResultMaterial | null>(null)
+  const previewMaterial = ref<Material | null>(null)
 
   // 添加到素材库选项
   const addToLibraryOptions = ref({
@@ -343,7 +345,9 @@
   // 搜索配置
   const searchConfig = computed(() => ({
     keywords: searchForm.keywords,
-    providers: searchForm.providers
+    providers: searchForm.providers,
+    searchScope: '',
+    filters: { type: [] }
   }))
 
   // 可用的搜索提供商
@@ -379,9 +383,11 @@
       updateSearchProgress('config', 0, 100, '配置搜索参数...')
 
       // 构建搜索参数
+      const selectedProvider: 'tavily' | 'bocha' = searchForm.providers[0] || 'tavily'
+
       const searchParams = {
         queries: [searchForm.keywords],
-        provider: searchForm.providers[0] || 'tavily',
+        provider: selectedProvider,
         max_results: searchForm.maxResults
       }
 
@@ -398,22 +404,22 @@
       // 更新搜索进度
       updateSearchProgress('processing', 80, 100, '处理搜索结果...')
 
+      const userStore = useUserStore()
+      const currentUserId = userStore.info.id
+
       // 转换搜索结果格式
-      searchResults.value = result.results.map((item, index) => ({
-        id: `search-${Date.now()}-${index}`,
+      searchResults.value = result.results.map((item) => ({
+        id: CryptoJS.MD5(item.url).toString(),
+        user_id: currentUserId, // 添加缺失的 user_id 字段
         title: item.aititle || (item as any).webtitle,
-        source: new URL(item.url).hostname,
         summary: item.summary || item.key_excerpts.join(' '),
-        url: item.url,
-        tags: item.tags || [],
-        type: 'text' as const,
-        createdAt: item.published_date ? new Date(item.published_date) : new Date(),
         score: item.score,
-        query: item.query,
-        aititle: item.aititle,
         key_excerpts: item.key_excerpts,
-        published_date: item.published_date,
-        webtitle: (item as any).webtitle
+        tags: item.tags || [],
+        url: item.url,
+        createdAt: item.published_date ? new Date(item.published_date) : new Date(),
+        // 保留检索数据以供参考
+        query: item.query
       }))
       totalResults.value = result.total_results
 
@@ -546,7 +552,7 @@
       // 获取选中的素材对象
       const materialsToAdd = selectedMaterials.value
         .map((id) => searchResults.value.find((material) => material.id === id))
-        .filter(Boolean) as SearchResultMaterial[]
+        .filter(Boolean) as Material[]
 
       // 使用新的API将搜索结果添加到数据库
       addProgress.value.message = '正在将素材添加到数据库...'
@@ -607,7 +613,7 @@
   }
 
   // 显示素材预览
-  const showMaterialPreview = (material: SearchResultMaterial) => {
+  const showMaterialPreview = (material: Material) => {
     previewMaterial.value = material
     previewDialogVisible.value = true
   }
