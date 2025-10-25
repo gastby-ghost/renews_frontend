@@ -137,12 +137,12 @@ export function generateMockScopeAgentList(
 export function generateMockSearchAgentResponse(
   userId: string,
   projectId: string,
-  _brief: string // eslint-disable-line @typescript-eslint/no-unused-vars
+  brief: string
 ): SearchAgentResponse {
   return {
     success: true,
     task_id: `search_agent_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-    message: 'Search Agent任务已启动',
+    message: `Search Agent任务已启动 - 研究主题: ${brief}`,
     user_id: userId,
     project_id: projectId,
     agent_type: 'search_agent'
@@ -152,37 +152,160 @@ export function generateMockSearchAgentResponse(
 /**
  * 生成Search Agent状态的Mock响应
  */
-export function generateMockSearchAgentStatus(taskId: string): SearchAgentStatusResponse {
-  const statuses = ['pending', 'running', 'completed', 'failed']
-  const currentStatus = statuses[Math.floor(Math.random() * statuses.length)]
-  const progress = currentStatus === 'completed' ? 100 : Math.floor(Math.random() * 90)
+export function generateMockSearchAgentStatus(
+  taskId: string,
+  brief?: string
+): SearchAgentStatusResponse {
+  // 添加详细的调试日志
+  console.log(`[Mock数据生成器] generateMockSearchAgentStatus被调用:`, {
+    taskId,
+    brief,
+    timestamp: new Date().toISOString(),
+    fullTaskId: taskId
+  })
+
+  // 从taskId中提取时间戳（例如：search_agent_1761299389592_23e1armuv）
+  const parts = taskId.split('_')
+  let timestamp = 0
+  for (let i = 0; i < parts.length; i++) {
+    // 查找长的数字字符串，很可能是时间戳
+    if (/^\d+$/.test(parts[i]) && parts[i].length > 10) {
+      timestamp = parseInt(parts[i], 10)
+      break
+    }
+  }
+
+  // 如果找不到时间戳，使用当前时间（但减去一个偏移量模拟任务开始时间）
+  if (timestamp === 0) {
+    timestamp = Date.now() - 10000 // 假设任务10秒前开始
+  }
+
+  const elapsed = Date.now() - timestamp
+  // 15秒总窗口用于状态推进
+
+  let currentStatus: string
+  let progress: number
+
+  // 基于经过时间决定状态
+  if (elapsed < 5000) {
+    currentStatus = 'PENDING'
+    progress = Math.min(20, (elapsed / 5000) * 20)
+  } else if (elapsed < 10000) {
+    currentStatus = 'STARTED'
+    progress = 20 + ((elapsed - 5000) / 5000) * 40
+  } else {
+    currentStatus = 'SUCCESS'
+    progress = 100
+  }
+
+  // 确保进度在0-100之间
+  progress = Math.min(100, Math.max(0, progress))
+
+  console.log(`[Mock数据生成器] 基于时间的状态生成:`, {
+    taskId,
+    extractedTimestamp: timestamp,
+    elapsedTime: elapsed,
+    currentStatus,
+    progress
+  })
+
+  // 如果经过时间超过20秒，强制返回SUCCESS状态
+  if (elapsed > 20000) {
+    console.log(`[Mock数据生成器] 经过时间超过20秒，强制返回SUCCESS状态`)
+    currentStatus = 'SUCCESS'
+    progress = 100
+  }
+
+  // 根据brief参数生成针对性的搜索结果
+  const isAIMedicalTopic =
+    brief &&
+    (brief.includes('人工智能') || brief.includes('AI')) &&
+    (brief.includes('医疗') || brief.includes('健康') || brief.includes('医学'))
+
+  // 根据状态生成相应的结果
+  let result = null
+  if (currentStatus === 'SUCCESS') {
+    result = {
+      research_path: [
+        '分析研究简报需求',
+        '制定搜索策略',
+        '执行多轮搜索',
+        '筛选和评估搜索结果',
+        '生成研究总结和关键洞察'
+      ],
+      web_search_data: isAIMedicalTopic
+        ? [
+            {
+              url: 'https://www.nature.com/articles/s41591-023-02729-2',
+              title: '人工智能在医疗诊断中的突破性应用',
+              summary:
+                '最新研究显示，AI算法在医学影像诊断中的准确率已达到95%，特别是在肺癌和乳腺癌的早期筛查方面表现突出。深度学习模型能够识别出人眼难以察觉的微小病变，为早期治疗提供了宝贵时间窗口。',
+              score: 0.96
+            },
+            {
+              url: 'https://www.sciencedirect.com/science/article/pii/S1532046423001458',
+              title: '基于深度学习的药物发现平台加速新药研发',
+              summary:
+                '研究人员开发了一个结合AI和量子计算的药物发现平台，能够将传统需要10年的新药研发周期缩短至2-3年。该平台已成功预测了多种蛋白质结构，并在COVID-19药物研发中发挥了重要作用。',
+              score: 0.94
+            },
+            {
+              url: 'https://www.lancet.com/journals/landig/article/PIIS2589-7500(23)00123-4/fulltext',
+              title: '个性化医疗：AI驱动的精准治疗方案',
+              summary:
+                '通过分析患者的基因组数据、病史和生活方式，AI系统能够为每位患者制定个性化的治疗方案。在癌症治疗中，这种精准医疗方法使治疗有效率提高了40%，同时减少了副作用。',
+              score: 0.92
+            },
+            {
+              url: 'https://www.nejm.org/doi/full/10.1056/NEJMra2300123',
+              title: '医疗机器人与AI的融合：手术新纪元',
+              summary:
+                '最新一代手术机器人结合了计算机视觉和机器学习技术，能够实现亚毫米级的精确操作。在复杂神经外科手术中，AI辅助手术的成功率比传统手术提高了35%，并发症发生率降低了60%。',
+              score: 0.91
+            },
+            {
+              url: 'https://www.bmj.com/content/381/bmj.p1234',
+              title: 'AI在流行病预测和公共卫生决策中的应用',
+              summary:
+                '利用机器学习分析大数据，AI系统能够提前6个月预测流感等传染病的爆发趋势。在COVID-19大流行期间，AI预测模型帮助多个国家优化了医疗资源分配，挽救了数万生命。',
+              score: 0.89
+            }
+          ]
+        : [
+            {
+              url: 'https://example.com/article1',
+              title: '人工智能技术发展报告',
+              summary: '详细介绍了2024年人工智能技术的最新发展情况和应用前景',
+              score: 0.95
+            },
+            {
+              url: 'https://example.com/article2',
+              title: '机器学习在商业中的应用',
+              summary: '探讨了机器学习技术如何帮助企业提升效率和创造价值',
+              score: 0.88
+            }
+          ],
+      research_summary: isAIMedicalTopic
+        ? '搜索完成，共找到25个高质量资源，涵盖AI医疗诊断、药物发现、个性化治疗、医疗机器人和公共卫生等关键领域'
+        : '搜索完成，共找到15个相关资源',
+      key_insights: isAIMedicalTopic
+        ? [
+            'AI医疗诊断准确率已达95%，超越人类专家水平',
+            '药物研发周期从10年缩短至2-3年，效率提升300%',
+            '个性化治疗方案使癌症治疗有效率提高40%',
+            'AI辅助手术成功率提升35%，并发症降低60%',
+            '流行病预测准确率达90%，显著改善公共卫生决策'
+          ]
+        : ['AI技术正在快速发展', '商业应用前景广阔', '技术挑战依然存在']
+    }
+  }
 
   return {
     task_id: taskId,
     status: currentStatus,
     progress: progress,
-    result:
-      currentStatus === 'completed'
-        ? {
-            search_results: [
-              {
-                url: 'https://example.com/article1',
-                title: '人工智能技术发展报告',
-                summary: '详细介绍了2024年人工智能技术的最新发展情况和应用前景',
-                score: 0.95
-              },
-              {
-                url: 'https://example.com/article2',
-                title: '机器学习在商业中的应用',
-                summary: '探讨了机器学习技术如何帮助企业提升效率和创造价值',
-                score: 0.88
-              }
-            ],
-            research_summary: '搜索完成，共找到15个相关资源',
-            key_insights: ['AI技术正在快速发展', '商业应用前景广阔', '技术挑战依然存在']
-          }
-        : null,
-    error: currentStatus === 'failed' ? '搜索任务失败：网络连接超时' : null,
+    result: result,
+    error: currentStatus === 'FAILURE' ? '搜索任务失败：网络连接超时' : null,
     user_id: 'user_123',
     project_id: 'project_456',
     agent_type: 'search_agent',
@@ -196,10 +319,11 @@ export function generateMockSearchAgentStatus(taskId: string): SearchAgentStatus
  */
 export function generateMockSearchAgentList(
   userId: string,
-  projectId?: string
+  projectId?: string,
+  brief?: string
 ): SearchAgentListResponse {
   const tasks = Array.from({ length: 3 }, (_, index) =>
-    generateMockSearchAgentStatus(`search_agent_task_${index}`)
+    generateMockSearchAgentStatus(`search_agent_task_${index}`, brief)
   )
 
   return {

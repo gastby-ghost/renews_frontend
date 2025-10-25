@@ -218,10 +218,53 @@ class ApiConfigManager {
     const service = this.getServiceConfig(serviceName)
     if (!service) return null
 
-    const pathConfig = service.paths[path]
+    // 添加调试日志：检查路径匹配情况
+    if (this.config.showDebugInfo) {
+      console.log(`[API配置调试] 查找服务 ${serviceName} 的路径: ${path}`)
+      console.log(`[API配置调试] 服务 ${serviceName} 的所有路径:`, Object.keys(service.paths))
+    }
+
+    // 首先尝试精确匹配
+    let pathConfig = service.paths[path]
+
+    // 如果没有精确匹配，尝试路径参数匹配
+    if (!pathConfig) {
+      if (this.config.showDebugInfo) {
+        console.log(`[API配置调试] 精确匹配失败，尝试路径参数匹配: ${path}`)
+      }
+
+      // 查找包含路径参数的配置
+      for (const [configPath, config] of Object.entries(service.paths)) {
+        if (configPath.includes('{')) {
+          // 构建正则表达式来匹配路径参数
+          const regexPattern = configPath.replace(/{[^}]+}/g, '([^/]+)')
+          const regex = new RegExp(`^${regexPattern}$`)
+          if (regex.test(path)) {
+            pathConfig = config
+            if (this.config.showDebugInfo) {
+              console.log(`[API配置调试] 路径参数匹配成功: ${configPath} -> ${path}`)
+            }
+            break
+          }
+        }
+      }
+    }
+
     if (!pathConfig) {
       console.warn(`[API配置] 服务 ${serviceName} 未找到路径: ${path}`)
+      if (this.config.showDebugInfo) {
+        console.warn(`[API配置调试] 路径匹配失败详情:`, {
+          serviceName,
+          requestedPath: path,
+          availablePaths: Object.keys(service.paths),
+          serviceConfig: service
+        })
+      }
       return null
+    }
+
+    if (this.config.showDebugInfo) {
+      console.log(`[API配置调试] 路径匹配成功: ${path} ->`, pathConfig)
     }
 
     return pathConfig

@@ -168,12 +168,12 @@ export class MockDataManager {
       }
 
       case 'ai-search-agent-status': {
-        data = generateMockSearchAgentStatus(args[0])
+        data = generateMockSearchAgentStatus(args[0], args[1])
         break
       }
 
       case 'ai-search-agent-list': {
-        data = generateMockSearchAgentList(args[0], args[1])
+        data = generateMockSearchAgentList(args[0], args[1], args[2])
         break
       }
 

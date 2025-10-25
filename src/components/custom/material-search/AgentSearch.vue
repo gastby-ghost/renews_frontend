@@ -62,34 +62,6 @@
             />
           </el-form-item>
 
-          <el-form-item label="Agent类型">
-            <el-select
-              v-model="agentForm.agentType"
-              placeholder="选择Agent类型"
-              style="width: 100%"
-            >
-              <el-option
-                v-for="agent in availableAgents"
-                :key="agent.id"
-                :label="agent.name"
-                :value="agent.type"
-              >
-                <div class="agent-search__agent-option">
-                  <span>{{ agent.name }}</span>
-                  <el-tag size="small" type="warning">{{ agent.type }}</el-tag>
-                </div>
-              </el-option>
-            </el-select>
-          </el-form-item>
-
-          <el-form-item label="AI增强">
-            <el-switch
-              v-model="agentForm.enableAIEnhancement"
-              active-text="启用"
-              inactive-text="禁用"
-            />
-          </el-form-item>
-
           <el-form-item>
             <div class="agent-search__actions">
               <el-button type="primary" @click="handleSearch" :loading="searching">
@@ -106,8 +78,6 @@
     <!-- Agent配置面板 -->
     <div v-if="showAgentPanel" class="agent-search__agent-panel">
       <AgentPanel
-        :config="agentForm"
-        :available-agents="availableAgents"
         @update:config="updateAgentConfig"
         @search="handleAgentSearch"
         @close="showAgentPanel = false"
@@ -294,7 +264,7 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, reactive, computed, onMounted } from 'vue'
+  import { ref, reactive, computed } from 'vue'
   import { ElMessage } from 'element-plus'
   import { Search, Connection } from '@element-plus/icons-vue'
   import type { FormInstance, FormRules } from 'element-plus'
@@ -302,7 +272,7 @@
   import { useUserStore } from '@/store/modules/user'
   import { useProjectStore } from '@/store/modules/project'
   import { useRouter } from 'vue-router'
-  import http from '@/utils/http'
+  import { aiService } from '@/services/aiService'
   import type { Material, SearchResultMaterial } from '@/types/material'
   import SearchResultCard from '@/components/custom/material-card/UnifiedMaterialCard.vue'
   import MaterialPreviewDialog from '@/components/custom/material-card/MaterialPreviewDialog.vue'
@@ -334,29 +304,13 @@
                 placeholder="默认使用系统配置"
               />
             </el-form-item>
-            <el-form-item label="搜索深度">
-              <el-select v-model="config.agentConfig.searchDepth" placeholder="选择搜索深度">
-                <el-option label="浅度搜索" value="shallow" />
-                <el-option label="标准搜索" value="standard" />
-                <el-option label="深度搜索" value="deep" />
-              </el-select>
-            </el-form-item>
           </el-form>
           <div class="agent-panel__actions">
             <el-button type="primary" @click="handleSearch">开始Agent搜索</el-button>
             <el-button @click="$emit('close')">取消</el-button>
           </div>
         </div>
-      </div>
-    `,
-    props: ['config', 'availableAgents'],
-    emits: ['update:config', 'search', 'close'],
-    methods: {
-      handleSearch() {
-        this.$emit('search', this.config)
-        this.$emit('close')
-      }
-    }
+      </div>`
   }
 
   interface SearchForm {
@@ -365,16 +319,7 @@
 
   interface AgentForm {
     agentType: 'search' | 'scope' | 'custom'
-    enableAIEnhancement: boolean
     agentConfig: Record<string, any>
-  }
-
-  interface AgentService {
-    id: string
-    name: string
-    type: string
-    description: string
-    capabilities: string[]
   }
 
   interface AgentSearchConfig {
@@ -385,7 +330,6 @@
     agentConfig: Record<string, any>
     filters: Record<string, any>
     maxResults: number
-    enableAIEnhancement: boolean
   }
 
   // Search Agent API 类型定义 - 根据 ai_openapi.json 更新
@@ -393,28 +337,6 @@
     brief: string
     max_concurrent_research_units?: number | null
     max_researcher_iterations?: number | null
-  }
-
-  interface SearchAgentResponse {
-    success: boolean
-    task_id: string
-    message: string
-    user_id: string
-    project_id: string
-    agent_type: string
-  }
-
-  interface SearchAgentStatusResponse {
-    task_id: string
-    status: 'PENDING' | 'STARTED' | 'SUCCESS' | 'FAILURE' | 'REVOKED'
-    progress: number
-    result?: SearchAgentResult
-    error?: string
-    user_id: string
-    project_id: string
-    agent_type: string
-    created_at: number
-    updated_at: number
   }
 
   interface SearchAgentResult {
@@ -440,8 +362,6 @@
   const selectedMaterials = ref<string[]>([])
   const loadingMaterials = ref<string[]>([])
   const researchPath = ref<string[]>([])
-
-  const availableAgents = ref<AgentService[]>([])
 
   // 添加到素材库相关状态
   const addToLibraryDialogVisible = ref(false)
@@ -483,7 +403,6 @@
   // Agent表单数据
   const agentForm = reactive<AgentForm>({
     agentType: 'search',
-    enableAIEnhancement: true,
     agentConfig: {}
   })
 
@@ -496,38 +415,6 @@
       { required: true, message: '请输入研究简报', trigger: 'blur' },
       { min: 1, max: 1000, message: '研究简报长度应在 1 到 1000 个字符之间', trigger: 'blur' }
     ]
-  }
-
-  // 获取可用的Agent服务
-  const fetchAvailableAgents = async () => {
-    try {
-      // 模拟Agent服务数据
-      availableAgents.value = [
-        {
-          id: 'search-agent',
-          name: '搜索Agent',
-          type: 'search',
-          description: '智能搜索和分析素材',
-          capabilities: ['智能搜索', '内容分析', '相关性评估']
-        },
-        {
-          id: 'scope-agent',
-          name: '范围Agent',
-          type: 'scope',
-          description: '深度搜索特定领域素材',
-          capabilities: ['深度搜索', '领域专业', '精准匹配']
-        },
-        {
-          id: 'custom-agent',
-          name: '自定义Agent',
-          type: 'custom',
-          description: '根据需求自定义搜索策略',
-          capabilities: ['自定义策略', '灵活配置', '个性化推荐']
-        }
-      ]
-    } catch (error) {
-      console.error('获取Agent服务失败:', error)
-    }
   }
 
   // 更新Agent配置
@@ -559,14 +446,18 @@
         requestData.max_researcher_iterations = config.agentConfig.maxResearcherIterations
       }
 
-      // 调用真实的Agent搜索API
-      const executeResponse = await http.post<SearchAgentResponse>({
-        url: '/api/v1/ai/search-agent/execute',
-        data: requestData,
-        params: {
-          user_id: getCurrentUserId(),
-          project_id: getCurrentProjectId()
-        }
+      // 调用Agent搜索API
+      const executeResponse = await aiService.executeSearchAgent(
+        getCurrentUserId(),
+        getCurrentProjectId(),
+        requestData
+      )
+
+      // 添加调试日志：检查API响应
+      console.log('[AgentSearch] API响应:', {
+        response: executeResponse,
+        isMockResponse:
+          executeResponse && typeof executeResponse === 'object' && 'isMock' in executeResponse
       })
 
       if (!executeResponse.success) {
@@ -600,25 +491,66 @@
     const maxAttempts = 60 // 最多轮询60次（5分钟）
     const interval = 5000 // 5秒间隔
 
+    console.log(`[AgentSearch] 开始轮询任务状态:`, {
+      taskId,
+      maxAttempts,
+      interval,
+      mockEnabled: import.meta.env.VITE_USE_MOCK === 'true'
+    })
+
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       try {
-        const statusResponse = await http.get<SearchAgentStatusResponse>({
-          url: `/api/v1/ai/search-agent/status/${taskId}`,
-          params: {
-            user_id: getCurrentUserId(),
-            project_id: getCurrentProjectId()
-          }
+        // 添加调试日志：检查状态查询API
+        console.log(`[AgentSearch] 第${attempt + 1}次状态查询:`, {
+          service: 'aiService',
+          taskId,
+          attempt: attempt + 1,
+          totalAttempts: maxAttempts
         })
 
+        const statusResponse = await aiService.getSearchAgentStatus(
+          taskId,
+          getCurrentUserId(),
+          getCurrentProjectId()
+        )
+
+        // 添加调试日志：检查状态查询响应
+        console.log(`[AgentSearch] 第${attempt + 1}次状态查询响应:`, {
+          response: statusResponse,
+          status: statusResponse?.status,
+          progress: statusResponse?.progress,
+          hasResult: !!statusResponse?.result,
+          isMockResponse:
+            statusResponse && typeof statusResponse === 'object' && 'isMock' in statusResponse
+        })
+
+        // 检查响应结构
+        if (!statusResponse) {
+          console.error('[AgentSearch] 状态查询返回空响应')
+          throw new Error('状态查询返回空响应')
+        }
+
         // 更新进度
+        const currentProgress = 20 + (statusResponse.progress || 0) * 0.8
         updateSearchProgress(
           'processing',
-          20 + statusResponse.progress * 0.8,
+          currentProgress,
           100,
           getStatusMessage(statusResponse.status)
         )
 
+        console.log(`[AgentSearch] 状态检查:`, {
+          status: statusResponse.status,
+          isSuccess: statusResponse.status === 'SUCCESS',
+          hasResult: !!statusResponse.result,
+          progress: statusResponse.progress
+        })
+
         if (statusResponse.status === 'SUCCESS' && statusResponse.result) {
+          console.log('[AgentSearch] 任务成功完成，返回结果:', {
+            researchPathLength: statusResponse.result.research_path?.length,
+            webSearchDataLength: statusResponse.result.web_search_data?.length
+          })
           return statusResponse.result
         } else if (statusResponse.status === 'FAILURE') {
           throw new Error(statusResponse.error || 'Agent任务执行失败')
@@ -626,14 +558,19 @@
           throw new Error('Agent任务已被取消')
         }
 
+        console.log(
+          `[AgentSearch] 任务状态: ${statusResponse.status}, 进度: ${statusResponse.progress}%, 等待下一次轮询...`
+        )
+
         // 任务仍在进行中，等待后继续轮询
         await new Promise((resolve) => setTimeout(resolve, interval))
       } catch (error) {
-        console.error('Poll agent status error:', error)
+        console.error(`[AgentSearch] 第${attempt + 1}次轮询失败:`, error)
         throw error
       }
     }
 
+    console.error(`[AgentSearch] 任务超时，已达到最大轮询次数: ${maxAttempts}`)
     throw new Error('Agent任务超时')
   }
 
@@ -779,8 +716,7 @@
         agentType: agentForm.agentType,
         agentConfig: agentForm.agentConfig,
         filters: { type: [] },
-        maxResults: 20,
-        enableAIEnhancement: agentForm.enableAIEnhancement
+        maxResults: 20
       }
 
       await handleAgentSearch(agentConfig)
@@ -808,13 +744,11 @@
     if (currentTaskId.value) {
       try {
         // 调用取消API
-        await http.post({
-          url: `/api/v1/ai/search-agent/cancel/${currentTaskId.value}`,
-          params: {
-            user_id: getCurrentUserId(),
-            project_id: getCurrentProjectId()
-          }
-        })
+        await aiService.cancelSearchAgentTask(
+          currentTaskId.value,
+          getCurrentUserId(),
+          getCurrentProjectId()
+        )
         ElMessage.success('Agent任务已取消')
       } catch (error) {
         console.error('Cancel agent task error:', error)
@@ -834,7 +768,6 @@
 
     // 重置Agent表单
     agentForm.agentType = 'search'
-    agentForm.enableAIEnhancement = true
     agentForm.agentConfig = {}
 
     searchResults.value = []
@@ -981,8 +914,25 @@
 
   // 显示素材预览
   const showMaterialPreview = (material: SearchResultMaterial) => {
+    console.log('[AgentSearch] showMaterialPreview 被调用:', {
+      material,
+      materialId: material?.id,
+      materialType: typeof material,
+      isSearchResultMaterial: 'score' in material
+    })
+
+    if (!material) {
+      console.error('[AgentSearch] showMaterialPreview: material 参数为空')
+      return
+    }
+
     previewMaterial.value = material
     previewDialogVisible.value = true
+
+    console.log('[AgentSearch] showMaterialPreview: 预览对话框已打开:', {
+      previewDialogVisible: previewDialogVisible.value,
+      previewMaterial: previewMaterial.value
+    })
   }
 
   // 分页处理
@@ -1021,11 +971,6 @@
     // 临时返回默认值
     return 'current-project'
   }
-
-  // 组件挂载时初始化
-  onMounted(async () => {
-    await fetchAvailableAgents()
-  })
 </script>
 
 <style scoped lang="scss">

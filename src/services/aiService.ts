@@ -469,8 +469,28 @@ class AiService extends BaseApiService {
       }
 
       if (method === 'GET' && url.includes('/search-agent/status/')) {
-        const taskId = url.split('/').pop()
-        return mockDataManager.getMockData('ai-search-agent-status', taskId)
+        // 从URL中提取taskId，注意URL可能包含baseUrl，所以不能简单用split
+        const parts = url.split('/search-agent/status/')
+        if (parts.length > 1) {
+          let taskId = parts[1]
+          // 如果taskId包含后续路径，则去除
+          if (taskId.includes('/')) {
+            taskId = taskId.split('/')[0]
+          }
+          const params = config.params || {}
+
+          // 添加调试日志
+          if (apiConfig.showDebugInfo) {
+            console.log(`[API-${this.serviceName}] Search Agent状态查询:`, {
+              url,
+              extractedTaskId: taskId,
+              params,
+              fullUrlParts: parts
+            })
+          }
+
+          return mockDataManager.getMockData('ai-search-agent-status', taskId, params.brief)
+        }
       }
 
       if (method === 'GET' && url.includes('/search-agent/tasks')) {
@@ -478,7 +498,8 @@ class AiService extends BaseApiService {
         return mockDataManager.getMockData(
           'ai-search-agent-list',
           params.user_id,
-          params.project_id
+          params.project_id,
+          params.brief
         )
       }
 

@@ -154,7 +154,17 @@
   }
 
   function handlePreview() {
+    console.log('[UnifiedMaterialCard] handlePreview 被调用:', {
+      material: props.material,
+      materialId: props.material?.id,
+      materialType: typeof props.material,
+      hasScore: 'score' in props.material,
+      event: 'preview'
+    })
+
     emit('preview', props.material)
+
+    console.log('[UnifiedMaterialCard] preview 事件已发出')
   }
 
   function formatUrl(url: string): string {

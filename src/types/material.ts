@@ -1,13 +1,12 @@
 export interface Material {
   id: string
-  title: string
-  source: string
+  user_id: string
   summary: string
+  score: number // 相关性评分 (0-1)
+  title?: string // AI总结标题
+  key_excerpts: string[] // 关键摘录
   tags: string[]
-  type: 'image' | 'video' | 'text' | 'audio' | 'other'
   url?: string
-  thumbnail?: string
-  content?: string
   createdAt: Date
   updatedAt?: Date
   selected?: boolean
@@ -16,11 +15,8 @@ export interface Material {
 // 扩展Material接口，用于搜索结果
 export interface SearchResultMaterial extends Material {
   score: number // 相关性评分 (0-1)
-  query: string // 产生此结果的搜索查询
-  aititle?: string // AI总结标题
+  title?: string // AI总结标题
   key_excerpts: string[] // 关键摘录
-  published_date?: string // 发布日期
-  webtitle?: string // 原始网页标题
 }
 
 export interface SearchProvider {
