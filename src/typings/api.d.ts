@@ -357,8 +357,8 @@ declare namespace Api {
     /** Search Agent 相关类型 */
     interface SearchAgentRequest {
       brief: string
-      max_concurrent_research_units?: number | null
-      max_researcher_iterations?: number | null
+      max_concurrent_research_units?: number
+      max_researcher_iterations?: number
     }
 
     interface SearchAgentResponse extends TaskResponse {

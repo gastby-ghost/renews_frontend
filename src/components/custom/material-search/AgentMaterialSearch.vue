@@ -294,6 +294,7 @@
                 v-model="config.agentConfig.maxConcurrentResearchUnits"
                 :min="1"
                 :max="10"
+                :nullable="true"
                 placeholder="默认使用系统配置"
               />
             </el-form-item>
@@ -302,6 +303,7 @@
                 v-model="config.agentConfig.maxResearcherIterations"
                 :min="1"
                 :max="20"
+                :nullable="true"
                 placeholder="默认使用系统配置"
               />
             </el-form-item>
@@ -320,7 +322,11 @@
 
   interface AgentForm {
     agentType: 'search' | 'scope' | 'custom'
-    agentConfig: Record<string, any>
+    agentConfig: {
+      maxConcurrentResearchUnits?: number | null
+      maxResearcherIterations?: number | null
+      [key: string]: any
+    }
   }
 
   interface AgentSearchConfig {
@@ -336,8 +342,8 @@
   // Search Agent API 类型定义 - 根据 ai_openapi.json 更新
   interface SearchAgentRequest {
     brief: string
-    max_concurrent_research_units?: number | null
-    max_researcher_iterations?: number | null
+    max_concurrent_research_units?: number
+    max_researcher_iterations?: number
   }
 
   interface SearchAgentResult {
@@ -404,7 +410,10 @@
   // Agent表单数据
   const agentForm = reactive<AgentForm>({
     agentType: 'search',
-    agentConfig: {}
+    agentConfig: {
+      maxConcurrentResearchUnits: null,
+      maxResearcherIterations: null
+    }
   })
 
   // 搜索历史
@@ -420,7 +429,16 @@
 
   // 更新Agent配置
   const updateAgentConfig = (config: Partial<AgentForm>) => {
-    Object.assign(agentForm, config)
+    if (config.agentConfig) {
+      // 确保保留原有的默认值
+      agentForm.agentConfig = {
+        maxConcurrentResearchUnits: agentForm.agentConfig.maxConcurrentResearchUnits,
+        maxResearcherIterations: agentForm.agentConfig.maxResearcherIterations,
+        ...config.agentConfig
+      }
+    } else {
+      Object.assign(agentForm, config)
+    }
     console.log('Agent配置已更新:', config)
   }
 
@@ -440,10 +458,16 @@
       }
 
       // 添加可选参数
-      if (config.agentConfig?.maxConcurrentResearchUnits) {
+      if (
+        config.agentConfig?.maxConcurrentResearchUnits !== null &&
+        config.agentConfig?.maxConcurrentResearchUnits !== undefined
+      ) {
         requestData.max_concurrent_research_units = config.agentConfig.maxConcurrentResearchUnits
       }
-      if (config.agentConfig?.maxResearcherIterations) {
+      if (
+        config.agentConfig?.maxResearcherIterations !== null &&
+        config.agentConfig?.maxResearcherIterations !== undefined
+      ) {
         requestData.max_researcher_iterations = config.agentConfig.maxResearcherIterations
       }
 
@@ -696,7 +720,10 @@
 
     // 重置Agent表单
     agentForm.agentType = 'search'
-    agentForm.agentConfig = {}
+    agentForm.agentConfig = {
+      maxConcurrentResearchUnits: null,
+      maxResearcherIterations: null
+    }
 
     searchResults.value = []
     selectedMaterials.value = []
