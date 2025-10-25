@@ -236,17 +236,6 @@ export const useMaterialStore = defineStore('material', () => {
     }
   }
 
-  // 获取搜索提供商信息
-  async function getSearchToolsProviders() {
-    try {
-      const providers = await aiService.getSearchProviders()
-      return providers
-    } catch (error) {
-      state.value.error = error instanceof Error ? error.message : '获取搜索提供商信息失败'
-      throw error
-    }
-  }
-
   // 更新搜索进度
   function updateSearchProgress(
     stage: SearchProgress['stage'],
@@ -802,7 +791,6 @@ export const useMaterialStore = defineStore('material', () => {
 
     // Search-tools 相关方法
     checkSearchToolsStatus,
-    getSearchToolsProviders,
     updateSearchProgress,
     setSearchMode,
     clearCurrentSearchResults,

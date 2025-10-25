@@ -304,13 +304,6 @@ class AiService extends BaseApiService {
     return this.get<SearchToolsStatusResponse>('/search-tools/status', undefined, options)
   }
 
-  /**
-   * 获取搜索提供商信息
-   */
-  async getSearchProviders(options?: ApiRequestConfig) {
-    return this.get('/search-tools/providers', undefined, options)
-  }
-
   // ============= 标题生成服务 =============
 
   /**
@@ -418,17 +411,17 @@ class AiService extends BaseApiService {
     try {
       // 搜索工具相关API
       if (method === 'GET' && url.includes('/search-tools/status')) {
-        return mockDataManager.getMockData('ai-search-tools-status')
+        return mockDataManager.getMockData('search-tools-status')
       }
 
       if (method === 'GET' && url.includes('/search-tools/providers')) {
-        return mockDataManager.getMockData('ai-providers')
+        return mockDataManager.getMockData('search-providers')
       }
 
       if (method === 'POST' && url.includes('/search-tools/search')) {
         const requestData = config.data
         return mockDataManager.getMockData(
-          'ai-search-tools',
+          'search-tools',
           requestData.queries || [],
           requestData.provider || 'tavily'
         )
@@ -461,7 +454,7 @@ class AiService extends BaseApiService {
         const requestData = config.data
         const params = config.params || {}
         return mockDataManager.getMockData(
-          'ai-search-agent-execute',
+          'search-agent-execute',
           params.user_id,
           params.project_id,
           requestData.brief
@@ -479,24 +472,14 @@ class AiService extends BaseApiService {
           }
           const params = config.params || {}
 
-          // 添加调试日志
-          if (apiConfig.showDebugInfo) {
-            console.log(`[API-${this.serviceName}] Search Agent状态查询:`, {
-              url,
-              extractedTaskId: taskId,
-              params,
-              fullUrlParts: parts
-            })
-          }
-
-          return mockDataManager.getMockData('ai-search-agent-status', taskId, params.brief)
+          return mockDataManager.getMockData('search-agent-status', taskId, params.brief)
         }
       }
 
       if (method === 'GET' && url.includes('/search-agent/tasks')) {
         const params = config.params || {}
         return mockDataManager.getMockData(
-          'ai-search-agent-list',
+          'search-agent-list',
           params.user_id,
           params.project_id,
           params.brief

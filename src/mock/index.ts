@@ -2,54 +2,27 @@
  * Mock数据统一导出文件
  */
 
-// Agent相关Mock数据
-export * from './data/agent/searchResult'
-
 // 素材相关Mock数据
 export * from './data/material/list'
 
 // 搜索相关Mock数据
 export * from './data/search/results'
 
-// AI服务相关Mock数据
-export * from './data/ai'
-
-// 导入所有Mock数据生成函数
-import {
-  generateMockAgentSearchResult,
-  mockAgentServices,
-  mockAgentCapabilities
-} from './data/agent/searchResult'
-
 import { generateMockMaterialList, generateMockTags } from './data/material/list'
 
 import {
+  generateMockSearchToolsStatus,
+  generateMockAIProviders,
   generateMockSearchResult,
   generateMockSearchToolsResult,
-  generateMockSearchProviders,
-  generateMockSearchToolsStatus,
   generateMockLibraryMaterials,
   generateMockMaterialDetails,
-  generateMockDownloadUrl
-} from './data/search/results'
-
-import {
-  generateMockWebpageSummaryAsync,
-  generateMockWebpageSummaryStatus,
-  generateMockScopeAgentResponse,
-  generateMockScopeAgentStatus,
-  generateMockScopeAgentList,
-  generateMockSearchAgentResponse,
+  generateMockDownloadUrl,
   generateMockSearchAgentStatus,
+  generateMockSearchAgentResponse,
   generateMockSearchAgentList,
-  generateMockSearchToolsResponse,
-  generateMockSearchToolsStatus,
-  generateMockTitleGenerationResponse,
-  generateMockTitleToolsStatus,
-  generateMockOutlineGenerationResponse,
-  generateMockOutlineToolsStatus,
-  generateMockAIProviders
-} from './data/ai'
+  generateMockSearchToolsResponse
+} from './data/search/results'
 
 // Mock数据管理器
 export class MockDataManager {
@@ -75,44 +48,18 @@ export class MockDataManager {
 
     let data: any
 
+    // 根据不同的数据类型key，调用对应的Mock数据生成函数
     switch (key) {
-      case 'agent-search-result': {
-        data = generateMockAgentSearchResult(args[0], args[1])
-        break
-      }
-
-      case 'agent-services': {
-        data = mockAgentServices
-        break
-      }
-
-      case 'agent-capabilities': {
-        data = mockAgentCapabilities
-        break
-      }
-
       case 'material-list': {
+        // 生成素材列表Mock数据
+        // 参数: 页码, 每页数量, 筛选条件
         data = generateMockMaterialList(args[0], args[1], args[2])
         break
       }
 
       case 'material-tags': {
+        // 生成素材标签Mock数据
         data = generateMockTags()
-        break
-      }
-
-      case 'search-result': {
-        data = generateMockSearchResult(args[0], args[1], args[2])
-        break
-      }
-
-      case 'search-tools-result': {
-        data = generateMockSearchToolsResult(args[0], args[1], args[2])
-        break
-      }
-
-      case 'search-providers': {
-        data = generateMockSearchProviders()
         break
       }
 
@@ -121,102 +68,81 @@ export class MockDataManager {
         break
       }
 
+      case 'search-providers': {
+        data = generateMockAIProviders()
+        break
+      }
+
+      case 'search-tools': {
+        // 生成搜索工具响应Mock数据
+        // 参数: 查询数组, 提供商
+        data = generateMockSearchToolsResponse(args[0] || ['默认查询'], args[1] || 'tavily')
+        break
+      }
+
+      case 'search-agent-execute': {
+        // 生成搜索代理执行Mock数据
+        // 参数: 用户ID, 项目ID, 简报内容
+        data = generateMockSearchAgentResponse(args[0], args[1], args[2])
+        break
+      }
+
+      case 'search-agent-status': {
+        // 生成搜索代理状态Mock数据
+        // 参数: 任务ID, 简报内容(可选)
+        console.log('执行了获取agent状态函数')
+        data = generateMockSearchAgentStatus(args[0], args[1])
+        break
+      }
+
+      case 'search-agent-list': {
+        // 生成搜索代理列表Mock数据
+        // 参数: 用户ID, 项目ID(可选), 简报内容(可选)
+        data = generateMockSearchAgentList(args[0], args[1], args[2])
+        break
+      }
+
+      case 'search-result': {
+        // 生成搜索结果Mock数据
+        // 参数: 搜索关键词, 页码, 每页数量
+        data = generateMockSearchResult(args[0], args[1], args[2])
+        break
+      }
+
+      case 'search-tools-result': {
+        // 生成搜索工具结果Mock数据
+        // 参数: 搜索关键词, 工具类型
+        data = generateMockSearchToolsResult(args[0], args[1])
+        break
+      }
+
       case 'library-materials': {
-        data = generateMockLibraryMaterials(args[0], args[1], args[2], args[3], args[4])
+        // 生成库素材Mock数据
+        // 参数: 标签数组, 页码, 每页数量
+        data = generateMockLibraryMaterials(args[0], args[1], args[2])
         break
       }
 
       case 'material-details': {
+        // 生成素材详情Mock数据
+        // 参数: 素材ID
         data = generateMockMaterialDetails(args[0])
         break
       }
 
       case 'download-url': {
+        // 生成下载链接Mock数据
+        // 参数: 素材ID
         data = generateMockDownloadUrl(args[0])
         break
       }
 
-      // AI服务Mock数据
-      case 'ai-webpage-summary-async': {
-        data = generateMockWebpageSummaryAsync(args[0])
-        break
-      }
-
-      case 'ai-webpage-summary-status': {
-        data = generateMockWebpageSummaryStatus(args[0])
-        break
-      }
-
-      case 'ai-scope-agent-execute': {
-        data = generateMockScopeAgentResponse(args[0], args[1], args[2])
-        break
-      }
-
-      case 'ai-scope-agent-status': {
-        data = generateMockScopeAgentStatus(args[0])
-        break
-      }
-
-      case 'ai-scope-agent-list': {
-        data = generateMockScopeAgentList(args[0], args[1])
-        break
-      }
-
-      case 'ai-search-agent-execute': {
-        data = generateMockSearchAgentResponse(args[0], args[1], args[2])
-        break
-      }
-
-      case 'ai-search-agent-status': {
-        data = generateMockSearchAgentStatus(args[0], args[1])
-        break
-      }
-
-      case 'ai-search-agent-list': {
-        data = generateMockSearchAgentList(args[0], args[1], args[2])
-        break
-      }
-
-      case 'ai-search-tools': {
-        data = generateMockSearchToolsResponse(args[0], args[1])
-        break
-      }
-
-      case 'ai-search-tools-status': {
-        data = generateMockSearchToolsStatus()
-        break
-      }
-
-      case 'ai-title-generation': {
-        data = generateMockTitleGenerationResponse(args[0], args[1])
-        break
-      }
-
-      case 'ai-title-tools-status': {
-        data = generateMockTitleToolsStatus()
-        break
-      }
-
-      case 'ai-outline-generation': {
-        data = generateMockOutlineGenerationResponse(args[0], args[1], args[2])
-        break
-      }
-
-      case 'ai-outline-tools-status': {
-        data = generateMockOutlineToolsStatus()
-        break
-      }
-
-      case 'ai-providers': {
-        data = generateMockAIProviders()
-        break
-      }
-
       default:
+        // 处理未知的Mock数据类型请求
         throw new Error(`未知的Mock数据类型: ${key}`)
     }
 
-    // 缓存数据
+    // 将生成的数据存入缓存，提高后续访问性能
     this.dataCache.set(cacheKey, data)
     return data
   }

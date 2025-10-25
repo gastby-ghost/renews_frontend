@@ -43,11 +43,6 @@ export async function testAiApiIntegration() {
     const outlineStatus = await aiService.getOutlineToolsStatus()
     console.log('大纲生成工具状态:', outlineStatus)
 
-    // 7. 测试搜索提供商
-    console.log('🏢 测试搜索提供商...')
-    const providers = await aiService.getSearchProviders()
-    console.log('搜索提供商:', providers)
-
     console.log('✅ AI API集成测试完成！')
     return true
   } catch (error) {

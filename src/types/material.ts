@@ -12,14 +12,6 @@ export interface Material {
   selected?: boolean
 }
 
-export interface SearchProvider {
-  id: string
-  name: string
-  type: 'api' | 'ai'
-  apiEndpoint?: string
-  config?: Record<string, any>
-}
-
 export interface SearchProgress {
   stage: 'config' | 'searching' | 'processing' | 'completed'
   current: number
@@ -43,7 +35,6 @@ export interface MaterialLibraryState {
   materials: Material[]
   selectedMaterials: string[]
   searchHistory: SearchConfig[]
-  providers: SearchProvider[]
   loading: boolean
   error: string | null
 }
