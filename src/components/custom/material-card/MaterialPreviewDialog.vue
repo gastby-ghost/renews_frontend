@@ -12,11 +12,6 @@
       <div class="material-preview__header">
         <div class="material-preview__title-info">
           <h2 class="material-preview__main-title">{{ displayTitle }}</h2>
-          <div class="material-preview__meta-info">
-            <el-tag size="small" :type="getTypeTagType" class="material-preview__type-tag">
-              {{ getTypeLabel }}
-            </el-tag>
-          </div>
         </div>
         <div class="material-preview__mode-switch" v-if="context === 'management'">
           <el-radio-group v-model="previewMode" size="small">
