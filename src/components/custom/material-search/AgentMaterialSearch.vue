@@ -330,12 +330,9 @@
   }
 
   interface AgentSearchConfig {
-    keywords: string
+    brief: string
     providers: string[]
-    searchScope: string
-    agentType: string
     agentConfig: Record<string, any>
-    filters: Record<string, any>
     maxResults: number
   }
 
@@ -411,8 +408,8 @@
   const agentForm = reactive<AgentForm>({
     agentType: 'search',
     agentConfig: {
-      maxConcurrentResearchUnits: null,
-      maxResearcherIterations: null
+      maxConcurrentResearchUnits: 10,
+      maxResearcherIterations: 3
     }
   })
 
@@ -454,7 +451,7 @@
 
       // 构建请求数据
       const requestData: SearchAgentRequest = {
-        brief: config.keywords
+        brief: config.brief
       }
 
       // 添加可选参数
@@ -513,14 +510,13 @@
 
   // 轮询Agent任务状态
   const pollAgentStatus = async (taskId: string): Promise<SearchAgentResult | null> => {
-    const maxAttempts = 60 // 最多轮询60次（5分钟）
-    const interval = 5000 // 5秒间隔
+    const maxAttempts = 60 // 最多轮询60次
+    const interval = 20000 // 20秒间隔
 
     console.log(`[AgentSearch] 开始轮询任务状态:`, {
       taskId,
       maxAttempts,
-      interval,
-      mockEnabled: import.meta.env.VITE_USE_MOCK === 'true'
+      interval
     })
 
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
@@ -662,12 +658,9 @@
 
       // 构建Agent搜索配置
       const agentConfig: AgentSearchConfig = {
-        keywords: searchForm.brief,
+        brief: searchForm.brief,
         providers: ['tavily'], // Agent搜索通常使用默认提供商
-        searchScope: '',
-        agentType: agentForm.agentType,
         agentConfig: agentForm.agentConfig,
-        filters: { type: [] },
         maxResults: 20
       }
 
@@ -721,8 +714,8 @@
     // 重置Agent表单
     agentForm.agentType = 'search'
     agentForm.agentConfig = {
-      maxConcurrentResearchUnits: null,
-      maxResearcherIterations: null
+      maxConcurrentResearchUnits: 5,
+      maxResearcherIterations: 10
     }
 
     searchResults.value = []
