@@ -915,18 +915,75 @@ export const useMaterialStore = defineStore('material', () => {
   function transformSearchResultsToMaterials(results: any[]): Material[] {
     const currentUserId = getCurrentUserId()
 
-    return results.map((item) => ({
-      id: CryptoJS.MD5(item.url).toString(), // 使用URL的MD5值作为唯一ID
-      user_id: currentUserId, // 当前用户ID
-      title: item.aititle || item.webtitle || '未命名素材', // 优先使用AI生成的标题，其次是网页标题
-      summary: item.summary || item.key_excerpts?.join(' ') || '无可用摘要', // 摘要信息
-      score: item.score || 0, // 相关性评分
-      key_excerpts: item.key_excerpts || [], // 关键摘录
-      tags: item.tags || [], // 标签
-      url: item.url, // 原始URL
-      createdAt: item.published_date ? new Date(item.published_date) : new Date(), // 创建时间
-      selected: false // 默认未选中
-    }))
+    // 添加调试日志：检查输入数据
+    console.log('[transformSearchResultsToMaterials] 输入数据检查:', {
+      resultsType: typeof results,
+      resultsIsArray: Array.isArray(results),
+      resultsLength: results?.length,
+      firstItemType: results?.[0] ? typeof results[0] : 'undefined',
+      firstItemValue: results?.[0],
+      fullResults: results
+    })
+
+    // 预处理结果：如果元素是字符串，尝试解析为JSON对象
+    const processedResults = results.map((item, index) => {
+      // 如果item是字符串，尝试解析为JSON
+      if (typeof item === 'string') {
+        try {
+          console.log(`[transformSearchResultsToMaterials] 解析第${index}个JSON字符串:`, item)
+          const parsedItem = JSON.parse(item)
+          console.log(`[transformSearchResultsToMaterials] 解析成功:`, parsedItem)
+          return parsedItem
+        } catch (error) {
+          console.error(`[transformSearchResultsToMaterials] 解析第${index}个JSON字符串失败:`, {
+            error,
+            stringValue: item
+          })
+          // 解析失败时返回空对象
+          return {}
+        }
+      }
+      // 如果item已经是对象，直接返回
+      return item
+    })
+
+    return processedResults.map((item, index) => {
+      // 添加调试日志：检查每个item的类型
+      if (typeof item !== 'object' || item === null) {
+        console.error(`[transformSearchResultsToMaterials] 第${index}个元素不是对象类型:`, {
+          itemType: typeof item,
+          itemValue: item,
+          itemIsNull: item === null,
+          itemIsUndefined: item === undefined
+        })
+      }
+
+      // 安全地访问属性，即使item不是对象也不会报错
+      const safeItem = typeof item === 'object' && item !== null ? item : {}
+
+      return {
+        id: safeItem.url
+          ? CryptoJS.MD5(safeItem.url).toString()
+          : `fallback-${Date.now()}-${index}`, // 使用URL的MD5值作为唯一ID，如果没有URL则使用fallback ID
+        user_id: currentUserId, // 当前用户ID
+        title: safeItem.aititle || safeItem.webtitle || '未命名素材', // 优先使用AI生成的标题，其次是网页标题
+        summary:
+          safeItem.summary ||
+          (safeItem.key_excerpts && Array.isArray(safeItem.key_excerpts)
+            ? safeItem.key_excerpts.join(' ')
+            : '') ||
+          '无可用摘要', // 摘要信息
+        score: typeof safeItem.score === 'number' ? safeItem.score : 0, // 相关性评分
+        key_excerpts:
+          safeItem.key_excerpts && Array.isArray(safeItem.key_excerpts)
+            ? safeItem.key_excerpts
+            : [], // 关键摘录
+        tags: safeItem.tags && Array.isArray(safeItem.tags) ? safeItem.tags : [], // 标签
+        url: safeItem.url || '', // 原始URL
+        createdAt: safeItem.published_date ? new Date(safeItem.published_date) : new Date(), // 创建时间
+        selected: false // 默认未选中
+      }
+    })
   }
 
   /**
