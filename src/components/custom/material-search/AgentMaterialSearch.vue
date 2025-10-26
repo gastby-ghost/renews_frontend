@@ -112,7 +112,12 @@
               {{ index + 1 }}
             </div>
             <div class="research-step__content">
-              <div class="research-step__text">{{ step }}</div>
+              <MdPreview
+                :model-value="step"
+                :preview-theme="previewTheme"
+                :code-theme="codeTheme"
+                class="research-step__markdown"
+              />
             </div>
           </div>
         </div>
@@ -171,6 +176,8 @@
   import MaterialSearchResults from './common/MaterialSearchResults.vue'
   import AddToLibraryDialog from './common/AddToLibraryDialog.vue'
   import { useMaterialSearch } from '@/composables/useMaterialSearch'
+  import { MdPreview } from 'md-editor-v3'
+  import 'md-editor-v3/lib/preview.css'
 
   // Agent配置面板组件
   const AgentPanel = {
@@ -256,6 +263,10 @@
   const showAgentPanel = ref(false)
   const currentTaskId = ref<string>('')
   const researchPath = computed(() => materialStore.researchPath)
+
+  // Markdown 预览主题配置
+  const previewTheme = ref('default')
+  const codeTheme = ref('atom')
 
   // 搜索表单数据
   const searchForm = reactive<SearchForm>({
@@ -552,6 +563,103 @@
         font-size: 14px;
         line-height: 1.5;
         color: var(--el-text-color-regular);
+      }
+
+      &__markdown {
+        font-size: 14px;
+        line-height: 1.6;
+
+        :deep(.md-editor-preview) {
+          padding: 0;
+          background: transparent;
+
+          h1,
+          h2,
+          h3,
+          h4,
+          h5,
+          h6 {
+            margin-top: 0.5em;
+            margin-bottom: 0.5em;
+            color: var(--el-text-color-primary);
+          }
+
+          p {
+            margin: 0.5em 0;
+            color: var(--el-text-color-regular);
+          }
+
+          ul,
+          ol {
+            padding-left: 1.5em;
+            margin: 0.5em 0;
+
+            li {
+              margin: 0.25em 0;
+              color: var(--el-text-color-regular);
+            }
+          }
+
+          code {
+            padding: 0.2em 0.4em;
+            font-size: 0.9em;
+            background-color: var(--el-fill-color-light);
+            border-radius: 3px;
+          }
+
+          pre {
+            padding: 1em;
+            margin: 0.5em 0;
+            overflow-x: auto;
+            background-color: var(--el-fill-color-light);
+            border-radius: 4px;
+
+            code {
+              padding: 0;
+              background: none;
+            }
+          }
+
+          blockquote {
+            padding: 0.5em 1em;
+            margin: 0.5em 0;
+            color: var(--el-text-color-regular);
+            background-color: var(--el-fill-color-lighter);
+            border-left: 4px solid var(--el-color-primary);
+          }
+
+          table {
+            width: 100%;
+            margin: 0.5em 0;
+            border-collapse: collapse;
+
+            th,
+            td {
+              padding: 0.5em;
+              text-align: left;
+              border: 1px solid var(--el-border-color-lighter);
+            }
+
+            th {
+              background-color: var(--el-fill-color-light);
+            }
+          }
+
+          a {
+            color: var(--el-color-primary);
+            text-decoration: none;
+
+            &:hover {
+              text-decoration: underline;
+            }
+          }
+
+          img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+          }
+        }
       }
     }
   }
