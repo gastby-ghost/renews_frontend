@@ -298,10 +298,11 @@
 
   // 头部操作按钮
   const headerActions = computed(() => {
-    return [
+    // 添加类型检查日志
+    const actions = [
       {
         label: '导出',
-        type: 'primary',
+        type: 'primary' as const, // 使用 as const 确保类型为字面量类型而非 string
         icon: 'el-icon-download',
         handler: () => {
           // 导出需求数据的处理函数
@@ -309,6 +310,10 @@
         }
       }
     ]
+    // 验证类型
+    console.log('headerActions type:', typeof actions[0].type)
+    console.log('headerActions value:', actions[0].type)
+    return actions
   })
 
   const requirementsForm = reactive<RequirementsForm>({

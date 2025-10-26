@@ -82,7 +82,7 @@
           <div v-else class="rich-editor">
             <ArtWangEditor
               v-model="documentContent"
-              :height="600"
+              height="600"
               placeholder="开始写作您的文档内容..."
               @change="onContentChange"
             />
@@ -247,7 +247,7 @@
     return [
       {
         label: '导出',
-        type: 'primary',
+        type: 'primary' as const, // 使用 as const 确保类型为字面量类型而非 string
         icon: 'el-icon-download',
         handler: exportContent
       }
