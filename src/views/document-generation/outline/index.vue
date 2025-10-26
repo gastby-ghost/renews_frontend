@@ -31,104 +31,91 @@
           <p class="title-description">{{ titleDescription }}</p>
         </div>
         <div class="outline-actions">
-          <el-button @click="generateAIOutline" :loading="generatingOutline" type="primary"
-            >AI生成大纲</el-button
+          <el-button @click="generateAIOutline" :loading="generatingOutline" type="primary">
+            AI生成大纲
+          </el-button>
+          <el-button @click="addSection" :disabled="!canAddSection"> 添加章节 </el-button>
+          <el-button
+            @click="clearOutline"
+            :disabled="outlineGeneration.state.generatedOutline.length === 0"
+            type="danger"
+            plain
           >
-          <el-button @click="addSection" :disabled="!canAddSection">添加章节</el-button>
-          <el-button @click="clearOutline" :disabled="outline.length === 0" type="danger" plain
-            >清空大纲</el-button
-          >
+            清空大纲
+          </el-button>
         </div>
       </div>
 
       <div class="outline-editor">
-        <div v-if="outline.length === 0" class="empty-outline">
+        <div v-if="outlineGeneration.state.generatedOutline.length === 0" class="empty-outline">
           <div class="empty-icon">📝</div>
           <h4>大纲为空</h4>
           <p>点击"AI生成大纲"让AI为您创建内容大纲，或手动添加章节</p>
         </div>
 
         <div v-else class="outline-tree">
-          <div v-for="(section, sectionIndex) in outline" :key="section.id" class="outline-section">
+          <div
+            v-for="(section, sectionIndex) in outlineGeneration.state.generatedOutline"
+            :key="section.title"
+            class="outline-section"
+          >
             <div class="section-header">
-              <div class="section-info"
-                ><span class="section-number">{{ sectionIndex + 1 }}</span>
+              <div class="section-info">
+                <span class="section-number">{{ sectionIndex + 1 }}</span>
                 <input
                   v-model="section.title"
                   class="section-title-input"
                   placeholder="章节标题"
-                  @blur="saveOutline"
+                  @blur="outlineGeneration.editSection(section.title, { title: section.title })"
                 />
               </div>
               <div class="section-controls">
-                <el-button @click="addSubsection(sectionIndex)" size="small" link
-                  >添加子节</el-button
-                >
                 <el-button
                   @click="moveSectionUp(sectionIndex)"
                   size="small"
                   link
                   :disabled="sectionIndex === 0"
-                  >上移</el-button
                 >
+                  上移
+                </el-button>
                 <el-button
                   @click="moveSectionDown(sectionIndex)"
                   size="small"
                   link
-                  :disabled="sectionIndex === outline.length - 1"
-                  >下移</el-button
+                  :disabled="sectionIndex === outlineGeneration.state.generatedOutline.length - 1"
                 >
-                <el-button @click="deleteSection(sectionIndex)" size="small" type="danger" link
-                  >删除</el-button
-                >
+                  下移
+                </el-button>
+                <el-button @click="deleteSection(sectionIndex)" size="small" type="danger" link>
+                  删除
+                </el-button>
               </div>
             </div>
 
-            <div v-if="section.subsections.length > 0" class="subsections">
-              <div
-                v-for="(subsection, subIndex) in section.subsections"
-                :key="subsection.id"
-                class="outline-subsection"
-              >
-                <div class="subsection-header"
-                  ><span class="subsection-number">{{ sectionIndex + 1 }}.{{ subIndex + 1 }}</span>
-                  <input
-                    v-model="subsection.title"
-                    class="subsection-title-input"
-                    placeholder="子节标题"
-                    @blur="saveOutline"
-                  />
-                  <div class="subsection-controls"
-                    ><el-button
-                      @click="moveSubsectionUp(sectionIndex, subIndex)"
-                      size="small"
-                      link
-                      :disabled="subIndex === 0"
-                      >上移</el-button
-                    ><el-button
-                      @click="moveSubsectionDown(sectionIndex, subIndex)"
-                      size="small"
-                      link
-                      :disabled="subIndex === section.subsections.length - 1"
-                      >下移</el-button
-                    ><el-button
-                      @click="deleteSubsection(sectionIndex, subIndex)"
-                      size="small"
-                      type="danger"
-                      link
-                      >删除</el-button
-                    >
-                  </div>
-                </div>
-
-                <div class="subsection-content">
-                  <textarea
-                    v-model="subsection.content"
-                    class="subsection-content-textarea"
-                    placeholder="子节内容要点（可选）"
-                    @blur="saveOutline"
-                  ></textarea>
-                </div>
+            <div class="section-content">
+              <div class="content-direction">
+                <label>内容方向：</label>
+                <textarea
+                  v-model="section.content_direction"
+                  class="content-direction-textarea"
+                  placeholder="请输入内容方向和写作要点"
+                  @blur="
+                    outlineGeneration.editSection(section.title, {
+                      content_direction: section.content_direction
+                    })
+                  "
+                />
+              </div>
+              <div class="data-requirements">
+                <label>数据需求：</label>
+                <el-tag
+                  v-for="req in section.data_requirements"
+                  :key="req"
+                  size="small"
+                  effect="plain"
+                >
+                  {{ req }}
+                </el-tag>
               </div>
             </div>
           </div>
@@ -141,7 +128,7 @@
           type="success"
           size="large"
           @click="confirmOutline"
-          :disabled="outline.length === 0"
+          :disabled="outlineGeneration.state.generatedOutline.length === 0"
         >
           确认大纲并继续
         </el-button>
@@ -154,170 +141,93 @@
   import { ref, computed, onMounted } from 'vue'
   import { useRouter, useRoute } from 'vue-router'
   import { ElMessage } from 'element-plus'
-
-  interface OutlineSubsection {
-    id: string
-    title: string
-    content: string
-  }
-
-  interface OutlineSection {
-    id: string
-    title: string
-    subsections: OutlineSubsection[]
-  }
+  import { useOutlineGeneration } from '@/composables/useOutlineGeneration'
+  import { useDocumentGenerateStore } from '@/store/documentGenerate'
 
   const router = useRouter()
   const route = useRoute()
+  const outlineGeneration = useOutlineGeneration()
+  const documentStore = useDocumentGenerateStore()
 
   const projectId = route.params.projectId as string
-
-  const selectedTitle = ref('')
-  const titleDescription = ref('')
-  const outline = ref<OutlineSection[]>([])
   const generatingOutline = ref(false)
 
-  onMounted(() => {
-    loadExistingData()
+  // 头部操作按钮
+  const headerActions = computed(() => {
+    return [
+      {
+        label: '导出',
+        type: 'primary' as const,
+        icon: 'el-icon-download',
+        handler: () => {
+          outlineGeneration.exportOutline('json')
+        }
+      }
+    ]
   })
 
-  const loadExistingData = () => {
-    // Load selected title
+  onMounted(async () => {
+    // 确保当前文档项目已设置
+    if (!documentStore.currentDocument) {
+      documentStore.setCurrentDocument(projectId)
+    }
+
+    await loadExistingData()
+  })
+
+  const loadExistingData = async () => {
+    // 从localStorage加载标题数据
     const titlesData = localStorage.getItem(`project_${projectId}_titles`)
     if (titlesData) {
       const { selectedTitle: title } = JSON.parse(titlesData)
-      selectedTitle.value = title.text
-      titleDescription.value = title.description
+      if (title) {
+        // 标题数据已存储到store，无需额外处理
+      }
     }
 
-    // Load existing outline
-    const outlineData = localStorage.getItem(`project_${projectId}_outline`)
-    if (outlineData) {
-      outline.value = JSON.parse(outlineData)
+    // 检查服务状态
+    try {
+      await outlineGeneration.getOutlineToolsStatus()
+    } catch {
+      ElMessage.warning('大纲生成服务状态检查失败，将使用模拟数据')
     }
   }
 
+  const selectedTitle = computed(() => {
+    return documentStore.currentDocument?.selectedTitle?.title || ''
+  })
+
+  const titleDescription = computed(() => {
+    return documentStore.currentDocument?.selectedTitle?.angle || ''
+  })
+
   const canAddSection = computed(() => {
-    return outline.value.length < 10 // Limit to 10 sections
+    return outlineGeneration.state.generatedOutline.length < 10
   })
 
   const generateAIOutline = async () => {
+    if (
+      !documentStore.currentDocument?.selectedTitle ||
+      !documentStore.currentDocument?.researchBrief
+    ) {
+      ElMessage.warning('请先选择标题并完善研究简报')
+      return
+    }
+
     generatingOutline.value = true
     try {
-      // Simulate AI outline generation
-      await new Promise((resolve) => setTimeout(resolve, 3000))
+      const response = await outlineGeneration.generateOutline(
+        documentStore.currentDocument.selectedTitle,
+        documentStore.currentDocument.researchBrief,
+        documentStore.currentDocument.searchResults
+      )
 
-      // Generate mock outline based on title and requirements
-      const mockOutline: OutlineSection[] = [
-        {
-          id: '1',
-          title: '引言',
-          subsections: [
-            {
-              id: '1-1',
-              title: '研究背景',
-              content: '介绍人工智能技术的发展历程和当前状况'
-            },
-            {
-              id: '1-2',
-              title: '研究意义',
-              content: '阐述本研究对行业发展的重要性和实际价值'
-            },
-            {
-              id: '1-3',
-              title: '研究目标',
-              content: '明确本文的研究目标和预期成果'
-            }
-          ]
-        },
-        {
-          id: '2',
-          title: '相关技术概述',
-          subsections: [
-            {
-              id: '2-1',
-              title: '人工智能技术基础',
-              content: '介绍机器学习、深度学习等核心技术'
-            },
-            {
-              id: '2-2',
-              title: '行业发展现状',
-              content: '分析当前AI技术在各行业的应用情况'
-            },
-            {
-              id: '2-3',
-              title: '技术发展趋势',
-              content: '探讨AI技术的未来发展方向和趋势'
-            }
-          ]
-        },
-        {
-          id: '3',
-          title: '应用案例分析',
-          subsections: [
-            {
-              id: '3-1',
-              title: '金融行业应用',
-              content: '分析AI在风控、客服、投资等方面的应用'
-            },
-            {
-              id: '3-2',
-              title: '医疗健康应用',
-              content: '探讨AI在诊断、治疗、药物研发中的作用'
-            },
-            {
-              id: '3-3',
-              title: '制造业应用',
-              content: '研究AI在生产优化、质量控制等方面的应用'
-            }
-          ]
-        },
-        {
-          id: '4',
-          title: '挑战与机遇',
-          subsections: [
-            {
-              id: '4-1',
-              title: '技术挑战',
-              content: '分析当前AI技术面临的主要技术难题'
-            },
-            {
-              id: '4-2',
-              title: '伦理考量',
-              content: '探讨AI应用中的伦理问题和解决方案'
-            },
-            {
-              id: '4-3',
-              title: '发展机遇',
-              content: '分析AI技术发展带来的新机遇和前景'
-            }
-          ]
-        },
-        {
-          id: '5',
-          title: '结论与展望',
-          subsections: [
-            {
-              id: '5-1',
-              title: '主要结论',
-              content: '总结研究的主要发现和结论'
-            },
-            {
-              id: '5-2',
-              title: '未来展望',
-              content: '对AI技术未来发展的展望和建议'
-            },
-            {
-              id: '5-3',
-              title: '研究局限',
-              content: '说明本研究的局限性和改进方向'
-            }
-          ]
-        }
-      ]
-
-      outline.value = mockOutline
-      saveOutline()
+      // 保存到store
+      if (response) {
+        documentStore.updateCurrentDocument({
+          generatedOutline: response.outline
+        })
+      }
 
       ElMessage.success('AI大纲生成成功！')
     } catch {
@@ -328,88 +238,55 @@
   }
 
   const addSection = () => {
-    const newSection: OutlineSection = {
-      id: Date.now().toString(),
-      title: '',
-      subsections: []
-    }
-    outline.value.push(newSection)
-    saveOutline()
+    outlineGeneration.addSection()
   }
 
-  const addSubsection = (sectionIndex: number) => {
-    const newSubsection: OutlineSubsection = {
-      id: Date.now().toString(),
-      title: '',
-      content: ''
-    }
-    outline.value[sectionIndex].subsections.push(newSubsection)
-    saveOutline()
-  }
-
-  const deleteSection = (sectionIndex: number) => {
-    outline.value.splice(sectionIndex, 1)
-    saveOutline()
-  }
-
-  const deleteSubsection = (sectionIndex: number, subIndex: number) => {
-    outline.value[sectionIndex].subsections.splice(subIndex, 1)
-    saveOutline()
-  }
-
-  const moveSectionUp = (sectionIndex: number) => {
-    if (sectionIndex > 0) {
-      const temp = outline.value[sectionIndex]
-      outline.value[sectionIndex] = outline.value[sectionIndex - 1]
-      outline.value[sectionIndex - 1] = temp
-      saveOutline()
+  const deleteSection = (index: number) => {
+    const sections = outlineGeneration.state.generatedOutline
+    if (index >= 0 && index < sections.length) {
+      sections.splice(index, 1)
+      ElMessage.success('章节已删除')
     }
   }
 
-  const moveSectionDown = (sectionIndex: number) => {
-    if (sectionIndex < outline.value.length - 1) {
-      const temp = outline.value[sectionIndex]
-      outline.value[sectionIndex] = outline.value[sectionIndex + 1]
-      outline.value[sectionIndex + 1] = temp
-      saveOutline()
+  const moveSectionUp = (index: number) => {
+    const sections = outlineGeneration.state.generatedOutline
+    if (index > 0) {
+      const temp = sections[index]
+      sections[index] = sections[index - 1]
+      sections[index - 1] = temp
     }
   }
 
-  const moveSubsectionUp = (sectionIndex: number, subIndex: number) => {
-    const subsections = outline.value[sectionIndex].subsections
-    if (subIndex > 0) {
-      const temp = subsections[subIndex]
-      subsections[subIndex] = subsections[subIndex - 1]
-      subsections[subIndex - 1] = temp
-      saveOutline()
-    }
-  }
-
-  const moveSubsectionDown = (sectionIndex: number, subIndex: number) => {
-    const subsections = outline.value[sectionIndex].subsections
-    if (subIndex < subsections.length - 1) {
-      const temp = subsections[subIndex]
-      subsections[subIndex] = subsections[subIndex + 1]
-      subsections[subIndex + 1] = temp
-      saveOutline()
+  const moveSectionDown = (index: number) => {
+    const sections = outlineGeneration.state.generatedOutline
+    if (index < sections.length - 1) {
+      const temp = sections[index]
+      sections[index] = sections[index + 1]
+      sections[index + 1] = temp
     }
   }
 
   const clearOutline = () => {
-    outline.value = []
-    saveOutline()
+    outlineGeneration.reset()
     ElMessage.success('大纲已清空')
   }
 
-  const saveOutline = () => {
-    localStorage.setItem(`project_${projectId}_outline`, JSON.stringify(outline.value))
-  }
-
   const confirmOutline = () => {
-    if (outline.value.length === 0) {
+    if (outlineGeneration.state.generatedOutline.length === 0) {
       ElMessage.warning('请创建大纲')
       return
     }
+
+    // 验证大纲
+    if (!outlineGeneration.validateOutline()) {
+      return
+    }
+
+    // 保存到store
+    documentStore.updateCurrentDocument({
+      generatedOutline: outlineGeneration.state.generatedOutline
+    })
 
     ElMessage.success('大纲已确认，即将进入正文阶段')
 
@@ -614,64 +491,28 @@
     gap: 5px;
   }
 
-  .subsections {
-    padding-left: 20px;
-    margin-left: 30px;
-    border-left: 2px solid var(--el-border-color);
+  .section-content {
+    padding: 15px;
+    margin-top: 15px;
+    background: var(--el-fill-color-blank);
+    border-radius: 4px;
   }
 
-  .outline-subsection {
-    padding: 10px;
+  .content-direction {
     margin-bottom: 15px;
-    background: white;
-    border-radius: 4px;
 
-    &:last-child {
-      margin-bottom: 0;
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--el-text-color-primary);
     }
   }
 
-  .subsection-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 8px;
-  }
-
-  .subsection-number {
-    min-width: 40px;
-    font-weight: bold;
-    color: var(--el-text-color-secondary);
-  }
-
-  .subsection-title-input {
-    flex: 1;
-    padding: 6px 10px;
-    margin: 0 10px;
-    font-size: 14px;
-    background: white;
-    border: 1px solid var(--el-border-color);
-    border-radius: 4px;
-
-    &:focus {
-      border-color: var(--el-color-primary);
-      outline: none;
-      box-shadow: 0 0 0 2px var(--el-color-primary-light-8);
-    }
-  }
-
-  .subsection-controls {
-    display: flex;
-    gap: 5px;
-  }
-
-  .subsection-content {
-    margin-left: 50px;
-  }
-
-  .subsection-content-textarea {
+  .content-direction-textarea {
     width: 100%;
-    min-height: 60px;
+    min-height: 80px;
     padding: 8px 12px;
     font-family: inherit;
     font-size: 14px;
@@ -683,6 +524,21 @@
       border-color: var(--el-color-primary);
       outline: none;
       box-shadow: 0 0 0 2px var(--el-color-primary-light-8);
+    }
+  }
+
+  .data-requirements {
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--el-text-color-primary);
+    }
+
+    .el-tag {
+      margin-right: 8px;
+      margin-bottom: 8px;
     }
   }
 
@@ -721,25 +577,6 @@
 
     .section-controls {
       flex-wrap: wrap;
-    }
-
-    .subsection-header {
-      flex-direction: column;
-      gap: 8px;
-      align-items: flex-start;
-    }
-
-    .subsection-controls {
-      flex-wrap: wrap;
-    }
-
-    .subsection-content {
-      margin-left: 0;
-    }
-
-    .subsections {
-      padding-left: 15px;
-      margin-left: 15px;
     }
 
     .step-indicator {

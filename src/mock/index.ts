@@ -8,6 +8,9 @@ export * from './data/material/list'
 // 搜索相关Mock数据
 export * from './data/search/results'
 
+// 文档生成相关Mock数据
+export * from './data/document-generate'
+
 import { generateMockMaterialList, generateMockTags } from './data/material/list'
 
 import {
@@ -23,6 +26,16 @@ import {
   generateMockSearchAgentList,
   generateMockSearchToolsResponse
 } from './data/search/results'
+
+import {
+  generateScopeAgentResponse,
+  generateScopeAgentStatusResponse,
+  generateScopeAgentListResponse,
+  generateTitleGenerationResponse,
+  generateTitleToolsStatusResponse,
+  generateOutlineGenerationResponse,
+  generateOutlineToolsStatusResponse
+} from './data/document-generate'
 
 // Mock数据管理器
 export class MockDataManager {
@@ -134,6 +147,52 @@ export class MockDataManager {
         // 生成下载链接Mock数据
         // 参数: 素材ID
         data = generateMockDownloadUrl(args[0])
+        break
+      }
+
+      // ========== 文档生成相关Mock数据 ==========
+      case 'scope-agent-execute': {
+        // 生成Scope Agent执行Mock数据
+        // 参数: 用户ID, 项目ID, 查询内容
+        data = generateScopeAgentResponse(args[0], args[1])
+        break
+      }
+
+      case 'scope-agent-status': {
+        // 生成Scope Agent状态Mock数据
+        // 参数: 任务ID
+        data = generateScopeAgentStatusResponse(args[0])
+        break
+      }
+
+      case 'scope-agent-list': {
+        // 生成Scope Agent列表Mock数据
+        // 参数: 用户ID, 项目ID(可选)
+        data = generateScopeAgentListResponse(args[0], args[1])
+        break
+      }
+
+      case 'title-generation': {
+        // 生成标题生成Mock数据
+        data = generateTitleGenerationResponse()
+        break
+      }
+
+      case 'title-tools-status': {
+        // 生成标题工具状态Mock数据
+        data = generateTitleToolsStatusResponse()
+        break
+      }
+
+      case 'outline-generation': {
+        // 生成大纲生成Mock数据
+        data = generateOutlineGenerationResponse()
+        break
+      }
+
+      case 'outline-tools-status': {
+        // 生成大纲工具状态Mock数据
+        data = generateOutlineToolsStatusResponse()
         break
       }
 

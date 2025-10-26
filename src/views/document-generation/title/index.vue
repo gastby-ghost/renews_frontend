@@ -24,6 +24,16 @@
       </div>
     </div>
 
+    <!-- 生成进度显示 -->
+    <div v-if="titleGeneration.state.isGenerating" class="generation-progress">
+      <el-progress
+        :percentage="titleGeneration.state.progress"
+        :status="titleGeneration.state.progress === 100 ? 'success' : undefined"
+        :stroke-width="6"
+      />
+      <p class="progress-text">正在生成标题，请稍候...</p>
+    </div>
+
     <div class="title-generation-section">
       <div class="generation-controls">
         <div class="control-group">
@@ -41,9 +51,10 @@
             </el-form-item>
             <el-form-item label="标题长度">
               <el-radio-group v-model="titleControls.length">
-                <el-radio label="short">简短</el-radio>
-                <el-radio label="medium">适中</el-radio>
-                <el-radio label="long">详细</el-radio>
+                <!-- 修复：使用 value 属性替代即将废弃的 label 属性 -->
+                <el-radio value="short">简短</el-radio>
+                <el-radio value="medium">适中</el-radio>
+                <el-radio value="long">详细</el-radio>
               </el-radio-group>
             </el-form-item>
             <el-form-item label="风格偏好">
@@ -57,10 +68,10 @@
             <el-form-item label="包含关键词">
               <div class="keywords-section">
                 <el-tag
-                  v-for="keyword in extractedKeywords"
+                  v-for="keyword in titleGeneration.state.customKeywords"
                   :key="keyword"
                   closable
-                  @close="removeKeyword(keyword)"
+                  @close="titleGeneration.removeCustomKeyword(keyword)"
                   type="info"
                 >
                   {{ keyword }}
@@ -76,121 +87,113 @@
             </el-form-item>
           </el-form>
         </div>
+      </div>
 
-        <div class="material-section">
-          <h4>素材选择</h4>
-          <div class="material-controls">
-            <el-button @click="openMaterialLibrary" type="primary" plain>从素材库选择</el-button>
-            <el-button @click="aiSearchMaterials" :loading="aiSearching" plain
-              >AI智能检索</el-button
-            >
-            <el-button
-              @click="clearSelectedMaterials"
-              :disabled="selectedMaterials.length === 0"
-              plain
-              >清空选择</el-button
-            >
-          </div>
-
-          <div class="selected-materials" v-if="selectedMaterials.length > 0">
-            <div v-for="material in selectedMaterials" :key="material.id" class="material-card">
-              <div class="material-header">
-                <h5>{{ material.title }}</h5>
-                <el-button type="danger" size="small" @click="removeMaterial(material.id)" link>
-                  移除
-                </el-button>
-              </div>
-              <p>{{ material.content.substring(0, 150) }}...</p>
-              <div class="material-tags">
-                <el-tag v-for="tag in material.tags" :key="tag" size="small" effect="plain">
-                  {{ tag }}
-                </el-tag>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="generation-actions">
-          <el-button
-            type="primary"
-            size="large"
-            @click="generateTitles"
-            :loading="generatingTitles"
-            :disabled="!canGenerateTitles"
-          >
-            生成标题
-          </el-button>
-          <p class="generation-tip" v-if="!canGenerateTitles">
-            请至少选择一个素材或添加关键词来生成标题
-          </p>
-        </div>
+      <div class="generation-actions">
+        <el-button
+          type="primary"
+          size="large"
+          @click="generateTitles"
+          :loading="titleGeneration.state.isGenerating"
+          :disabled="!canGenerateTitles"
+        >
+          AI生成待选标题
+        </el-button>
+        <el-button
+          v-if="titleGeneration.hasGeneratedTitles"
+          @click="regenerateTitles"
+          :loading="titleGeneration.state.isGenerating"
+        >
+          重新生成
+        </el-button>
+        <p class="generation-tip" v-if="!canGenerateTitles">
+          请确保有研究简报和搜索数据来生成标题
+        </p>
       </div>
     </div>
 
-    <div class="titles-display-section" v-if="generatedTitles.length > 0">
+    <div class="titles-display-section" v-if="titleGeneration.hasGeneratedTitles">
       <div class="section-header">
         <h3>生成的标题选项</h3>
-        <el-tag type="info">共 {{ generatedTitles.length }} 个标题</el-tag>
+        <el-tag type="info">共 {{ titleGeneration.state.generatedTitles.length }} 个标题</el-tag>
       </div>
 
       <div class="titles-grid">
         <div
-          v-for="(title, index) in generatedTitles"
+          v-for="(title, index) in titleGeneration.state.generatedTitles"
           :key="index"
           class="title-card"
-          :class="{ selected: selectedTitleIndex === index }"
-          @click="selectTitle(index)"
+          :class="{ selected: titleGeneration.state.selectedTitle === title }"
+          @click="titleGeneration.selectTitle(title)"
         >
           <div class="title-header">
             <div class="title-content">
-              <h4>{{ title.text }}</h4>
+              <h4>{{ title.title }}</h4>
               <div class="title-score">
-                <el-rate v-model="title.score" disabled show-score text-color="#ff9900" />
+                <span class="score-label">评分: </span>
+                <el-rate
+                  :value="getTitleScore(title)"
+                  disabled
+                  show-score
+                  text-color="#ff9900"
+                  :max="5"
+                />
               </div>
             </div>
             <div class="title-selection">
-              <el-radio v-model="selectedTitleIndex" :label="index">
-                {{ selectedTitleIndex === index ? '已选择' : '选择' }}
+              <!-- 修复：使用 model-value 和 value 属性替代即将废弃的 label 属性 -->
+              <el-radio
+                :model-value="titleGeneration.state.selectedTitle === title"
+                :value="true"
+                @change="titleGeneration.selectTitle(title)"
+              >
+                {{ titleGeneration.state.selectedTitle === title ? '已选择' : '选择' }}
               </el-radio>
             </div>
           </div>
 
           <div class="title-analysis">
-            <div class="analysis-item"><strong>吸引力：</strong> {{ title.attractiveness }}</div>
-            <div class="analysis-item"><strong>相关性：</strong> {{ title.relevance }}</div>
-            <div class="analysis-item"><strong>独特性：</strong> {{ title.uniqueness }}</div>
+            <div class="analysis-item"><strong>角度：</strong> {{ title.angle }}</div>
+            <div class="analysis-item"><strong>时效性：</strong> {{ title.why_now }}</div>
+            <div class="analysis-item"><strong>可行性：</strong> {{ title.feasibility }}</div>
           </div>
 
           <div class="title-keywords">
-            <span class="keyword-label">关键词：</span>
+            <span class="keyword-label">新闻价值：</span>
             <el-tag
-              v-for="keyword in title.keywords"
-              :key="keyword"
+              v-for="value in title.news_values"
+              :key="value"
               size="small"
               type="info"
               effect="plain"
             >
-              {{ keyword }}
+              {{ value }}
             </el-tag>
           </div>
 
           <div class="title-advantages">
             <h5>优势分析：</h5>
             <ul>
-              <li v-for="advantage in title.advantages" :key="advantage">{{ advantage }}</li>
+              <li v-for="(advantage, index) in getTitleSuggestions(title)" :key="index">{{
+                advantage
+              }}</li>
             </ul>
           </div>
         </div>
       </div>
 
-      <div class="selected-title-preview" v-if="selectedTitleIndex !== null">
+      <div class="selected-title-preview" v-if="titleGeneration.hasSelectedTitle">
         <div class="preview-header">
           <h4>选中的标题</h4>
           <el-tag type="success" effect="dark">已选择</el-tag>
         </div>
         <div class="preview-content">
-          <h3>{{ generatedTitles[selectedTitleIndex].text }}</h3>
-          <p class="preview-description">{{ generatedTitles[selectedTitleIndex].description }}</p>
+          <h3>{{ titleGeneration.state.selectedTitle?.title }}</h3>
+          <p class="preview-description">
+            <strong>角度：</strong> {{ titleGeneration.state.selectedTitle?.angle }}<br />
+            <strong>时效性：</strong> {{ titleGeneration.state.selectedTitle?.why_now }}<br />
+            <strong>可行性：</strong> {{ titleGeneration.state.selectedTitle?.feasibility }}
+          </p>
         </div>
       </div>
     </div>
@@ -201,7 +204,7 @@
         type="success"
         size="large"
         @click="confirmTitle"
-        :disabled="selectedTitleIndex === null"
+        :disabled="!titleGeneration.hasSelectedTitle"
       >
         确认标题并继续
       </el-button>
@@ -213,6 +216,9 @@
   import { ref, reactive, computed, onMounted } from 'vue'
   import { useRouter, useRoute } from 'vue-router'
   import { ElMessage } from 'element-plus'
+  import { useTitleGeneration } from '@/composables/useTitleGeneration'
+  import { useDocumentGenerateStore } from '@/store/documentGenerate'
+  import type { Title } from '@/types/ai'
 
   interface TitleControls {
     count: number
@@ -220,26 +226,10 @@
     styles: string[]
   }
 
-  interface Material {
-    id: string
-    title: string
-    content: string
-    tags: string[]
-  }
-
-  interface GeneratedTitle {
-    text: string
-    score: number
-    attractiveness: string
-    relevance: string
-    uniqueness: string
-    keywords: string[]
-    advantages: string[]
-    description: string
-  }
-
   const router = useRouter()
   const route = useRoute()
+  const titleGeneration = useTitleGeneration()
+  const documentStore = useDocumentGenerateStore()
 
   const projectId = route.params.projectId as string
 
@@ -249,262 +239,142 @@
     styles: ['professional', 'catchy']
   })
 
-  const extractedKeywords = ref<string[]>([])
   const newKeyword = ref('')
-  const selectedMaterials = ref<Material[]>([])
-  const generatedTitles = ref<GeneratedTitle[]>([])
-  const selectedTitleIndex = ref<number | null>(null)
-  const generatingTitles = ref(false)
-  const aiSearching = ref(false)
 
-  onMounted(() => {
-    loadExistingData()
-    extractKeywordsFromRequirements()
+  // 头部操作按钮
+  const headerActions = computed(() => {
+    return [
+      {
+        label: '导出',
+        type: 'primary',
+        icon: 'el-icon-download',
+        handler: () => {
+          // 导出标题数据的处理函数
+          ElMessage.info('导出功能开发中')
+        }
+      }
+    ]
   })
 
-  const loadExistingData = () => {
-    // Load existing requirements
-    const requirementsData = localStorage.getItem(`project_${projectId}_requirements`)
-    if (requirementsData) {
-      const { requirements } = JSON.parse(requirementsData)
-      // Extract keywords from requirements
-      const keywords = [
-        ...requirements.keyPoints,
-        requirements.topic,
-        requirements.documentType
-      ].filter(Boolean)
-      extractedKeywords.value = [...new Set(keywords)]
-    }
-
-    // Load existing titles if any
-    const titlesData = localStorage.getItem(`project_${projectId}_titles`)
-    if (titlesData) {
-      const { titles, selectedIndex } = JSON.parse(titlesData)
-      generatedTitles.value = titles
-      selectedTitleIndex.value = selectedIndex
-    }
-
-    // Load selected materials
-    const materialsData = localStorage.getItem(`project_${projectId}_materials`)
-    if (materialsData) {
-      selectedMaterials.value = JSON.parse(materialsData)
-    }
-  }
-
-  const extractKeywordsFromRequirements = () => {
-    // This would typically analyze the requirements and extract relevant keywords
-    // For now, we'll use the keywords from requirements
-  }
-
+  // 计算属性
   const canGenerateTitles = computed(() => {
-    return selectedMaterials.value.length > 0 || extractedKeywords.value.length > 0
+    return documentStore.currentDocument?.researchBrief && !titleGeneration.state.isGenerating
   })
+
+  onMounted(async () => {
+    // 确保当前文档项目已设置
+    if (!documentStore.currentDocument) {
+      documentStore.setCurrentDocument(projectId)
+    }
+
+    // 加载现有数据
+    await loadExistingData()
+
+    // 提取关键词
+    extractKeywords()
+  })
+
+  const loadExistingData = async () => {
+    try {
+      // 从localStorage加载标题数据
+      const titlesData = localStorage.getItem(`project_${projectId}_titles`)
+      if (titlesData) {
+        const { titles, selectedTitle } = JSON.parse(titlesData)
+        if (titles && titles.length > 0) {
+          titleGeneration.state.generatedTitles = titles
+          if (selectedTitle) {
+            titleGeneration.selectTitle(selectedTitle)
+          }
+        }
+      }
+
+      // 检查服务状态
+      await checkServiceStatus()
+    } catch (error) {
+      console.error('加载现有数据失败:', error)
+    }
+  }
+
+  const checkServiceStatus = async () => {
+    try {
+      const status = await titleGeneration.getTitleToolsStatus()
+      if (!status.configured) {
+        ElMessage.warning('标题生成服务未配置，将使用模拟数据')
+      }
+    } catch {
+      ElMessage.warning('标题生成服务状态检查失败，将使用模拟数据')
+    }
+  }
+
+  const extractKeywords = () => {
+    if (documentStore.currentDocument?.researchBrief) {
+      titleGeneration.extractKeywords(documentStore.currentDocument.researchBrief)
+    }
+  }
 
   const addKeyword = () => {
     const keyword = newKeyword.value.trim()
-    if (keyword && !extractedKeywords.value.includes(keyword)) {
-      extractedKeywords.value.push(keyword)
+    if (keyword) {
+      titleGeneration.addCustomKeyword(keyword)
       newKeyword.value = ''
     }
   }
 
-  const removeKeyword = (keyword: string) => {
-    const index = extractedKeywords.value.indexOf(keyword)
-    if (index > -1) {
-      extractedKeywords.value.splice(index, 1)
-    }
-  }
-
-  const openMaterialLibrary = () => {
-    // TODO: Open material library dialog
-    // For now, simulate adding some materials
-    const mockMaterials: Material[] = [
-      {
-        id: '1',
-        title: '2024年人工智能发展趋势报告',
-        content:
-          '人工智能技术在过去一年中取得了显著进展，特别是在大语言模型、计算机视觉和机器学习等领域...',
-        tags: ['AI', '技术趋势', '2024']
-      },
-      {
-        id: '2',
-        title: 'AI技术在各行业的应用现状',
-        content:
-          '人工智能已经广泛应用于金融、医疗、教育、制造等多个行业，为这些领域带来了革命性的变化...',
-        tags: ['AI应用', '行业分析']
-      }
-    ]
-
-    // Add materials that aren't already selected
-    mockMaterials.forEach((material) => {
-      if (!selectedMaterials.value.find((m) => m.id === material.id)) {
-        selectedMaterials.value.push(material)
-      }
-    })
-
-    ElMessage.success('已添加素材到选择列表')
-  }
-
-  const aiSearchMaterials = async () => {
-    aiSearching.value = true
-    try {
-      // Simulate AI search
-      await new Promise((resolve) => setTimeout(resolve, 2000))
-
-      // Mock AI search results based on keywords
-      const mockMaterials: Material[] = [
-        {
-          id: '3',
-          title: '机器学习算法最新进展',
-          content:
-            '近年来，机器学习算法在各个领域都取得了突破性进展，特别是在深度学习和强化学习方面...',
-          tags: ['机器学习', '算法', '深度学习']
-        },
-        {
-          id: '4',
-          title: '自然语言处理技术综述',
-          content:
-            '自然语言处理作为AI的重要分支，在文本理解、情感分析、机器翻译等领域都有重要应用...',
-          tags: ['NLP', '文本处理', 'AI技术']
-        }
-      ]
-
-      // Add materials that aren't already selected
-      mockMaterials.forEach((material) => {
-        if (!selectedMaterials.value.find((m) => m.id === material.id)) {
-          selectedMaterials.value.push(material)
-        }
-      })
-
-      ElMessage.success('AI检索完成，已添加相关素材')
-    } catch {
-      ElMessage.error('AI检索失败')
-    } finally {
-      aiSearching.value = false
-    }
-  }
-
-  const removeMaterial = (id: string) => {
-    const index = selectedMaterials.value.findIndex((m) => m.id === id)
-    if (index > -1) {
-      selectedMaterials.value.splice(index, 1)
-    }
-  }
-
-  const clearSelectedMaterials = () => {
-    selectedMaterials.value = []
-  }
-
   const generateTitles = async () => {
-    if (!canGenerateTitles.value) {
-      ElMessage.warning('请至少选择一个素材或添加关键词')
+    if (!documentStore.currentDocument?.researchBrief) {
+      ElMessage.warning('请先完善研究简报')
       return
     }
 
-    generatingTitles.value = true
     try {
-      // Simulate AI title generation
-      await new Promise((resolve) => setTimeout(resolve, 3000))
+      await titleGeneration.generateTitles(documentStore.currentDocument.researchBrief)
 
-      // Generate mock titles based on materials and keywords
-      const baseKeywords = [...extractedKeywords.value]
-      const materialTitles = selectedMaterials.value.map((m) => m.title)
-
-      const mockTitles: GeneratedTitle[] = [
-        {
-          text: `深度解析：${baseKeywords[0] || 'AI技术'}在${titleControls.length === 'short' ? '各行业' : '不同行业领域'}的${titleControls.styles.includes('creative') ? '创新' : '应用'}实践`,
-          score: 4.5,
-          attractiveness: '高 - 使用"深度解析"吸引眼球',
-          relevance: '高 - 直接关联AI技术应用',
-          uniqueness: '中 - 类似标题较多但内容深度不同',
-          keywords: baseKeywords.slice(0, 3),
-          advantages: [
-            '使用"深度解析"增强权威性',
-            '涵盖多个行业，受众面广',
-            '关键词密度适中，有利于SEO'
-          ],
-          description: '适合专业读者，具有较强的权威性和深度'
-        },
-        {
-          text: `${titleControls.styles.includes('catchy') ? '揭秘' : '分析'}：${baseKeywords[0] || '人工智能'}如何${titleControls.length === 'long' ? '在各个行业领域中发挥重要作用并推动产业变革' : '改变行业格局'}`,
-          score: 4.3,
-          attractiveness: '高 - "揭秘"引发好奇心',
-          relevance: '高 - 聚焦AI的行业影响',
-          uniqueness: '高 - 角度新颖，内容独特',
-          keywords: [...baseKeywords.slice(0, 2), '行业变革'],
-          advantages: ['"揭秘"引发读者好奇心', '强调变革性影响，有冲击力', '适应不同长度需求'],
-          description: '适合大众读者，具有较强的吸引力和传播性'
-        },
-        {
-          text: `${materialTitles[0] ? '基于' + materialTitles[0].substring(0, 10) + '的' : ''}${baseKeywords[0] || 'AI技术'}${titleControls.styles.includes('professional') ? '系统性' : ''}研究报告`,
-          score: 4.1,
-          attractiveness: '中 - 较为正式但内容扎实',
-          relevance: '极高 - 基于具体素材内容',
-          uniqueness: '高 - 结合具体素材，内容独特',
-          keywords: [...baseKeywords, '研究报告'],
-          advantages: ['基于实际素材，内容可信度高', '系统性分析，专业性强', '适合学术或专业场景'],
-          description: '适合学术和专业研究，内容严谨可信'
-        },
-        {
-          text: `从${selectedMaterials.value[0]?.tags[0] || '技术'}视角看${baseKeywords[0] || 'AI'}：${titleControls.length === 'long' ? '一个全面而深入的技术发展分析' : '技术发展趋势分析'}`,
-          score: 3.9,
-          attractiveness: '中 - 视角独特但吸引力一般',
-          relevance: '高 - 从特定角度分析',
-          uniqueness: '极高 - 独特视角',
-          keywords: [...baseKeywords, '技术视角'],
-          advantages: ['独特视角，差异化明显', '专业性较强，目标明确', '适合特定受众群体'],
-          description: '适合专业读者，从特定技术角度深入分析'
-        },
-        {
-          text: `${titleControls.styles.includes('creative') ? '智能未来：' : ''}${baseKeywords[0] || '人工智能'}的${titleControls.length === 'short' ? '现状与展望' : '当前发展现状及未来趋势展望'}`,
-          score: 3.7,
-          attractiveness: '中 - "智能未来"有前瞻性',
-          relevance: '高 - 覆盖现状和趋势',
-          uniqueness: '中 - 类似标题较多',
-          keywords: [...baseKeywords, '未来趋势'],
-          advantages: ['时间维度完整，内容全面', '"智能未来"有前瞻性', '适合趋势分析类内容'],
-          description: '适合趋势分析和预测，时间维度完整'
-        }
-      ]
-
-      generatedTitles.value = mockTitles.slice(0, titleControls.count)
-
-      ElMessage.success(`成功生成 ${generatedTitles.value.length} 个标题`)
+      // 保存到localStorage
+      saveTitlesData()
     } catch {
       ElMessage.error('标题生成失败')
-    } finally {
-      generatingTitles.value = false
     }
   }
 
-  const selectTitle = (index: number) => {
-    selectedTitleIndex.value = index
+  const regenerateTitles = async () => {
+    await generateTitles()
+  }
+
+  const getTitleScore = (title: Title): number => {
+    return titleGeneration.getTitleScore(title)
+  }
+
+  const getTitleSuggestions = (title: Title): string[] => {
+    return titleGeneration.getTitleSuggestions(title)
+  }
+
+  const saveTitlesData = () => {
+    const titleData = {
+      titles: titleGeneration.state.generatedTitles,
+      selectedTitle: titleGeneration.state.selectedTitle,
+      updatedAt: new Date().toISOString()
+    }
+    localStorage.setItem(`project_${projectId}_titles`, JSON.stringify(titleData))
   }
 
   const confirmTitle = () => {
-    if (selectedTitleIndex.value === null) {
+    if (!titleGeneration.hasSelectedTitle) {
       ElMessage.warning('请选择一个标题')
       return
     }
 
-    const selectedTitle = generatedTitles.value[selectedTitleIndex.value]
+    // 保存到store
+    if (titleGeneration.state.selectedTitle) {
+      documentStore.selectTitle(titleGeneration.state.selectedTitle)
+      saveTitlesData()
 
-    // Save to localStorage
-    const titleData = {
-      titles: generatedTitles.value,
-      selectedIndex: selectedTitleIndex.value,
-      selectedTitle: selectedTitle,
-      updatedAt: new Date().toISOString()
+      ElMessage.success('标题已确认，即将进入大纲阶段')
+
+      // 导航到大纲页面
+      setTimeout(() => {
+        router.push(`/document-generation/outline/${projectId}`)
+      }, 1500)
     }
-
-    localStorage.setItem(`project_${projectId}_titles`, JSON.stringify(titleData))
-
-    ElMessage.success('标题已确认，即将进入大纲阶段')
-
-    // Navigate to outline
-    setTimeout(() => {
-      router.push(`/document-generation/outline/${projectId}`)
-    }, 1500)
   }
 
   const goBack = () => {
@@ -588,6 +458,19 @@
     }
   }
 
+  .generation-progress {
+    padding: 20px;
+    margin-bottom: 30px;
+    text-align: center;
+    background: var(--el-bg-color);
+    border-radius: 8px;
+
+    .progress-text {
+      margin: 10px 0 0;
+      color: var(--el-text-color-secondary);
+    }
+  }
+
   .title-generation-section {
     padding: 30px;
     margin-bottom: 30px;
@@ -596,23 +479,13 @@
   }
 
   .generation-controls {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 30px;
     margin-bottom: 30px;
   }
 
-  .control-group h4,
-  .material-section h4 {
+  .control-group h4 {
     margin: 0 0 20px;
     font-size: 16px;
     color: var(--el-text-color-primary);
-  }
-
-  .material-controls {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
   }
 
   .keywords-section {
@@ -622,54 +495,8 @@
     align-items: center;
   }
 
-  .selected-materials {
-    padding: 15px;
-    background: var(--el-fill-color-light);
-    border: 1px solid var(--el-border-color);
-    border-radius: 4px;
-  }
-
-  .material-card {
-    padding: 15px;
-    margin-bottom: 10px;
-    background: white;
-    border: 1px solid var(--el-border-color);
-    border-radius: 4px;
-
-    &:last-child {
-      margin-bottom: 0;
-    }
-
-    .material-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 8px;
-
-      h5 {
-        margin: 0;
-        font-size: 14px;
-        color: var(--el-text-color-primary);
-      }
-    }
-
-    p {
-      margin: 0 0 10px;
-      font-size: 13px;
-      line-height: 1.4;
-      color: var(--el-text-color-regular);
-    }
-
-    .material-tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 5px;
-    }
-  }
-
   .generation-actions {
     display: flex;
-    flex-direction: column;
     gap: 15px;
     align-items: center;
     padding-top: 30px;
@@ -833,11 +660,13 @@
     justify-content: center;
   }
 
-  @media (width <= 1200px) {
-    .generation-controls {
-      grid-template-columns: 1fr;
-    }
+  .score-label {
+    margin-right: 8px;
+    font-size: 14px;
+    color: var(--el-text-color-secondary);
+  }
 
+  @media (width <= 1200px) {
     .titles-grid {
       grid-template-columns: 1fr;
     }
@@ -865,10 +694,6 @@
     .navigation-actions {
       flex-direction: column;
       align-items: center;
-    }
-
-    .material-controls {
-      flex-direction: column;
     }
   }
 </style>

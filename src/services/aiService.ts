@@ -11,18 +11,11 @@ import { mockDataManager } from '@/mock'
 // AI服务相关类型
 type WebpageSummaryAsyncResponse = Api.Ai.WebpageSummaryAsyncResponse
 type WebpageSummaryStatusResponse = Api.Ai.WebpageSummaryStatusResponse
-type ScopeAgentResponse = Api.Ai.ScopeAgentResponse
-type ScopeAgentStatusResponse = Api.Ai.ScopeAgentStatusResponse
-type ScopeAgentListResponse = Api.Ai.ScopeAgentListResponse
 type SearchAgentResponse = Api.Ai.SearchAgentResponse
 type SearchAgentStatusResponse = Api.Ai.SearchAgentStatusResponse
 type SearchAgentListResponse = Api.Ai.SearchAgentListResponse
 type SearchToolsResponse = Api.Ai.SearchToolsResponse
 type SearchToolsStatusResponse = Api.Ai.SearchToolsStatusResponse
-type TitleGenerationResponse = Api.Ai.TitleGenerationResponse
-type TitleToolsStatusResponse = Api.Ai.TitleToolsStatusResponse
-type OutlineGenerationResponse = Api.Ai.OutlineGenerationResponse
-type OutlineGenerationStatusResponse = Api.Ai.OutlineGenerationStatusResponse
 
 class AiService extends BaseApiService {
   constructor() {
@@ -128,64 +121,6 @@ class AiService extends BaseApiService {
       },
       ...options
     })
-  }
-
-  // ============= Scope Agent服务 =============
-
-  /**
-   * 执行Scope Agent
-   */
-  async executeScopeAgent(
-    userId: string,
-    projectId: string,
-    request: {
-      query: string
-    },
-    options?: ApiRequestConfig
-  ) {
-    return this.post<ScopeAgentResponse>('/scope-agent/execute', request, {
-      params: { user_id: userId, project_id: projectId },
-      ...options
-    })
-  }
-
-  /**
-   * 获取Scope Agent任务状态
-   */
-  async getScopeAgentStatus(taskId: string, options?: ApiRequestConfig) {
-    return this.get<ScopeAgentStatusResponse>(`/scope-agent/status/${taskId}`, undefined, options)
-  }
-
-  /**
-   * 获取Scope Agent任务列表
-   */
-  async getScopeAgentTasks(
-    userId: string,
-    projectId?: string,
-    limit?: number,
-    offset?: number,
-    options?: ApiRequestConfig
-  ) {
-    const params: any = { user_id: userId }
-    if (projectId) params.project_id = projectId
-    if (limit) params.limit = limit
-    if (offset) params.offset = offset
-
-    return this.get<ScopeAgentListResponse>('/scope-agent/tasks', params, options)
-  }
-
-  /**
-   * 取消Scope Agent任务
-   */
-  async cancelScopeAgentTask(taskId: string, options?: ApiRequestConfig) {
-    return this.post(`/scope-agent/cancel/${taskId}`, undefined, options)
-  }
-
-  /**
-   * 获取Scope Agent图状态
-   */
-  async getScopeAgentState(taskId: string, options?: ApiRequestConfig) {
-    return this.get(`/scope-agent/state/${taskId}`, undefined, options)
   }
 
   // ============= Search Agent服务 =============
@@ -304,78 +239,6 @@ class AiService extends BaseApiService {
     return this.get<SearchToolsStatusResponse>('/search-tools/status', undefined, options)
   }
 
-  // ============= 标题生成服务 =============
-
-  /**
-   * 生成标题
-   */
-  async generateTitles(
-    request: {
-      research_brief: string
-      web_search_data: any[] | string[]
-    },
-    options?: ApiRequestConfig
-  ) {
-    return this.post<TitleGenerationResponse>('/title-generate/generate', request, options)
-  }
-
-  /**
-   * 获取标题生成工具状态
-   */
-  async getTitleToolsStatus(options?: ApiRequestConfig) {
-    return this.get<TitleToolsStatusResponse>('/title-generate/status', undefined, options)
-  }
-
-  /**
-   * 验证标题生成请求
-   */
-  async validateTitleGeneration(
-    request: {
-      research_brief: string
-      web_search_data: any[] | string[]
-    },
-    options?: ApiRequestConfig
-  ) {
-    return this.post('/title-generate/validate', request, options)
-  }
-
-  // ============= 大纲生成服务 =============
-
-  /**
-   * 生成大纲
-   */
-  async generateOutline(
-    request: {
-      title: any
-      research_brief: string
-      web_search_data: any[] | string[]
-    },
-    options?: ApiRequestConfig
-  ) {
-    return this.post<OutlineGenerationResponse>('/outline-generate/generate', request, options)
-  }
-
-  /**
-   * 获取大纲生成工具状态
-   */
-  async getOutlineToolsStatus(options?: ApiRequestConfig) {
-    return this.get<OutlineGenerationStatusResponse>('/outline-generate/status', undefined, options)
-  }
-
-  /**
-   * 验证大纲生成请求
-   */
-  async validateOutlineGeneration(
-    request: {
-      title: any
-      research_brief: string
-      web_search_data: any[] | string[]
-    },
-    options?: ApiRequestConfig
-  ) {
-    return this.post('/outline-generate/validate', request, options)
-  }
-
   // ============= 系统服务 =============
 
   /**
@@ -427,28 +290,6 @@ class AiService extends BaseApiService {
         )
       }
 
-      // Scope Agent相关API
-      if (method === 'POST' && url.includes('/scope-agent/execute')) {
-        const requestData = config.data
-        const params = config.params || {}
-        return mockDataManager.getMockData(
-          'ai-scope-agent-execute',
-          params.user_id,
-          params.project_id,
-          requestData.query
-        )
-      }
-
-      if (method === 'GET' && url.includes('/scope-agent/status/')) {
-        const taskId = url.split('/').pop()
-        return mockDataManager.getMockData('ai-scope-agent-status', taskId)
-      }
-
-      if (method === 'GET' && url.includes('/scope-agent/tasks')) {
-        const params = config.params || {}
-        return mockDataManager.getMockData('ai-scope-agent-list', params.user_id, params.project_id)
-      }
-
       // Search Agent相关API
       if (method === 'POST' && url.includes('/search-agent/execute')) {
         const requestData = config.data
@@ -495,35 +336,6 @@ class AiService extends BaseApiService {
       if (method === 'GET' && url.includes('/webpage-summary/status/')) {
         const taskId = url.split('/').pop()
         return mockDataManager.getMockData('ai-webpage-summary-status', taskId)
-      }
-
-      // 标题生成相关API
-      if (method === 'POST' && url.includes('/title-generate/generate')) {
-        const requestData = config.data
-        return mockDataManager.getMockData(
-          'ai-title-generation',
-          requestData.research_brief,
-          requestData.web_search_data
-        )
-      }
-
-      if (method === 'GET' && url.includes('/title-generate/status')) {
-        return mockDataManager.getMockData('ai-title-tools-status')
-      }
-
-      // 大纲生成相关API
-      if (method === 'POST' && url.includes('/outline-generate/generate')) {
-        const requestData = config.data
-        return mockDataManager.getMockData(
-          'ai-outline-generation',
-          requestData.title,
-          requestData.research_brief,
-          requestData.web_search_data
-        )
-      }
-
-      if (method === 'GET' && url.includes('/outline-generate/status')) {
-        return mockDataManager.getMockData('ai-outline-tools-status')
       }
 
       // 默认Mock响应

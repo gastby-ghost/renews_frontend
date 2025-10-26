@@ -12,11 +12,9 @@ import { aiService } from './ai'
 import { webpageSummaryService } from './webpage-summary'
 import { retrievalService } from './retrieval'
 import { tasksService } from './tasks'
-import { scopeAgentService } from './scope-agent'
 import { searchAgentService } from './search-agent'
 import { searchToolsService } from './search-tools'
-import { titleGenerateService } from './title-generate'
-import { outlineGenerateService } from './outline-generate'
+import { documentGenerateService } from './document-generate'
 import { healthService } from './health'
 
 export const API_MODULES = {
@@ -29,11 +27,9 @@ export const API_MODULES = {
   webpageSummary: webpageSummaryService,
   retrieval: retrievalService,
   tasks: tasksService,
-  scopeAgent: scopeAgentService,
   searchAgent: searchAgentService,
   searchTools: searchToolsService,
-  titleGenerate: titleGenerateService,
-  outlineGenerate: outlineGenerateService,
+  documentGenerate: documentGenerateService,
   health: healthService
 } as const
 
@@ -49,10 +45,8 @@ export {
   webpageSummaryService,
   retrievalService,
   tasksService,
-  scopeAgentService,
   searchAgentService,
   searchToolsService,
-  titleGenerateService,
-  outlineGenerateService,
+  documentGenerateService,
   healthService
 }

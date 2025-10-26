@@ -296,6 +296,21 @@
 
   const projectId = route.params.projectId as string
 
+  // 头部操作按钮
+  const headerActions = computed(() => {
+    return [
+      {
+        label: '导出',
+        type: 'primary',
+        icon: 'el-icon-download',
+        handler: () => {
+          // 导出需求数据的处理函数
+          ElMessage.info('导出功能开发中')
+        }
+      }
+    ]
+  })
+
   const requirementsForm = reactive<RequirementsForm>({
     topic: '',
     targetAudience: '',
@@ -308,7 +323,7 @@
   })
 
   const currentKeyPoint = ref('')
-  const selectedMaterials = ref([])
+  const selectedMaterials = ref<any[]>([])
   const generatingBriefing = ref(false)
   const aiBriefingGenerated = ref(false)
   const aiSearching = ref(false)
@@ -325,9 +340,9 @@
   const editableBriefing = reactive({
     overview: '',
     audienceAnalysis: '',
-    structureSuggestions: '',
-    keywords: '',
-    cautions: ''
+    structureSuggestions: [] as string[],
+    keywords: [] as string[],
+    cautions: [] as string[]
   })
 
   const requirementsRules: FormRules = {
@@ -561,7 +576,7 @@
 
   // Helper functions
   const getDocumentTypeText = (type: string) => {
-    const types = {
+    const types: Record<string, string> = {
       analysis: '分析报告',
       press_release: '新闻稿',
       blog: '博客文章',
@@ -573,7 +588,7 @@
   }
 
   const getAudienceText = (audience: string) => {
-    const audiences = {
+    const audiences: Record<string, string> = {
       general: '普通大众',
       professional: '专业人士',
       executive: '企业决策者',
@@ -585,7 +600,7 @@
   }
 
   const getToneText = (tone: string) => {
-    const tones = {
+    const tones: Record<string, string> = {
       formal: '正式',
       casual: '轻松',
       professional: '专业',

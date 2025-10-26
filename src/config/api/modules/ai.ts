@@ -11,11 +11,8 @@ import type { ApiEndpointConfig } from '../types'
 import { webpageSummaryService } from './webpage-summary'
 import { retrievalService } from './retrieval'
 import { tasksService } from './tasks'
-import { scopeAgentService } from './scope-agent'
 import { searchAgentService } from './search-agent'
 import { searchToolsService } from './search-tools'
-import { titleGenerateService } from './title-generate'
-import { outlineGenerateService } from './outline-generate'
 import { healthService } from './health'
 
 /**
@@ -53,11 +50,8 @@ export const aiService: ApiEndpointConfig = {
     ...webpageSummaryService.paths,
     ...retrievalService.paths,
     ...tasksService.paths,
-    ...scopeAgentService.paths,
     ...searchAgentService.paths,
     ...searchToolsService.paths,
-    ...titleGenerateService.paths,
-    ...outlineGenerateService.paths,
     ...healthService.paths
   }
 }

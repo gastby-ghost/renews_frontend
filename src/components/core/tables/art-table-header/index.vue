@@ -2,6 +2,17 @@
 <template>
   <div class="table-header">
     <div class="left">
+      <div v-if="title" class="header-title">
+        <el-button
+          v-if="$slots.back || $attrs.onBack"
+          @click="emit('back')"
+          type="text"
+          class="back-button"
+        >
+          <i class="iconfont-sys">&#xe6a7;</i>
+        </el-button>
+        <h3>{{ title }}</h3>
+      </div>
       <slot name="left"></slot>
     </div>
     <div class="right">
@@ -69,6 +80,21 @@
           }}</ElCheckbox>
         </div>
       </ElPopover>
+
+      <!-- 自定义操作按钮 -->
+      <div v-if="actions && actions.length > 0" class="custom-actions">
+        <el-button
+          v-for="(action, index) in actions"
+          :key="index"
+          :type="action.type || 'default'"
+          :icon="action.icon"
+          @click="action.handler"
+          size="small"
+        >
+          {{ action.label }}
+        </el-button>
+      </div>
+
       <slot name="right"></slot>
     </div>
   </div>
@@ -99,6 +125,15 @@
     fullClass?: string
     /** 组件布局，子组件名用逗号分隔 */
     layout?: string
+    /** 标题 */
+    title?: string
+    /** 操作按钮 */
+    actions?: Array<{
+      label: string
+      type?: 'primary' | 'success' | 'warning' | 'info' | 'danger' | 'default' | 'text'
+      icon?: string
+      handler: () => void
+    }>
   }
 
   const props = withDefaults(defineProps<Props>(), {
@@ -106,7 +141,9 @@
     showBorder: true,
     showHeaderBackground: true,
     fullClass: 'art-page-view',
-    layout: 'refresh,size,fullscreen,columns,settings'
+    layout: 'refresh,size,fullscreen,columns,settings',
+    title: '',
+    actions: () => []
   })
 
   const columns = defineModel<ColumnOption[]>('columns', {
@@ -116,6 +153,7 @@
 
   const emit = defineEmits<{
     (e: 'refresh'): void
+    (e: 'back'): void
   }>()
 
   // ========== 数据和状态 ==========
@@ -247,12 +285,14 @@
 
   .table-header {
     display: flex;
+    align-items: center;
     justify-content: space-between;
 
     .left {
       display: flex;
       flex-wrap: wrap;
       gap: 10px 0;
+      align-items: center;
     }
 
     .right {
@@ -287,6 +327,34 @@
           }
         }
       }
+    }
+
+    .header-title {
+      display: flex;
+      align-items: center;
+      margin-right: 20px;
+
+      h3 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 500;
+        color: var(--el-text-color-primary);
+      }
+
+      .back-button {
+        padding: 0;
+        margin-right: 10px;
+
+        i {
+          font-size: 18px;
+        }
+      }
+    }
+
+    .custom-actions {
+      display: flex;
+      gap: 8px;
+      margin-left: 10px;
     }
   }
 
