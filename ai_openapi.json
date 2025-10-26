@@ -316,12 +316,12 @@
         }
       }
     },
-    "/api/v1/ai/scope-agent/execute": {
+    "/api/v1/ai/document-generate/scope-agent/execute": {
       "post": {
-        "tags": ["Scope Agent"],
+        "tags": ["Document Generate"],
         "summary": "Execute Scope Agent",
         "description": "Execute a scope agent with user and project constraints.\n\nEnsures only one scope agent runs per user per project at a time.",
-        "operationId": "execute_scope_agent_api_v1_ai_scope_agent_execute_post",
+        "operationId": "execute_scope_agent_api_v1_ai_document_generate_scope_agent_execute_post",
         "parameters": [
           {
             "name": "user_id",
@@ -362,12 +362,12 @@
         }
       }
     },
-    "/api/v1/ai/scope-agent/status/{task_id}": {
+    "/api/v1/ai/document-generate/scope-agent/status/{task_id}": {
       "get": {
-        "tags": ["Scope Agent"],
+        "tags": ["Document Generate"],
         "summary": "Get Scope Agent Status",
         "description": "Get the status of a scope agent task.",
-        "operationId": "get_scope_agent_status_api_v1_ai_scope_agent_status__task_id__get",
+        "operationId": "get_scope_agent_status_api_v1_ai_document_generate_scope_agent_status__task_id__get",
         "parameters": [
           {
             "name": "task_id",
@@ -396,12 +396,12 @@
         }
       }
     },
-    "/api/v1/ai/scope-agent/tasks": {
+    "/api/v1/ai/document-generate/scope-agent/tasks": {
       "get": {
-        "tags": ["Scope Agent"],
+        "tags": ["Document Generate"],
         "summary": "List Scope Agent Tasks",
         "description": "List scope agent tasks for a user, optionally filtered by project.",
-        "operationId": "list_scope_agent_tasks_api_v1_ai_scope_agent_tasks_get",
+        "operationId": "list_scope_agent_tasks_api_v1_ai_document_generate_scope_agent_tasks_get",
         "parameters": [
           {
             "name": "user_id",
@@ -448,42 +448,12 @@
         }
       }
     },
-    "/api/v1/ai/scope-agent/cancel/{task_id}": {
+    "/api/v1/ai/document-generate/scope-agent/cancel/{task_id}": {
       "post": {
-        "tags": ["Scope Agent"],
+        "tags": ["Document Generate"],
         "summary": "Cancel Scope Agent Task",
         "description": "Cancel a running scope agent task.",
-        "operationId": "cancel_scope_agent_task_api_v1_ai_scope_agent_cancel__task_id__post",
-        "parameters": [
-          {
-            "name": "task_id",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string", "title": "Task Id" }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": { "application/json": { "schema": {} } }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/ai/scope-agent/state/{task_id}": {
-      "get": {
-        "tags": ["Scope Agent"],
-        "summary": "Get Scope Agent Graph State",
-        "description": "Get the LangGraph state for a running scope agent task.\n\nThis returns the internal state of the LangGraph including messages,\nnext nodes to execute, and other graph state information.",
-        "operationId": "get_scope_agent_graph_state_api_v1_ai_scope_agent_state__task_id__get",
+        "operationId": "cancel_scope_agent_task_api_v1_ai_document_generate_scope_agent_cancel__task_id__post",
         "parameters": [
           {
             "name": "task_id",
@@ -512,7 +482,7 @@
       "post": {
         "tags": ["Search Agent"],
         "summary": "Execute Search Agent",
-        "description": "Execute a search agent with user and project constraints.\n\nEnsures only one search agent runs per user per project at a time.",
+        "description": "Execute a search agent with user and project constraints.\n\nEnsures only one search agent runs per user per project at a time.\nIf project_id is not provided, uses user's default project.",
         "operationId": "execute_search_agent_api_v1_ai_search_agent_execute_post",
         "parameters": [
           {
@@ -524,8 +494,8 @@
           {
             "name": "project_id",
             "in": "query",
-            "required": true,
-            "schema": { "type": "string", "title": "Project Id" }
+            "required": false,
+            "schema": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Project Id" }
           }
         ],
         "requestBody": {
@@ -576,8 +546,8 @@
           {
             "name": "project_id",
             "in": "query",
-            "required": true,
-            "schema": { "type": "string", "title": "Project Id" }
+            "required": false,
+            "schema": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Project Id" }
           }
         ],
         "responses": {
@@ -662,8 +632,8 @@
           {
             "name": "project_id",
             "in": "query",
-            "required": true,
-            "schema": { "type": "string", "title": "Project Id" }
+            "required": false,
+            "schema": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Project Id" }
           }
         ],
         "responses": {
@@ -704,8 +674,8 @@
           {
             "name": "project_id",
             "in": "query",
-            "required": true,
-            "schema": { "type": "string", "title": "Project Id" }
+            "required": false,
+            "schema": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Project Id" }
           }
         ],
         "responses": {
@@ -798,11 +768,12 @@
         }
       }
     },
-    "/api/v1/ai/title-generate/generate": {
+    "/api/v1/ai/document-generate/title-agent/generate": {
       "post": {
+        "tags": ["Document Generate"],
         "summary": "Generate Titles Endpoint",
         "description": "Generate news titles based on research brief and web search data.\n\nThis endpoint directly exposes the title generation agent with structured output,\nproviding bottom-up data flow for the research agent architecture.\n\nArgs:\n    request: Title generation parameters including research brief and search data\n    \nReturns:\n    Structured title generation output with metadata and timing information",
-        "operationId": "generate_titles_endpoint_api_v1_ai_title_generate_generate_post",
+        "operationId": "generate_titles_endpoint_api_v1_ai_document_generate_title_agent_generate_post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -831,11 +802,12 @@
         }
       }
     },
-    "/api/v1/ai/title-generate/status": {
+    "/api/v1/ai/document-generate/title-agent/status": {
       "get": {
+        "tags": ["Document Generate"],
         "summary": "Get Title Tools Status",
         "description": "Get the status of title generation tools.",
-        "operationId": "get_title_tools_status_api_v1_ai_title_generate_status_get",
+        "operationId": "get_title_tools_status_api_v1_ai_document_generate_title_agent_status_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -848,11 +820,12 @@
         }
       }
     },
-    "/api/v1/ai/title-generate/validate": {
+    "/api/v1/ai/document-generate/title-agent/validate": {
       "post": {
+        "tags": ["Document Generate"],
         "summary": "Validate Title Generation Request",
         "description": "Validate title generation request before processing.\n\nArgs:\n    request: Title generation request to validate\n    \nReturns:\n    Validation result with any errors or warnings",
-        "operationId": "validate_title_generation_request_api_v1_ai_title_generate_validate_post",
+        "operationId": "validate_title_generation_request_api_v1_ai_document_generate_title_agent_validate_post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -869,7 +842,7 @@
                 "schema": {
                   "additionalProperties": true,
                   "type": "object",
-                  "title": "Response Validate Title Generation Request Api V1 Ai Title Generate Validate Post"
+                  "title": "Response Validate Title Generation Request Api V1 Ai Document Generate Title Agent Validate Post"
                 }
               }
             }
@@ -885,11 +858,12 @@
         }
       }
     },
-    "/api/v1/ai/outline-generate/generate": {
+    "/api/v1/ai/document-generate/outline-agent/generate": {
       "post": {
+        "tags": ["Document Generate"],
         "summary": "Generate Outline Endpoint",
         "description": "Generate news article outline based on selected title and web search data.\n\nThis endpoint directly exposes the outline generation agent with structured output,\nproviding detailed structure for news article creation.\n\nArgs:\n    request: Outline generation parameters including title and search data\n    \nReturns:\n    Structured outline generation output with metadata and timing information",
-        "operationId": "generate_outline_endpoint_api_v1_ai_outline_generate_generate_post",
+        "operationId": "generate_outline_endpoint_api_v1_ai_document_generate_outline_agent_generate_post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -918,11 +892,12 @@
         }
       }
     },
-    "/api/v1/ai/outline-generate/status": {
+    "/api/v1/ai/document-generate/outline-agent/status": {
       "get": {
+        "tags": ["Document Generate"],
         "summary": "Get Outline Tools Status",
         "description": "Get the status of outline generation tools.",
-        "operationId": "get_outline_tools_status_api_v1_ai_outline_generate_status_get",
+        "operationId": "get_outline_tools_status_api_v1_ai_document_generate_outline_agent_status_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -935,11 +910,12 @@
         }
       }
     },
-    "/api/v1/ai/outline-generate/validate": {
+    "/api/v1/ai/document-generate/outline-validate": {
       "post": {
+        "tags": ["Document Generate"],
         "summary": "Validate Outline Generation Request",
         "description": "Validate outline generation request before processing.\n\nArgs:\n    request: Outline generation request to validate\n    \nReturns:\n    Validation result with any errors or warnings",
-        "operationId": "validate_outline_generation_request_api_v1_ai_outline_generate_validate_post",
+        "operationId": "validate_outline_generation_request_api_v1_ai_document_generate_outline_validate_post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -956,7 +932,7 @@
                 "schema": {
                   "additionalProperties": true,
                   "type": "object",
-                  "title": "Response Validate Outline Generation Request Api V1 Ai Outline Generate Validate Post"
+                  "title": "Response Validate Outline Generation Request Api V1 Ai Document Generate Outline Validate Post"
                 }
               }
             }
@@ -1361,6 +1337,12 @@
             "type": "string",
             "title": "Agent Type",
             "description": "Type of agent that was executed"
+          },
+          "is_default_project": {
+            "type": "boolean",
+            "title": "Is Default Project",
+            "description": "Whether the task uses default project ID",
+            "default": false
           }
         },
         "type": "object",
@@ -1411,6 +1393,12 @@
             "type": "number",
             "title": "Updated At",
             "description": "Timestamp when the task was last updated"
+          },
+          "is_default_project": {
+            "type": "boolean",
+            "title": "Is Default Project",
+            "description": "Whether the task uses default project ID",
+            "default": false
           }
         },
         "type": "object",
