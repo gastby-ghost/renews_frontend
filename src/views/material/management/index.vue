@@ -12,34 +12,17 @@
           />
         </el-form-item>
 
-        <el-form-item label="类型">
+        <el-form-item label="标签">
           <el-select
-            v-model="filterForm.type"
-            placeholder="选择类型"
+            v-model="filterForm.tags"
+            placeholder="选择标签"
+            multiple
+            collapse-tags
+            collapse-tags-tooltip
             clearable
-            style="width: 120px"
+            style="width: 300px"
           >
-            <el-option label="图片" value="image" />
-            <el-option label="视频" value="video" />
-            <el-option label="音频" value="audio" />
-            <el-option label="文本" value="text" />
-            <el-option label="其他" value="other" />
-          </el-select>
-        </el-form-item>
-
-        <el-form-item label="来源">
-          <el-select
-            v-model="filterForm.source"
-            placeholder="选择来源"
-            clearable
-            style="width: 150px"
-          >
-            <el-option
-              v-for="source in availableSources"
-              :key="source"
-              :label="source"
-              :value="source"
-            />
+            <el-option v-for="tag in availableTags" :key="tag" :label="tag" :value="tag" />
           </el-select>
         </el-form-item>
 
@@ -153,8 +136,7 @@
   // 筛选表单
   const filterForm = ref({
     search: '',
-    type: '',
-    source: ''
+    tags: [] as string[]
   })
 
   // 状态
@@ -175,9 +157,10 @@
   // 由于现在使用API进行筛选，filteredMaterials 直接返回 materials
   const filteredMaterials = computed(() => materials.value)
 
-  const availableSources = computed(() => {
-    const sources = new Set(materials.value.map((m) => m.source))
-    return Array.from(sources)
+  const availableTags = computed(() => {
+    const allTags = materials.value.flatMap((m) => m.tags || [])
+    const uniqueTags = new Set(allTags)
+    return Array.from(uniqueTags).sort()
   })
 
   // 方法
@@ -195,8 +178,7 @@
   function resetFilters() {
     filterForm.value = {
       search: '',
-      type: '',
-      source: ''
+      tags: []
     }
     currentPage.value = 1
     loadMaterials()
@@ -290,20 +272,11 @@
   // 加载素材数据
   async function loadMaterials() {
     try {
-      // 构建标签数组，包含类型和来源筛选
-      const tags: string[] = []
-      if (filterForm.value.type) {
-        tags.push(filterForm.value.type)
-      }
-      if (filterForm.value.source) {
-        tags.push(filterForm.value.source)
-      }
-
       const params = {
         page: currentPage.value,
         page_size: pageSize.value,
         keywords: filterForm.value.search || undefined,
-        tags: tags.length > 0 ? tags : undefined
+        tags: filterForm.value.tags.length > 0 ? filterForm.value.tags : undefined
       }
 
       const result = await materialStore.loadAllMaterialsFromDatabase(params)
