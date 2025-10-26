@@ -124,28 +124,6 @@
               placeholder="请输入任何特殊要求，如需要包含的特定信息、避免的词汇等"
             />
           </el-form-item>
-
-          <el-form-item label="参考素材" prop="referenceMaterials">
-            <div class="reference-section">
-              <el-button @click="selectFromMaterialLibrary" type="primary" plain
-                >从素材库选择</el-button
-              >
-              <el-button @click="aiSearchMaterials" :loading="aiSearching" plain
-                >AI智能检索</el-button
-              >
-            </div>
-            <div class="selected-materials" v-if="selectedMaterials.length > 0">
-              <div v-for="material in selectedMaterials" :key="material.id" class="material-item">
-                <div class="material-info">
-                  <h4>{{ material.title }}</h4>
-                  <p>{{ material.content.substring(0, 100) }}...</p>
-                </div>
-                <el-button type="danger" size="small" @click="removeMaterial(material.id)" link>
-                  移除
-                </el-button>
-              </div>
-            </div>
-          </el-form-item>
         </el-form>
 
         <div class="form-actions">
@@ -279,7 +257,6 @@
     tone: string
     keyPoints: string[]
     specialRequirements: string
-    referenceMaterials: any[]
   }
 
   interface AIBriefing {
@@ -323,15 +300,12 @@
     wordCount: 2000,
     tone: 'professional',
     keyPoints: [],
-    specialRequirements: '',
-    referenceMaterials: []
+    specialRequirements: ''
   })
 
   const currentKeyPoint = ref('')
-  const selectedMaterials = ref<any[]>([])
   const generatingBriefing = ref(false)
   const aiBriefingGenerated = ref(false)
-  const aiSearching = ref(false)
   const briefingDialogVisible = ref(false)
 
   const aiBriefing = reactive<AIBriefing>({
@@ -420,51 +394,6 @@
 
   const removeKeyPoint = (index: number) => {
     requirementsForm.keyPoints.splice(index, 1)
-  }
-
-  const selectFromMaterialLibrary = () => {
-    // TODO: Open material library selector
-    ElMessage.info('素材库选择功能开发中')
-  }
-
-  const aiSearchMaterials = async () => {
-    aiSearching.value = true
-    try {
-      // Simulate AI search
-      await new Promise((resolve) => setTimeout(resolve, 2000))
-
-      // Mock AI search results
-      const mockMaterials = [
-        {
-          id: '1',
-          title: '2024年AI技术发展趋势',
-          content:
-            '人工智能技术在过去一年中取得了显著进展，特别是在大语言模型、计算机视觉和机器学习等领域...',
-          type: 'article'
-        },
-        {
-          id: '2',
-          title: '人工智能应用场景分析',
-          content:
-            'AI技术已经广泛应用于金融、医疗、教育、制造等多个行业，为这些领域带来了革命性的变化...',
-          type: 'analysis'
-        }
-      ]
-
-      selectedMaterials.value = mockMaterials
-      ElMessage.success('AI检索完成，找到相关素材')
-    } catch {
-      ElMessage.error('AI检索失败')
-    } finally {
-      aiSearching.value = false
-    }
-  }
-
-  const removeMaterial = (id: string) => {
-    const index = selectedMaterials.value.findIndex((m) => m.id === id)
-    if (index > -1) {
-      selectedMaterials.value.splice(index, 1)
-    }
   }
 
   const generateAIBriefing = async () => {
@@ -697,48 +626,6 @@
     gap: 8px;
   }
 
-  .reference-section {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 15px;
-  }
-
-  .selected-materials {
-    padding: 10px;
-    background: var(--el-fill-color-light);
-    border: 1px solid var(--el-border-color);
-    border-radius: 4px;
-  }
-
-  .material-item {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    padding: 10px;
-    border-bottom: 1px solid var(--el-border-color);
-
-    &:last-child {
-      border-bottom: none;
-    }
-
-    .material-info {
-      flex: 1;
-
-      h4 {
-        margin: 0 0 8px;
-        font-size: 14px;
-        color: var(--el-text-color-primary);
-      }
-
-      p {
-        margin: 0;
-        font-size: 12px;
-        line-height: 1.4;
-        color: var(--el-text-color-secondary);
-      }
-    }
-  }
-
   .form-actions {
     display: flex;
     gap: 15px;
@@ -815,10 +702,6 @@
     .form-actions {
       flex-direction: column;
       align-items: center;
-    }
-
-    .reference-section {
-      flex-direction: column;
     }
 
     .key-points-input {
