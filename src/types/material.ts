@@ -12,6 +12,14 @@ export interface Material {
   selected?: boolean
 }
 
+export interface SearchProvider {
+  id: string
+  name: string
+  type: 'api' | 'ai'
+  apiEndpoint?: string
+  config?: Record<string, any>
+}
+
 export interface SearchProgress {
   stage: 'config' | 'searching' | 'processing' | 'completed'
   current: number
@@ -25,8 +33,6 @@ export interface SearchConfig {
   aiProvider?: string
   searchScope: string
   filters: {
-    type?: Material['type'][]
-    source?: string[]
     tags?: string[]
   }
 }
@@ -35,6 +41,7 @@ export interface MaterialLibraryState {
   materials: Material[]
   selectedMaterials: string[]
   searchHistory: SearchConfig[]
+  providers: SearchProvider[]
   loading: boolean
   error: string | null
 }
@@ -91,13 +98,21 @@ export interface AgentState {
   activeAgents: AgentService[]
   currentTask: AgentTask | null
   taskHistory: AgentTask[]
-  agentCapabilities: Record<string, string[]>
   loading: boolean
   error: string | null
+}
+
+// 分页状态类型定义
+export interface PaginationState {
+  currentPage: number
+  pageSize: number
+  totalResults: number
+  totalPages: number
 }
 
 // 扩展MaterialLibraryState以包含Agent相关状态
 export interface ExtendedMaterialLibraryState extends MaterialLibraryState {
   agentState: AgentState
   searchMode: 'simple' | 'agent'
+  paginationState: PaginationState
 }

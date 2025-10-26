@@ -32,7 +32,7 @@
               v-for="(item, index) in searchHistory.slice(0, 5)"
               :key="index"
               class="art-material-search__history-item"
-              @click="useHistoryItem(item)"
+              @click="useHistoryItemAndSearch(item)"
             >
               {{ item.keywords }}
             </el-tag>
@@ -110,7 +110,12 @@
     <div v-if="searching" class="art-material-search__progress">
       <SearchProgressComponent
         :progress="searchProgress"
-        :config="searchConfig"
+        :config="{
+          keywords: searchForm.keywords,
+          providers: searchForm.providers,
+          searchScope: '',
+          filters: { tags: [] }
+        }"
         :providers="availableProviders"
         :is-active="searching"
         @cancel="cancelSearch"
@@ -118,141 +123,34 @@
     </div>
 
     <!-- 搜索结果 -->
-    <div v-if="searchResults.length > 0" class="art-material-search__results">
-      <el-card class="art-material-search__card">
-        <template #header>
-          <div class="art-material-search__results-header">
-            <h3>
-              搜索结果 ({{ searchResults.length }} 个素材)
-              <span v-if="totalResults > searchResults.length"> / 共 {{ totalResults }} 个 </span>
-            </h3>
-            <div class="art-material-search__results-actions">
-              <el-button @click="selectAll">全选</el-button>
-              <el-button @click="clearSelection">取消选择</el-button>
-              <el-button
-                type="primary"
-                @click="showAddToLibraryDialog"
-                :disabled="selectedMaterials.length === 0"
-              >
-                添加到素材库 ({{ selectedMaterials.length }})
-              </el-button>
-              <el-button
-                type="success"
-                @click="goToLibrary"
-                v-if="materialStore.materials.length > 0"
-              >
-                查看素材库
-              </el-button>
-            </div>
-          </div>
-        </template>
+    <MaterialSearchResults
+      :search-results="paginatedSearchResults"
+      :selected-materials="selectedMaterials"
+      :loading-materials="[]"
+      :searching="searching"
+      :has-searched="hasSearched"
+      :pagination-state="paginationState"
+      @select-all="materialStore.selectAll"
+      @clear-selection="materialStore.clearSelection"
+      @toggle-material-selection="materialStore.toggleMaterialSelection"
+      @show-add-to-library-dialog="showAddToLibraryDialog"
+      @go-to-library="goToLibrary"
+      @show-material-preview="showMaterialPreview"
+      @select-material="selectMaterial"
+      @handle-size-change="handleSizeChange"
+      @handle-current-change="handleCurrentChange"
+      @reset-search="resetForm"
+    />
 
-        <div class="art-material-search__results-grid">
-          <SearchResultCard
-            v-for="material in searchResults"
-            :key="material.id"
-            :material="material"
-            :selected="selectedMaterials.includes(material.id)"
-            :loading="loadingMaterials.includes(material.id)"
-            :show-selection="true"
-            :show-score="true"
-            context="search"
-            @select="toggleMaterialSelection"
-            @preview="showMaterialPreview"
-            @click="selectMaterial(material)"
-          />
-        </div>
-
-        <!-- 分页 -->
-        <div v-if="totalResults > searchResults.length" class="art-material-search__pagination">
-          <el-pagination
-            v-model:current-page="currentPage"
-            v-model:page-size="pageSize"
-            :page-sizes="[10, 20, 50]"
-            :total="totalResults"
-            layout="total, sizes, prev, pager, next, jumper"
-            @size-change="handleSizeChange"
-            @current-change="handleCurrentChange"
-          />
-        </div>
-      </el-card>
-    </div>
-
-    <!-- 添加到素材库确认对话框 -->
-    <el-dialog
-      v-model="addToLibraryDialogVisible"
-      title="添加到素材库"
-      width="600px"
-      :before-close="closeAddToLibraryDialog"
-    >
-      <div class="art-material-search__add-dialog">
-        <div class="art-material-search__add-info">
-          <p>
-            您已选择了
-            <strong>{{ selectedMaterials.length }}</strong>
-            个素材，是否确认添加到素材库？
-          </p>
-          <div v-if="selectedMaterials.length <= 5" class="art-material-search__add-list">
-            <div
-              v-for="materialId in selectedMaterials"
-              :key="materialId"
-              class="art-material-search__add-item"
-            >
-              {{ getMaterialById(materialId)?.title }}
-            </div>
-          </div>
-          <div v-else class="art-material-search__add-summary">
-            <p>选中的素材包括多种类型，将全部添加到素材库中。</p>
-          </div>
-        </div>
-
-        <div class="art-material-search__add-options">
-          <el-checkbox v-model="addToLibraryOptions.autoClear">添加后自动清除选择</el-checkbox>
-          <el-checkbox v-model="addToLibraryOptions.goToLibrary">添加后跳转到素材库</el-checkbox>
-        </div>
-      </div>
-
-      <template #footer>
-        <el-button @click="closeAddToLibraryDialog">取消</el-button>
-        <el-button type="primary" @click="confirmAddToLibrary" :loading="addingToLibrary">
-          确认添加
-        </el-button>
-      </template>
-    </el-dialog>
-
-    <!-- 添加进度对话框 -->
-    <el-dialog
-      v-model="addProgressDialogVisible"
-      title="正在添加到素材库"
-      width="500px"
-      :close-on-click-modal="false"
-      :close-on-press-escape="false"
-      :show-close="false"
-    >
-      <div class="art-material-search__add-progress">
-        <el-progress
-          :percentage="addProgress.percentage"
-          :status="addProgress.status"
-          :stroke-width="8"
-        />
-        <p class="art-material-search__add-progress-text">
-          {{ addProgress.message }}
-        </p>
-        <div class="art-material-search__add-progress-details">
-          <span>已处理: {{ addProgress.processed }} / {{ addProgress.total }}</span>
-        </div>
-      </div>
-    </el-dialog>
-
-    <!-- 空状态 -->
-    <div
-      v-if="!searching && hasSearched && searchResults.length === 0"
-      class="art-material-search__empty"
-    >
-      <el-empty description="未找到相关素材">
-        <el-button type="primary" @click="resetForm">重新搜索</el-button>
-      </el-empty>
-    </div>
+    <!-- 添加到素材库对话框 -->
+    <AddToLibraryDialog
+      v-model:visible="addToLibraryDialogVisible"
+      :selected-materials="selectedMaterials"
+      :materials="searchResults"
+      :loading="addingToLibrary"
+      @confirm="handleAddToLibraryConfirm"
+      @close="closeAddToLibraryDialog"
+    />
 
     <!-- 素材预览对话框 -->
     <MaterialPreviewDialog
@@ -269,17 +167,13 @@
   import { ElMessage } from 'element-plus'
   import { Search } from '@element-plus/icons-vue'
   import type { FormInstance, FormRules } from 'element-plus'
-  import { useUserStore } from '@/store/modules/user'
-  import { aiService } from '@/services/aiService'
-  import type { SearchToolsResponse } from '@/types/ai'
   import { useMaterialStore } from '@/store/material'
-  import type { Material, SearchProgress } from '@/types/material'
-  import SearchResultCard from '@/components/custom/material-card/UnifiedMaterialCard.vue'
+  import type { Material, SearchConfig } from '@/types/material'
   import SearchProgressComponent from '@/components/custom/search-progress/SearchProgress.vue'
   import MaterialPreviewDialog from '@/components/custom/material-card/MaterialPreviewDialog.vue'
-  import { useRouter } from 'vue-router'
-  import { HttpError } from '@/utils/http/error'
-  import CryptoJS from 'crypto-js'
+  import MaterialSearchResults from './common/MaterialSearchResults.vue'
+  import AddToLibraryDialog from './common/AddToLibraryDialog.vue'
+  import { useMaterialSearch } from '@/composables/useMaterialSearch'
 
   interface SearchForm {
     keywords: string
@@ -287,45 +181,37 @@
     maxResults: number
   }
 
+  // 使用公共搜索逻辑
+  const {
+    searching,
+    hasSearched,
+    showHistory,
+    searchResults,
+    paginatedSearchResults,
+    selectedMaterials,
+    searchHistory,
+    searchProgress,
+    paginationState,
+    addToLibraryDialogVisible,
+    addingToLibrary,
+    addToLibraryOptions,
+    previewDialogVisible,
+    previewMaterial,
+    searchWithSearchTools,
+    selectMaterial,
+    clearHistory,
+    showAddToLibraryDialog,
+    closeAddToLibraryDialog,
+    goToLibrary,
+    showMaterialPreview,
+    handleSizeChange,
+    handleCurrentChange,
+    resetSearchState
+  } = useMaterialSearch()
+
   // 响应式数据
   const searchFormRef = ref<FormInstance>()
   const materialStore = useMaterialStore()
-  const router = useRouter()
-
-  const searching = ref(false)
-  const showHistory = ref(false)
-  const hasSearched = ref(false)
-  const currentPage = ref(1)
-  const pageSize = ref(20)
-  const totalResults = ref(0)
-
-  const searchResults = ref<Material[]>([])
-  const selectedMaterials = ref<string[]>([])
-  const loadingMaterials = ref<string[]>([])
-
-  // 添加到素材库相关状态
-  const addToLibraryDialogVisible = ref(false)
-  const addProgressDialogVisible = ref(false)
-  const addingToLibrary = ref(false)
-
-  // 预览对话框相关状态
-  const previewDialogVisible = ref(false)
-  const previewMaterial = ref<Material | null>(null)
-
-  // 添加到素材库选项
-  const addToLibraryOptions = ref({
-    autoClear: true,
-    goToLibrary: false
-  })
-
-  // 添加进度
-  const addProgress = ref({
-    percentage: 0,
-    status: 'success' as 'success' | 'exception' | 'warning',
-    message: '准备添加...',
-    processed: 0,
-    total: 0
-  })
 
   // 搜索表单数据
   const searchForm = reactive<SearchForm>({
@@ -334,27 +220,8 @@
     maxResults: 20
   })
 
-  // 搜索进度
-  const searchProgress = reactive<SearchProgress>({
-    stage: 'config',
-    current: 0,
-    total: 100,
-    message: '准备搜索...'
-  })
-
-  // 搜索配置
-  const searchConfig = computed(() => ({
-    keywords: searchForm.keywords,
-    providers: searchForm.providers,
-    searchScope: '',
-    filters: { type: [] }
-  }))
-
   // 可用的搜索提供商
   const availableProviders = computed(() => materialStore.providers)
-
-  // 搜索历史
-  const searchHistory = computed(() => materialStore.searchHistory)
 
   // 表单验证规则
   const searchRules: FormRules = {
@@ -374,87 +241,20 @@
       if (!valid) return
 
       console.log('[MaterialSearch] 开始搜索，关键词:', searchForm.keywords)
-      searching.value = true
-      hasSearched.value = true
-      currentPage.value = 1
 
-      // 简单搜索模式
-      // 更新搜索进度
-      updateSearchProgress('config', 0, 100, '配置搜索参数...')
-
-      // 构建搜索参数
-      const selectedProvider: 'tavily' | 'bocha' = searchForm.providers[0] || 'tavily'
-
-      const searchParams = {
-        queries: [searchForm.keywords],
-        provider: selectedProvider,
-        max_results: searchForm.maxResults
-      }
-
-      console.log('[MaterialSearch] 搜索参数:', searchParams)
-
-      // 更新搜索进度
-      updateSearchProgress('searching', 20, 100, '正在搜索素材...')
-
-      // 执行搜索
-      console.log('[MaterialSearch] 调用 aiService.searchTools')
-      const result: SearchToolsResponse = await aiService.searchTools(searchParams)
-      console.log('[MaterialSearch] 搜索完成，结果数量:', result.results.length)
-
-      // 更新搜索进度
-      updateSearchProgress('processing', 80, 100, '处理搜索结果...')
-
-      const userStore = useUserStore()
-      const currentUserId = userStore.info.id
-
-      // 转换搜索结果格式
-      searchResults.value = result.results.map((item) => ({
-        id: CryptoJS.MD5(item.url).toString(),
-        user_id: currentUserId, // 添加缺失的 user_id 字段
-        title: item.aititle || (item as any).webtitle,
-        summary: item.summary || item.key_excerpts.join(' '),
-        score: item.score,
-        key_excerpts: item.key_excerpts,
-        tags: item.tags || [],
-        url: item.url,
-        createdAt: item.published_date ? new Date(item.published_date) : new Date(),
-        // 保留检索数据以供参考
-        query: item.query
-      }))
-      totalResults.value = result.total_results
-
-      // 更新搜索进度
-      updateSearchProgress('completed', 100, 100, '搜索完成')
-
-      // 添加到搜索历史（仅记录历史，不执行搜索）
-      console.log('[MaterialSearch] 添加搜索历史记录，不执行重复搜索')
-      materialStore.addToSearchHistory({
+      // 使用公共搜索逻辑
+      // 构建搜索配置
+      const searchConfig: SearchConfig = {
         keywords: searchForm.keywords,
         providers: searchForm.providers,
         searchScope: '',
-        filters: { type: [] }
-      })
+        filters: { tags: [] }
+      }
 
-      ElMessage.success(`找到 ${result.total_results} 个相关素材`)
+      await searchWithSearchTools(searchConfig)
     } catch (error) {
       console.error('Search error:', error)
-      ElMessage.error(error instanceof Error ? error.message : '搜索失败，请稍后重试')
-    } finally {
-      searching.value = false
     }
-  }
-
-  // 更新搜索进度
-  const updateSearchProgress = (
-    stage: SearchProgress['stage'],
-    current: number,
-    total: number,
-    message: string
-  ) => {
-    searchProgress.stage = stage
-    searchProgress.current = current
-    searchProgress.total = total
-    searchProgress.message = message
   }
 
   // 取消搜索
@@ -471,162 +271,49 @@
     searchForm.providers = ['tavily']
     searchForm.maxResults = 20
 
-    searchResults.value = []
-    selectedMaterials.value = []
-    hasSearched.value = false
+    // 重置搜索状态
+    resetSearchState()
   }
 
-  // 使用历史记录
-  const useHistoryItem = (item: any) => {
+  // 使用历史记录并搜索
+  const useHistoryItemAndSearch = (item: SearchConfig) => {
     searchForm.keywords = item.keywords
-    searchForm.providers = [...item.providers]
+    searchForm.providers = item.providers as ('tavily' | 'bocha')[]
     handleSearch()
   }
 
-  // 清空历史记录
-  const clearHistory = () => {
-    materialStore.clearSearchHistory()
-    ElMessage.success('搜索历史已清空')
-  }
-
-  // 选择/取消选择素材
-  const toggleMaterialSelection = (materialId: string) => {
-    const index = selectedMaterials.value.indexOf(materialId)
-    if (index > -1) {
-      selectedMaterials.value.splice(index, 1)
-    } else {
-      selectedMaterials.value.push(materialId)
-    }
-  }
-
-  // 选择素材
-  const selectMaterial = (material: Material) => {
-    toggleMaterialSelection(material.id)
-  }
-
-  // 全选
-  const selectAll = () => {
-    selectedMaterials.value = searchResults.value.map((material) => material.id)
-  }
-
-  // 取消选择
-  const clearSelection = () => {
-    selectedMaterials.value = []
-  }
-
-  // 显示添加到素材库对话框
-  const showAddToLibraryDialog = () => {
-    if (selectedMaterials.value.length === 0) {
-      ElMessage.warning('请先选择要添加的素材')
-      return
-    }
-    addToLibraryDialogVisible.value = true
-  }
-
-  // 关闭添加到素材库对话框
-  const closeAddToLibraryDialog = () => {
-    addToLibraryDialogVisible.value = false
-  }
-
-  // 确认添加到素材库
-  const confirmAddToLibrary = async () => {
-    if (selectedMaterials.value.length === 0) {
-      ElMessage.warning('请先选择要添加的素材')
-      return
-    }
-
-    closeAddToLibraryDialog()
-    addProgressDialogVisible.value = true
-    addingToLibrary.value = true
-
-    // 初始化进度
-    addProgress.value = {
-      percentage: 0,
-      status: 'success',
-      message: '准备添加素材到数据库...',
-      processed: 0,
-      total: selectedMaterials.value.length
-    }
-
+  // 处理添加到素材库确认
+  const handleAddToLibraryConfirm = async (options: {
+    autoClear: boolean
+    goToLibrary: boolean
+  }) => {
     try {
+      // 更新选项
+      addToLibraryOptions.value.autoClear = options.autoClear
+      addToLibraryOptions.value.goToLibrary = options.goToLibrary
+
       // 获取选中的素材对象
       const materialsToAdd = selectedMaterials.value
         .map((id) => searchResults.value.find((material) => material.id === id))
         .filter(Boolean) as Material[]
 
-      // 使用新的API将搜索结果添加到数据库
-      addProgress.value.message = '正在将素材添加到数据库...'
-      addProgress.value.percentage = 30
-
+      // 使用Store方法将搜索结果添加到数据库
       const result = await materialStore.addSearchResultsToDatabase(materialsToAdd)
 
-      // 更新进度
-      addProgress.value.percentage = 80
-      addProgress.value.message = `已成功添加 ${result.addedCount} 个素材到数据库`
-      addProgress.value.processed = result.addedCount
-
-      // 添加延迟，让用户看到进度
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      // 完成添加
-      addProgress.value.percentage = 100
-      addProgress.value.message = `成功添加 ${result.addedCount} 个素材到数据库`
-
       // 根据选项执行后续操作
-      if (addToLibraryOptions.value.autoClear) {
-        clearSelection()
+      if (options.autoClear) {
+        materialStore.clearSelection()
       }
 
-      // 延迟关闭进度对话框
-      setTimeout(() => {
-        addProgressDialogVisible.value = false
-        addingToLibrary.value = false
-
-        if (addToLibraryOptions.value.goToLibrary) {
-          goToLibrary()
-        } else {
-          ElMessage.success(`已添加 ${result.addedCount} 个素材到数据库`)
-        }
-      }, 1500)
+      if (options.goToLibrary) {
+        goToLibrary()
+      } else {
+        ElMessage.success(`已添加 ${result.addedCount} 个素材到数据库`)
+      }
     } catch (error) {
       console.error('添加到数据库失败:', error)
-      addProgress.value.status = 'exception'
-      addProgress.value.message = '添加到数据库失败'
-
-      setTimeout(() => {
-        addProgressDialogVisible.value = false
-        addingToLibrary.value = false
-        ElMessage.error('添加到数据库失败')
-      }, 2000)
+      ElMessage.error('添加到数据库失败')
     }
-  }
-
-  // 跳转到素材库
-  const goToLibrary = () => {
-    // 使用路由跳转到素材管理页面
-    router.push('/material/management')
-  }
-
-  // 根据ID获取素材
-  const getMaterialById = (id: string) => {
-    return searchResults.value.find((material) => material.id === id)
-  }
-
-  // 显示素材预览
-  const showMaterialPreview = (material: Material) => {
-    previewMaterial.value = material
-    previewDialogVisible.value = true
-  }
-
-  // 分页处理
-  const handleSizeChange = (size: number) => {
-    pageSize.value = size
-    handleSearch()
-  }
-
-  const handleCurrentChange = (page: number) => {
-    currentPage.value = page
-    handleSearch()
   }
 
   // 组件挂载时检查搜索工具状态
@@ -656,8 +343,7 @@
       console.error('[MaterialSearch] 错误详情:', {
         error: error,
         errorMessage: error instanceof Error ? error.message : '未知错误',
-        errorType: typeof error,
-        isHttpError: error instanceof HttpError
+        errorType: typeof error
       })
     }
   })

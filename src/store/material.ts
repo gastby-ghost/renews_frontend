@@ -1,3 +1,16 @@
+/**
+ * 素材管理 Store
+ *
+ * 该 Store 负责管理应用中的所有素材相关状态和操作，包括：
+ * - 素材的增删改查
+ * - 素材搜索功能（普通搜索和Agent智能搜索）
+ * - 素材库管理
+ * - 搜索历史记录
+ * - Agent任务管理
+ *
+ * 注意：此Store专注于核心业务逻辑和状态管理，UI相关状态由 useMaterialSearch composable 处理
+ */
+
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
@@ -10,17 +23,25 @@ import type {
   MaterialLibraryState,
   AgentSearchConfig,
   AgentSearchResult,
-  AgentService,
-  AgentState
+  AgentState,
+  PaginationState
 } from '@/types/material'
 import type { SearchToolsStatusResponse } from '@/types/ai'
+import CryptoJS from 'crypto-js'
+import { useUserStore } from '@/store/modules/user'
+import { useProjectStore } from '@/store/modules/project'
 
 export const useMaterialStore = defineStore('material', () => {
+  /**
+   * 素材库主状态
+   * 包含所有素材相关的核心状态数据
+   */
   const state = ref<MaterialLibraryState>({
-    materials: [],
-    selectedMaterials: [],
-    searchHistory: [],
+    materials: [], // 素材列表
+    selectedMaterials: [], // 已选中的素材ID列表
+    searchHistory: [], // 搜索历史记录
     providers: [
+      // 搜索提供商配置
       {
         id: 'tavily',
         name: 'Tavily',
@@ -40,60 +61,110 @@ export const useMaterialStore = defineStore('material', () => {
         apiEndpoint: '/api/ai/deepseek'
       }
     ],
-    loading: false,
-    error: null
+    loading: false, // 加载状态
+    error: null // 错误信息
   })
 
-  // Search-tools 相关状态
-  const searchToolsStatus = ref<SearchToolsStatusResponse | null>(null)
-  const searchMode = ref<'simple' | 'agent'>('simple')
-  const currentSearchResults = ref<Material[]>([])
+  /**
+   * Search-tools 相关状态
+   * 管理搜索工具的状态和配置
+   */
+  const searchToolsStatus = ref<SearchToolsStatusResponse | null>(null) // 搜索工具状态
+  const searchMode = ref<'simple' | 'agent'>('simple') // 搜索模式：简单搜索或Agent智能搜索
+  const currentSearchResults = ref<Material[]>([]) // 当前搜索结果
   const searchProgress = ref<SearchProgress>({
+    // 搜索进度状态
     stage: 'config',
     current: 0,
     total: 100,
     message: '准备搜索...'
   })
 
-  // Agent 相关状态
-  const agentState = ref<AgentState>({
-    activeAgents: [],
-    currentTask: null,
-    taskHistory: [],
-    agentCapabilities: {},
-    loading: false,
-    error: null
+  /**
+   * 分页状态
+   * 管理搜索结果的分页信息
+   */
+  const paginationState = ref<PaginationState>({
+    currentPage: 1, // 当前页码
+    pageSize: 20, // 每页数量
+    totalResults: 0, // 总结果数
+    totalPages: 0 // 总页数
   })
 
-  const availableAgents = ref<AgentService[]>([])
-  const currentAgentSearchResults = ref<AgentSearchResult | null>(null)
+  /**
+   * Agent 相关状态
+   * 管理Agent智能搜索的状态和任务
+   */
+  const agentState = ref<AgentState>({
+    activeAgents: [], // 活跃的Agent列表
+    currentTask: null, // 当前任务
+    taskHistory: [], // 任务历史
+    loading: false, // Agent加载状态
+    error: null // Agent错误信息
+  })
 
-  const materials = computed(() => state.value.materials)
-  const selectedMaterials = computed(() => state.value.selectedMaterials)
-  const searchHistory = computed(() => state.value.searchHistory)
-  const providers = computed(() => state.value.providers)
-  const loading = computed(() => state.value.loading)
-  const error = computed(() => state.value.error)
+  const currentAgentSearchResults = ref<AgentSearchResult | null>(null) // 当前Agent搜索结果
+  const researchPath = ref<string[]>([]) // 研究路径，记录Agent的搜索过程
 
+  /**
+   * 基础计算属性
+   * 从主状态中派生的响应式数据
+   */
+  const materials = computed(() => state.value.materials) // 素材列表
+  const selectedMaterials = computed(() => state.value.selectedMaterials) // 已选中的素材ID列表
+  const searchHistory = computed(() => state.value.searchHistory) // 搜索历史
+  const providers = computed(() => state.value.providers) // 搜索提供商
+  const loading = computed(() => state.value.loading) // 加载状态
+  const error = computed(() => state.value.error) // 错误信息
+
+  /**
+   * 已选中的素材完整对象列表
+   * 根据选中的ID列表过滤出完整的素材对象
+   */
   const selectedMaterialList = computed(() =>
     state.value.materials.filter((material) => state.value.selectedMaterials.includes(material.id))
   )
 
-  // Agent 计算属性
-  const agentLoading = computed(() => agentState.value.loading)
-  const agentError = computed(() => agentState.value.error)
-  const currentAgentTask = computed(() => agentState.value.currentTask)
-  const agentTaskHistory = computed(() => agentState.value.taskHistory)
-  const agentCapabilities = computed(() => agentState.value.agentCapabilities)
+  /**
+   * Agent 相关计算属性
+   * 从Agent状态中派生的响应式数据
+   */
+  const agentLoading = computed(() => agentState.value.loading) // Agent加载状态
+  const agentError = computed(() => agentState.value.error) // Agent错误信息
+  const currentAgentTask = computed(() => agentState.value.currentTask) // 当前Agent任务
+  const agentTaskHistory = computed(() => agentState.value.taskHistory) // Agent任务历史
 
+  /**
+   * 当前页显示的搜索结果
+   * 根据分页状态计算当前应该显示的数据
+   */
+  const paginatedSearchResults = computed(() => {
+    const startIndex = (paginationState.value.currentPage - 1) * paginationState.value.pageSize
+    const endIndex = startIndex + paginationState.value.pageSize
+    return currentSearchResults.value.slice(startIndex, endIndex)
+  })
+
+  /**
+   * 添加单个素材到素材列表
+   * @param material 要添加的素材对象
+   */
   function addMaterial(material: Material) {
     state.value.materials.unshift(material)
   }
 
+  /**
+   * 批量添加素材到素材列表
+   * @param materials 要添加的素材数组
+   */
   function addMaterials(materials: Material[]) {
     state.value.materials.unshift(...materials)
   }
 
+  /**
+   * 从素材列表中移除指定素材
+   * 同时从选中列表中移除该素材
+   * @param id 要移除的素材ID
+   */
   function removeMaterial(id: string) {
     const index = state.value.materials.findIndex((m) => m.id === id)
     if (index > -1) {
@@ -104,6 +175,11 @@ export const useMaterialStore = defineStore('material', () => {
     )
   }
 
+  /**
+   * 切换素材的选中状态
+   * 如果素材已选中则取消选中，否则选中该素材
+   * @param id 要切换选中状态的素材ID
+   */
   function toggleMaterialSelection(id: string) {
     const index = state.value.selectedMaterials.indexOf(id)
     if (index > -1) {
@@ -113,98 +189,76 @@ export const useMaterialStore = defineStore('material', () => {
     }
   }
 
+  /**
+   * 清空所有选中的素材
+   */
   function clearSelection() {
     state.value.selectedMaterials = []
   }
 
+  /**
+   * 选中所有素材
+   */
   function selectAll() {
     state.value.selectedMaterials = state.value.materials.map((m) => m.id)
   }
 
+  /**
+   * 设置搜索进度
+   * @param progress 搜索进度对象
+   */
   function setSearchProgress(progress: SearchProgress) {
-    // Implementation for search progress tracking
-    console.log('Search progress:', progress)
+    searchProgress.value = progress
   }
 
-  async function searchMaterials(config: SearchConfig) {
-    state.value.loading = true
-    state.value.error = null
-
-    try {
-      // Add to search history
-      state.value.searchHistory.unshift({
-        ...config,
-        providers: [...config.providers]
-      })
-
-      // Use the search service
-      const searchParams = {
-        keywords: config.keywords,
-        providers: config.providers,
-        searchScope: config.searchScope,
-        aiProvider: config.aiProvider,
-        filters: config.filters,
-        page: 1,
-        pageSize: 50
-      }
-
-      // Use the search service
-      const result = await aiService.searchTools(searchParams)
-
-      addMaterials(result.materials)
-      return result.materials
-    } catch (error) {
-      state.value.error = error instanceof Error ? error.message : '搜索失败'
-      throw error
-    } finally {
-      state.value.loading = false
-    }
-  }
-
-  // 使用 search-tools API 搜索素材
+  /**
+   * 使用 search-tools API 搜索素材
+   * @param config 搜索配置对象
+   * @returns 搜索到的素材列表
+   */
   async function searchWithSearchTools(config: SearchConfig) {
     state.value.loading = true
     state.value.error = null
-
-    // 更新搜索进度
     updateSearchProgress('config', 0, 100, '配置搜索参数...')
 
     try {
-      // Add to search history
-      state.value.searchHistory.unshift({
-        ...config,
-        providers: [...config.providers]
-      })
+      // 添加到搜索历史
+      addToSearchHistory(config)
 
-      // Use the search-tools service
+      // 构建搜索参数
       const searchParams = {
-        keywords: config.keywords,
-        providers: config.providers,
-        searchScope: config.searchScope,
-        aiProvider: config.aiProvider,
-        filters: config.filters,
-        page: 1,
-        pageSize: 20
+        queries: [config.keywords],
+        provider: config.providers[0] as 'tavily' | 'bocha',
+        max_results: 20
       }
 
-      // 更新搜索进度
       updateSearchProgress('searching', 20, 100, '正在搜索素材...')
 
+      // 调用搜索API
       const result = await aiService.searchTools(searchParams)
 
-      // 更新搜索进度
       updateSearchProgress('processing', 80, 100, '处理搜索结果...')
 
-      // 保存当前搜索结果
-      currentSearchResults.value = result.materials as Material[]
+      // 转换搜索结果
+      const materials = transformSearchResultsToMaterials(result.results)
+
+      // 更新当前搜索结果
+      currentSearchResults.value = materials
+
+      // 更新分页状态
+      paginationState.value = {
+        currentPage: 1,
+        pageSize: paginationState.value.pageSize, // 使用当前页面大小而不是硬编码
+        totalResults: result.total_results,
+        totalPages: Math.ceil(result.total_results / paginationState.value.pageSize)
+      }
 
       // 添加到素材库
-      addMaterials(result.materials)
+      addMaterials(materials)
 
-      // 更新搜索进度
       updateSearchProgress('completed', 100, 100, '搜索完成')
 
-      return result.materials as Material[]
+      return materials
     } catch (error) {
       state.value.error = error instanceof Error ? error.message : '搜索失败'
       throw error
@@ -213,7 +267,11 @@ export const useMaterialStore = defineStore('material', () => {
     }
   }
 
-  // 检查搜索工具状态
+  /**
+   * 检查搜索工具状态
+   * 获取并缓存搜索工具的可用状态
+   * @returns 搜索工具状态响应
+   */
   async function checkSearchToolsStatus() {
     try {
       // 如果已经有状态数据且最近更新过，直接返回
@@ -236,7 +294,13 @@ export const useMaterialStore = defineStore('material', () => {
     }
   }
 
-  // 更新搜索进度
+  /**
+   * 更新搜索进度
+   * @param stage 搜索阶段
+   * @param current 当前进度
+   * @param total 总进度
+   * @param message 进度消息
+   */
   function updateSearchProgress(
     stage: SearchProgress['stage'],
     current: number,
@@ -251,22 +315,33 @@ export const useMaterialStore = defineStore('material', () => {
     }
   }
 
-  // 设置搜索模式
+  /**
+   * 设置搜索模式
+   * @param mode 搜索模式：'simple' 或 'agent'
+   */
   function setSearchMode(mode: 'simple' | 'agent') {
     searchMode.value = mode
   }
 
-  // 清空当前搜索结果
+  /**
+   * 清空当前搜索结果
+   */
   function clearCurrentSearchResults() {
     currentSearchResults.value = []
   }
 
-  // 清空搜索历史
+  /**
+   * 清空搜索历史
+   */
   function clearSearchHistory() {
     state.value.searchHistory = []
   }
 
-  // 只添加搜索历史，不执行搜索
+  /**
+   * 添加搜索历史记录
+   * 只添加搜索历史，不执行搜索
+   * @param config 搜索配置对象
+   */
   function addToSearchHistory(config: SearchConfig) {
     console.log('[MaterialStore] 添加搜索历史记录:', {
       keywords: config.keywords,
@@ -284,59 +359,51 @@ export const useMaterialStore = defineStore('material', () => {
     )
   }
 
-  // Agent 相关方法实现
-
-  // 获取可用的Agent服务
-  async function fetchAvailableAgents() {
-    try {
-      agentState.value.loading = true
-      agentState.value.error = null
-
-      // 使用AI服务获取Scope Agent任务列表作为替代
-      const agents = await aiService.getScopeAgentTasks('system')
-      availableAgents.value = agents
-      agentState.value.activeAgents = agents
-
-      return agents
-    } catch (error) {
-      agentState.value.error = error instanceof Error ? error.message : '获取Agent服务失败'
-      throw error
-    } finally {
-      agentState.value.loading = false
-    }
-  }
-
-  // 使用Agent进行搜索
+  /**
+   * 使用Agent进行智能搜索
+   * 通过AI Agent执行更智能的搜索，包括需求分析和结果处理
+   * @param config Agent搜索配置
+   * @returns Agent搜索结果
+   */
   async function searchWithAgent(config: AgentSearchConfig) {
     try {
       agentState.value.loading = true
       agentState.value.error = null
-
-      // 更新搜索进度
       updateSearchProgress('config', 0, 100, '配置Agent搜索参数...')
 
-      // 创建Agent任务
-      // const task = await createAgentTask(config)
+      // 构建Agent搜索请求
+      const requestData = {
+        brief: config.keywords,
+        max_concurrent_research_units: config.agentConfig?.maxConcurrentResearchUnits,
+        max_researcher_iterations: config.agentConfig?.maxResearcherIterations
+      }
 
-      // 更新搜索进度
       updateSearchProgress('searching', 20, 100, 'Agent正在分析需求...')
 
       // 执行Agent搜索
-      const result = await agentService.searchWithAgent(config)
+      const executeResponse = await aiService.executeSearchAgent(
+        getCurrentUserId(),
+        getCurrentProjectId(),
+        requestData
+      )
 
-      // 更新搜索进度
-      updateSearchProgress('processing', 80, 100, 'Agent正在处理搜索结果...')
+      if (!executeResponse.success) {
+        throw new Error(executeResponse.message || 'Agent执行失败')
+      }
 
-      // 保存结果
-      currentAgentSearchResults.value = result
+      updateSearchProgress('processing', 40, 100, 'Agent正在处理搜索结果...')
 
-      // 添加素材到本地状态
-      addMaterials(result.materials)
+      // 轮询任务状态
+      const result = await pollAgentStatus(executeResponse.task_id)
 
-      // 更新搜索进度
-      updateSearchProgress('completed', 100, 100, 'Agent搜索完成')
-
-      return result
+      if (result) {
+        // 处理成功结果
+        await processAgentResult(result)
+        updateSearchProgress('completed', 100, 100, 'Agent搜索完成')
+        return currentAgentSearchResults.value
+      } else {
+        throw new Error('Agent任务执行失败')
+      }
     } catch (error) {
       agentState.value.error = error instanceof Error ? error.message : 'Agent搜索失败'
       throw error
@@ -345,49 +412,15 @@ export const useMaterialStore = defineStore('material', () => {
     }
   }
 
-  // 创建Agent任务
-  async function createAgentTask(config: AgentSearchConfig) {
-    try {
-      const task = await agentService.createAgentTask(config)
-      agentState.value.currentTask = task
-      return task
-    } catch (error) {
-      agentState.value.error = error instanceof Error ? error.message : '创建Agent任务失败'
-      throw error
-    }
-  }
-
-  // 获取Agent任务状态
-  async function getAgentTask(taskId: string) {
-    try {
-      const task = await agentService.getAgentTask(taskId)
-
-      // 更新当前任务状态
-      if (agentState.value.currentTask?.id === taskId) {
-        agentState.value.currentTask = task
-      }
-
-      // 如果任务完成，添加到历史记录
-      if (task.status === 'completed' || task.status === 'failed') {
-        const historyIndex = agentState.value.taskHistory.findIndex((t) => t.id === taskId)
-        if (historyIndex > -1) {
-          agentState.value.taskHistory[historyIndex] = task
-        } else {
-          agentState.value.taskHistory.unshift(task)
-        }
-      }
-
-      return task
-    } catch (error) {
-      agentState.value.error = error instanceof Error ? error.message : '获取Agent任务状态失败'
-      throw error
-    }
-  }
-
-  // 取消Agent任务
+  /**
+   * 取消Agent任务
+   * 取消正在执行的Agent任务
+   * @param taskId 要取消的任务ID
+   */
   async function cancelAgentTask(taskId: string) {
     try {
-      await agentService.cancelAgentTask(taskId)
+      // 使用 aiService 替代 agentService，因为 agentService 未定义
+      await aiService.cancelSearchAgentTask(taskId, getCurrentUserId(), getCurrentProjectId())
 
       // 更新任务状态
       if (agentState.value.currentTask?.id === taskId) {
@@ -400,67 +433,78 @@ export const useMaterialStore = defineStore('material', () => {
     }
   }
 
-  // 获取Agent任务历史
+  /**
+   * 获取Agent任务历史
+   * 获取所有Agent任务的历史记录
+   * @returns 任务历史列表
+   */
   async function getAgentTaskHistory() {
     try {
-      const history = await agentService.getAgentTaskHistory()
-      agentState.value.taskHistory = history
-      return history
+      // 使用 aiService 替代 agentService，因为 agentService 未定义
+      const history = await aiService.getSearchAgentTasks(getCurrentUserId(), getCurrentProjectId())
+
+      // 转换 SearchAgentStatusResponse 到 AgentTask 类型
+      const convertedTasks = (history.tasks || []).map((task) => ({
+        id: task.task_id,
+        type: 'search' as const,
+        status: task.status as 'pending' | 'running' | 'completed' | 'failed',
+        progress: task.progress,
+        message: task.error || (task.status === 'completed' ? '任务完成' : '任务进行中'),
+        config: {
+          keywords: '',
+          providers: ['tavily'],
+          searchScope: '',
+          agentType: 'search' as const,
+          filters: { tags: [] }
+        },
+        result: task.result
+          ? {
+              materials: [],
+              total: 0,
+              page: 1,
+              pageSize: 20
+            }
+          : undefined,
+        error: task.error || undefined,
+        createdAt: new Date(task.created_at * 1000), // 转换时间戳为Date对象
+        updatedAt: new Date(task.updated_at * 1000)
+      }))
+
+      agentState.value.taskHistory = convertedTasks
+      return convertedTasks
     } catch (error) {
       agentState.value.error = error instanceof Error ? error.message : '获取Agent任务历史失败'
       throw error
     }
   }
 
-  // 获取Agent推荐内容
-  async function getAgentRecommendations(materialId: string) {
-    try {
-      const recommendations = await agentService.getAgentRecommendations(materialId)
-      return recommendations
-    } catch (error) {
-      agentState.value.error = error instanceof Error ? error.message : '获取Agent推荐失败'
-      throw error
-    }
-  }
-
-  // 分析素材内容
-  async function analyzeMaterial(materialId: string) {
-    try {
-      const analysis = await agentService.analyzeMaterial(materialId)
-      return analysis
-    } catch (error) {
-      agentState.value.error = error instanceof Error ? error.message : '分析素材内容失败'
-      throw error
-    }
-  }
-
-  // 获取Agent能力配置
-  async function getAgentCapabilities() {
-    try {
-      const capabilities = await agentService.getAgentCapabilities()
-      agentState.value.agentCapabilities = capabilities
-      return capabilities
-    } catch (error) {
-      agentState.value.error = error instanceof Error ? error.message : '获取Agent能力配置失败'
-      throw error
-    }
-  }
-
-  // 更新Agent状态
+  /**
+   * 更新Agent状态
+   * 批量更新Agent状态对象
+   * @param updates 要更新的状态部分
+   */
   function updateAgentState(updates: Partial<AgentState>) {
     Object.assign(agentState.value, updates)
   }
 
-  // 清空Agent错误
+  /**
+   * 清空Agent错误信息
+   */
   function clearAgentError() {
     agentState.value.error = null
   }
 
-  // 清空Agent任务历史
+  /**
+   * 清空Agent任务历史
+   */
   function clearAgentTaskHistory() {
     agentState.value.taskHistory = []
   }
 
+  /**
+   * 更新素材信息
+   * @param updates 包含ID和要更新字段的素材对象
+   */
   async function updateMaterial(updates: Partial<Material> & { id: string }) {
     const index = state.value.materials.findIndex((m) => m.id === updates.id)
     if (index > -1) {
@@ -472,18 +516,37 @@ export const useMaterialStore = defineStore('material', () => {
     }
   }
 
-  function getMaterialsByType(type: Material['type']) {
-    return state.value.materials.filter((m) => m.type === type)
+  /**
+   * 根据类型获取素材
+   * 注意：Material 类型中没有 type 属性，这里使用 tags 来模拟类型过滤
+   * @param type 素材类型（实际上是标签）
+   * @returns 匹配的素材列表
+   */
+  function getMaterialsByType(type: string) {
+    // Material 类型中没有 type 属性，这里使用 tags 来模拟类型过滤
+    return state.value.materials.filter((m) => m.tags.includes(type))
   }
 
+  /**
+   * 根据标签获取素材
+   * @param tag 标签名称
+   * @returns 包含指定标签的素材列表
+   */
   function getMaterialsByTag(tag: string) {
     return state.value.materials.filter((m) => m.tags.includes(tag))
   }
 
+  /**
+   * 清空错误信息
+   */
   function clearError() {
     state.value.error = null
   }
 
+  /**
+   * 将素材添加到素材库
+   * @param materialIds 要添加的素材ID列表
+   */
   async function addToLibrary(materialIds: string[]) {
     try {
       // 使用旧的API作为备用
@@ -710,6 +773,10 @@ export const useMaterialStore = defineStore('material', () => {
     }
   }
 
+  /**
+   * 从素材库移除素材
+   * @param materialIds 要移除的素材ID列表
+   */
   async function removeFromLibrary(materialIds: string[]) {
     try {
       // 由于移除了materialSearchService，这里使用素材API删除功能
@@ -727,8 +794,13 @@ export const useMaterialStore = defineStore('material', () => {
     }
   }
 
+  /**
+   * 加载素材库中的素材
+   * @param params 查询参数，包括类型、来源、标签、搜索关键词和分页信息
+   * @returns 加载的素材列表
+   */
   async function loadLibraryMaterials(params?: {
-    type?: Material['type']
+    type?: string
     source?: string
     tags?: string[]
     search?: string
@@ -741,8 +813,12 @@ export const useMaterialStore = defineStore('material', () => {
     try {
       // 由于移除了materialSearchService，这里使用素材API获取项目素材作为替代
       const result = await materialApiService.getProjectMaterials(1, params)
-      state.value.materials = result.materials
-      return result.materials
+      // 将API返回的素材转换为前端格式
+      const materials = result.materials.map((apiMaterial) =>
+        MaterialApiService.convertApiMaterialToMaterial(apiMaterial)
+      )
+      state.value.materials = materials
+      return materials
     } catch (error) {
       state.value.error = error instanceof Error ? error.message : '加载素材库失败'
       throw error
@@ -775,7 +851,6 @@ export const useMaterialStore = defineStore('material', () => {
     clearSelection,
     selectAll,
     setSearchProgress,
-    searchMaterials,
     searchWithSearchTools,
     updateMaterial,
     getMaterialsByType,
@@ -795,30 +870,209 @@ export const useMaterialStore = defineStore('material', () => {
     setSearchMode,
     clearCurrentSearchResults,
     clearSearchHistory,
-    addToSearchHistory,
 
     // Agent 相关状态
     agentState,
-    availableAgents,
     currentAgentSearchResults,
     agentLoading,
     agentError,
     currentAgentTask,
     agentTaskHistory,
-    agentCapabilities,
 
     // Agent 相关方法
-    fetchAvailableAgents,
     searchWithAgent,
-    createAgentTask,
-    getAgentTask,
     cancelAgentTask,
     getAgentTaskHistory,
-    getAgentRecommendations,
-    analyzeMaterial,
-    getAgentCapabilities,
     updateAgentState,
     clearAgentError,
-    clearAgentTaskHistory
+    clearAgentTaskHistory,
+
+    // 新增的分页状态
+    paginationState,
+    paginatedSearchResults,
+
+    // 新增的研究路径状态
+    researchPath,
+
+    // 数据转换方法
+    transformSearchResultsToMaterials,
+
+    // Agent搜索辅助方法
+    pollAgentStatus,
+    processAgentResult,
+    getCurrentUserId,
+    getCurrentProjectId
+  }
+
+  // ========== 辅助函数 ==========
+
+  /**
+   * 转换搜索结果为Material格式
+   * 将API返回的搜索结果转换为前端使用的Material对象格式
+   * @param results API返回的搜索结果数组
+   * @returns 转换后的Material对象数组
+   */
+  function transformSearchResultsToMaterials(results: any[]): Material[] {
+    const currentUserId = getCurrentUserId()
+
+    return results.map((item) => ({
+      id: CryptoJS.MD5(item.url).toString(), // 使用URL的MD5值作为唯一ID
+      user_id: currentUserId, // 当前用户ID
+      title: item.aititle || item.webtitle || '未命名素材', // 优先使用AI生成的标题，其次是网页标题
+      summary: item.summary || item.key_excerpts?.join(' ') || '无可用摘要', // 摘要信息
+      score: item.score || 0, // 相关性评分
+      key_excerpts: item.key_excerpts || [], // 关键摘录
+      tags: item.tags || [], // 标签
+      url: item.url, // 原始URL
+      createdAt: item.published_date ? new Date(item.published_date) : new Date(), // 创建时间
+      selected: false // 默认未选中
+    }))
+  }
+
+  /**
+   * 轮询Agent任务状态
+   * 定期查询Agent任务的执行状态，直到任务完成或超时
+   * @param taskId 任务ID
+   * @returns 任务结果
+   */
+  async function pollAgentStatus(taskId: string): Promise<any> {
+    const maxAttempts = 60 // 最多轮询60次
+    const interval = 20000 // 20秒间隔
+
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      try {
+        const statusResponse = await aiService.getSearchAgentStatus(
+          taskId,
+          getCurrentUserId(),
+          getCurrentProjectId()
+        )
+
+        // 更新进度
+        const currentProgress = 40 + (statusResponse.progress || 0) * 0.6
+        updateSearchProgress(
+          'processing',
+          currentProgress,
+          100,
+          getAgentStatusMessage(statusResponse.status)
+        )
+
+        if (statusResponse.status === 'SUCCESS' && statusResponse.result) {
+          return statusResponse.result
+        } else if (statusResponse.status === 'FAILURE') {
+          throw new Error(statusResponse.error || 'Agent任务执行失败')
+        } else if (statusResponse.status === 'REVOKED') {
+          throw new Error('Agent任务已被取消')
+        }
+
+        // 任务仍在进行中，等待后继续轮询
+        await new Promise((resolve) => setTimeout(resolve, interval))
+      } catch (error) {
+        console.error(`轮询Agent状态失败 (第${attempt + 1}次):`, error)
+        if (attempt === maxAttempts - 1) {
+          throw error
+        }
+        await new Promise((resolve) => setTimeout(resolve, interval))
+      }
+    }
+
+    throw new Error('Agent任务超时')
+  }
+
+  /**
+   * 处理Agent搜索结果
+   * 将Agent返回的结果转换为前端可用的格式，并更新相关状态
+   * @param result Agent搜索结果
+   */
+  async function processAgentResult(result: any) {
+    // 显示研究路径
+    if (result.research_path && result.research_path.length > 0) {
+      researchPath.value = result.research_path
+    }
+
+    // 转换web_search_data为素材格式
+    if (result.web_search_data && result.web_search_data.length > 0) {
+      const materials = transformSearchResultsToMaterials(result.web_search_data)
+
+      // 更新当前搜索结果
+      currentSearchResults.value = materials
+
+      // 更新分页状态
+      paginationState.value = {
+        currentPage: 1,
+        pageSize: paginationState.value.pageSize, // 使用当前页面大小而不是硬编码
+        totalResults: materials.length,
+        totalPages: Math.ceil(materials.length / paginationState.value.pageSize)
+      }
+
+      // 添加到素材库
+      addMaterials(materials)
+
+      // 保存Agent搜索结果
+      currentAgentSearchResults.value = {
+        materials,
+        total: materials.length,
+        page: 1,
+        pageSize: 20,
+        agentInsights: result.agent_insights,
+        recommendations: result.recommendations || [],
+        relatedQueries: result.related_queries || [],
+        processingTime: result.processing_time
+      }
+    } else {
+      currentSearchResults.value = []
+      paginationState.value.totalResults = 0
+      currentAgentSearchResults.value = {
+        materials: [],
+        total: 0,
+        page: 1,
+        pageSize: 20
+      }
+    }
+  }
+
+  /**
+   * 获取Agent状态对应的中文消息
+   * @param status Agent状态码
+   * @returns 状态对应的中文消息
+   */
+  function getAgentStatusMessage(status: string): string {
+    const statusMap = {
+      PENDING: '任务等待中...',
+      STARTED: 'Agent正在执行...',
+      SUCCESS: '任务完成',
+      FAILURE: '任务失败',
+      REVOKED: '任务已取消'
+    }
+    return statusMap[status as keyof typeof statusMap] || status
+  }
+
+  /**
+   * 获取当前用户ID
+   * 从用户store中获取当前登录用户的ID，如果获取失败则返回默认值
+   * @returns 当前用户ID字符串
+   */
+  function getCurrentUserId(): string {
+    // 这里应该从用户store获取，暂时返回默认值
+    try {
+      const userStore = useUserStore()
+      return userStore.info?.id || 'current-user'
+    } catch {
+      return 'current-user'
+    }
+  }
+
+  /**
+   * 获取当前项目ID
+   * 从项目store中获取当前项目的ID，如果获取失败则返回默认值
+   * @returns 当前项目ID字符串
+   */
+  function getCurrentProjectId(): string {
+    // 这里应该从项目store获取，暂时返回默认值
+    try {
+      const projectStore = useProjectStore()
+      return projectStore.currentProject?.id?.toString() || 'current-project'
+    } catch {
+      return 'current-project'
+    }
   }
 })
