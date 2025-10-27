@@ -43,6 +43,9 @@ importers:
       lodash-es:
         specifier: ^4.17.21
         version: 4.17.21
+      marked:
+        specifier: ^16.4.1
+        version: 16.4.1
       md-editor-v3:
         specifier: ^4.17.0
         version: 4.21.3(@codemirror/view@6.35.0)(@lezer/common@1.2.3)(vue@3.5.15(typescript@5.6.3))
@@ -6399,6 +6402,14 @@ packages:
       {
         integrity: sha512-a54IwgWPaeBCAAsv13YgmALOF1elABB08FxO9i+r4VFk5Vl4pKokRPeX8u5TCgSsPi6ec1otfLjdOpVcgbpshg==
       }
+    hasBin: true
+
+  marked@16.4.1:
+    resolution:
+      {
+        integrity: sha512-ntROs7RaN3EvWfy3EZi14H4YxmT6A5YvywfhO+0pm+cH/dnSQRmdAmoFIc3B9aiwTehyk7pESH4ofyBY+V5hZg==
+      }
+    engines: { node: '>= 20' }
     hasBin: true
 
   math-intrinsics@1.1.0:
@@ -13287,6 +13298,8 @@ snapshots:
       mdurl: 2.0.0
       punycode.js: 2.3.1
       uc.micro: 2.1.0
+
+  marked@16.4.1: {}
 
   math-intrinsics@1.1.0: {}
 

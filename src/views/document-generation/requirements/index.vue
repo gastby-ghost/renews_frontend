@@ -155,47 +155,7 @@
           <el-button @click="editBriefing" size="small" type="primary" plain>编辑简报</el-button>
         </div>
 
-        <div class="briefing-content">
-          <div class="briefing-section">
-            <h4>📋 文档概述</h4>
-            <p>{{ aiBriefing.overview }}</p>
-          </div>
-
-          <div class="briefing-section">
-            <h4>🎯 目标受众分析</h4>
-            <p>{{ aiBriefing.audienceAnalysis }}</p>
-          </div>
-
-          <div class="briefing-section">
-            <h4>📝 内容结构建议</h4>
-            <ul>
-              <li v-for="suggestion in aiBriefing.structureSuggestions" :key="suggestion">{{
-                suggestion
-              }}</li>
-            </ul>
-          </div>
-
-          <div class="briefing-section">
-            <h4>🔑 关键词建议</h4>
-            <div class="keyword-tags">
-              <el-tag
-                v-for="keyword in aiBriefing.keywords"
-                :key="keyword"
-                type="warning"
-                effect="plain"
-              >
-                {{ keyword }}
-              </el-tag>
-            </div>
-          </div>
-
-          <div class="briefing-section">
-            <h4>⚠️ 注意事项</h4>
-            <ul>
-              <li v-for="note in aiBriefing.cautions" :key="note">{{ note }}</li>
-            </ul>
-          </div>
-        </div>
+        <div class="briefing-content markdown-body" v-html="renderedBriefing"></div>
       </div>
     </div>
 
@@ -203,36 +163,30 @@
     <el-dialog
       v-model="briefingDialogVisible"
       title="编辑AI简报"
-      width="800px"
+      width="900px"
       :close-on-click-modal="false"
     >
-      <el-form :model="editableBriefing" label-width="120px">
-        <el-form-item label="文档概述">
-          <el-input v-model="editableBriefing.overview" type="textarea" :rows="3" />
-        </el-form-item>
-        <el-form-item label="受众分析">
-          <el-input v-model="editableBriefing.audienceAnalysis" type="textarea" :rows="3" />
-        </el-form-item>
-        <el-form-item label="结构建议">
-          <el-input
-            v-model="structureSuggestionsText"
-            type="textarea"
-            :rows="4"
-            placeholder="每行一个建议"
-          />
-        </el-form-item>
-        <el-form-item label="关键词">
-          <el-input v-model="keywordsText" placeholder="用逗号分隔关键词" />
-        </el-form-item>
-        <el-form-item label="注意事项">
-          <el-input
-            v-model="cautionsText"
-            type="textarea"
-            :rows="4"
-            placeholder="每行一个注意事项"
-          />
-        </el-form-item>
-      </el-form>
+      <el-tabs model-value="edit" class="briefing-edit-tabs">
+        <el-tab-pane label="编辑模式" name="edit">
+          <el-form :model="editableBriefing" label-width="80px">
+            <el-form-item label="简报内容">
+              <el-input
+                v-model="editableBriefing.content"
+                type="textarea"
+                :rows="15"
+                placeholder="请输入Markdown格式的简报内容"
+              />
+            </el-form-item>
+          </el-form>
+        </el-tab-pane>
+        <el-tab-pane label="预览模式" name="preview">
+          <div
+            class="briefing-preview markdown-body"
+            v-html="renderedEditableBriefing"
+            style="max-height: 500px; padding: 20px; overflow-y: auto"
+          ></div>
+        </el-tab-pane>
+      </el-tabs>
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="briefingDialogVisible = false">取消</el-button>
@@ -248,6 +202,8 @@
   import { useRouter, useRoute } from 'vue-router'
   import { ElMessage } from 'element-plus'
   import type { FormInstance, FormRules } from 'element-plus'
+  import { marked } from 'marked'
+  import '@/assets/styles/markdown.scss'
 
   interface RequirementsForm {
     topic: string
@@ -260,11 +216,7 @@
   }
 
   interface AIBriefing {
-    overview: string
-    audienceAnalysis: string
-    structureSuggestions: string[]
-    keywords: string[]
-    cautions: string[]
+    content: string // Markdown content
   }
 
   const router = useRouter()
@@ -309,19 +261,11 @@
   const briefingDialogVisible = ref(false)
 
   const aiBriefing = reactive<AIBriefing>({
-    overview: '',
-    audienceAnalysis: '',
-    structureSuggestions: [],
-    keywords: [],
-    cautions: []
+    content: ''
   })
 
   const editableBriefing = reactive({
-    overview: '',
-    audienceAnalysis: '',
-    structureSuggestions: [] as string[],
-    keywords: [] as string[],
-    cautions: [] as string[]
+    content: '' // Markdown content
   })
 
   const requirementsRules: FormRules = {
@@ -341,28 +285,13 @@
     )
   })
 
-  const structureSuggestionsText = computed({
-    get: () => editableBriefing.structureSuggestions.join('\n'),
-    set: (value: string) => {
-      editableBriefing.structureSuggestions = value.split('\n').filter((s) => s.trim())
-    }
+  const renderedBriefing = computed(() => {
+    if (!aiBriefingGenerated.value) return ''
+    return marked(aiBriefing.content)
   })
 
-  const keywordsText = computed({
-    get: () => editableBriefing.keywords.join(', '),
-    set: (value: string) => {
-      editableBriefing.keywords = value
-        .split(',')
-        .map((k) => k.trim())
-        .filter((k) => k)
-    }
-  })
-
-  const cautionsText = computed({
-    get: () => editableBriefing.cautions.join('\n'),
-    set: (value: string) => {
-      editableBriefing.cautions = value.split('\n').filter((c) => c.trim())
-    }
+  const renderedEditableBriefing = computed(() => {
+    return marked(editableBriefing.content)
   })
 
   onMounted(() => {
@@ -406,33 +335,40 @@
       // Simulate AI generation
       await new Promise((resolve) => setTimeout(resolve, 3000))
 
-      // Generate mock AI briefing based on form data
-      const briefing: AIBriefing = {
-        overview: `基于您提供的需求，我们将创作一篇关于"${requirementsForm.topic}"的${getDocumentTypeText(requirementsForm.documentType)}。该文档将针对${getAudienceText(requirementsForm.targetAudience)}，采用${getToneText(requirementsForm.tone)}的语气风格，预期字数约${requirementsForm.wordCount}字。`,
-        audienceAnalysis: `${getAudienceText(requirementsForm.targetAudience)}通常对${requirementsForm.topic}相关的信息有较高的关注度，他们期望获得${requirementsForm.keyPoints.length > 0 ? requirementsForm.keyPoints.join('、') : '核心信息'}等方面的深入分析。`,
-        structureSuggestions: [
-          '开篇引入：通过数据或案例引起读者兴趣',
-          '背景介绍：提供必要的背景信息和现状分析',
-          '核心内容：围绕关键要点展开详细论述',
-          '实例说明：通过具体案例或数据支撑观点',
-          '总结展望：总结核心观点并展望未来趋势'
-        ],
-        keywords: [
-          requirementsForm.topic,
-          ...requirementsForm.keyPoints.slice(0, 3),
-          getDocumentTypeText(requirementsForm.documentType),
-          getAudienceText(requirementsForm.targetAudience)
-        ].filter((v, i, a) => a.indexOf(v) === i), // Remove duplicates
-        cautions: [
-          '避免过于技术化的术语，确保内容通俗易懂',
-          '注意数据的时效性和准确性',
-          '保持客观中立的立场，避免主观臆断',
-          '确保逻辑清晰，层次分明'
-        ]
-      }
+      // Generate mock AI briefing based on form data (markdown format)
+      const briefingContent = `# 📋 文档概述
+基于您提供的需求，我们将创作一篇关于**${requirementsForm.topic}**的${getDocumentTypeText(requirementsForm.documentType)}。该文档将针对**${getAudienceText(requirementsForm.targetAudience)}**，采用**${getToneText(requirementsForm.tone)}**的语气风格，预期字数约**${requirementsForm.wordCount}字**。
 
-      if (requirementsForm.specialRequirements) {
-        briefing.cautions.push(`特殊要求：${requirementsForm.specialRequirements}`)
+# 🎯 目标受众分析
+**${getAudienceText(requirementsForm.targetAudience)}**通常对**${requirementsForm.topic}**相关的信息有较高的关注度，他们期望获得${requirementsForm.keyPoints.length > 0 ? requirementsForm.keyPoints.map((point) => `**${point}**`).join('、') : '核心信息'}等方面的深入分析。
+
+# 📝 内容结构建议
+- **开篇引入**：通过数据或案例引起读者兴趣
+- **背景介绍**：提供必要的背景信息和现状分析
+- **核心内容**：围绕关键要点展开详细论述
+- **实例说明**：通过具体案例或数据支撑观点
+- **总结展望**：总结核心观点并展望未来趋势
+
+# 🔑 关键词建议
+${[
+  requirementsForm.topic,
+  ...requirementsForm.keyPoints.slice(0, 3),
+  getDocumentTypeText(requirementsForm.documentType),
+  getAudienceText(requirementsForm.targetAudience)
+]
+  .filter((v, i, a) => a.indexOf(v) === i)
+  .map((keyword) => `**${keyword}**`)
+  .join(' · ')}
+
+# ⚠️ 注意事项
+- 避免过于技术化的术语，确保内容通俗易懂
+- 注意数据的时效性和准确性
+- 保持客观中立的立场，避免主观臆断
+- 确保逻辑清晰，层次分明${requirementsForm.specialRequirements ? '\n- 特殊要求：' + requirementsForm.specialRequirements : ''}
+`
+
+      const briefing: AIBriefing = {
+        content: briefingContent
       }
 
       Object.assign(aiBriefing, briefing)
@@ -451,24 +387,12 @@
   }
 
   const editBriefing = () => {
-    Object.assign(editableBriefing, {
-      overview: aiBriefing.overview,
-      audienceAnalysis: aiBriefing.audienceAnalysis,
-      structureSuggestions: aiBriefing.structureSuggestions,
-      keywords: aiBriefing.keywords,
-      cautions: aiBriefing.cautions
-    })
+    editableBriefing.content = aiBriefing.content
     briefingDialogVisible.value = true
   }
 
   const saveBriefing = () => {
-    Object.assign(aiBriefing, {
-      overview: editableBriefing.overview,
-      audienceAnalysis: editableBriefing.audienceAnalysis,
-      structureSuggestions: editableBriefing.structureSuggestions,
-      keywords: editableBriefing.keywords,
-      cautions: editableBriefing.cautions
-    })
+    aiBriefing.content = editableBriefing.content
     briefingDialogVisible.value = false
     saveRequirements()
     ElMessage.success('简报已更新')
@@ -683,6 +607,57 @@
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
+  }
+
+  .briefing-content {
+    ::v-deep(.markdown-body) {
+      h1,
+      h2,
+      h3,
+      h4 {
+        margin-top: 1.5em;
+        margin-bottom: 0.5em;
+        font-weight: 600;
+      }
+
+      h1 {
+        font-size: 1.5em;
+        color: var(--el-color-primary);
+      }
+
+      p {
+        margin-bottom: 1em;
+        line-height: 1.7;
+      }
+
+      ul,
+      ol {
+        padding-left: 2em;
+        margin-bottom: 1em;
+      }
+
+      li {
+        margin-bottom: 0.5em;
+        line-height: 1.6;
+      }
+
+      strong {
+        font-weight: 600;
+        color: var(--el-color-warning);
+      }
+    }
+  }
+
+  .briefing-edit-tabs {
+    ::v-deep(.el-tabs__content) {
+      padding: 20px;
+    }
+  }
+
+  .briefing-preview {
+    background: var(--el-fill-color-lighter);
+    border: 1px solid var(--el-border-color);
+    border-radius: 4px;
   }
 
   @media (width <= 768px) {
