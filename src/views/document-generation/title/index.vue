@@ -181,21 +181,6 @@
           </div>
         </div>
       </div>
-
-      <div class="selected-title-preview" v-if="titleGeneration.hasSelectedTitle">
-        <div class="preview-header">
-          <h4>选中的标题</h4>
-          <el-tag type="success" effect="dark">已选择</el-tag>
-        </div>
-        <div class="preview-content">
-          <h3>{{ titleGeneration.state.selectedTitle?.title }}</h3>
-          <p class="preview-description">
-            <strong>角度：</strong> {{ titleGeneration.state.selectedTitle?.angle }}<br />
-            <strong>时效性：</strong> {{ titleGeneration.state.selectedTitle?.why_now }}<br />
-            <strong>可行性：</strong> {{ titleGeneration.state.selectedTitle?.feasibility }}
-          </p>
-        </div>
-      </div>
     </div>
 
     <div class="navigation-actions">
@@ -615,41 +600,6 @@
         &:last-child {
           margin-bottom: 0;
         }
-      }
-    }
-  }
-
-  .selected-title-preview {
-    padding: 25px;
-    background: var(--el-color-success-light-9);
-    border: 2px solid var(--el-color-success);
-    border-radius: 8px;
-
-    .preview-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 15px;
-
-      h4 {
-        margin: 0;
-        color: var(--el-text-color-primary);
-      }
-    }
-
-    .preview-content {
-      h3 {
-        margin: 0 0 10px;
-        font-size: 20px;
-        line-height: 1.4;
-        color: var(--el-text-color-primary);
-      }
-
-      .preview-description {
-        margin: 0;
-        font-size: 14px;
-        line-height: 1.6;
-        color: var(--el-text-color-regular);
       }
     }
   }

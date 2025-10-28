@@ -2,6 +2,7 @@ import App from './App.vue'
 import { createApp } from 'vue'
 import { initStore } from './store'                 // Store
 import { initRouter } from './router'               // Router
+import { initAuthModule } from './services/auth/initAuth'  // 认证模块初始化
 import '@styles/reset.scss'                         // 重置HTML样式
 import '@styles/app.scss'                           // 全局样式
 import '@styles/el-ui.scss'                         // 优化element样式
@@ -33,6 +34,13 @@ const app = createApp(App)
 initStore(app)
 initRouter(app)
 setupGlobDirectives(app)
+
+// 初始化认证模块（在store初始化之后）
+console.log('[Main] 开始初始化认证模块')
+const authInitSuccess = initAuthModule()
+if (!authInitSuccess) {
+  console.error('[Main] 认证模块初始化失败')
+}
 
 app.use(language)
 

@@ -10,6 +10,9 @@ export { default as BaseApiService } from './base/apiService'
 // 用户认证服务 - 基于OpenAPI配置
 export * from './authService'
 
+// 认证管理器 - 避免循环依赖
+export { authManager, getAuthManager, initAuthModule } from './auth/initAuth'
+
 // 项目管理服务 - 基于OpenAPI配置
 export * from './projectService'
 

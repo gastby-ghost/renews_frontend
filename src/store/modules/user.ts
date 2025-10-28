@@ -9,7 +9,7 @@ import { setPageTitle } from '@/router/utils/utils'
 import { resetRouterState } from '@/router/guards/beforeEach'
 import { RoutesAlias } from '@/router/routesAlias'
 import { useMenuStore } from './menu'
-import { authService } from '@/services/authService'
+import { authManager } from '@/services/auth/AuthManager'
 import { apiConfigManager } from '@/config/api'
 import { isTokenExpired, parseToken } from '@/utils/auth'
 
@@ -179,32 +179,14 @@ export const useUserStore = defineStore(
           return false
         }
 
-        const response = await authService.refreshToken(refreshToken.value)
+        // 使用 authManager 来刷新令牌
+        const success = await authManager.refreshAccessToken(refreshToken.value)
 
-        // 根据API规范，刷新令牌API返回空对象 RefreshTokenResponse
-        // 如果请求成功，说明刷新令牌有效，新的访问令牌应该已经在HTTP响应头中
-        // 这里我们假设HTTP客户端会自动处理响应头中的新令牌
-        // 或者我们需要从响应头中手动提取新令牌
-
-        // 如果响应是空对象且没有错误，认为刷新成功
-        if (response && typeof response === 'object' && Object.keys(response).length === 0) {
-          console.log('[UserStore] 刷新令牌成功，但需要从响应头获取新令牌')
-          // 注意：这里可能需要根据实际的HTTP客户端实现来从响应头获取新令牌
-          // 如果令牌不在响应头中，可能需要修改API设计
+        if (success) {
+          // 如果刷新成功，需要从响应中获取新令牌并更新
+          // 这里可能需要根据实际实现来获取新令牌
+          console.log('[UserStore] 令牌刷新成功')
           return true
-        }
-
-        // 如果响应包含令牌信息（向后兼容）
-        if (response && 'success' in response) {
-          const authResponse = response as Api.Auth.AuthResponse
-          if (authResponse.success && authResponse.token) {
-            setToken(
-              authResponse.token,
-              authResponse.refresh_token || refreshToken.value,
-              authResponse.expires_in || undefined
-            )
-            return true
-          }
         }
 
         return false
@@ -316,9 +298,9 @@ export const useUserStore = defineStore(
         tokenRefreshTimer = null
       }
 
-      // 调用登出API
+      // 使用 authManager 调用登出API
       try {
-        await authService.logout()
+        await authManager.handleLogout()
       } catch (error) {
         console.error('登出API调用失败:', error)
       }
@@ -420,6 +402,8 @@ export const useUserStore = defineStore(
           return false
         }
 
+        // 使用 authManager 获取 authService
+        const authService = authManager.getAuthService()
         const response = await authService.getAccount()
 
         if (response && response.success && response.data) {
