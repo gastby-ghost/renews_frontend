@@ -768,6 +768,224 @@
         }
       }
     },
+    "/api/v1/ai/document-generate/search2title-agent/execute": {
+      "post": {
+        "tags": ["Document Generate"],
+        "summary": "Execute Search2Title Agent",
+        "description": "Execute a search2title agent with user and project constraints.\n\nThis agent combines research (supervisor_agent) and title generation (write_agent)\nin a two-phase workflow to directly output news titles based on a research brief.\n\nEnsures only one search2title agent runs per user per project at a time.\nIf project_id is not provided, uses user's default project.",
+        "operationId": "execute_search2title_agent_api_v1_ai_document_generate_search2title_agent_execute_post",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "User Id" }
+          },
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": false,
+            "schema": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Project Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/Search2TitleAgentRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Search2TitleAgentResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/document-generate/search2title-agent/status/{task_id}": {
+      "get": {
+        "tags": ["Document Generate"],
+        "summary": "Get Search2Title Agent Status",
+        "description": "Get the status of a search2title agent task.",
+        "operationId": "get_search2title_agent_status_api_v1_ai_document_generate_search2title_agent_status__task_id__get",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Task Id" }
+          },
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "User Id" }
+          },
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": false,
+            "schema": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Project Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Search2TitleAgentStatusResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/document-generate/search2title-agent/tasks": {
+      "get": {
+        "tags": ["Document Generate"],
+        "summary": "List Search2Title Agent Tasks",
+        "description": "List search2title agent tasks for a user.",
+        "operationId": "list_search2title_agent_tasks_api_v1_ai_document_generate_search2title_agent_tasks_get",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "User Id" }
+          },
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": false,
+            "schema": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Project Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Search2TitleAgentListResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/document-generate/search2title-agent/cancel/{task_id}": {
+      "post": {
+        "tags": ["Document Generate"],
+        "summary": "Cancel Search2Title Agent Task",
+        "description": "Cancel a running search2title agent task.",
+        "operationId": "cancel_search2title_agent_task_api_v1_ai_document_generate_search2title_agent_cancel__task_id__post",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Task Id" }
+          },
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "User Id" }
+          },
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": false,
+            "schema": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Project Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/document-generate/search2title-agent/state/{task_id}": {
+      "get": {
+        "tags": ["Document Generate"],
+        "summary": "Get Search2Title Agent Graph State",
+        "description": "Get the current LangGraph state for a running search2title agent task.",
+        "operationId": "get_search2title_agent_graph_state_api_v1_ai_document_generate_search2title_agent_state__task_id__get",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Task Id" }
+          },
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "User Id" }
+          },
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": false,
+            "schema": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Project Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/ai/document-generate/title-agent/generate": {
       "post": {
         "tags": ["Document Generate"],
@@ -1259,6 +1477,176 @@
         ],
         "title": "ScopeAgentStatusResponse",
         "description": "Response model for scope agent status."
+      },
+      "Search2TitleAgentListResponse": {
+        "properties": {
+          "tasks": {
+            "items": { "$ref": "#/components/schemas/Search2TitleAgentStatusResponse" },
+            "type": "array",
+            "title": "Tasks",
+            "description": "List of agent tasks"
+          },
+          "total_count": {
+            "type": "integer",
+            "title": "Total Count",
+            "description": "Total number of tasks"
+          },
+          "user_id": { "type": "string", "title": "User Id", "description": "User ID" },
+          "project_id": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Project Id",
+            "description": "Project ID if filtered by project"
+          }
+        },
+        "type": "object",
+        "required": ["tasks", "total_count", "user_id"],
+        "title": "Search2TitleAgentListResponse",
+        "description": "Response model for listing search2title agent tasks."
+      },
+      "Search2TitleAgentRequest": {
+        "properties": {
+          "brief": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Brief",
+            "description": "Brief for research and title generation"
+          },
+          "max_concurrent_research_units": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Max Concurrent Research Units",
+            "description": "Maximum number of concurrent research units (overrides default config)"
+          },
+          "max_researcher_iterations": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Max Researcher Iterations",
+            "description": "Maximum number of research iterations (overrides default config)"
+          }
+        },
+        "type": "object",
+        "required": ["brief"],
+        "title": "Search2TitleAgentRequest",
+        "description": "Request model for search2title agent execution."
+      },
+      "Search2TitleAgentResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "Whether the agent execution was started successfully"
+          },
+          "task_id": {
+            "type": "string",
+            "title": "Task Id",
+            "description": "Unique task ID for tracking the agent execution"
+          },
+          "message": { "type": "string", "title": "Message", "description": "Status message" },
+          "user_id": {
+            "type": "string",
+            "title": "User Id",
+            "description": "User ID associated with the task"
+          },
+          "project_id": {
+            "type": "string",
+            "title": "Project Id",
+            "description": "Project ID associated with the task"
+          },
+          "agent_type": {
+            "type": "string",
+            "title": "Agent Type",
+            "description": "Type of agent that was executed"
+          },
+          "is_default_project": {
+            "type": "boolean",
+            "title": "Is Default Project",
+            "description": "Whether the task uses default project ID",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": ["success", "task_id", "message", "user_id", "project_id", "agent_type"],
+        "title": "Search2TitleAgentResponse",
+        "description": "Response model for search2title agent execution."
+      },
+      "Search2TitleAgentStatusResponse": {
+        "properties": {
+          "task_id": { "type": "string", "title": "Task Id", "description": "Task ID" },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Current status of the agent"
+          },
+          "progress": {
+            "type": "integer",
+            "title": "Progress",
+            "description": "Progress percentage (0-100)"
+          },
+          "result": {
+            "anyOf": [{ "additionalProperties": true, "type": "object" }, { "type": "null" }],
+            "title": "Result",
+            "description": "Result data if the agent completed successfully. Includes both research data and title data."
+          },
+          "error": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Error",
+            "description": "Error message if the agent failed"
+          },
+          "user_id": {
+            "type": "string",
+            "title": "User Id",
+            "description": "User ID associated with the task"
+          },
+          "project_id": {
+            "type": "string",
+            "title": "Project Id",
+            "description": "Project ID associated with the task"
+          },
+          "agent_type": { "type": "string", "title": "Agent Type", "description": "Type of agent" },
+          "created_at": {
+            "type": "number",
+            "title": "Created At",
+            "description": "Timestamp when the task was created"
+          },
+          "updated_at": {
+            "type": "number",
+            "title": "Updated At",
+            "description": "Timestamp when the task was last updated"
+          },
+          "is_default_project": {
+            "type": "boolean",
+            "title": "Is Default Project",
+            "description": "Whether the task uses default project ID",
+            "default": false
+          },
+          "research_data": {
+            "anyOf": [{ "additionalProperties": true, "type": "object" }, { "type": "null" }],
+            "title": "Research Data",
+            "description": "Research phase data including research_brief, research_path, web_search_data"
+          },
+          "title_data": {
+            "anyOf": [{ "additionalProperties": true, "type": "object" }, { "type": "null" }],
+            "title": "Title Data",
+            "description": "Title generation phase data including titles and generation summary"
+          },
+          "current_phase": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Current Phase",
+            "description": "Current execution phase: 'research' or 'title_generation'"
+          }
+        },
+        "type": "object",
+        "required": [
+          "task_id",
+          "status",
+          "progress",
+          "user_id",
+          "project_id",
+          "agent_type",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "Search2TitleAgentStatusResponse",
+        "description": "Response model for search2title agent status."
       },
       "SearchAgentListResponse": {
         "properties": {

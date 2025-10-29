@@ -387,6 +387,54 @@ declare namespace Api {
       project_id?: string | null
     }
 
+    /** Search2Title Agent 相关类型 */
+    interface Search2TitleAgentRequest {
+      brief: string
+      max_concurrent_research_units?: number
+      max_researcher_iterations?: number
+    }
+
+    interface Search2TitleAgentResponse extends TaskResponse {
+      user_id: string
+      project_id: string
+      agent_type: string
+      is_default_project?: boolean
+    }
+
+    interface Search2TitleAgentStatusResponse {
+      task_id: string
+      status: string
+      progress: number
+      result?: {
+        research_data?: {
+          research_brief?: string
+          research_path?: string[]
+          web_search_data?: SearchResultItem[]
+        }
+        title_data?: {
+          titles?: Title[]
+          generation_summary?: string
+        }
+      } | null
+      error?: string | null
+      user_id: string
+      project_id: string
+      agent_type: string
+      created_at: number
+      updated_at: number
+      is_default_project?: boolean
+      research_data?: Record<string, any> | null
+      title_data?: Record<string, any> | null
+      current_phase?: string | null
+    }
+
+    interface Search2TitleAgentListResponse {
+      tasks: Search2TitleAgentStatusResponse[]
+      total_count: number
+      user_id: string
+      project_id?: string | null
+    }
+
     /** 搜索工具相关类型 */
     interface SearchResultItem {
       url: string

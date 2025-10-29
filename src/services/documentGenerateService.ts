@@ -14,6 +14,10 @@ type ScopeAgentResponse = Api.Ai.ScopeAgentResponse
 type ScopeAgentStatusResponse = Api.Ai.ScopeAgentStatusResponse
 type ScopeAgentListResponse = Api.Ai.ScopeAgentListResponse
 type ScopeAgentRequest = Api.Ai.ScopeAgentRequest
+type Search2TitleAgentResponse = Api.Ai.Search2TitleAgentResponse
+type Search2TitleAgentStatusResponse = Api.Ai.Search2TitleAgentStatusResponse
+type Search2TitleAgentListResponse = Api.Ai.Search2TitleAgentListResponse
+type Search2TitleAgentRequest = Api.Ai.Search2TitleAgentRequest
 type TitleGenerationResponse = Api.Ai.TitleGenerationResponse
 type TitleToolsStatusResponse = Api.Ai.TitleToolsStatusResponse
 type TitleGenerationRequest = Api.Ai.TitleGenerationRequest
@@ -172,6 +176,90 @@ class DocumentGenerateService extends BaseApiService {
     return this.post('/outline-validate', request, options)
   }
 
+  // ============= Search2Title Agent 服务 =============
+
+  /**
+   * 执行Search2Title Agent
+   * @param userId - 用户ID
+   * @param projectId - 项目ID
+   * @param request - Search2Title Agent请求参数
+   * @param options - 请求配置选项
+   * @returns Search2Title Agent执行响应
+   */
+  async executeSearch2TitleAgent(
+    userId: string,
+    projectId: string,
+    request: Search2TitleAgentRequest,
+    options?: ApiRequestConfig
+  ): Promise<Search2TitleAgentResponse> {
+    return this.post<Search2TitleAgentResponse>('/search2title-agent/execute', request, {
+      params: { user_id: userId, project_id: projectId },
+      ...options
+    })
+  }
+
+  /**
+   * 获取Search2Title Agent任务状态
+   * @param taskId - 任务ID
+   * @param userId - 用户ID
+   * @param projectId - 项目ID
+   * @param options - 请求配置选项
+   * @returns Search2Title Agent状态响应
+   */
+  async getSearch2TitleAgentStatus(
+    taskId: string,
+    userId: string,
+    projectId: string,
+    options?: ApiRequestConfig
+  ): Promise<Search2TitleAgentStatusResponse> {
+    return this.get<Search2TitleAgentStatusResponse>(
+      `/search2title-agent/status/${taskId}`,
+      {
+        user_id: userId,
+        project_id: projectId
+      },
+      options
+    )
+  }
+
+  /**
+   * 获取Search2Title Agent任务列表
+   * @param userId - 用户ID
+   * @param projectId - 项目ID（可选）
+   * @param options - 请求配置选项
+   * @returns Search2Title Agent任务列表响应
+   */
+  async getSearch2TitleAgentTasks(
+    userId: string,
+    projectId?: string,
+    options?: ApiRequestConfig
+  ): Promise<Search2TitleAgentListResponse> {
+    const params: any = { user_id: userId }
+    if (projectId) params.project_id = projectId
+
+    return this.get<Search2TitleAgentListResponse>('/search2title-agent/tasks', params, options)
+  }
+
+  /**
+   * 取消Search2Title Agent任务
+   * @param taskId - 任务ID
+   * @param userId - 用户ID
+   * @param projectId - 项目ID
+   * @param options - 请求配置选项
+   * @returns 取消响应
+   */
+  async cancelSearch2TitleAgentTask(
+    taskId: string,
+    userId: string,
+    projectId: string,
+    options?: ApiRequestConfig
+  ): Promise<any> {
+    return this.post(`/search2title-agent/cancel/${taskId}`, null, {
+      params: { user_id: userId, project_id: projectId },
+      ...options
+    })
+  }
+
   // ============= 便捷方法 =============
 
   /**
@@ -305,6 +393,32 @@ class DocumentGenerateService extends BaseApiService {
 
       if (method === 'GET' && url.includes('/outline-agent/status')) {
         return mockDataManager.getMockData('outline-tools-status')
+      }
+
+      // Search2Title Agent相关API
+      if (method === 'POST' && url.includes('/search2title-agent/execute')) {
+        const requestData = config.data
+        const params = config.params || {}
+        return mockDataManager.getMockData(
+          'search2title-agent-execute',
+          params.user_id,
+          params.project_id,
+          requestData.brief
+        )
+      }
+
+      if (method === 'GET' && url.includes('/search2title-agent/status/')) {
+        const taskId = url.split('/').pop()
+        return mockDataManager.getMockData('search2title-agent-status', taskId)
+      }
+
+      if (method === 'GET' && url.includes('/search2title-agent/tasks')) {
+        const params = config.params || {}
+        return mockDataManager.getMockData(
+          'search2title-agent-list',
+          params.user_id,
+          params.project_id
+        )
       }
 
       // 默认Mock响应

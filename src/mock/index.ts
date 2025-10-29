@@ -31,6 +31,9 @@ import {
   generateScopeAgentResponse,
   generateScopeAgentStatusResponse,
   generateScopeAgentListResponse,
+  generateSearch2TitleAgentResponse,
+  generateSearch2TitleAgentStatusResponse,
+  generateSearch2TitleAgentListResponse,
   generateTitleGenerationResponse,
   generateTitleToolsStatusResponse,
   generateOutlineGenerationResponse,
@@ -169,6 +172,27 @@ export class MockDataManager {
         // 生成Scope Agent列表Mock数据
         // 参数: 用户ID, 项目ID(可选)
         data = generateScopeAgentListResponse(args[0], args[1])
+        break
+      }
+
+      case 'search2title-agent-execute': {
+        // 生成Search2Title Agent执行Mock数据
+        // 参数: 用户ID, 项目ID, 简报内容
+        data = generateSearch2TitleAgentResponse(args[0], args[1], args[2])
+        break
+      }
+
+      case 'search2title-agent-status': {
+        // 生成Search2Title Agent状态Mock数据
+        // 参数: 任务ID, 简报内容(可选)
+        data = generateSearch2TitleAgentStatusResponse(args[0], args[1])
+        break
+      }
+
+      case 'search2title-agent-list': {
+        // 生成Search2Title Agent列表Mock数据
+        // 参数: 用户ID, 项目ID(可选)
+        data = generateSearch2TitleAgentListResponse(args[0], args[1])
         break
       }
 

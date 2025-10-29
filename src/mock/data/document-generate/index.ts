@@ -1,12 +1,15 @@
 /**
  * 文档生成服务Mock数据
- * 包含scope-agent, title-agent, outline-agent的模拟数据
+ * 包含scope-agent, title-agent, outline-agent, search2title-agent的模拟数据
  */
 
 import type {
   ScopeAgentResponse,
   ScopeAgentStatusResponse,
   ScopeAgentListResponse,
+  Search2TitleAgentResponse,
+  Search2TitleAgentStatusResponse,
+  Search2TitleAgentListResponse,
   TitleGenerationResponse,
   TitleToolsStatusResponse,
   OutlineGenerationResponse,
@@ -15,6 +18,8 @@ import type {
   OutlineSection
 } from '@/types/ai'
 
+import documentGenerateTitle from '../../json/document-generate-title.json'
+import searchData from '../../json/search.json'
 /**
  * 生成Scope Agent执行响应
  */
@@ -43,11 +48,8 @@ export function generateScopeAgentStatusResponse(taskId: string): ScopeAgentStat
     result:
       currentStatus === 'completed'
         ? {
-            scope_analysis: 'Generated comprehensive scope analysis',
-            key_topics: ['Topic 1', 'Topic 2', 'Topic 3'],
-            research_directions: ['Direction 1', 'Direction 2'],
-            estimated_complexity: 'medium',
-            suggested_approach: 'Structured research methodology'
+            brief:
+              '我需要进行关于人工智能在医疗领域应用的新闻选题调研。\n\n主题和范围：人工智能技术在医疗健康领域的应用、发展和影响，重点关注诊断辅助、药物研发、医疗影像分析、个性化治疗等具体应用场景。\n\n关键信息维度：\n- 时间：重点关注近期的技术突破和应用案例（近3-6个月）\n- 地点：全球范围，特别关注中国、美国、欧洲等主要医疗科技发展地区\n- 人物：AI医疗领域的领军企业、科研机构、医疗专家\n- 事件：AI医疗产品的获批上市、临床试验结果、技术突破、政策支持\n- 影响：AI医疗对医疗效率、诊断准确性、医疗成本的影响\n- 争议：数据隐私、算法偏见、监管挑战、伦理问题\n- 数据：AI医疗市场规模、应用效果数据、用户接受度统计\n\n语言与地区：中文为主，主要关注中国及全球AI医疗发展动态\n\n时效性要求：重点关注近期（近3个月）的重要进展和突破性成果\n\n期望体裁：深度报道，结合案例分析和技术解读\n\n来源优先级：\n1. 官方监管机构公告（如国家药监局、FDA等）\n2. 权威医学期刊和学术论文\n3. 上市公司公告和财报\n4. 知名医疗科技公司官方发布\n5. 权威医疗媒体和专业机构报告\n6. 学术会议和行业峰会信息'
           }
         : null,
     error: currentStatus === 'failed' ? 'Scope analysis failed due to insufficient data' : null,
@@ -88,34 +90,116 @@ export function generateScopeAgentListResponse(
 }
 
 /**
- * 生成标题对象
+ * 生成Search2Title Agent执行响应
  */
-function generateTitle(index: number): Title {
-  const sampleTitles = [
-    '人工智能技术在医疗领域的突破性应用',
-    '全球气候变化对经济发展的深远影响',
-    '新能源汽车产业迎来重大发展机遇',
-    '数字化转型推动企业创新升级',
-    '区块链技术在金融领域的创新应用'
-  ]
+export function generateSearch2TitleAgentResponse(
+  userId: string,
+  projectId: string,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  brief: string
+): Search2TitleAgentResponse {
+  return {
+    success: true,
+    task_id: `search2title-agent-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    message: 'Search2Title agent execution started successfully',
+    user_id: userId,
+    project_id: projectId,
+    agent_type: 'search2title-agent',
+    is_default_project: false
+  }
+}
 
-  const sampleAngles = [
-    '从技术突破到实际应用的转化过程',
-    '多维度分析当前形势与未来趋势',
-    '深入探讨产业发展的内在逻辑',
-    '全面解析创新驱动的核心要素',
-    '系统梳理技术变革的演进路径'
-  ]
+/**
+ * 生成Search2Title Agent状态响应
+ */
+export function generateSearch2TitleAgentStatusResponse(
+  taskId: string,
+  brief?: string
+): Search2TitleAgentStatusResponse {
+  const statuses = ['pending', 'running', 'completed', 'failed'] as const
+  const currentStatus = statuses[Math.floor(Math.random() * statuses.length)]
+
+  // 从JSON文件中获取搜索结果数据
+  const mockSearchResults = Object.values(documentGenerateTitle.title_sources_details).flat()
+
+  // 从JSON文件中获取标题数据
+  const mockTitles: Title[] = documentGenerateTitle.titles
+
+  const result =
+    currentStatus === 'completed'
+      ? {
+          research_data: {
+            research_brief: brief || '我需要进行关于人工智能在医疗领域应用的新闻选题调研',
+            research_path: ['分析AI医疗市场现状', '调研FDA最新监管政策', '收集技术突破案例'],
+            web_search_data: mockSearchResults
+          },
+          title_data: {
+            titles: mockTitles,
+            generation_summary: documentGenerateTitle.generation_summary
+          }
+        }
+      : null
 
   return {
-    title: sampleTitles[index % sampleTitles.length],
-    angle: sampleAngles[index % sampleAngles.length],
-    why_now: '当前时机具有重要战略意义，各方关注度高涨',
-    news_values: ['Timeliness', 'Impact', 'Proximity', 'Human Interest'],
-    verifiability: '基于公开数据和权威报告，信息来源可靠',
-    sources: ['1', '2', '3'],
-    risk_notes: '需要持续关注政策变化和市场动态',
-    feasibility: '具备充分的实施条件和资源保障'
+    task_id: taskId,
+    status: currentStatus,
+    progress: currentStatus === 'completed' ? 100 : Math.floor(Math.random() * 90),
+    result,
+    error:
+      currentStatus === 'failed' ? 'Search2Title execution failed due to insufficient data' : null,
+    user_id: 'user-123',
+    project_id: 'project-456',
+    agent_type: 'search2title-agent',
+    created_at: Date.now() - 300000,
+    updated_at: Date.now(),
+    is_default_project: false,
+    research_data: currentStatus === 'completed' ? searchData : null,
+    title_data:
+      currentStatus === 'completed'
+        ? {
+            titles: mockTitles,
+            generation_summary: documentGenerateTitle.generation_summary
+          }
+        : null,
+    current_phase: currentStatus === 'running' ? 'title_generation' : null
+  }
+}
+
+/**
+ * 生成Search2Title Agent任务列表响应
+ */
+export function generateSearch2TitleAgentListResponse(
+  userId: string,
+  projectId?: string
+): Search2TitleAgentListResponse {
+  const tasks = Array.from({ length: 3 }, (_, index) => ({
+    task_id: `search2title-agent-task-${index}`,
+    status: (['completed', 'running', 'pending'] as const)[Math.floor(Math.random() * 3)],
+    progress: Math.floor(Math.random() * 100),
+    result:
+      Math.random() > 0.5
+        ? {
+            research_data: { research_brief: `Task ${index} research brief` },
+            title_data: { titles: [], generation_summary: `Task ${index} summary` }
+          }
+        : null,
+    error: null,
+    user_id: userId,
+    project_id: projectId || `project-${index}`,
+    agent_type: 'search2title-agent',
+    created_at: Date.now() - index * 60000,
+    updated_at: Date.now() - index * 30000,
+    is_default_project: false,
+    research_data: null,
+    title_data: null,
+    current_phase: null
+  }))
+
+  return {
+    tasks,
+    total_count: tasks.length,
+    user_id: userId,
+    project_id: projectId || null
   }
 }
 
@@ -123,21 +207,7 @@ function generateTitle(index: number): Title {
  * 生成标题生成响应
  */
 export function generateTitleGenerationResponse(): TitleGenerationResponse {
-  const titles = Array.from({ length: 5 }, (_, index) => generateTitle(index))
-
-  return {
-    success: true,
-    titles,
-    title_sources_details: {
-      'title-1': [{ source: 'source-1', relevance: 0.9 }],
-      'title-2': [{ source: 'source-2', relevance: 0.8 }]
-    },
-    generation_time: 15.5,
-    title_count: titles.length,
-    generation_summary: 'Generated diverse title options based on comprehensive research analysis',
-    total_candidates: 12,
-    final_report: 'Title generation completed successfully with high-quality candidates'
-  }
+  return documentGenerateTitle
 }
 
 /**

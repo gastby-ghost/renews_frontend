@@ -21,7 +21,7 @@ import type {
  */
 export interface DocumentTask {
   taskId: string
-  type: 'scope' | 'title' | 'outline'
+  type: 'scope' | 'title' | 'outline' | 'search2title'
   status: 'pending' | 'running' | 'completed' | 'failed'
   progress: number
   result?: any
@@ -50,6 +50,7 @@ export interface DocumentProject {
   scopeTask: DocumentTask | null
   titleTask: DocumentTask | null
   outlineTask: DocumentTask | null
+  search2titleTask: DocumentTask | null
 
   // 工作流状态
   currentStep: 'requirements' | 'title' | 'outline' | 'content' | 'complete'
@@ -158,6 +159,7 @@ export const useDocumentGenerateStore = defineStore(
           scopeTask: null,
           titleTask: null,
           outlineTask: null,
+          search2titleTask: null,
           currentStep: 'requirements',
           generationStats: {
             titleCount: 0,
@@ -377,6 +379,130 @@ export const useDocumentGenerateStore = defineStore(
     }
 
     /**
+     * 执行Search2Title Agent
+     */
+    const executeSearch2TitleAgent = async (brief: string) => {
+      if (!currentDocument.value) {
+        ElMessage.error('没有活动的文档项目')
+        return null
+      }
+
+      try {
+        loading.value = true
+        error.value = null
+
+        const response = await documentGenerateService.executeSearch2TitleAgent(
+          currentDocument.value.userId,
+          currentDocument.value.projectId,
+          { brief }
+        )
+
+        if (!response.success) {
+          throw new Error(response.message || 'Search2Title执行失败')
+        }
+
+        // 创建任务记录
+        const task: DocumentTask = {
+          taskId: response.task_id,
+          type: 'search2title',
+          status: 'pending',
+          progress: 0,
+          createdAt: Date.now(),
+          updatedAt: Date.now()
+        }
+
+        currentDocument.value.search2titleTask = task
+        activeTasks.value.push(task)
+
+        ElMessage.success('Search2Title任务已启动')
+        return response
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Search2Title任务启动失败'
+        ElMessage.error(errorMessage)
+        return null
+      } finally {
+        loading.value = false
+      }
+    }
+
+    /**
+     * 获取Search2Title Agent状态
+     */
+    const getSearch2TitleTaskStatus = async (taskId: string) => {
+      try {
+        if (!currentDocument.value) {
+          throw new Error('没有活动的文档项目')
+        }
+
+        const status = await documentGenerateService.getSearch2TitleAgentStatus(
+          taskId,
+          currentDocument.value.userId,
+          currentDocument.value.projectId
+        )
+
+        // 更新本地任务状态
+        const task = activeTasks.value.find((t) => t.taskId === taskId)
+        if (task) {
+          task.status = status.status as any
+          task.progress = status.progress
+          task.result = status.result
+          task.error = status.error || undefined
+          task.updatedAt = Date.now()
+
+          // 如果任务完成，更新项目数据
+          if (task.status === 'completed' && status.result) {
+            if (status.result.title_data?.titles) {
+              currentDocument.value.generatedTitles = status.result.title_data.titles
+              currentDocument.value.generationStats.titleCount =
+                status.result.title_data.titles.length
+            }
+            if (status.result.research_data?.web_search_data) {
+              currentDocument.value.searchResults = status.result.research_data.web_search_data
+            }
+          }
+        }
+
+        return status
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : '获取Search2Title任务状态失败'
+        ElMessage.error(errorMessage)
+        return null
+      }
+    }
+
+    /**
+     * 取消Search2Title任务
+     */
+    const cancelSearch2TitleTask = async (taskId: string): Promise<boolean> => {
+      try {
+        if (!currentDocument.value) {
+          throw new Error('没有活动的文档项目')
+        }
+
+        await documentGenerateService.cancelSearch2TitleAgentTask(
+          taskId,
+          currentDocument.value.userId,
+          currentDocument.value.projectId
+        )
+
+        // 更新本地任务状态
+        const task = activeTasks.value.find((t) => t.taskId === taskId)
+        if (task) {
+          task.status = 'failed'
+          task.error = '任务已取消'
+          task.updatedAt = Date.now()
+        }
+
+        ElMessage.success('Search2Title任务已取消')
+        return true
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : '取消Search2Title任务失败'
+        ElMessage.error(errorMessage)
+        return false
+      }
+    }
+
+    /**
      * 更新工作流步骤
      */
     const updateWorkflowStep = (step: DocumentProject['currentStep']) => {
@@ -515,6 +641,9 @@ export const useDocumentGenerateStore = defineStore(
       generateTitles,
       generateOutline,
       selectTitle,
+      executeSearch2TitleAgent,
+      getSearch2TitleTaskStatus,
+      cancelSearch2TitleTask,
       updateWorkflowStep,
       updateSearchResults,
       updateResearchBrief,

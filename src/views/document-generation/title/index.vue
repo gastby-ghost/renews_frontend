@@ -90,24 +90,28 @@
       </div>
 
       <div class="generation-actions">
+        <!-- 方式一：检索+生成标题 -->
+        <el-button type="primary" size="large" @click="openMaterialSelection">
+          <el-icon><Search /></el-icon>
+          检索素材后生成标题
+        </el-button>
+
+        <!-- 方式二：直接Search2Title -->
         <el-button
-          type="primary"
+          type="success"
           size="large"
-          @click="generateTitles"
-          :loading="titleGeneration.state.isGenerating"
-          :disabled="!canGenerateTitles"
+          @click="executeSearch2Title"
+          :loading="search2titleLoading"
+          :disabled="!canGenerateSearch2Title"
         >
-          AI生成待选标题
+          <el-icon><MagicStick /></el-icon>
+          一键Search2Title
         </el-button>
-        <el-button
-          v-if="titleGeneration.hasGeneratedTitles"
-          @click="regenerateTitles"
-          :loading="titleGeneration.state.isGenerating"
-        >
-          重新生成
-        </el-button>
-        <p class="generation-tip" v-if="!canGenerateTitles">
-          请确保有研究简报和搜索数据来生成标题
+
+        <el-button v-if="search2titleLoading" @click="cancelSearch2Title"> 取消任务 </el-button>
+
+        <p class="generation-tip" v-if="!canGenerateTitles && !canGenerateSearch2Title">
+          请确保有研究简报
         </p>
       </div>
     </div>
@@ -119,66 +123,37 @@
       </div>
 
       <div class="titles-grid">
-        <div
+        <TitleCard
           v-for="(title, index) in titleGeneration.state.generatedTitles"
           :key="index"
-          class="title-card"
-          :class="{ selected: titleGeneration.state.selectedTitle === title }"
-          @click="titleGeneration.selectTitle(title)"
-        >
-          <div class="title-header">
-            <div class="title-content">
-              <h4>{{ title.title }}</h4>
-              <div class="title-score">
-                <span class="score-label">评分: </span>
-                <el-rate
-                  :value="getTitleScore(title)"
-                  disabled
-                  show-score
-                  text-color="#ff9900"
-                  :max="5"
-                />
-              </div>
+          :title="title"
+          :is-selected="titleGeneration.state.selectedTitle === title"
+          :score="getTitleScore(title)"
+          :suggestions="getTitleSuggestions(title)"
+          @select="titleGeneration.selectTitle"
+        />
+      </div>
+
+      <!-- 当前选中标题对应的素材 -->
+      <div
+        v-if="titleGeneration.state.selectedTitle && currentTitleMaterials.length > 0"
+        class="title-materials-section"
+      >
+        <div class="section-header">
+          <h3>「{{ titleGeneration.state.selectedTitle.title }}」对应素材</h3>
+        </div>
+        <div class="materials-list">
+          <el-card
+            v-for="material in currentTitleMaterials"
+            :key="material.id"
+            class="material-card"
+            shadow="hover"
+          >
+            <div class="material-content">
+              <h4>{{ material.title }}</h4>
+              <p class="material-summary">{{ material.summary }}</p>
             </div>
-            <div class="title-selection">
-              <!-- 修复：使用 model-value 和 value 属性替代即将废弃的 label 属性 -->
-              <el-radio
-                :model-value="titleGeneration.state.selectedTitle === title"
-                :value="true"
-                @change="titleGeneration.selectTitle(title)"
-              >
-                {{ titleGeneration.state.selectedTitle === title ? '已选择' : '选择' }}
-              </el-radio>
-            </div>
-          </div>
-
-          <div class="title-analysis">
-            <div class="analysis-item"><strong>角度：</strong> {{ title.angle }}</div>
-            <div class="analysis-item"><strong>时效性：</strong> {{ title.why_now }}</div>
-            <div class="analysis-item"><strong>可行性：</strong> {{ title.feasibility }}</div>
-          </div>
-
-          <div class="title-keywords">
-            <span class="keyword-label">新闻价值：</span>
-            <el-tag
-              v-for="value in title.news_values"
-              :key="value"
-              size="small"
-              type="info"
-              effect="plain"
-            >
-              {{ value }}
-            </el-tag>
-          </div>
-
-          <div class="title-advantages">
-            <h5>优势分析：</h5>
-            <ul>
-              <li v-for="(advantage, index) in getTitleSuggestions(title)" :key="index">{{
-                advantage
-              }}</li>
-            </ul>
-          </div>
+          </el-card>
         </div>
       </div>
     </div>
@@ -195,6 +170,23 @@
       </el-button>
     </div>
   </div>
+
+  <!-- 素材选择对话框 -->
+  <el-dialog
+    v-model="showMaterialSelectionDialog"
+    title="标题生成 - 素材选择"
+    width="95%"
+    :before-close="closeMaterialSelection"
+    :close-on-click-modal="false"
+    destroy-on-close
+  >
+    <MaterialSelectionForTitle
+      v-if="showMaterialSelectionDialog"
+      :research-brief="documentStore.currentDocument?.researchBrief || ''"
+      @close="closeMaterialSelection"
+      @materials-selected="handleMaterialsSelected"
+    />
+  </el-dialog>
 </template>
 
 <script setup lang="ts">
@@ -203,7 +195,10 @@
   import { ElMessage } from 'element-plus'
   import { useTitleGeneration } from '@/composables/useTitleGeneration'
   import { useDocumentGenerateStore } from '@/store/documentGenerate'
+  import TitleCard from '@/components/custom/TitleCard.vue'
+  import MaterialSelectionForTitle from '@/components/custom/material-search/MaterialSelectionForTitle.vue'
   import type { Title } from '@/types/ai'
+  import type { Material } from '@/types/material'
 
   interface TitleControls {
     count: number
@@ -226,6 +221,13 @@
 
   const newKeyword = ref('')
 
+  // 素材选择对话框状态
+  const showMaterialSelectionDialog = ref(false)
+
+  // Search2Title Agent状态
+  const search2titleTaskId = ref<string | null>(null)
+  const search2titleLoading = ref(false)
+
   // 头部操作按钮
   const headerActions = computed(() => {
     return [
@@ -242,8 +244,34 @@
   })
 
   // 计算属性
-  const canGenerateTitles = computed(() => {
-    return documentStore.currentDocument?.researchBrief && !titleGeneration.state.isGenerating
+  const canGenerateSearch2Title = computed(() => {
+    return documentStore.currentDocument?.researchBrief && !search2titleLoading.value
+  })
+
+  // 当前选中标题对应的素材
+  const currentTitleMaterials = computed(() => {
+    if (!titleGeneration.state.selectedTitle) return []
+
+    // 根据selectedTitle的sources字段匹配素材
+    const selectedSources = titleGeneration.state.selectedTitle.sources || []
+    if (selectedSources.length > 0 && documentStore.currentDocument?.searchResults) {
+      return documentStore.currentDocument.searchResults
+        .filter((_, index) => selectedSources.includes((index + 1).toString()))
+        .map((result) => ({
+          id: `search-${result.query}-${Math.random().toString(36).substr(2, 9)}`,
+          title: result.aititle,
+          summary: result.summary,
+          url: result.url,
+          tags: result.tags || [],
+          createdAt: result.published_date ? new Date(result.published_date) : new Date(),
+          score: result.score,
+          key_excerpts: result.key_excerpts || [],
+          content: '',
+          type: 'article' as const
+        }))
+    }
+
+    return []
   })
 
   onMounted(async () => {
@@ -305,26 +333,6 @@
     }
   }
 
-  const generateTitles = async () => {
-    if (!documentStore.currentDocument?.researchBrief) {
-      ElMessage.warning('请先完善研究简报')
-      return
-    }
-
-    try {
-      await titleGeneration.generateTitles(documentStore.currentDocument.researchBrief)
-
-      // 保存到localStorage
-      saveTitlesData()
-    } catch {
-      ElMessage.error('标题生成失败')
-    }
-  }
-
-  const regenerateTitles = async () => {
-    await generateTitles()
-  }
-
   const getTitleScore = (title: Title): number => {
     return titleGeneration.getTitleScore(title)
   }
@@ -333,13 +341,93 @@
     return titleGeneration.getTitleSuggestions(title)
   }
 
-  const saveTitlesData = () => {
-    const titleData = {
-      titles: titleGeneration.state.generatedTitles,
-      selectedTitle: titleGeneration.state.selectedTitle,
-      updatedAt: new Date().toISOString()
+  // 打开素材选择对话框
+  const openMaterialSelection = () => {
+    showMaterialSelectionDialog.value = true
+  }
+
+  // 关闭素材选择对话框
+  const closeMaterialSelection = () => {
+    showMaterialSelectionDialog.value = false
+  }
+
+  // 处理素材选择完成
+  const handleMaterialsSelected = (materials: Material[]) => {
+    ElMessage.success(`已选择 ${materials.length} 个素材`)
+    closeMaterialSelection()
+  }
+
+  // 执行Search2Title
+  const executeSearch2Title = async () => {
+    if (!documentStore.currentDocument?.researchBrief) {
+      ElMessage.warning('请先完善研究简报')
+      return
     }
-    localStorage.setItem(`project_${projectId}_titles`, JSON.stringify(titleData))
+
+    try {
+      search2titleLoading.value = true
+
+      const response = await documentStore.executeSearch2TitleAgent(
+        documentStore.currentDocument.researchBrief
+      )
+
+      if (response) {
+        search2titleTaskId.value = response.task_id
+
+        // 开始轮询任务状态
+        pollSearch2TitleStatus(response.task_id)
+      }
+    } catch {
+      ElMessage.error('Search2Title执行失败')
+      search2titleLoading.value = false
+    }
+  }
+
+  // 轮询Search2Title任务状态
+  const pollSearch2TitleStatus = async (taskId: string) => {
+    const interval = setInterval(async () => {
+      try {
+        const status = await documentStore.getSearch2TitleTaskStatus(taskId)
+
+        if (status) {
+          if (status.status === 'SUCCESS') {
+            clearInterval(interval)
+            search2titleLoading.value = false
+
+            // 更新素材和标题
+            if (status.result?.research_data?.web_search_data) {
+              // 更新搜索结果到store
+              documentStore.updateSearchResults(status.result.research_data.web_search_data)
+            }
+
+            if (status.result?.title_data?.titles) {
+              titleGeneration.state.generatedTitles = status.result.title_data.titles
+            }
+
+            ElMessage.success('Search2Title执行完成')
+          } else if (status.status === 'FAILURE') {
+            clearInterval(interval)
+            search2titleLoading.value = false
+            ElMessage.error(status.error || 'Search2Title执行失败')
+          }
+        }
+      } catch (error) {
+        console.error('轮询Search2Title状态失败:', error)
+      }
+    }, 5000)
+  }
+
+  // 取消Search2Title任务
+  const cancelSearch2Title = async () => {
+    if (!search2titleTaskId.value) return
+
+    try {
+      await documentStore.cancelSearch2TitleTask(search2titleTaskId.value)
+      search2titleLoading.value = false
+      search2titleTaskId.value = null
+    } catch {
+      ElMessage.error('取消Search2Title任务失败')
+    }
   }
 
   const confirmTitle = () => {
@@ -351,7 +439,6 @@
     // 保存到store
     if (titleGeneration.state.selectedTitle) {
       documentStore.selectTitle(titleGeneration.state.selectedTitle)
-      saveTitlesData()
 
       ElMessage.success('标题已确认，即将进入大纲阶段')
 
@@ -512,6 +599,12 @@
       margin: 0;
       color: var(--el-text-color-primary);
     }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
   }
 
   .titles-grid {
@@ -614,6 +707,54 @@
     margin-right: 8px;
     font-size: 14px;
     color: var(--el-text-color-secondary);
+  }
+
+  // 素材相关样式
+  .materials-section,
+  .title-materials-section {
+    padding: 20px;
+    margin-top: 30px;
+    background: var(--el-bg-color-page);
+    border-radius: 8px;
+
+    .materials-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .material-card {
+      .material-content {
+        h4 {
+          margin: 0 0 8px;
+          font-size: 15px;
+          color: var(--el-text-color-primary);
+        }
+
+        .material-summary {
+          display: -webkit-box;
+          margin: 0 0 12px;
+          overflow: hidden;
+          font-size: 13px;
+          line-height: 1.5;
+          color: var(--el-text-color-regular);
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+        }
+
+        .material-tags {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px;
+        }
+      }
+    }
+  }
+
+  .title-materials-section {
+    background: var(--el-color-success-light-9);
+    border: 1px solid var(--el-color-success-light-3);
   }
 
   @media (width <= 1200px) {

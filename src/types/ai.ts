@@ -84,6 +84,7 @@ export interface SearchAgentResponse extends TaskResponse {
   user_id: string
   project_id: string
   agent_type: string
+  is_default_project?: boolean
 }
 
 export interface SearchAgentStatusResponse {
@@ -97,10 +98,49 @@ export interface SearchAgentStatusResponse {
   agent_type: string
   created_at: number
   updated_at: number
+  is_default_project?: boolean
 }
 
 export interface SearchAgentListResponse {
   tasks: SearchAgentStatusResponse[]
+  total_count: number
+  user_id: string
+  project_id?: string | null
+}
+
+// Search2Title Agent相关类型
+export interface Search2TitleAgentRequest {
+  brief: string
+  max_concurrent_research_units?: number | null
+  max_researcher_iterations?: number | null
+}
+
+export interface Search2TitleAgentResponse extends TaskResponse {
+  user_id: string
+  project_id: string
+  agent_type: string
+  is_default_project?: boolean
+}
+
+export interface Search2TitleAgentStatusResponse {
+  task_id: string
+  status: string
+  progress: number
+  result?: Record<string, any> | null
+  error?: string | null
+  user_id: string
+  project_id: string
+  agent_type: string
+  created_at: number
+  updated_at: number
+  is_default_project?: boolean
+  research_data?: Record<string, any> | null
+  title_data?: Record<string, any> | null
+  current_phase?: 'research' | 'title_generation' | null
+}
+
+export interface Search2TitleAgentListResponse {
+  tasks: Search2TitleAgentStatusResponse[]
   total_count: number
   user_id: string
   project_id?: string | null
