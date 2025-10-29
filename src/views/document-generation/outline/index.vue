@@ -2,136 +2,146 @@
   <div class="outline-container">
     <ArtTableHeader title="大纲编辑" :actions="headerActions" @back="goBack" />
 
-    <div class="step-indicator">
-      <div class="step-item completed">
-        <div class="step-number">✓</div>
-        <div class="step-label">需求</div>
-      </div>
-      <div class="step-connector completed"></div>
-      <div class="step-item completed">
-        <div class="step-number">✓</div>
-        <div class="step-label">标题</div>
-      </div>
-      <div class="step-connector completed"></div>
-      <div class="step-item active">
-        <div class="step-number">3</div>
-        <div class="step-label">大纲</div>
-      </div>
-      <div class="step-connector"></div>
-      <div class="step-item">
-        <div class="step-number">4</div>
-        <div class="step-label">正文</div>
-      </div>
+    <!-- 项目加载提示 -->
+    <div
+      v-if="loadingProject || (!projectStore.currentProject && projectId)"
+      class="project-loading"
+    >
+      <el-empty :description="loadingProject ? '正在加载项目信息...' : '项目信息加载失败'" />
     </div>
 
-    <div class="outline-content">
-      <div class="outline-header">
-        <div class="selected-title">
-          <h3>{{ selectedTitle }}</h3>
-          <p class="title-description">{{ titleDescription }}</p>
+    <div v-else class="main-content">
+      <div class="step-indicator">
+        <div class="step-item completed">
+          <div class="step-number">✓</div>
+          <div class="step-label">需求</div>
         </div>
-        <div class="outline-actions">
-          <el-button @click="generateAIOutline" :loading="generatingOutline" type="primary">
-            AI生成大纲
-          </el-button>
-          <el-button @click="addSection" :disabled="!canAddSection"> 添加章节 </el-button>
-          <el-button
-            @click="clearOutline"
-            :disabled="outlineGeneration.state.generatedOutline.length === 0"
-            type="danger"
-            plain
-          >
-            清空大纲
-          </el-button>
+        <div class="step-connector completed"></div>
+        <div class="step-item completed">
+          <div class="step-number">✓</div>
+          <div class="step-label">标题</div>
+        </div>
+        <div class="step-connector completed"></div>
+        <div class="step-item active">
+          <div class="step-number">3</div>
+          <div class="step-label">大纲</div>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step-item">
+          <div class="step-number">4</div>
+          <div class="step-label">正文</div>
         </div>
       </div>
 
-      <div class="outline-editor">
-        <div v-if="outlineGeneration.state.generatedOutline.length === 0" class="empty-outline">
-          <div class="empty-icon">📝</div>
-          <h4>大纲为空</h4>
-          <p>点击"AI生成大纲"让AI为您创建内容大纲，或手动添加章节</p>
+      <div class="outline-content">
+        <div class="outline-header">
+          <div class="selected-title">
+            <h3>{{ selectedTitle }}</h3>
+            <p class="title-description">{{ titleDescription }}</p>
+          </div>
+          <div class="outline-actions">
+            <el-button @click="generateAIOutline" :loading="generatingOutline" type="primary">
+              AI生成大纲
+            </el-button>
+            <el-button @click="addSection" :disabled="!canAddSection"> 添加章节 </el-button>
+            <el-button
+              @click="clearOutline"
+              :disabled="outlineGeneration.state.generatedOutline.length === 0"
+              type="danger"
+              plain
+            >
+              清空大纲
+            </el-button>
+          </div>
         </div>
 
-        <div v-else class="outline-tree">
-          <div
-            v-for="(section, sectionIndex) in outlineGeneration.state.generatedOutline"
-            :key="section.title"
-            class="outline-section"
-          >
-            <div class="section-header">
-              <div class="section-info">
-                <span class="section-number">{{ sectionIndex + 1 }}</span>
-                <input
-                  v-model="section.title"
-                  class="section-title-input"
-                  placeholder="章节标题"
-                  @blur="outlineGeneration.editSection(section.title, { title: section.title })"
-                />
-              </div>
-              <div class="section-controls">
-                <el-button
-                  @click="moveSectionUp(sectionIndex)"
-                  size="small"
-                  link
-                  :disabled="sectionIndex === 0"
-                >
-                  上移
-                </el-button>
-                <el-button
-                  @click="moveSectionDown(sectionIndex)"
-                  size="small"
-                  link
-                  :disabled="sectionIndex === outlineGeneration.state.generatedOutline.length - 1"
-                >
-                  下移
-                </el-button>
-                <el-button @click="deleteSection(sectionIndex)" size="small" type="danger" link>
-                  删除
-                </el-button>
-              </div>
-            </div>
+        <div class="outline-editor">
+          <div v-if="outlineGeneration.state.generatedOutline.length === 0" class="empty-outline">
+            <div class="empty-icon">📝</div>
+            <h4>大纲为空</h4>
+            <p>点击"AI生成大纲"让AI为您创建内容大纲，或手动添加章节</p>
+          </div>
 
-            <div class="section-content">
-              <div class="content-direction">
-                <label>内容方向：</label>
-                <textarea
-                  v-model="section.content_direction"
-                  class="content-direction-textarea"
-                  placeholder="请输入内容方向和写作要点"
-                  @blur="
-                    outlineGeneration.editSection(section.title, {
-                      content_direction: section.content_direction
-                    })
-                  "
-                />
+          <div v-else class="outline-tree">
+            <div
+              v-for="(section, sectionIndex) in outlineGeneration.state.generatedOutline"
+              :key="section.title"
+              class="outline-section"
+            >
+              <div class="section-header">
+                <div class="section-info">
+                  <span class="section-number">{{ sectionIndex + 1 }}</span>
+                  <input
+                    v-model="section.title"
+                    class="section-title-input"
+                    placeholder="章节标题"
+                    @blur="outlineGeneration.editSection(section.title, { title: section.title })"
+                  />
+                </div>
+                <div class="section-controls">
+                  <el-button
+                    @click="moveSectionUp(sectionIndex)"
+                    size="small"
+                    link
+                    :disabled="sectionIndex === 0"
+                  >
+                    上移
+                  </el-button>
+                  <el-button
+                    @click="moveSectionDown(sectionIndex)"
+                    size="small"
+                    link
+                    :disabled="sectionIndex === outlineGeneration.state.generatedOutline.length - 1"
+                  >
+                    下移
+                  </el-button>
+                  <el-button @click="deleteSection(sectionIndex)" size="small" type="danger" link>
+                    删除
+                  </el-button>
+                </div>
               </div>
-              <div class="data-requirements">
-                <label>数据需求：</label>
-                <el-tag
-                  v-for="req in section.data_requirements"
-                  :key="req"
-                  size="small"
-                  effect="plain"
-                >
-                  {{ req }}
-                </el-tag>
+
+              <div class="section-content">
+                <div class="content-direction">
+                  <label>内容方向：</label>
+                  <textarea
+                    v-model="section.content_direction"
+                    class="content-direction-textarea"
+                    placeholder="请输入内容方向和写作要点"
+                    @blur="
+                      outlineGeneration.editSection(section.title, {
+                        content_direction: section.content_direction
+                      })
+                    "
+                  />
+                </div>
+                <div class="data-requirements">
+                  <label>数据需求：</label>
+                  <el-tag
+                    v-for="req in section.data_requirements"
+                    :key="req"
+                    size="small"
+                    effect="plain"
+                  >
+                    {{ req }}
+                  </el-tag>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div class="outline-actions-bottom">
-        <el-button @click="goBack" size="large">返回标题</el-button>
-        <el-button
-          type="success"
-          size="large"
-          @click="confirmOutline"
-          :disabled="outlineGeneration.state.generatedOutline.length === 0"
-        >
-          确认大纲并继续
-        </el-button>
+        <div class="outline-actions-bottom">
+          <el-button @click="goBack" size="large">返回标题</el-button>
+          <el-button
+            type="success"
+            size="large"
+            @click="confirmOutline"
+            :disabled="outlineGeneration.state.generatedOutline.length === 0"
+          >
+            确认大纲并继续
+          </el-button>
+        </div>
       </div>
     </div>
   </div>
@@ -142,14 +152,19 @@
   import { useRouter, useRoute } from 'vue-router'
   import { ElMessage } from 'element-plus'
   import { useOutlineGeneration } from '@/composables/useOutlineGeneration'
-  import { useDocumentGenerateStore } from '@/store/documentGenerate'
+  import { useDocumentGenerateStore } from '@/store/modules/documentGenerate'
+  import { useProjectStore } from '@/store/modules/project'
 
   const router = useRouter()
   const route = useRoute()
   const outlineGeneration = useOutlineGeneration()
   const documentStore = useDocumentGenerateStore()
+  const projectStore = useProjectStore()
 
   const projectId = route.params.projectId as string
+
+  // 项目加载状态
+  const loadingProject = ref(false)
   const generatingOutline = ref(false)
 
   // 头部操作按钮
@@ -167,13 +182,71 @@
   })
 
   onMounted(async () => {
-    // 确保当前文档项目已设置
-    if (!documentStore.currentDocument) {
-      documentStore.setCurrentDocument(projectId)
-    }
+    // 更新当前步骤
+    documentStore.documentState.currentStep = 'outline'
 
+    // 加载项目信息
+    await loadProject()
+
+    // 加载现有数据
     await loadExistingData()
   })
+
+  // 加载项目信息
+  const loadProject = async () => {
+    try {
+      loadingProject.value = true
+
+      if (!projectId) {
+        ElMessage.error('项目ID不存在')
+        return
+      }
+
+      const numericProjectId = Number(projectId)
+
+      // 如果 store 中已有当前项目且ID匹配，直接返回
+      if (
+        projectStore.currentProject &&
+        Number(projectStore.currentProject.id) === numericProjectId
+      ) {
+        return
+      }
+
+      // 如果项目列表为空，先加载项目列表
+      if (projectStore.projects.length === 0) {
+        try {
+          await projectStore.fetchProjects()
+        } catch (error) {
+          console.error('加载项目列表失败:', error)
+        }
+      }
+
+      // 从项目列表中查找
+      const project = projectStore.projects.find((p) => Number(p.id) === numericProjectId)
+      if (project) {
+        projectStore.setCurrentProject(project)
+        return
+      }
+
+      // 如果项目列表中没有，尝试从API获取
+      try {
+        const { projectService } = await import('@/services/projectService')
+        const response = await projectService.getProjectDetail(numericProjectId)
+
+        if (response.project) {
+          projectStore.setCurrentProject(response.project)
+        }
+      } catch (apiError) {
+        console.error('从API获取项目失败:', apiError)
+        ElMessage.error('项目不存在或已被删除')
+      }
+    } catch (error) {
+      console.error('加载项目失败:', error)
+      ElMessage.error('加载项目信息失败')
+    } finally {
+      loadingProject.value = false
+    }
+  }
 
   const loadExistingData = async () => {
     // 从localStorage加载标题数据
@@ -194,11 +267,11 @@
   }
 
   const selectedTitle = computed(() => {
-    return documentStore.currentDocument?.selectedTitle?.title || ''
+    return documentStore.documentState.selectedTitle?.title || ''
   })
 
   const titleDescription = computed(() => {
-    return documentStore.currentDocument?.selectedTitle?.angle || ''
+    return documentStore.documentState.selectedTitle?.angle || ''
   })
 
   const canAddSection = computed(() => {
@@ -206,10 +279,7 @@
   })
 
   const generateAIOutline = async () => {
-    if (
-      !documentStore.currentDocument?.selectedTitle ||
-      !documentStore.currentDocument?.researchBrief
-    ) {
+    if (!documentStore.documentState.selectedTitle || !documentStore.documentState.researchBrief) {
       ElMessage.warning('请先选择标题并完善研究简报')
       return
     }
@@ -217,14 +287,14 @@
     generatingOutline.value = true
     try {
       const response = await outlineGeneration.generateOutline(
-        documentStore.currentDocument.selectedTitle,
-        documentStore.currentDocument.researchBrief,
-        documentStore.currentDocument.searchResults
+        documentStore.documentState.selectedTitle,
+        documentStore.documentState.researchBrief,
+        documentStore.documentState.searchResults
       )
 
       // 保存到store
       if (response) {
-        documentStore.updateCurrentDocument({
+        documentStore.updateDocumentState({
           generatedOutline: response.outline
         })
       }
@@ -284,7 +354,7 @@
     }
 
     // 保存到store
-    documentStore.updateCurrentDocument({
+    documentStore.updateDocumentState({
       generatedOutline: outlineGeneration.state.generatedOutline
     })
 

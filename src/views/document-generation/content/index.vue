@@ -2,176 +2,188 @@
   <div class="content-container">
     <ArtTableHeader title="正文编辑" :actions="headerActions" @back="goBack" />
 
-    <div class="step-indicator">
-      <div class="step-item completed">
-        <div class="step-number">✓</div>
-        <div class="step-label">需求</div>
-      </div>
-      <div class="step-connector completed"></div>
-      <div class="step-item completed">
-        <div class="step-number">✓</div>
-        <div class="step-label">标题</div>
-      </div>
-      <div class="step-connector completed"></div>
-      <div class="step-item completed">
-        <div class="step-number">✓</div>
-        <div class="step-label">大纲</div>
-      </div>
-      <div class="step-connector completed"></div>
-      <div class="step-item active">
-        <div class="step-number">4</div>
-        <div class="step-label">正文</div>
-      </div>
+    <!-- 项目加载提示 -->
+    <div
+      v-if="loadingProject || (!projectStore.currentProject && projectId)"
+      class="project-loading"
+    >
+      <el-empty :description="loadingProject ? '正在加载项目信息...' : '项目信息加载失败'" />
     </div>
 
-    <div class="content-editor">
-      <div class="editor-header">
-        <div class="document-info">
-          <h2>{{ documentTitle }}</h2>
-          <div class="document-meta">
-            <span>字数: {{ wordCount }}</span>
-            <span>预计阅读时间: {{ estimatedReadTime }} 分钟</span>
-            <span>最后保存: {{ lastSaved }}</span>
-          </div>
+    <div v-else class="main-content">
+      <div class="step-indicator">
+        <div class="step-item completed">
+          <div class="step-number">✓</div>
+          <div class="step-label">需求</div>
         </div>
-        <div class="editor-actions">
-          <el-button @click="generateAIContent" :loading="generatingContent" type="primary"
-            >AI生成正文</el-button
-          >
-          <el-button @click="saveContent" type="success">保存内容</el-button>
-          <el-button @click="previewContent" :disabled="!hasContent">预览</el-button>
-          <el-button @click="exportContent" :disabled="!hasContent">导出</el-button>
+        <div class="step-connector completed"></div>
+        <div class="step-item completed">
+          <div class="step-number">✓</div>
+          <div class="step-label">标题</div>
+        </div>
+        <div class="step-connector completed"></div>
+        <div class="step-item completed">
+          <div class="step-number">✓</div>
+          <div class="step-label">大纲</div>
+        </div>
+        <div class="step-connector completed"></div>
+        <div class="step-item active">
+          <div class="step-number">4</div>
+          <div class="step-label">正文</div>
         </div>
       </div>
 
-      <div class="editor-layout">
-        <div class="outline-panel">
-          <div class="panel-header">
-            <h3>文档大纲</h3>
-            <el-button @click="toggleOutline" size="small" link>{{
-              showOutline ? '隐藏' : '显示'
-            }}</el-button>
+      <div class="content-editor">
+        <div class="editor-header">
+          <div class="document-info">
+            <h2>{{ documentTitle }}</h2>
+            <div class="document-meta">
+              <span>字数: {{ wordCount }}</span>
+              <span>预计阅读时间: {{ estimatedReadTime }} 分钟</span>
+              <span>最后保存: {{ lastSaved }}</span>
+            </div>
           </div>
-
-          <div v-if="showOutline" class="outline-content">
-            <div
-              v-for="(section, index) in documentOutline"
-              :key="section.id"
-              class="outline-item"
-              :class="{ active: currentSection === index }"
-              @click="navigateToSection(index)"
+          <div class="editor-actions">
+            <el-button @click="generateAIContent" :loading="generatingContent" type="primary"
+              >AI生成正文</el-button
             >
-              <span class="outline-number">{{ index + 1 }}</span>
-              <span class="outline-title">{{ section.title }}</span>
-            </div>
+            <el-button @click="saveContent" type="success">保存内容</el-button>
+            <el-button @click="previewContent" :disabled="!hasContent">预览</el-button>
+            <el-button @click="exportContent" :disabled="!hasContent">导出</el-button>
           </div>
         </div>
 
-        <div class="editor-panel">
-          <div v-if="!hasContent" class="empty-editor">
-            <div class="empty-icon">📝</div>
-            <h3>开始创作您的文档</h3>
-            <p>点击"AI生成正文"让AI帮您生成内容，或手动开始写作</p>
-            <div class="empty-actions">
-              <el-button @click="generateAIContent" type="primary" size="large"
-                >AI生成正文</el-button
+        <div class="editor-layout">
+          <div class="outline-panel">
+            <div class="panel-header">
+              <h3>文档大纲</h3>
+              <el-button @click="toggleOutline" size="small" link>{{
+                showOutline ? '隐藏' : '显示'
+              }}</el-button>
+            </div>
+
+            <div v-if="showOutline" class="outline-content">
+              <div
+                v-for="(section, index) in documentOutline"
+                :key="section.id"
+                class="outline-item"
+                :class="{ active: currentSection === index }"
+                @click="navigateToSection(index)"
               >
+                <span class="outline-number">{{ index + 1 }}</span>
+                <span class="outline-title">{{ section.title }}</span>
+              </div>
             </div>
           </div>
 
-          <div v-else class="rich-editor">
-            <ArtWangEditor
-              v-model="documentContent"
-              height="600"
-              placeholder="开始写作您的文档内容..."
-              @change="onContentChange"
-            />
-          </div>
-        </div>
-
-        <div class="ai-assistant-panel">
-          <div class="panel-header">
-            <h3>AI助手</h3>
-            <el-button @click="toggleAIAssistant" size="small" link>{{
-              showAIAssistant ? '隐藏' : '显示'
-            }}</el-button>
-          </div>
-
-          <div v-if="showAIAssistant" class="ai-assistant-content">
-            <div class="ai-suggestions">
-              <h4>AI建议</h4>
-              <div v-if="aiSuggestions.length > 0" class="suggestion-list">
-                <div
-                  v-for="(suggestion, index) in aiSuggestions"
-                  :key="index"
-                  class="suggestion-item"
+          <div class="editor-panel">
+            <div v-if="!hasContent" class="empty-editor">
+              <div class="empty-icon">📝</div>
+              <h3>开始创作您的文档</h3>
+              <p>点击"AI生成正文"让AI帮您生成内容，或手动开始写作</p>
+              <div class="empty-actions">
+                <el-button @click="generateAIContent" type="primary" size="large"
+                  >AI生成正文</el-button
                 >
-                  <p>{{ suggestion.text }}</p>
-                  <div class="suggestion-actions">
-                    <el-button
-                      @click="applySuggestion(suggestion)"
-                      size="small"
-                      type="primary"
-                      plain
-                      >应用</el-button
-                    >
-                    <el-button @click="ignoreSuggestion(index)" size="small" plain>忽略</el-button>
+              </div>
+            </div>
+
+            <div v-else class="rich-editor">
+              <ArtWangEditor
+                v-model="documentContent"
+                height="600"
+                placeholder="开始写作您的文档内容..."
+                @change="onContentChange"
+              />
+            </div>
+          </div>
+
+          <div class="ai-assistant-panel">
+            <div class="panel-header">
+              <h3>AI助手</h3>
+              <el-button @click="toggleAIAssistant" size="small" link>{{
+                showAIAssistant ? '隐藏' : '显示'
+              }}</el-button>
+            </div>
+
+            <div v-if="showAIAssistant" class="ai-assistant-content">
+              <div class="ai-suggestions">
+                <h4>AI建议</h4>
+                <div v-if="aiSuggestions.length > 0" class="suggestion-list">
+                  <div
+                    v-for="(suggestion, index) in aiSuggestions"
+                    :key="index"
+                    class="suggestion-item"
+                  >
+                    <p>{{ suggestion.text }}</p>
+                    <div class="suggestion-actions">
+                      <el-button
+                        @click="applySuggestion(suggestion)"
+                        size="small"
+                        type="primary"
+                        plain
+                        >应用</el-button
+                      >
+                      <el-button @click="ignoreSuggestion(index)" size="small" plain
+                        >忽略</el-button
+                      >
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div v-else class="no-suggestions">
-                <p>暂无建议</p>
-              </div>
-            </div>
-
-            <div class="ai-chat">
-              <h4>AI对话</h4>
-              <div class="chat-messages" ref="chatMessages">
-                <div
-                  v-for="(message, index) in chatMessages"
-                  :key="index"
-                  class="chat-message"
-                  :class="message.type"
-                >
-                  <div class="message-content">{{ message.content }}</div>
-                  <div class="message-time">{{ message.time }}</div>
+                <div v-else class="no-suggestions">
+                  <p>暂无建议</p>
                 </div>
               </div>
-              <div class="chat-input">
-                <el-input
-                  v-model="chatInput"
-                  type="textarea"
-                  :rows="3"
-                  placeholder="向AI助手提问..."
-                  @keyup.enter="sendMessage"
-                />
-                <el-button @click="sendMessage" :loading="chatLoading" type="primary"
-                  >发送</el-button
-                >
+
+              <div class="ai-chat">
+                <h4>AI对话</h4>
+                <div class="chat-messages" ref="chatMessages">
+                  <div
+                    v-for="(message, index) in chatMessages"
+                    :key="index"
+                    class="chat-message"
+                    :class="message.type"
+                  >
+                    <div class="message-content">{{ message.content }}</div>
+                    <div class="message-time">{{ message.time }}</div>
+                  </div>
+                </div>
+                <div class="chat-input">
+                  <el-input
+                    v-model="chatInput"
+                    type="textarea"
+                    :rows="3"
+                    placeholder="向AI助手提问..."
+                    @keyup.enter="sendMessage"
+                  />
+                  <el-button @click="sendMessage" :loading="chatLoading" type="primary"
+                    >发送</el-button
+                  >
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <div class="content-actions">
-      <el-button @click="goBack" size="large">返回大纲</el-button>
-      <el-button type="success" size="large" @click="completeDocument" :disabled="!hasContent">
-        完成文档
-      </el-button>
-    </div>
+      <div class="content-actions">
+        <el-button @click="goBack" size="large">返回大纲</el-button>
+        <el-button type="success" size="large" @click="completeDocument" :disabled="!hasContent">
+          完成文档
+        </el-button>
+      </div>
 
-    <!-- 预览对话框 -->
-    <el-dialog v-model="previewDialogVisible" title="文档预览" width="80%" top="5vh">
-      <div class="preview-content" v-html="previewHtml"></div>
-      <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="previewDialogVisible = false">关闭</el-button>
-          <el-button type="primary" @click="exportContent">导出</el-button>
-        </span>
-      </template>
-    </el-dialog>
+      <!-- 预览对话框 -->
+      <el-dialog v-model="previewDialogVisible" title="文档预览" width="80%" top="5vh">
+        <div class="preview-content" v-html="previewHtml"></div>
+        <template #footer>
+          <span class="dialog-footer">
+            <el-button @click="previewDialogVisible = false">关闭</el-button>
+            <el-button type="primary" @click="exportContent">导出</el-button>
+          </span>
+        </template>
+      </el-dialog>
+    </div>
   </div>
 </template>
 
@@ -179,6 +191,8 @@
   import { ref, computed, onMounted, nextTick } from 'vue'
   import { useRouter, useRoute } from 'vue-router'
   import { ElMessage } from 'element-plus'
+  import { useDocumentGenerateStore } from '@/store/modules/documentGenerate'
+  import { useProjectStore } from '@/store/modules/project'
 
   interface AISuggestion {
     id: string
@@ -201,8 +215,13 @@
 
   const router = useRouter()
   const route = useRoute()
+  const documentStore = useDocumentGenerateStore()
+  const projectStore = useProjectStore()
 
   const projectId = route.params.projectId as string
+
+  // 项目加载状态
+  const loadingProject = ref(false)
 
   const documentTitle = ref('')
   const documentContent = ref('')
@@ -217,7 +236,14 @@
   const chatMessages = ref<ChatMessage[]>([])
   const aiSuggestions = ref<AISuggestion[]>([])
 
-  onMounted(() => {
+  onMounted(async () => {
+    // 更新当前步骤
+    documentStore.documentState.currentStep = 'content'
+
+    // 加载项目信息
+    await loadProject()
+
+    // 加载现有数据
     loadExistingData()
     loadAIContent()
   })
@@ -253,6 +279,62 @@
       }
     ]
   })
+
+  // 加载项目信息
+  const loadProject = async () => {
+    try {
+      loadingProject.value = true
+
+      if (!projectId) {
+        ElMessage.error('项目ID不存在')
+        return
+      }
+
+      const numericProjectId = Number(projectId)
+
+      // 如果 store 中已有当前项目且ID匹配，直接返回
+      if (
+        projectStore.currentProject &&
+        Number(projectStore.currentProject.id) === numericProjectId
+      ) {
+        return
+      }
+
+      // 如果项目列表为空，先加载项目列表
+      if (projectStore.projects.length === 0) {
+        try {
+          await projectStore.fetchProjects()
+        } catch (error) {
+          console.error('加载项目列表失败:', error)
+        }
+      }
+
+      // 从项目列表中查找
+      const project = projectStore.projects.find((p) => Number(p.id) === numericProjectId)
+      if (project) {
+        projectStore.setCurrentProject(project)
+        return
+      }
+
+      // 如果项目列表中没有，尝试从API获取
+      try {
+        const { projectService } = await import('@/services/projectService')
+        const response = await projectService.getProjectDetail(numericProjectId)
+
+        if (response.project) {
+          projectStore.setCurrentProject(response.project)
+        }
+      } catch (apiError) {
+        console.error('从API获取项目失败:', apiError)
+        ElMessage.error('项目不存在或已被删除')
+      }
+    } catch (error) {
+      console.error('加载项目失败:', error)
+      ElMessage.error('加载项目信息失败')
+    } finally {
+      loadingProject.value = false
+    }
+  }
 
   const loadExistingData = () => {
     // Load title

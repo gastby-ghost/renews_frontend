@@ -7,7 +7,7 @@
 import BaseApiService from './base/apiService'
 import type { ApiRequestConfig } from '@/config/api/types'
 import type { Api } from '@/typings/api'
-import { mockDataManager } from '@/mock'
+import { documentGenerateMockManager } from '@/mock/document-generate'
 
 // 文档生成服务相关类型
 type ScopeAgentResponse = Api.Ai.ScopeAgentResponse
@@ -340,7 +340,7 @@ class DocumentGenerateService extends BaseApiService {
 
   /**
    * Mock实现方法
-   * 为文档生成服务提供Mock数据支持
+   * 解耦业务逻辑与Mock数据，使用独立的管理器
    */
   protected async mockImplementation(config: ApiRequestConfig): Promise<any> {
     const apiConfig = this.getCurrentConfig()
@@ -356,51 +356,44 @@ class DocumentGenerateService extends BaseApiService {
     // 模拟网络延迟
     await new Promise((resolve) => setTimeout(resolve, apiConfig.mockDelay || 1000))
 
-    // 根据不同的API路径返回相应的Mock数据
     const url = config.url
     const method = config.method
+    const params = config.params || {}
+    const requestData = config.data
 
     try {
-      // Scope Agent相关API
+      // 根据API路径调用对应的Mock管理器方法
       if (method === 'POST' && url.includes('/scope-agent/execute')) {
-        const params = config.params || {}
-        return mockDataManager.getMockData('scope-agent-execute', params.user_id, params.project_id)
+        return documentGenerateMockManager.getScopeAgentExecute(params.user_id, params.project_id)
       }
 
       if (method === 'GET' && url.includes('/scope-agent/status/')) {
         const taskId = url.split('/').pop()
-        return mockDataManager.getMockData('scope-agent-status', taskId)
+        return documentGenerateMockManager.getScopeAgentStatus(taskId!)
       }
 
       if (method === 'GET' && url.includes('/scope-agent/tasks')) {
-        const params = config.params || {}
-        return mockDataManager.getMockData('scope-agent-list', params.user_id, params.project_id)
+        return documentGenerateMockManager.getScopeAgentList(params.user_id, params.project_id)
       }
 
-      // Title Agent相关API
       if (method === 'POST' && url.includes('/title-agent/generate')) {
-        return mockDataManager.getMockData('title-generation')
+        return documentGenerateMockManager.getTitleGeneration()
       }
 
       if (method === 'GET' && url.includes('/title-agent/status')) {
-        return mockDataManager.getMockData('title-tools-status')
+        return documentGenerateMockManager.getTitleToolsStatus()
       }
 
-      // Outline Agent相关API
       if (method === 'POST' && url.includes('/outline-agent/generate')) {
-        return mockDataManager.getMockData('outline-generation')
+        return documentGenerateMockManager.getOutlineGeneration()
       }
 
       if (method === 'GET' && url.includes('/outline-agent/status')) {
-        return mockDataManager.getMockData('outline-tools-status')
+        return documentGenerateMockManager.getOutlineToolsStatus()
       }
 
-      // Search2Title Agent相关API
       if (method === 'POST' && url.includes('/search2title-agent/execute')) {
-        const requestData = config.data
-        const params = config.params || {}
-        return mockDataManager.getMockData(
-          'search2title-agent-execute',
+        return documentGenerateMockManager.getSearch2TitleAgentExecute(
           params.user_id,
           params.project_id,
           requestData.brief
@@ -409,36 +402,21 @@ class DocumentGenerateService extends BaseApiService {
 
       if (method === 'GET' && url.includes('/search2title-agent/status/')) {
         const taskId = url.split('/').pop()
-        return mockDataManager.getMockData('search2title-agent-status', taskId)
+        return documentGenerateMockManager.getSearch2TitleAgentStatus(taskId!)
       }
 
       if (method === 'GET' && url.includes('/search2title-agent/tasks')) {
-        const params = config.params || {}
-        return mockDataManager.getMockData(
-          'search2title-agent-list',
+        return documentGenerateMockManager.getSearch2TitleAgentList(
           params.user_id,
           params.project_id
         )
       }
 
       // 默认Mock响应
-      return {
-        success: true,
-        message: `文档生成服务Mock响应 - ${method} ${url}`,
-        data: {
-          mock: true,
-          timestamp: Date.now(),
-          request_info: {
-            url,
-            method,
-            data: config.data
-          }
-        }
-      }
+      return documentGenerateMockManager.getDefaultResponse(url, method)
     } catch (error) {
       console.error(`[API-${this.serviceName}] Mock数据获取失败:`, error)
 
-      // 返回错误响应
       return {
         success: false,
         message: `Mock数据获取失败: ${error instanceof Error ? error.message : '未知错误'}`,

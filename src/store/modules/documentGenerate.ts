@@ -1,6 +1,12 @@
 /**
  * 文档生成状态管理
- * 管理文档生成的工作流状态、生成结果、任务状态等
+ *
+ * 核心职责：
+ * 1. 统一管理文档生成工作流状态
+ * 2. 统一管理异步任务（Scope Agent、Title、Outline）
+ * 3. 提供完整的文档生成数据模型
+ *
+ * 注意：项目相关状态由 projectStore 管理
  */
 
 import { defineStore } from 'pinia'
@@ -17,7 +23,7 @@ import type {
 } from '@/types/ai'
 
 /**
- * 文档生成任务状态
+ * 异步任务状态
  */
 export interface DocumentTask {
   taskId: string
@@ -31,14 +37,14 @@ export interface DocumentTask {
 }
 
 /**
- * 文档生成项目状态
+ * 文档生成状态模型
+ * 不包含项目信息，项目状态由 projectStore 管理
  */
-export interface DocumentProject {
-  projectId: string
-  userId: string
-
-  // 基本信息
+export interface DocumentState {
+  // 当前研究简报
   researchBrief: string
+
+  // 搜索数据
   searchResults: SearchResultItem[]
 
   // 生成的内容
@@ -46,14 +52,14 @@ export interface DocumentProject {
   selectedTitle: Title | null
   generatedOutline: OutlineSection[]
 
+  // 当前工作流步骤
+  currentStep: 'requirements' | 'title' | 'outline' | 'content' | 'complete'
+
   // 任务状态
   scopeTask: DocumentTask | null
   titleTask: DocumentTask | null
   outlineTask: DocumentTask | null
   search2titleTask: DocumentTask | null
-
-  // 工作流状态
-  currentStep: 'requirements' | 'title' | 'outline' | 'content' | 'complete'
 
   // 统计信息
   generationStats: {
@@ -68,52 +74,139 @@ export interface DocumentProject {
 }
 
 /**
+ * 异步任务轮询管理器
+ */
+class TaskPollingManager {
+  private pollingTasks = new Map<string, NodeJS.Timeout>()
+  public store: any
+
+  constructor(store: any) {
+    this.store = store
+  }
+
+  /**
+   * 开始轮询任务状态
+   */
+  startPolling(
+    taskId: string,
+    type: string,
+    userId?: string,
+    projectId?: string,
+    interval: number = 3000
+  ) {
+    // 清除之前的轮询
+    this.stopPolling(taskId)
+
+    const poll = async () => {
+      try {
+        if (type === 'scope') {
+          const status = await this.store.getScopeTaskStatus(taskId)
+          if (status?.status === 'completed' || status?.status === 'failed') {
+            this.stopPolling(taskId)
+          }
+        } else if (type === 'search2title') {
+          const status = await this.store.getSearch2TitleTaskStatus(taskId, userId, projectId)
+          if (status?.status === 'completed' || status?.status === 'failed') {
+            this.stopPolling(taskId)
+          }
+        }
+      } catch (error) {
+        console.error(`轮询任务${taskId}状态失败:`, error)
+      }
+    }
+
+    // 立即执行一次，然后定时执行
+    poll()
+    const timer = setInterval(poll, interval)
+    this.pollingTasks.set(taskId, timer)
+  }
+
+  /**
+   * 停止轮询任务状态
+   */
+  stopPolling(taskId: string) {
+    const timer = this.pollingTasks.get(taskId)
+    if (timer) {
+      clearInterval(timer)
+      this.pollingTasks.delete(taskId)
+    }
+  }
+
+  /**
+   * 清除所有轮询
+   */
+  clearAll() {
+    this.pollingTasks.forEach((timer) => clearInterval(timer))
+    this.pollingTasks.clear()
+  }
+}
+
+/**
  * 文档生成状态管理
+ *
+ * 核心状态：
+ * - documentState: 当前文档生成状态
+ * - loading/error: 全局加载和错误状态
+ * - activeTasks: 活动任务列表
  */
 export const useDocumentGenerateStore = defineStore(
   'documentGenerateStore',
   () => {
-    // 当前文档项目
-    const currentDocument = ref<DocumentProject | null>(null)
+    // 当前文档生成状态
+    const documentState = ref<DocumentState>({
+      researchBrief: '',
+      searchResults: [],
+      generatedTitles: [],
+      selectedTitle: null,
+      generatedOutline: [],
+      currentStep: 'requirements',
+      scopeTask: null,
+      titleTask: null,
+      outlineTask: null,
+      search2titleTask: null,
+      generationStats: {
+        titleCount: 0,
+        outlineSectionCount: 0,
+        totalWordEstimate: 0
+      },
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    })
 
-    // 文档项目列表
-    const documentProjects = ref<DocumentProject[]>([])
-
-    // 加载状态
+    // 全局加载状态
     const loading = ref(false)
 
-    // 错误信息
+    // 全局错误信息
     const error = ref<string | null>(null)
 
-    // 全局任务状态
+    // 活动任务列表
     const activeTasks = ref<DocumentTask[]>([])
+
+    // 异步任务轮询管理器
+    const taskPollingManager = new TaskPollingManager(null)
 
     // 计算属性：是否有活动任务
     const hasActiveTasks = computed(() => activeTasks.value.length > 0)
 
-    // 计算属性：当前项目的进度
-    const currentProjectProgress = computed(() => {
-      if (!currentDocument.value) return 0
-
+    // 计算属性：当前工作流进度
+    const workflowProgress = computed(() => {
       const steps = ['requirements', 'title', 'outline', 'content', 'complete']
-      const currentStepIndex = steps.indexOf(currentDocument.value.currentStep)
+      const currentStepIndex = steps.indexOf(documentState.value.currentStep)
       return (currentStepIndex / (steps.length - 1)) * 100
     })
 
-    // 计算属性：当前项目的状态统计
-    const currentProjectStats = computed(() => {
-      if (!currentDocument.value) return null
-
-      const doc = currentDocument.value
+    // 计算属性：当前工作流状态统计
+    const workflowStats = computed(() => {
+      const state = documentState.value
       return {
-        hasResearchBrief: doc.researchBrief.length > 10,
-        hasSearchResults: doc.searchResults.length > 0,
-        hasGeneratedTitles: doc.generatedTitles.length > 0,
-        hasSelectedTitle: doc.selectedTitle !== null,
-        hasGeneratedOutline: doc.generatedOutline.length > 0,
-        titleCount: doc.generatedTitles.length,
-        outlineSectionCount: doc.generatedOutline.length,
-        totalWordEstimate: doc.generationStats.totalWordEstimate
+        hasResearchBrief: state.researchBrief.length > 10,
+        hasSearchResults: state.searchResults.length > 0,
+        hasGeneratedTitles: state.generatedTitles.length > 0,
+        hasSelectedTitle: state.selectedTitle !== null,
+        hasGeneratedOutline: state.generatedOutline.length > 0,
+        titleCount: state.generatedTitles.length,
+        outlineSectionCount: state.generatedOutline.length,
+        totalWordEstimate: state.generationStats.totalWordEstimate
       }
     })
 
@@ -134,78 +227,50 @@ export const useDocumentGenerateStore = defineStore(
       return stats
     })
 
-    /**
-     * 创建新的文档项目
-     */
-    const createDocumentProject = async (
-      userId: string,
-      researchBrief: string = ''
-    ): Promise<DocumentProject | null> => {
-      try {
-        loading.value = true
-        error.value = null
-
-        const projectId = `doc-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-        const now = Date.now()
-
-        const newProject: DocumentProject = {
-          projectId,
-          userId,
-          researchBrief,
-          searchResults: [],
-          generatedTitles: [],
-          selectedTitle: null,
-          generatedOutline: [],
-          scopeTask: null,
-          titleTask: null,
-          outlineTask: null,
-          search2titleTask: null,
-          currentStep: 'requirements',
-          generationStats: {
-            titleCount: 0,
-            outlineSectionCount: 0,
-            totalWordEstimate: 0
-          },
-          createdAt: now,
-          updatedAt: now
+    // 初始化轮询管理器
+    taskPollingManager.store = {
+      getScopeTaskStatus: (taskId: string) => getScopeTaskStatus(taskId),
+      getSearch2TitleTaskStatus: (taskId: string, userId?: string, projectId?: string) => {
+        if (!userId || !projectId) {
+          console.error('getSearch2TitleTaskStatus 缺少必要参数: userId 或 projectId')
+          return null
         }
-
-        // 添加到列表
-        documentProjects.value.unshift(newProject)
-
-        // 设置为当前项目
-        currentDocument.value = newProject
-
-        ElMessage.success('文档项目创建成功')
-        return newProject
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : '创建文档项目失败'
-        ElMessage.error(errorMessage)
-        return null
-      } finally {
-        loading.value = false
+        return getSearch2TitleTaskStatus(taskId, userId, projectId)
       }
     }
 
     /**
-     * 设置当前文档项目
+     * 重置文档生成状态
      */
-    const setCurrentDocument = (projectId: string) => {
-      const project = documentProjects.value.find((p) => p.projectId === projectId)
-      if (project) {
-        currentDocument.value = project
-      } else {
-        ElMessage.error('找不到指定的文档项目')
+    const resetDocumentState = () => {
+      documentState.value = {
+        researchBrief: '',
+        searchResults: [],
+        generatedTitles: [],
+        selectedTitle: null,
+        generatedOutline: [],
+        currentStep: 'requirements',
+        scopeTask: null,
+        titleTask: null,
+        outlineTask: null,
+        search2titleTask: null,
+        generationStats: {
+          titleCount: 0,
+          outlineSectionCount: 0,
+          totalWordEstimate: 0
+        },
+        createdAt: Date.now(),
+        updatedAt: Date.now()
       }
+      activeTasks.value = []
+      taskPollingManager.clearAll()
     }
 
     /**
-     * 更新当前文档项目
+     * 更新文档状态
      */
-    const updateCurrentDocument = (updates: Partial<DocumentProject>) => {
-      if (!currentDocument.value) return
-
-      Object.assign(currentDocument.value, {
+    const updateDocumentState = (updates: Partial<DocumentState>) => {
+      Object.assign(documentState.value, {
         ...updates,
         updatedAt: Date.now()
       })
@@ -214,19 +279,18 @@ export const useDocumentGenerateStore = defineStore(
     /**
      * 执行Scope Agent任务
      */
-    const executeScopeAgent = async (query: string): Promise<ScopeAgentResponse | null> => {
-      if (!currentDocument.value) {
-        ElMessage.error('没有活动的文档项目')
-        return null
-      }
-
+    const executeScopeAgent = async (
+      userId: string,
+      projectId: string,
+      query: string
+    ): Promise<ScopeAgentResponse | null> => {
       try {
         loading.value = true
         error.value = null
 
         const response: ScopeAgentResponse = await documentGenerateService.executeScopeAgent(
-          currentDocument.value.userId,
-          currentDocument.value.projectId,
+          userId,
+          projectId,
           { query }
         )
 
@@ -240,15 +304,17 @@ export const useDocumentGenerateStore = defineStore(
           updatedAt: Date.now()
         }
 
-        currentDocument.value.scopeTask = task
+        documentState.value.scopeTask = task
         activeTasks.value.push(task)
 
-        ElMessage.success('Scope分析任务已启动')
+        // 开始轮询任务状态
+        taskPollingManager.startPolling(response.task_id, 'scope')
+
         return response
-      } catch (error) {
+      } catch (error: any) {
         const errorMessage = error instanceof Error ? error.message : 'Scope分析任务启动失败'
-        ElMessage.error(errorMessage)
-        return null
+        error.value = errorMessage
+        throw error
       } finally {
         loading.value = false
       }
@@ -257,17 +323,12 @@ export const useDocumentGenerateStore = defineStore(
     /**
      * 生成标题
      */
-    const generateTitles = async (): Promise<TitleGenerationResponse | null> => {
-      if (!currentDocument.value) {
-        ElMessage.error('没有活动的文档项目')
-        return null
-      }
-
-      if (
-        !currentDocument.value.researchBrief ||
-        currentDocument.value.searchResults.length === 0
-      ) {
-        ElMessage.error('研究简报或搜索数据不完整')
+    const generateTitles = async (
+      researchBrief: string,
+      webSearchData: SearchResultItem[]
+    ): Promise<TitleGenerationResponse | null> => {
+      if (!researchBrief || webSearchData.length === 0) {
+        error.value = '研究简报或搜索数据不完整'
         return null
       }
 
@@ -276,13 +337,18 @@ export const useDocumentGenerateStore = defineStore(
         error.value = null
 
         const response: TitleGenerationResponse = await documentGenerateService.generateTitles({
-          research_brief: currentDocument.value.researchBrief,
-          web_search_data: currentDocument.value.searchResults
+          research_brief: documentState.value.researchBrief,
+          web_search_data: webSearchData
         })
 
-        // 更新当前项目
-        currentDocument.value.generatedTitles = response.titles
-        currentDocument.value.generationStats.titleCount = response.title_count
+        // 更新文档状态
+        updateDocumentState({
+          generatedTitles: response.titles,
+          generationStats: {
+            ...documentState.value.generationStats,
+            titleCount: response.title_count
+          }
+        })
 
         // 创建任务记录
         const task: DocumentTask = {
@@ -295,15 +361,14 @@ export const useDocumentGenerateStore = defineStore(
           updatedAt: Date.now()
         }
 
-        currentDocument.value.titleTask = task
+        documentState.value.titleTask = task
         activeTasks.value.push(task)
 
-        ElMessage.success(`成功生成 ${response.title_count} 个标题`)
         return response
-      } catch (error) {
+      } catch (error: any) {
         const errorMessage = error instanceof Error ? error.message : '标题生成失败'
-        ElMessage.error(errorMessage)
-        return null
+        error.value = errorMessage
+        throw error
       } finally {
         loading.value = false
       }
@@ -312,17 +377,13 @@ export const useDocumentGenerateStore = defineStore(
     /**
      * 生成大纲
      */
-    const generateOutline = async (): Promise<OutlineGenerationResponse | null> => {
-      if (!currentDocument.value) {
-        ElMessage.error('没有活动的文档项目')
-        return null
-      }
-
-      if (
-        !currentDocument.value.selectedTitle ||
-        currentDocument.value.searchResults.length === 0
-      ) {
-        ElMessage.error('未选择标题或搜索数据不完整')
+    const generateOutline = async (
+      title: Title,
+      researchBrief: string,
+      webSearchData: SearchResultItem[]
+    ): Promise<OutlineGenerationResponse | null> => {
+      if (!title || webSearchData.length === 0) {
+        error.value = '未选择标题或搜索数据不完整'
         return null
       }
 
@@ -331,15 +392,20 @@ export const useDocumentGenerateStore = defineStore(
         error.value = null
 
         const response: OutlineGenerationResponse = await documentGenerateService.generateOutline({
-          title: currentDocument.value.selectedTitle,
-          research_brief: currentDocument.value.researchBrief,
-          web_search_data: currentDocument.value.searchResults
+          title,
+          research_brief: documentState.value.researchBrief,
+          web_search_data: webSearchData
         })
 
-        // 更新当前项目
-        currentDocument.value.generatedOutline = response.outline
-        currentDocument.value.generationStats.outlineSectionCount = response.section_count
-        currentDocument.value.generationStats.totalWordEstimate = response.total_word_estimate || 0
+        // 更新文档状态
+        updateDocumentState({
+          generatedOutline: response.outline,
+          generationStats: {
+            ...documentState.value.generationStats,
+            outlineSectionCount: response.section_count,
+            totalWordEstimate: response.total_word_estimate || 0
+          }
+        })
 
         // 创建任务记录
         const task: DocumentTask = {
@@ -352,15 +418,14 @@ export const useDocumentGenerateStore = defineStore(
           updatedAt: Date.now()
         }
 
-        currentDocument.value.outlineTask = task
+        documentState.value.outlineTask = task
         activeTasks.value.push(task)
 
-        ElMessage.success(`成功生成 ${response.section_count} 个章节的大纲`)
         return response
-      } catch (error) {
+      } catch (error: any) {
         const errorMessage = error instanceof Error ? error.message : '大纲生成失败'
-        ElMessage.error(errorMessage)
-        return null
+        error.value = errorMessage
+        throw error
       } finally {
         loading.value = false
       }
@@ -370,32 +435,20 @@ export const useDocumentGenerateStore = defineStore(
      * 选择标题
      */
     const selectTitle = (title: Title) => {
-      if (!currentDocument.value) return
-
-      currentDocument.value.selectedTitle = title
-      currentDocument.value.updatedAt = Date.now()
-
-      ElMessage.success('标题已选择')
+      updateDocumentState({ selectedTitle: title })
     }
 
     /**
      * 执行Search2Title Agent
      */
-    const executeSearch2TitleAgent = async (brief: string) => {
-      if (!currentDocument.value) {
-        ElMessage.error('没有活动的文档项目')
-        return null
-      }
-
+    const executeSearch2TitleAgent = async (userId: string, projectId: string, brief: string) => {
       try {
         loading.value = true
         error.value = null
 
-        const response = await documentGenerateService.executeSearch2TitleAgent(
-          currentDocument.value.userId,
-          currentDocument.value.projectId,
-          { brief }
-        )
+        const response = await documentGenerateService.executeSearch2TitleAgent(userId, projectId, {
+          brief
+        })
 
         if (!response.success) {
           throw new Error(response.message || 'Search2Title执行失败')
@@ -411,131 +464,26 @@ export const useDocumentGenerateStore = defineStore(
           updatedAt: Date.now()
         }
 
-        currentDocument.value.search2titleTask = task
+        documentState.value.search2titleTask = task
         activeTasks.value.push(task)
 
-        ElMessage.success('Search2Title任务已启动')
+        // 开始轮询任务状态
+        taskPollingManager.startPolling(response.task_id, 'search2title', userId, projectId)
+
         return response
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Search2Title任务启动失败'
-        ElMessage.error(errorMessage)
-        return null
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Search2Title任务启动失败'
+        error.value = errorMessage
+        throw err
       } finally {
         loading.value = false
       }
     }
 
     /**
-     * 获取Search2Title Agent状态
+     * 获取Scope任务状态
      */
-    const getSearch2TitleTaskStatus = async (taskId: string) => {
-      try {
-        if (!currentDocument.value) {
-          throw new Error('没有活动的文档项目')
-        }
-
-        const status = await documentGenerateService.getSearch2TitleAgentStatus(
-          taskId,
-          currentDocument.value.userId,
-          currentDocument.value.projectId
-        )
-
-        // 更新本地任务状态
-        const task = activeTasks.value.find((t) => t.taskId === taskId)
-        if (task) {
-          task.status = status.status as any
-          task.progress = status.progress
-          task.result = status.result
-          task.error = status.error || undefined
-          task.updatedAt = Date.now()
-
-          // 如果任务完成，更新项目数据
-          if (task.status === 'completed' && status.result) {
-            if (status.result.title_data?.titles) {
-              currentDocument.value.generatedTitles = status.result.title_data.titles
-              currentDocument.value.generationStats.titleCount =
-                status.result.title_data.titles.length
-            }
-            if (status.result.research_data?.web_search_data) {
-              currentDocument.value.searchResults = status.result.research_data.web_search_data
-            }
-          }
-        }
-
-        return status
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : '获取Search2Title任务状态失败'
-        ElMessage.error(errorMessage)
-        return null
-      }
-    }
-
-    /**
-     * 取消Search2Title任务
-     */
-    const cancelSearch2TitleTask = async (taskId: string): Promise<boolean> => {
-      try {
-        if (!currentDocument.value) {
-          throw new Error('没有活动的文档项目')
-        }
-
-        await documentGenerateService.cancelSearch2TitleAgentTask(
-          taskId,
-          currentDocument.value.userId,
-          currentDocument.value.projectId
-        )
-
-        // 更新本地任务状态
-        const task = activeTasks.value.find((t) => t.taskId === taskId)
-        if (task) {
-          task.status = 'failed'
-          task.error = '任务已取消'
-          task.updatedAt = Date.now()
-        }
-
-        ElMessage.success('Search2Title任务已取消')
-        return true
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : '取消Search2Title任务失败'
-        ElMessage.error(errorMessage)
-        return false
-      }
-    }
-
-    /**
-     * 更新工作流步骤
-     */
-    const updateWorkflowStep = (step: DocumentProject['currentStep']) => {
-      if (!currentDocument.value) return
-
-      currentDocument.value.currentStep = step
-      currentDocument.value.updatedAt = Date.now()
-    }
-
-    /**
-     * 更新搜索数据
-     */
-    const updateSearchResults = (results: SearchResultItem[]) => {
-      if (!currentDocument.value) return
-
-      currentDocument.value.searchResults = results
-      currentDocument.value.updatedAt = Date.now()
-    }
-
-    /**
-     * 更新研究简报
-     */
-    const updateResearchBrief = (brief: string) => {
-      if (!currentDocument.value) return
-
-      currentDocument.value.researchBrief = brief
-      currentDocument.value.updatedAt = Date.now()
-    }
-
-    /**
-     * 获取任务状态
-     */
-    const getTaskStatus = async (taskId: string): Promise<ScopeAgentStatusResponse | null> => {
+    const getScopeTaskStatus = async (taskId: string): Promise<ScopeAgentStatusResponse | null> => {
       try {
         const status = await documentGenerateService.getScopeAgentStatus(taskId)
 
@@ -547,14 +495,134 @@ export const useDocumentGenerateStore = defineStore(
           task.result = status.result
           task.error = status.error || undefined
           task.updatedAt = Date.now()
+
+          // 任务完成时停止轮询并更新研究简报
+          if (task.status === 'completed' || task.status === 'failed') {
+            taskPollingManager.stopPolling(taskId)
+
+            // 任务完成后更新文档状态
+            if (task.status === 'completed' && status.result) {
+              const updates: Partial<DocumentState> = {}
+
+              // 如果有研究简报结果，更新到文档状态
+              if (status.result.research_brief) {
+                updates.researchBrief = status.result.research_brief
+              }
+
+              if (Object.keys(updates).length > 0) {
+                updateDocumentState(updates)
+              }
+            }
+          }
         }
 
         return status
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : '获取任务状态失败'
-        ElMessage.error(errorMessage)
+        console.error('获取Scope任务状态失败:', error)
         return null
       }
+    }
+
+    /**
+     * 获取Search2Title任务状态
+     */
+    const getSearch2TitleTaskStatus = async (taskId: string, userId: string, projectId: string) => {
+      try {
+        const status = await documentGenerateService.getSearch2TitleAgentStatus(
+          taskId,
+          userId,
+          projectId
+        )
+
+        // 更新本地任务状态
+        const task = activeTasks.value.find((t) => t.taskId === taskId)
+        if (task) {
+          task.status = status.status as any
+          task.progress = status.progress
+          task.result = status.result
+          task.error = status.error || undefined
+          task.updatedAt = Date.now()
+
+          // 任务完成时停止轮询
+          if (task.status === 'completed' || task.status === 'failed') {
+            taskPollingManager.stopPolling(taskId)
+
+            // 任务完成后更新文档状态
+            if (task.status === 'completed' && status.result) {
+              const updates: Partial<DocumentState> = {}
+
+              if (status.result.title_data?.titles) {
+                updates.generatedTitles = status.result.title_data.titles
+                updates.generationStats = {
+                  ...documentState.value.generationStats,
+                  titleCount: status.result.title_data.titles.length
+                }
+              }
+
+              if (status.result.research_data?.web_search_data) {
+                updates.searchResults = status.result.research_data.web_search_data
+              }
+
+              if (Object.keys(updates).length > 0) {
+                updateDocumentState(updates)
+              }
+            }
+          }
+        }
+
+        return status
+      } catch (error) {
+        console.error('获取Search2Title任务状态失败:', error)
+        return null
+      }
+    }
+
+    /**
+     * 取消Search2Title任务
+     */
+    const cancelSearch2TitleTask = async (
+      taskId: string,
+      userId: string,
+      projectId: string
+    ): Promise<boolean> => {
+      try {
+        await documentGenerateService.cancelSearch2TitleAgentTask(taskId, userId, projectId)
+
+        // 更新本地任务状态
+        const task = activeTasks.value.find((t) => t.taskId === taskId)
+        if (task) {
+          task.status = 'failed'
+          task.error = '任务已取消'
+          task.updatedAt = Date.now()
+          taskPollingManager.stopPolling(taskId)
+        }
+
+        return true
+      } catch (error) {
+        console.error('取消Search2Title任务失败:', error)
+        return false
+      }
+    }
+
+    /**
+     * 更新工作流步骤
+     */
+    const updateWorkflowStep = (step: DocumentState['currentStep']) => {
+      updateDocumentState({ currentStep: step })
+    }
+
+    /**
+     * 更新搜索数据
+     */
+    const updateSearchResults = (results: SearchResultItem[]) => {
+      updateDocumentState({ searchResults: results })
+    }
+
+    /**
+     * 更新研究简报
+     */
+    const updateResearchBrief = (brief: string) => {
+      updateDocumentState({ researchBrief: brief })
     }
 
     /**
@@ -570,13 +638,12 @@ export const useDocumentGenerateStore = defineStore(
           task.status = 'failed'
           task.error = '任务已取消'
           task.updatedAt = Date.now()
+          taskPollingManager.stopPolling(taskId)
         }
 
-        ElMessage.success('任务已取消')
         return true
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : '取消任务失败'
-        ElMessage.error(errorMessage)
+        console.error('取消任务失败:', error)
         return false
       }
     }
@@ -589,8 +656,7 @@ export const useDocumentGenerateStore = defineStore(
         const status = await documentGenerateService.checkServiceStatus()
         return status
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : '服务状态检查失败'
-        ElMessage.error(errorMessage)
+        console.error('服务状态检查失败:', error)
         throw error
       }
     }
@@ -611,32 +677,22 @@ export const useDocumentGenerateStore = defineStore(
       })
     }
 
-    /**
-     * 重置当前项目
-     */
-    const resetCurrentDocument = () => {
-      currentDocument.value = null
-      activeTasks.value = []
-    }
-
     return {
       // 状态
-      currentDocument,
-      documentProjects,
+      documentState,
       loading,
       error,
       activeTasks,
 
       // 计算属性
       hasActiveTasks,
-      currentProjectProgress,
-      currentProjectStats,
+      workflowProgress,
+      workflowStats,
       taskStatistics,
 
       // 方法
-      createDocumentProject,
-      setCurrentDocument,
-      updateCurrentDocument,
+      resetDocumentState,
+      updateDocumentState,
       executeScopeAgent,
       generateTitles,
       generateOutline,
@@ -644,20 +700,18 @@ export const useDocumentGenerateStore = defineStore(
       executeSearch2TitleAgent,
       getSearch2TitleTaskStatus,
       cancelSearch2TitleTask,
+      getScopeTaskStatus,
       updateWorkflowStep,
       updateSearchResults,
       updateResearchBrief,
-      getTaskStatus,
       cancelTask,
       checkServiceStatus,
-      cleanupCompletedTasks,
-      resetCurrentDocument
+      cleanupCompletedTasks
     }
   },
   {
     persist: {
-      key: 'document-generate-store',
-      paths: ['documentProjects', 'currentDocument']
+      key: 'document-generate-store'
     }
   }
 )
