@@ -567,11 +567,17 @@ export const useDocumentGenerateStore = defineStore(
         // 更新本地任务状态
         const task = activeTasks.value.find((t) => t.taskId === taskId)
         if (task) {
+          // 更新任务状态
           task.status = status.status as any
           task.progress = status.progress
           task.result = status.result
           task.error = status.error || undefined
           task.updatedAt = Date.now()
+
+          // 替换 documentState 中的 scopeTask 对象以触发响应式更新
+          if (documentState.value.scopeTask?.taskId === taskId) {
+            documentState.value.scopeTask = { ...task }
+          }
 
           // 任务完成时停止轮询并更新研究简报
           if (task.status === 'completed' || task.status === 'failed') {
@@ -614,11 +620,17 @@ export const useDocumentGenerateStore = defineStore(
         // 更新本地任务状态
         const task = activeTasks.value.find((t) => t.taskId === taskId)
         if (task) {
+          // 更新任务状态
           task.status = status.status as any
           task.progress = status.progress
           task.result = status.result
           task.error = status.error || undefined
           task.updatedAt = Date.now()
+
+          // 替换 documentState 中的 search2titleTask 对象以触发响应式更新
+          if (documentState.value.search2titleTask?.taskId === taskId) {
+            documentState.value.search2titleTask = { ...task }
+          }
 
           // 任务完成时停止轮询
           if (task.status === 'completed' || task.status === 'failed') {
