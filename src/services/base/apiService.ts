@@ -6,7 +6,6 @@
 import { apiConfigManager } from '@/config/api'
 import type {
   ApiRequestConfig,
-  ApiResponse,
   HttpMethod,
   ApiEndpointConfig,
   ApiPathConfig
@@ -34,29 +33,10 @@ abstract class BaseApiService {
   protected async request<T>(config: ApiRequestConfig): Promise<T> {
     const apiConfig = apiConfigManager.getConfig()
 
-    // 添加调试日志
-    console.log(`[API-${this.serviceName}] 请求开始:`, {
-      url: config.url,
-      method: config.method,
-      useMock: config.useMock,
-      globalMockEnabled: apiConfig.useMock,
-      hasMockImplementation: !!this.mockImplementation,
-      serviceName: this.serviceName,
-      apiConfig: apiConfig
-    })
-
     // 检查是否启用Mock模式
     if (config.useMock !== false && apiConfig.useMock && this.mockImplementation) {
-      console.log(`[API-${this.serviceName}] 使用Mock模式`)
       return this.handleMockRequest<T>(config)
     }
-
-    // 添加调试信息
-    console.log(`[API-${this.serviceName}] 使用真实API模式. 原因:`, {
-      useMockDisabled: config.useMock === false,
-      globalMockDisabled: !apiConfig.useMock,
-      noMockImplementation: !this.mockImplementation
-    })
 
     // 使用真实API
     return this.handleRealRequest<T>(config)
@@ -69,37 +49,13 @@ abstract class BaseApiService {
     const apiConfig = apiConfigManager.getConfig()
     const mockConfig = apiConfigManager.getMockConfig()
 
-    console.log(`[API-${this.serviceName}] Mock请求:`, {
-      url: config.url,
-      method: config.method,
-      data: config.data,
-      params: config.params
-    })
+    // 模拟网络延迟
+    await this.simulateDelay(apiConfig.mockDelay || mockConfig.defaultDelay)
 
-    try {
-      // 模拟网络延迟
-      await this.simulateDelay(apiConfig.mockDelay || mockConfig.defaultDelay)
+    // 调用Mock实现
+    const result = await this.mockImplementation?.(config)
 
-      // 调用Mock实现
-      const result = await this.mockImplementation?.(config)
-      console.log(`[API-${this.serviceName}] Mock实现结果:`, result)
-
-      // 包装Mock响应
-      const mockResponse: ApiResponse<T> = {
-        data: result,
-        status: 200,
-        message: 'Mock数据响应成功',
-        timestamp: Date.now(),
-        isMock: true
-      }
-
-      console.log(`[API-${this.serviceName}] Mock响应:`, mockResponse)
-
-      return result as T
-    } catch (error) {
-      console.error(`[API-${this.serviceName}] Mock请求失败:`, error)
-      throw error
-    }
+    return result as T
   }
 
   /**
@@ -108,39 +64,21 @@ abstract class BaseApiService {
   private async handleRealRequest<T>(config: ApiRequestConfig): Promise<T> {
     const serviceDefaults = this.getServiceDefaults()
 
-    console.log(`[API-${this.serviceName}] 真实API请求:`, {
+    // 构建HTTP请求配置
+    const httpConfig = {
       url: config.url,
-      method: config.method,
+      method: config.method as any,
       data: config.data,
       params: config.params,
-      serviceDefaults
-    })
-
-    try {
-      // 构建HTTP请求配置
-      const httpConfig = {
-        url: config.url,
-        method: config.method as any,
-        data: config.data,
-        params: config.params,
-        headers: {
-          ...serviceDefaults.headers,
-          ...config.headers
-        },
-        timeout: config.timeout || serviceDefaults.timeout
-      }
-
-      console.log(`[API-${this.serviceName}] HTTP请求配置:`, httpConfig)
-      const result: T = await http.request<T>(httpConfig)
-      console.log(`[API-${this.serviceName}] 真实API响应:`, result)
-
-      return result
-    } catch (error) {
-      console.error(`[API-${this.serviceName}] 真实API请求失败:`, error)
-
-      // 使用通用错误处理
-      throw error
+      headers: {
+        ...serviceDefaults.headers,
+        ...config.headers
+      },
+      timeout: config.timeout || serviceDefaults.timeout
     }
+
+    const result: T = await http.request<T>(httpConfig)
+    return result
   }
 
   /**

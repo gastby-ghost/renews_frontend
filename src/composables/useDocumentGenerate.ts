@@ -77,17 +77,53 @@ export function useDocumentGenerate() {
   })
 
   // UI 状态
-  const uiState = computed<DocumentUIState>(() => ({
-    isExecutingScope: loading.value && documentState.value.scopeTask?.status === 'pending',
-    isGeneratingTitles: loading.value && documentState.value.titleTask?.status === 'running',
-    isGeneratingOutline: loading.value && documentState.value.outlineTask?.status === 'running',
-    errors: {
-      scope: error.value || undefined
-    },
-    scopeProgress: documentState.value.scopeTask?.progress || 0,
-    titleProgress: documentState.value.titleTask?.progress || 0,
-    outlineProgress: documentState.value.outlineTask?.progress || 0
-  }))
+  const uiState = computed<DocumentUIState>(() => {
+    // 状态计算说明：
+    // 1. Scope任务：异步任务（pending/running/completed），通过轮询更新状态
+    // 2. Title/Outline任务：同步任务（直接返回结果），loading期间即为执行中
+
+    const titleTask = documentState.value.titleTask
+    const outlineTask = documentState.value.outlineTask
+
+    return {
+      // Scope任务：等待中（pending状态且loading）
+      isExecutingScope: loading.value && documentState.value.scopeTask?.status === 'pending',
+
+      // Title任务：加载中（loading状态即为生成中）
+      isGeneratingTitles: loading.value && titleTask?.type === 'title',
+
+      // Outline任务：加载中（loading状态即为生成中）
+      isGeneratingOutline: loading.value && outlineTask?.type === 'outline',
+
+      // 错误状态：按任务类型分别跟踪
+      errors: {
+        scope: error.value || undefined,
+        title: titleTask?.error || undefined,
+        outline: outlineTask?.error || undefined
+      },
+
+      // 进度跟踪：
+      // - Scope：通过轮询实时更新progress
+      // - Title/Outline：完成后设为100%，失败或未开始为0%
+      scopeProgress: documentState.value.scopeTask?.progress || 0,
+      titleProgress:
+        titleTask?.status === 'completed'
+          ? 100
+          : titleTask?.status === 'failed'
+            ? 0
+            : loading.value && titleTask
+              ? titleTask.progress
+              : 0,
+      outlineProgress:
+        outlineTask?.status === 'completed'
+          ? 100
+          : outlineTask?.status === 'failed'
+            ? 0
+            : loading.value && outlineTask
+              ? outlineTask.progress
+              : 0
+    }
+  })
 
   // 包装 Store 方法，提供 UI 反馈
   const executeScopeAgent = async (userId: string, projectId: string, query: string) => {

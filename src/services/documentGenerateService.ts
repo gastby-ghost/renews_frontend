@@ -345,14 +345,6 @@ class DocumentGenerateService extends BaseApiService {
   protected async mockImplementation(config: ApiRequestConfig): Promise<any> {
     const apiConfig = this.getCurrentConfig()
 
-    if (apiConfig.showDebugInfo) {
-      console.log(`[API-${this.serviceName}] 执行Mock实现:`, {
-        url: config.url,
-        method: config.method,
-        data: config.data
-      })
-    }
-
     // 模拟网络延迟
     await new Promise((resolve) => setTimeout(resolve, apiConfig.mockDelay || 1000))
 

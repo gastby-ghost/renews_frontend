@@ -229,13 +229,15 @@ export const useDocumentGenerateStore = defineStore(
 
     // 初始化轮询管理器
     taskPollingManager.store = {
-      getScopeTaskStatus: (taskId: string) => getScopeTaskStatus(taskId),
-      getSearch2TitleTaskStatus: (taskId: string, userId?: string, projectId?: string) => {
+      // 修复：添加async/await确保Promise被正确等待
+      getScopeTaskStatus: async (taskId: string) => await getScopeTaskStatus(taskId),
+      getSearch2TitleTaskStatus: async (taskId: string, userId?: string, projectId?: string) => {
         if (!userId || !projectId) {
           console.error('getSearch2TitleTaskStatus 缺少必要参数: userId 或 projectId')
           return null
         }
-        return getSearch2TitleTaskStatus(taskId, userId, projectId)
+        // 修复：添加async/await确保Promise被正确等待
+        return await getSearch2TitleTaskStatus(taskId, userId, projectId)
       }
     }
 
@@ -337,7 +339,7 @@ export const useDocumentGenerateStore = defineStore(
         error.value = null
 
         const response: TitleGenerationResponse = await documentGenerateService.generateTitles({
-          research_brief: documentState.value.researchBrief,
+          research_brief: researchBrief,
           web_search_data: webSearchData
         })
 
@@ -368,6 +370,20 @@ export const useDocumentGenerateStore = defineStore(
       } catch (error: any) {
         const errorMessage = error instanceof Error ? error.message : '标题生成失败'
         error.value = errorMessage
+
+        // 创建失败任务记录
+        const task: DocumentTask = {
+          taskId: `title-${Date.now()}`,
+          type: 'title',
+          status: 'failed',
+          progress: 0,
+          error: errorMessage,
+          createdAt: Date.now(),
+          updatedAt: Date.now()
+        }
+        documentState.value.titleTask = task
+        activeTasks.value.push(task)
+
         throw error
       } finally {
         loading.value = false
@@ -393,7 +409,7 @@ export const useDocumentGenerateStore = defineStore(
 
         const response: OutlineGenerationResponse = await documentGenerateService.generateOutline({
           title,
-          research_brief: documentState.value.researchBrief,
+          research_brief: researchBrief,
           web_search_data: webSearchData
         })
 
@@ -425,6 +441,20 @@ export const useDocumentGenerateStore = defineStore(
       } catch (error: any) {
         const errorMessage = error instanceof Error ? error.message : '大纲生成失败'
         error.value = errorMessage
+
+        // 创建失败任务记录
+        const task: DocumentTask = {
+          taskId: `outline-${Date.now()}`,
+          type: 'outline',
+          status: 'failed',
+          progress: 0,
+          error: errorMessage,
+          createdAt: Date.now(),
+          updatedAt: Date.now()
+        }
+        documentState.value.outlineTask = task
+        activeTasks.value.push(task)
+
         throw error
       } finally {
         loading.value = false
