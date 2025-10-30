@@ -807,7 +807,20 @@ export const useDocumentGenerateStore = defineStore(
   },
   {
     persist: {
-      key: 'document-generate-store'
+      key: 'document-generate-store',
+      storage: localStorage,
+      // 只持久化必要的数据，避免存储过大的对象
+      paths: [
+        'documentState.researchBrief',
+        'documentState.searchResults',
+        'documentState.generatedTitles',
+        'documentState.selectedTitle',
+        'documentState.generatedOutline',
+        'documentState.currentStep',
+        'documentState.generationStats',
+        'documentState.createdAt',
+        'documentState.updatedAt'
+      ]
     }
   }
 )

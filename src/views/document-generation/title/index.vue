@@ -380,17 +380,7 @@
 
   const loadExistingData = async () => {
     try {
-      // 从localStorage加载标题数据
-      const titlesData = localStorage.getItem(`project_${projectId}_titles`)
-      if (titlesData) {
-        const { titles, selectedTitle } = JSON.parse(titlesData)
-        if (titles && titles.length > 0) {
-          documentStore.updateDocumentState({
-            generatedTitles: titles,
-            selectedTitle: selectedTitle || null
-          })
-        }
-      }
+      // 数据已通过Store持久化自动加载，无需手动从localStorage读取
 
       // 检查服务状态
       await checkServiceStatus()
@@ -494,16 +484,10 @@
             }
 
             if (status.result?.title_data?.titles) {
+              // 通过Store更新，数据会自动持久化
               documentStore.updateDocumentState({
                 generatedTitles: status.result.title_data.titles
               })
-
-              // 保存到localStorage
-              const titlesData = {
-                titles: status.result.title_data.titles,
-                selectedTitle: titleGeneration.state.selectedTitle
-              }
-              localStorage.setItem(`project_${projectId}_titles`, JSON.stringify(titlesData))
             }
 
             ElMessage.success('Search2Title执行完成')
@@ -538,16 +522,9 @@
       return
     }
 
-    // 保存到store
+    // 保存到store（数据会自动持久化）
     if (titleGeneration.state.selectedTitle) {
       documentStore.selectTitle(titleGeneration.state.selectedTitle)
-
-      // 保存到localStorage
-      const titlesData = {
-        titles: titleGeneration.state.generatedTitles,
-        selectedTitle: titleGeneration.state.selectedTitle
-      }
-      localStorage.setItem(`project_${projectId}_titles`, JSON.stringify(titlesData))
 
       ElMessage.success('标题已确认，即将进入大纲阶段')
 
