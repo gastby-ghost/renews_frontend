@@ -368,8 +368,10 @@ class DocumentGenerateService extends BaseApiService {
       }
 
       if (method === 'GET' && url.includes('/scope-agent/status/')) {
-        const taskId = url.split('/').pop()
-        return documentGenerateMockManager.getScopeAgentStatus(taskId!)
+        const parts = url.split('/')
+        const statusIndex = parts.indexOf('status')
+        const taskId = statusIndex > -1 ? parts[statusIndex + 1] : ''
+        return documentGenerateMockManager.getScopeAgentStatus(taskId)
       }
 
       if (method === 'GET' && url.includes('/scope-agent/tasks')) {
@@ -401,8 +403,10 @@ class DocumentGenerateService extends BaseApiService {
       }
 
       if (method === 'GET' && url.includes('/search2title-agent/status/')) {
-        const taskId = url.split('/').pop()
-        return documentGenerateMockManager.getSearch2TitleAgentStatus(taskId!)
+        const parts = url.split('/')
+        const statusIndex = parts.indexOf('status')
+        const taskId = statusIndex > -1 ? parts[statusIndex + 1] : ''
+        return documentGenerateMockManager.getSearch2TitleAgentStatus(taskId)
       }
 
       if (method === 'GET' && url.includes('/search2title-agent/tasks')) {

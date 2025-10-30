@@ -469,7 +469,8 @@ class ProjectService extends BaseApiService {
         !url.includes('/component') &&
         !url.includes('/statistics')
       ) {
-        const projectId = url.split('/')[2]
+        const parts = url.split('/')
+        const projectId = parts[parts.indexOf('projects') + 1]
         const projectDetail = {
           id: parseInt(projectId),
           user_id: 1,
@@ -522,7 +523,8 @@ class ProjectService extends BaseApiService {
         !url.includes('/status') &&
         !url.includes('/component')
       ) {
-        const projectId = url.split('/')[2]
+        const parts = url.split('/')
+        const projectId = parts[parts.indexOf('projects') + 1]
         const requestData = config.data as ProjectUpdate
         return {
           success: true,
@@ -556,7 +558,8 @@ class ProjectService extends BaseApiService {
 
       // 更新项目状态 - PATCH /api/v1/core/projects/{project_id}/status
       if (method === 'PATCH' && url.includes('/status')) {
-        const projectId = url.split('/')[2]
+        const parts = url.split('/')
+        const projectId = parts[parts.indexOf('projects') + 1]
         const requestData = config.data as ProjectStatusUpdateRequest
         return {
           success: true,
@@ -577,7 +580,8 @@ class ProjectService extends BaseApiService {
 
       // 更新项目组件 - PATCH /api/v1/core/projects/{project_id}/component
       if (method === 'PATCH' && url.includes('/component')) {
-        const projectId = url.split('/')[2]
+        const parts = url.split('/')
+        const projectId = parts[parts.indexOf('projects') + 1]
         const requestData = config.data as ProjectComponentUpdateRequest
         return {
           success: true,
@@ -598,7 +602,8 @@ class ProjectService extends BaseApiService {
 
       // 复制项目 - POST /api/v1/core/projects/{project_id}/duplicate
       if (method === 'POST' && url.includes('/duplicate')) {
-        const projectId = url.split('/')[2]
+        const parts = url.split('/')
+        const projectId = parts[parts.indexOf('projects') + 1]
         const requestData = config.data as { name: string }
         return {
           success: true,

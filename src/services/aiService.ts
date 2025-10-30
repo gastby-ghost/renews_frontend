@@ -400,16 +400,13 @@ class AiService extends BaseApiService {
       }
 
       if (method === 'GET' && url.includes('/search-agent/status/')) {
-        // 从URL中提取taskId，注意URL可能包含baseUrl，所以不能简单用split
-        const parts = url.split('/search-agent/status/')
-        if (parts.length > 1) {
-          let taskId = parts[1]
-          // 如果taskId包含后续路径，则去除
-          if (taskId.includes('/')) {
-            taskId = taskId.split('/')[0]
-          }
-          const params = config.params || {}
+        // 从URL中提取taskId，使用split明确提取
+        const parts = url.split('/')
+        const statusIndex = parts.indexOf('status')
+        const taskId = statusIndex > -1 ? parts[statusIndex + 1] : ''
 
+        if (taskId) {
+          const params = config.params || {}
           return mockDataManager.getMockData('search-agent-status', taskId, params.brief)
         }
       }
@@ -437,7 +434,9 @@ class AiService extends BaseApiService {
       }
 
       if (method === 'GET' && url.includes('/document-generate/search2title-agent/status/')) {
-        const taskId = url.split('/').pop()
+        const parts = url.split('/')
+        const statusIndex = parts.indexOf('status')
+        const taskId = statusIndex > -1 ? parts[statusIndex + 1] : ''
         const params = config.params || {}
         return mockDataManager.getMockData('search2title-agent-status', taskId, params.brief)
       }
@@ -459,7 +458,9 @@ class AiService extends BaseApiService {
       }
 
       if (method === 'GET' && url.includes('/webpage-summary/status/')) {
-        const taskId = url.split('/').pop()
+        const parts = url.split('/')
+        const statusIndex = parts.indexOf('status')
+        const taskId = statusIndex > -1 ? parts[statusIndex + 1] : ''
         return mockDataManager.getMockData('ai-webpage-summary-status', taskId)
       }
 
