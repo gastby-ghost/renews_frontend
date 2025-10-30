@@ -8,6 +8,12 @@ import BaseApiService from './base/apiService'
 import type { ApiRequestConfig } from '@/config/api/types'
 import type { Api } from '@/typings/api'
 import { documentGenerateMockManager } from '@/mock/document-generate'
+import {
+  AsyncTaskPoller,
+  type PollingConfig,
+  type PollingTask,
+  TaskStatus
+} from '@/utils/polling/asyncTaskPoller'
 
 // 文档生成服务相关类型
 type ScopeAgentResponse = Api.Ai.ScopeAgentResponse
@@ -98,6 +104,45 @@ class DocumentGenerateService extends BaseApiService {
    */
   async cancelScopeAgentTask(taskId: string, options?: ApiRequestConfig): Promise<any> {
     return this.post(`/scope-agent/cancel/${taskId}`, undefined, options)
+  }
+
+  /**
+   * 启动Scope Agent并轮询完成
+   * @param userId 用户ID
+   * @param projectId 项目ID
+   * @param request Scope Agent请求参数
+   * @param pollingConfig 轮询配置
+   * @returns 轮询任务实例
+   */
+  async executeScopeAgentWithPolling(
+    userId: string,
+    projectId: string,
+    request: ScopeAgentRequest,
+    pollingConfig?: PollingConfig
+  ): Promise<PollingTask> {
+    const response = await this.executeScopeAgent(userId, projectId, request)
+    const taskId = (response as any).task_id
+
+    if (!taskId) {
+      throw new Error('Scope Agent任务启动失败：未获取到任务ID')
+    }
+
+    const poller = new AsyncTaskPoller(
+      () =>
+        this.getScopeAgentStatus(taskId).then((result) => ({
+          status: (result as any).status || TaskStatus.RUNNING,
+          data: result,
+          isCompleted: (result as any).status === TaskStatus.COMPLETED
+        })),
+      {
+        interval: 2000,
+        timeout: 120000,
+        maxAttempts: 60,
+        ...pollingConfig
+      }
+    )
+
+    return poller.start(`scope-agent-${taskId}`)
   }
 
   // ============= Title Agent 服务 =============
@@ -258,6 +303,45 @@ class DocumentGenerateService extends BaseApiService {
       params: { user_id: userId, project_id: projectId },
       ...options
     })
+  }
+
+  /**
+   * 启动Search2Title Agent并轮询完成
+   * @param userId 用户ID
+   * @param projectId 项目ID
+   * @param request Search2Title Agent请求参数
+   * @param pollingConfig 轮询配置
+   * @returns 轮询任务实例
+   */
+  async executeSearch2TitleAgentWithPolling(
+    userId: string,
+    projectId: string,
+    request: Search2TitleAgentRequest,
+    pollingConfig?: PollingConfig
+  ): Promise<PollingTask> {
+    const response = await this.executeSearch2TitleAgent(userId, projectId, request)
+    const taskId = (response as any).task_id
+
+    if (!taskId) {
+      throw new Error('Search2Title Agent任务启动失败：未获取到任务ID')
+    }
+
+    const poller = new AsyncTaskPoller(
+      () =>
+        this.getSearch2TitleAgentStatus(taskId, userId, projectId).then((result) => ({
+          status: (result as any).status || TaskStatus.RUNNING,
+          data: result,
+          isCompleted: (result as any).status === TaskStatus.COMPLETED
+        })),
+      {
+        interval: 2000,
+        timeout: 120000,
+        maxAttempts: 60,
+        ...pollingConfig
+      }
+    )
+
+    return poller.start(`search2title-agent-${taskId}`)
   }
 
   // ============= 便捷方法 =============

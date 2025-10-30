@@ -8,6 +8,12 @@ import BaseApiService from './base/apiService'
 import type { ApiRequestConfig } from '@/config/api/types'
 import type { Api } from '@/typings/api'
 import { mockDataManager } from '@/mock'
+import {
+  AsyncTaskPoller,
+  type PollingConfig,
+  type PollingTask,
+  TaskStatus
+} from '@/utils/polling/asyncTaskPoller'
 
 // 素材搜索相关类型
 type SearchAgentResponse = Api.Ai.SearchAgentResponse
@@ -142,6 +148,81 @@ class SearchService extends BaseApiService {
     })
   }
 
+  /**
+   * 启动Search Agent并轮询完成
+   * @param userId 用户ID
+   * @param projectId 项目ID
+   * @param request Agent搜索请求参数
+   * @param pollingConfig 轮询配置
+   * @returns 轮询任务结果
+   */
+  async executeSearchAgentWithPolling(
+    userId: string,
+    projectId: string,
+    request: {
+      brief: string
+      max_concurrent_research_units?: number
+      max_researcher_iterations?: number
+    },
+    pollingConfig?: PollingConfig
+  ): Promise<PollingTask> {
+    const response = await this.executeSearchAgent(userId, projectId, request)
+    const taskId = (response as any).task_id
+
+    if (!taskId) {
+      throw new Error('Search Agent任务启动失败：未获取到任务ID')
+    }
+
+    const poller = new AsyncTaskPoller(
+      () =>
+        this.getSearchAgentStatus(taskId, userId, projectId).then((result) => ({
+          status: (result as any).status || TaskStatus.RUNNING,
+          data: result,
+          isCompleted: (result as any).status === TaskStatus.COMPLETED
+        })),
+      {
+        interval: 2000,
+        timeout: 120000,
+        maxAttempts: 60,
+        ...pollingConfig
+      }
+    )
+
+    return poller.start(`search-agent-${taskId}`)
+  }
+
+  /**
+   * 启动Search Agent并等待完成
+   * @param userId 用户ID
+   * @param projectId 项目ID
+   * @param request Agent搜索请求参数
+   * @param pollingConfig 轮询配置
+   * @returns 搜索结果
+   */
+  async executeSearchAgentAndWait(
+    userId: string,
+    projectId: string,
+    request: {
+      brief: string
+      max_concurrent_research_units?: number
+      max_researcher_iterations?: number
+    },
+    pollingConfig?: PollingConfig
+  ): Promise<SearchAgentStatusResponse> {
+    const result = await this.executeSearchAgentWithPolling(
+      userId,
+      projectId,
+      request,
+      pollingConfig
+    )
+
+    if (result.status !== TaskStatus.COMPLETED) {
+      throw new Error(`Search Agent任务失败: ${result.error}`)
+    }
+
+    return result.data as SearchAgentStatusResponse
+  }
+
   // ============= 通用检索服务 =============
 
   /**
@@ -195,6 +276,49 @@ class SearchService extends BaseApiService {
    */
   async getRetrievalStatus(taskId: string, options?: ApiRequestConfig) {
     return this.get(`/retrieval/status/${taskId}`, undefined, options)
+  }
+
+  /**
+   * 创建检索任务并轮询完成
+   * @param q 查询关键词
+   * @param params 检索参数
+   * @param pollingConfig 轮询配置
+   * @returns 轮询任务实例
+   */
+  async createRetrievalAgentWithPolling(
+    q: string,
+    params?: {
+      freshness?: string
+      summary?: boolean
+      include?: string
+      exclude?: string
+      count?: number
+    },
+    pollingConfig?: PollingConfig
+  ): Promise<PollingTask> {
+    const response = await this.createRetrievalAgent(q, params)
+    const taskId = (response as any).task_id
+
+    if (!taskId) {
+      throw new Error('检索任务创建失败：未获取到任务ID')
+    }
+
+    const poller = new AsyncTaskPoller(
+      () =>
+        this.getRetrievalStatus(taskId).then((result) => ({
+          status: (result as any).status || TaskStatus.RUNNING,
+          data: result,
+          isCompleted: (result as any).status === TaskStatus.COMPLETED
+        })),
+      {
+        interval: 2000,
+        timeout: 120000,
+        maxAttempts: 60,
+        ...pollingConfig
+      }
+    )
+
+    return poller.start(`retrieval-${taskId}`)
   }
 
   /**

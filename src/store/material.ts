@@ -30,6 +30,7 @@ import type { SearchToolsStatusResponse } from '@/types/ai'
 import CryptoJS from 'crypto-js'
 import { useUserStore } from '@/store/modules/user'
 import { useProjectStore } from '@/store/modules/project'
+import { AsyncTaskPoller, TaskStatus } from '@/utils/polling/asyncTaskPoller'
 
 export const useMaterialStore = defineStore('material', () => {
   /**
@@ -933,9 +934,9 @@ export const useMaterialStore = defineStore('material', () => {
       // 如果item是字符串，尝试解析为JSON
       if (typeof item === 'string') {
         try {
-          console.log(`[transformSearchResultsToMaterials] 解析第${index}个JSON字符串:`, item)
+          // console.log(`[transformSearchResultsToMaterials] 解析第${index}个JSON字符串:`, item)
           const parsedItem = JSON.parse(item)
-          console.log(`[transformSearchResultsToMaterials] 解析成功:`, parsedItem)
+          // console.log(`[transformSearchResultsToMaterials] 解析成功:`, parsedItem)
           return parsedItem
         } catch (error) {
           console.error(`[transformSearchResultsToMaterials] 解析第${index}个JSON字符串失败:`, {
@@ -991,51 +992,64 @@ export const useMaterialStore = defineStore('material', () => {
 
   /**
    * 轮询Agent任务状态
-   * 定期查询Agent任务的执行状态，直到任务完成或超时
+   * 使用新的轮询系统定期查询Agent任务的执行状态
    * @param taskId 任务ID
    * @returns 任务结果
    */
   async function pollAgentStatus(taskId: string): Promise<any> {
-    const maxAttempts = 60 // 最多轮询60次
-    const interval = 20000 // 20秒间隔
+    const poller = new AsyncTaskPoller(
+      () =>
+        searchService
+          .getSearchAgentStatus(taskId, getCurrentUserId(), getCurrentProjectId())
+          .then((response) => {
+            const status = (response as any).status || TaskStatus.RUNNING
+            const progress = (response as any).progress || 0
 
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      try {
-        const statusResponse = await searchService.getSearchAgentStatus(
-          taskId,
-          getCurrentUserId(),
-          getCurrentProjectId()
-        )
+            // 更新进度
+            const currentProgress = 40 + progress * 0.6
+            updateSearchProgress('processing', currentProgress, 100, getAgentStatusMessage(status))
 
-        // 更新进度
-        const currentProgress = 40 + (statusResponse.progress || 0) * 0.6
-        updateSearchProgress(
-          'processing',
-          currentProgress,
-          100,
-          getAgentStatusMessage(statusResponse.status)
-        )
-
-        if (statusResponse.status === 'SUCCESS' && statusResponse.result) {
-          return statusResponse.result
-        } else if (statusResponse.status === 'FAILURE') {
-          throw new Error(statusResponse.error || 'Agent任务执行失败')
-        } else if (statusResponse.status === 'REVOKED') {
-          throw new Error('Agent任务已被取消')
+            return {
+              status:
+                status === 'SUCCESS'
+                  ? TaskStatus.COMPLETED
+                  : status === 'FAILURE'
+                    ? TaskStatus.FAILED
+                    : status === 'REVOKED'
+                      ? TaskStatus.CANCELLED
+                      : TaskStatus.RUNNING,
+              data: (response as any).result || response,
+              isCompleted: status === 'SUCCESS' || status === 'FAILURE' || status === 'REVOKED'
+            }
+          }),
+      {
+        interval: 2000,
+        timeout: 120000,
+        maxAttempts: 60,
+        onStatusUpdate: (status) => {
+          console.log('Agent轮询状态:', status)
+        },
+        onProgress: (attempts, max) => {
+          const progress = 40 + (attempts / max) * 60
+          updateSearchProgress('processing', progress, 100, `Agent执行中... (${attempts}/${max})`)
         }
-
-        // 任务仍在进行中，等待后继续轮询
-        await new Promise((resolve) => setTimeout(resolve, interval))
-      } catch (error) {
-        console.error(`轮询Agent状态失败 (第${attempt + 1}次):`, error)
-        if (attempt === maxAttempts - 1) {
-          throw error
-        }
-        await new Promise((resolve) => setTimeout(resolve, interval))
       }
-    }
+    )
 
-    throw new Error('Agent任务超时')
+    const task = await poller.start(`material-agent-${taskId}`)
+
+    return new Promise((resolve, reject) => {
+      const checkInterval = setInterval(() => {
+        if (task.isCompleted) {
+          clearInterval(checkInterval)
+          if (task.result.status === TaskStatus.COMPLETED) {
+            resolve(task.result.data)
+          } else {
+            reject(new Error(task.result.error || 'Agent任务执行失败'))
+          }
+        }
+      }, 100)
+    })
   }
 
   /**
@@ -1092,18 +1106,23 @@ export const useMaterialStore = defineStore('material', () => {
 
   /**
    * 获取Agent状态对应的中文消息
-   * @param status Agent状态码
+   * @param status Agent状态码或TaskStatus枚举
    * @returns 状态对应的中文消息
    */
-  function getAgentStatusMessage(status: string): string {
+  function getAgentStatusMessage(status: string | TaskStatus): string {
     const statusMap = {
       PENDING: '任务等待中...',
+      RUNNING: 'Agent正在执行...',
       STARTED: 'Agent正在执行...',
       SUCCESS: '任务完成',
+      COMPLETED: '任务完成',
       FAILURE: '任务失败',
-      REVOKED: '任务已取消'
+      FAILED: '任务失败',
+      REVOKED: '任务已取消',
+      CANCELLED: '任务已取消',
+      TIMEOUT: '任务超时'
     }
-    return statusMap[status as keyof typeof statusMap] || status
+    return statusMap[status as keyof typeof statusMap] || String(status)
   }
 
   /**

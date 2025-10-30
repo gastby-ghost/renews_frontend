@@ -12,6 +12,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { documentGenerateService } from '@/services/documentGenerateService'
+import { AsyncTaskPoller, TaskStatus } from '@/utils/polling/asyncTaskPoller'
 import type {
   ScopeAgentResponse,
   ScopeAgentStatusResponse,
@@ -74,10 +75,10 @@ export interface DocumentState {
 }
 
 /**
- * 异步任务轮询管理器
+ * 异步任务轮询管理器 - 使用新的轮询系统
  */
 class TaskPollingManager {
-  private pollingTasks = new Map<string, NodeJS.Timeout>()
+  private pollingTasks = new Map<string, AsyncTaskPoller>()
   public store: any
 
   constructor(store: any) {
@@ -87,7 +88,7 @@ class TaskPollingManager {
   /**
    * 开始轮询任务状态
    */
-  startPolling(
+  async startPolling(
     taskId: string,
     type: string,
     userId?: string,
@@ -97,37 +98,66 @@ class TaskPollingManager {
     // 清除之前的轮询
     this.stopPolling(taskId)
 
-    const poll = async () => {
-      try {
-        if (type === 'scope') {
-          const status = await this.store.getScopeTaskStatus(taskId)
-          if (status?.status === 'completed' || status?.status === 'failed') {
-            this.stopPolling(taskId)
-          }
-        } else if (type === 'search2title') {
-          const status = await this.store.getSearch2TitleTaskStatus(taskId, userId, projectId)
-          if (status?.status === 'completed' || status?.status === 'failed') {
-            this.stopPolling(taskId)
+    const statusChecker = async () => {
+      if (type === 'scope') {
+        const status = await this.store.getScopeTaskStatus(taskId)
+        if (!status) {
+          return {
+            status: TaskStatus.FAILED,
+            data: null,
+            isCompleted: true,
+            error: '获取任务状态失败'
           }
         }
-      } catch (error) {
-        console.error(`轮询任务${taskId}状态失败:`, error)
+        const taskStatus = this.mapToTaskStatus(status.status)
+        return {
+          status: taskStatus,
+          data: status,
+          isCompleted: taskStatus === TaskStatus.COMPLETED || taskStatus === TaskStatus.FAILED
+        }
+      } else if (type === 'search2title') {
+        const status = await this.store.getSearch2TitleTaskStatus(taskId, userId, projectId)
+        if (!status) {
+          return {
+            status: TaskStatus.FAILED,
+            data: null,
+            isCompleted: true,
+            error: '获取任务状态失败'
+          }
+        }
+        const taskStatus = this.mapToTaskStatus(status.status)
+        return {
+          status: taskStatus,
+          data: status,
+          isCompleted: taskStatus === TaskStatus.COMPLETED || taskStatus === TaskStatus.FAILED
+        }
+      }
+      return {
+        status: TaskStatus.RUNNING,
+        data: null,
+        isCompleted: false
       }
     }
 
-    // 立即执行一次，然后定时执行
-    poll()
-    const timer = setInterval(poll, interval)
-    this.pollingTasks.set(taskId, timer)
+    const poller = new AsyncTaskPoller(statusChecker, {
+      interval,
+      timeout: 120000,
+      maxAttempts: 40
+    })
+
+    const task = await poller.start(`document-${type}-${taskId}`)
+    this.pollingTasks.set(taskId, poller)
+
+    return task
   }
 
   /**
    * 停止轮询任务状态
    */
   stopPolling(taskId: string) {
-    const timer = this.pollingTasks.get(taskId)
-    if (timer) {
-      clearInterval(timer)
+    const poller = this.pollingTasks.get(taskId)
+    if (poller) {
+      poller.stop()
       this.pollingTasks.delete(taskId)
     }
   }
@@ -136,8 +166,25 @@ class TaskPollingManager {
    * 清除所有轮询
    */
   clearAll() {
-    this.pollingTasks.forEach((timer) => clearInterval(timer))
+    this.pollingTasks.forEach((poller) => poller.stop())
     this.pollingTasks.clear()
+  }
+
+  /**
+   * 映射状态到TaskStatus枚举
+   */
+  private mapToTaskStatus(status: string): TaskStatus {
+    const statusMap: Record<string, TaskStatus> = {
+      pending: TaskStatus.PENDING,
+      running: TaskStatus.RUNNING,
+      completed: TaskStatus.COMPLETED,
+      success: TaskStatus.COMPLETED,
+      failed: TaskStatus.FAILED,
+      failure: TaskStatus.FAILED,
+      cancelled: TaskStatus.CANCELLED,
+      revoked: TaskStatus.CANCELLED
+    }
+    return statusMap[status.toLowerCase()] || TaskStatus.RUNNING
   }
 }
 
