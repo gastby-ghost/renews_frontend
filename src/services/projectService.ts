@@ -425,33 +425,33 @@ class ProjectService extends BaseApiService {
         !url.includes('/statistics')
       ) {
         console.log(`[API-${this.serviceName}] Mock返回项目列表数据`)
+        const projects = [
+          {
+            id: 1,
+            user_id: 1,
+            name: '示例项目1',
+            status: 'active',
+            current_component: 'requirement',
+            folder_id: null,
+            last_modified: '2023-12-31T23:59:59Z',
+            created_at: '2023-01-01T00:00:00Z',
+            updated_at: '2023-12-31T23:59:59Z'
+          },
+          {
+            id: 2,
+            user_id: 1,
+            name: '示例项目2',
+            status: 'draft',
+            current_component: 'title',
+            folder_id: 1,
+            last_modified: '2023-12-30T23:59:59Z',
+            created_at: '2023-02-01T00:00:00Z',
+            updated_at: '2023-12-30T23:59:59Z'
+          }
+        ]
         const mockData = {
           success: true,
-          message: '获取项目列表成功',
-          projects: [
-            {
-              id: 1,
-              user_id: 1,
-              name: '示例项目1',
-              status: 'active',
-              current_component: 'requirement',
-              folder_id: null,
-              last_modified: '2023-12-31T23:59:59Z',
-              created_at: '2023-01-01T00:00:00Z',
-              updated_at: '2023-12-31T23:59:59Z'
-            },
-            {
-              id: 2,
-              user_id: 1,
-              name: '示例项目2',
-              status: 'draft',
-              current_component: 'title',
-              folder_id: 1,
-              last_modified: '2023-12-30T23:59:59Z',
-              created_at: '2023-02-01T00:00:00Z',
-              updated_at: '2023-12-30T23:59:59Z'
-            }
-          ],
+          projects,
           total_count: 2,
           page: 1,
           page_size: 10,
@@ -470,40 +470,48 @@ class ProjectService extends BaseApiService {
         !url.includes('/statistics')
       ) {
         const projectId = url.split('/')[2]
+        const projectDetail = {
+          id: parseInt(projectId),
+          user_id: 1,
+          name: `项目 ${projectId}`,
+          status: 'active',
+          current_component: 'requirement',
+          folder_id: null,
+          last_modified: '2023-12-31T23:59:59Z',
+          created_at: '2023-01-01T00:00:00Z',
+          updated_at: '2023-12-31T23:59:59Z'
+        }
+        console.log(`[API-${this.serviceName}] Mock项目详情响应:`, {
+          success: true,
+          data: projectDetail
+        })
         return {
           success: true,
-          message: '获取项目详情成功',
-          project: {
-            id: parseInt(projectId),
-            user_id: 1,
-            name: `项目 ${projectId}`,
-            status: 'active',
-            current_component: 'requirement',
-            folder_id: null,
-            last_modified: '2023-12-31T23:59:59Z',
-            created_at: '2023-01-01T00:00:00Z',
-            updated_at: '2023-12-31T23:59:59Z'
-          }
+          data: projectDetail
         }
       }
 
       // 创建项目 - POST /api/v1/core/projects
       if (method === 'POST' && url.includes('/projects') && !url.includes('/batch')) {
         const requestData = config.data as ProjectCreate
+        const newProject = {
+          id: Math.floor(Math.random() * 1000) + 100,
+          user_id: 1,
+          name: requestData.name,
+          status: requestData.status || 'draft',
+          current_component: requestData.current_component || 'requirement',
+          folder_id: requestData.folder_id || null,
+          last_modified: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+        console.log(`[API-${this.serviceName}] Mock创建项目响应:`, {
+          success: true,
+          data: newProject
+        })
         return {
           success: true,
-          message: '创建项目成功',
-          project: {
-            id: Math.floor(Math.random() * 1000) + 100,
-            user_id: 1,
-            name: requestData.name,
-            status: requestData.status || 'draft',
-            current_component: requestData.current_component || 'requirement',
-            folder_id: requestData.folder_id || null,
-            last_modified: new Date().toISOString(),
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          }
+          data: newProject
         }
       }
 

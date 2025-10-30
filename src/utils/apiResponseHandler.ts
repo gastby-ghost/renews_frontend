@@ -111,15 +111,12 @@ export class ApiResponseValidator {
 
   /**
    * 验证项目响应
+   * 注意：此方法用于验证单个项目对象，不包含success字段
    */
-  static validateProjectResponse(response: any): ProjectResponse {
-    const baseResponse = this.validateBaseResponse(response)
-
-    if (!baseResponse.success || !baseResponse.data) {
-      throw new Error(baseResponse.message || '项目响应失败')
+  static validateProjectResponse(projectData: any): ProjectResponse {
+    if (!projectData || typeof projectData !== 'object') {
+      throw new Error('项目数据格式错误：非对象类型')
     }
-
-    const project = baseResponse.data as any
 
     // 验证必需字段
     const requiredFields = [
@@ -133,24 +130,24 @@ export class ApiResponseValidator {
       'last_modified'
     ]
     for (const field of requiredFields) {
-      if (project[field] === undefined || project[field] === null) {
+      if (projectData[field] === undefined || projectData[field] === null) {
         throw new Error(`项目响应缺少必需字段: ${field}`)
       }
     }
 
     // 类型转换和验证
     return {
-      id: Number(project.id),
-      user_id: Number(project.user_id),
-      name: String(project.name),
-      status: String(project.status),
-      current_component: String(project.current_component),
-      created_at: String(project.created_at),
-      updated_at: String(project.updated_at),
-      last_modified: String(project.last_modified),
+      id: Number(projectData.id),
+      user_id: Number(projectData.user_id),
+      name: String(projectData.name),
+      status: String(projectData.status),
+      current_component: String(projectData.current_component),
+      created_at: String(projectData.created_at),
+      updated_at: String(projectData.updated_at),
+      last_modified: String(projectData.last_modified),
       folder_id:
-        project.folder_id !== undefined && project.folder_id !== null
-          ? Number(project.folder_id)
+        projectData.folder_id !== undefined && projectData.folder_id !== null
+          ? Number(projectData.folder_id)
           : null
     }
   }
@@ -183,19 +180,34 @@ export class ApiResponseValidator {
 
   /**
    * 验证项目详情响应
+   * 支持两种格式：
+   * 1. { success: true, data: project } - 新的统一格式
+   * 2. { success: true, project } - 旧的兼容性格式
    */
   static validateProjectDetailResponse(response: any): ProjectDetailResponse {
     const baseResponse = this.validateBaseResponse(response)
 
-    if (!baseResponse.success || !baseResponse.data) {
+    if (!baseResponse.success) {
       throw new Error(baseResponse.message || '获取项目详情失败')
     }
 
-    const project = this.validateProjectResponse({ success: true, data: baseResponse.data })
+    // 优先从 data 字段获取项目对象
+    let projectData = baseResponse.data
+
+    // 兼容性：如果没有 data 字段，直接从 response 获取
+    if (!projectData) {
+      projectData = (response as any).project
+    }
+
+    if (!projectData) {
+      throw new Error('项目详情响应缺少项目数据')
+    }
+
+    const project = this.validateProjectResponse(projectData)
 
     return {
       success: baseResponse.success,
-      message: baseResponse.message,
+      message: baseResponse.message || '获取项目详情成功',
       project
     }
   }
