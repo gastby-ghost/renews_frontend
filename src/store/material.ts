@@ -14,7 +14,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
-import { aiService } from '@/services/aiService'
+import { searchService } from '@/services/searchService'
 import { materialApiService, MaterialApiService } from '@/services/materialService'
 import type {
   Material,
@@ -235,7 +235,7 @@ export const useMaterialStore = defineStore('material', () => {
       updateSearchProgress('searching', 20, 100, '正在搜索素材...')
 
       // 调用搜索API
-      const result = await aiService.searchTools(searchParams)
+      const result = await searchService.searchTools(searchParams)
 
       updateSearchProgress('processing', 80, 100, '处理搜索结果...')
 
@@ -282,7 +282,7 @@ export const useMaterialStore = defineStore('material', () => {
 
       console.log('[material store] checkSearchToolsStatus: 开始检查搜索工具状态')
       console.log('[material store] 时间戳:', new Date().toISOString())
-      const status = await aiService.getSearchToolsStatus()
+      const status = await searchService.getSearchToolsStatus()
       console.log('[material store] checkSearchToolsStatus: 搜索工具状态检查完成')
       console.log('[material store] 完成时间戳:', new Date().toISOString())
       searchToolsStatus.value = status
@@ -381,7 +381,7 @@ export const useMaterialStore = defineStore('material', () => {
       updateSearchProgress('searching', 20, 100, 'Agent正在分析需求...')
 
       // 执行Agent搜索
-      const executeResponse = await aiService.executeSearchAgent(
+      const executeResponse = await searchService.executeSearchAgent(
         getCurrentUserId(),
         getCurrentProjectId(),
         requestData
@@ -419,8 +419,8 @@ export const useMaterialStore = defineStore('material', () => {
    */
   async function cancelAgentTask(taskId: string) {
     try {
-      // 使用 aiService 替代 agentService，因为 agentService 未定义
-      await aiService.cancelSearchAgentTask(taskId, getCurrentUserId(), getCurrentProjectId())
+      // 使用 searchService 替代 agentService，因为 agentService 未定义
+      await searchService.cancelSearchAgentTask(taskId, getCurrentUserId(), getCurrentProjectId())
 
       // 更新任务状态
       if (agentState.value.currentTask?.id === taskId) {
@@ -440,8 +440,11 @@ export const useMaterialStore = defineStore('material', () => {
    */
   async function getAgentTaskHistory() {
     try {
-      // 使用 aiService 替代 agentService，因为 agentService 未定义
-      const history = await aiService.getSearchAgentTasks(getCurrentUserId(), getCurrentProjectId())
+      // 使用 searchService 替代 agentService，因为 agentService 未定义
+      const history = await searchService.getSearchAgentTasks(
+        getCurrentUserId(),
+        getCurrentProjectId()
+      )
 
       // 转换 SearchAgentStatusResponse 到 AgentTask 类型
       const convertedTasks = (history.tasks || []).map((task) => ({
@@ -998,7 +1001,7 @@ export const useMaterialStore = defineStore('material', () => {
 
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       try {
-        const statusResponse = await aiService.getSearchAgentStatus(
+        const statusResponse = await searchService.getSearchAgentStatus(
           taskId,
           getCurrentUserId(),
           getCurrentProjectId()

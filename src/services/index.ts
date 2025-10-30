@@ -19,8 +19,8 @@ export * from './projectService'
 // 素材管理服务 - 基于OpenAPI配置
 export * from './materialService'
 
-// AI智能服务 - 基于OpenAPI配置
-export * from './aiService'
+// 素材搜索服务 - 专门服务于素材搜索模块
+export * from './searchService'
 
 // 系统偏好设置服务 - 基于OpenAPI配置
 export * from './systemPreferencesService'
