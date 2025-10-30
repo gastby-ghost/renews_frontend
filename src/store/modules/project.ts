@@ -536,6 +536,15 @@ export const useProjectStore = defineStore(
      * @param project 项目对象
      */
     const setCurrentProject = (project: ProjectResponse | null) => {
+      // 添加调试日志验证类型不匹配问题
+      console.log('[DEBUG] ProjectStore.setCurrentProject 输入:', {
+        project,
+        projectType: typeof project,
+        projectKeys: project ? Object.keys(project) : null,
+        statusType: project ? typeof project.status : null,
+        statusValue: project ? project.status : null
+      })
+
       currentProject.value = project
     }
 

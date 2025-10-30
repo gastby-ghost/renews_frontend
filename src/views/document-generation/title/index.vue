@@ -68,10 +68,10 @@
               </el-form-item>
               <el-form-item label="风格偏好">
                 <el-checkbox-group v-model="titleControls.styles">
-                  <el-checkbox label="creative">创意性</el-checkbox>
-                  <el-checkbox label="professional">专业性</el-checkbox>
-                  <el-checkbox label="catchy">吸引力</el-checkbox>
-                  <el-checkbox label="descriptive">描述性</el-checkbox>
+                  <el-checkbox value="creative">创意性</el-checkbox>
+                  <el-checkbox value="professional">专业性</el-checkbox>
+                  <el-checkbox value="catchy">吸引力</el-checkbox>
+                  <el-checkbox value="descriptive">描述性</el-checkbox>
                 </el-checkbox-group>
               </el-form-item>
               <el-form-item label="包含关键词">
@@ -265,6 +265,10 @@
     return documentStore.documentState.researchBrief && !search2titleLoading.value
   })
 
+  const canGenerateTitles = computed(() => {
+    return Boolean(documentStore.documentState.researchBrief)
+  })
+
   // 当前选中标题对应的素材
   const currentTitleMaterials = computed(() => {
     if (!titleGeneration.state.selectedTitle) return []
@@ -348,6 +352,16 @@
       try {
         const { projectService } = await import('@/services/projectService')
         const response = await projectService.getProjectDetail(numericProjectId)
+
+        // 添加调试日志验证类型不匹配问题
+        console.log('[DEBUG] API响应类型检查:', {
+          response,
+          projectType: typeof response.project,
+          projectKeys: response.project ? Object.keys(response.project) : null,
+          statusType: response.project ? typeof response.project.status : null,
+          statusValue: response.project ? response.project.status : null,
+          apiProjectType: 'Api.Project.ProjectResponse'
+        })
 
         if (response.project) {
           projectStore.setCurrentProject(response.project)

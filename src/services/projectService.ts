@@ -16,8 +16,8 @@ interface ProjectResponse {
   id: number
   user_id: number
   name: string
-  status?: string
-  current_component?: string
+  status: string
+  current_component: string
   folder_id?: number | null
   last_modified: string
   created_at: string
@@ -193,7 +193,28 @@ class ProjectService extends BaseApiService {
   ): Promise<ProjectDetailResponse> {
     try {
       const rawResponse = await this.get<any>(`/projects/${projectId}`, undefined, options)
-      return ApiResponseWrapper.wrapProjectDetail(rawResponse)
+
+      // 添加调试日志验证类型不匹配问题
+      console.log('[DEBUG] ProjectService.getProjectDetail 原始响应:', {
+        rawResponse,
+        responseType: typeof rawResponse,
+        projectKeys: rawResponse.project ? Object.keys(rawResponse.project) : null,
+        statusType: rawResponse.project ? typeof rawResponse.project.status : null,
+        statusValue: rawResponse.project ? rawResponse.project.status : null
+      })
+
+      const wrappedResponse = ApiResponseWrapper.wrapProjectDetail(rawResponse)
+
+      // 添加调试日志验证包装后的响应
+      console.log('[DEBUG] ProjectService.getProjectDetail 包装后响应:', {
+        wrappedResponse,
+        projectType: typeof wrappedResponse.project,
+        projectKeys: wrappedResponse.project ? Object.keys(wrappedResponse.project) : null,
+        statusType: wrappedResponse.project ? typeof wrappedResponse.project.status : null,
+        statusValue: wrappedResponse.project ? wrappedResponse.project.status : null
+      })
+
+      return wrappedResponse
     } catch (error) {
       throw EnhancedErrorHandler.handleApiError(error, {
         url: `/projects/${projectId}`,

@@ -118,6 +118,17 @@ export class ApiResponseValidator {
       throw new Error('项目数据格式错误：非对象类型')
     }
 
+    // 添加调试日志验证类型不匹配问题
+    console.log('[DEBUG] ApiResponseWrapper.validateProjectResponse 输入:', {
+      projectData,
+      projectDataType: typeof projectData,
+      projectKeys: Object.keys(projectData),
+      statusType: typeof projectData.status,
+      statusValue: projectData.status,
+      statusUndefined: projectData.status === undefined,
+      statusNull: projectData.status === null
+    })
+
     // 验证必需字段
     const requiredFields = [
       'id',
@@ -136,12 +147,12 @@ export class ApiResponseValidator {
     }
 
     // 类型转换和验证
-    return {
+    const result = {
       id: Number(projectData.id),
       user_id: Number(projectData.user_id),
       name: String(projectData.name),
-      status: String(projectData.status),
-      current_component: String(projectData.current_component),
+      status: String(projectData.status || ''), // 确保status始终是string类型，即使原始数据是undefined
+      current_component: String(projectData.current_component || ''),
       created_at: String(projectData.created_at),
       updated_at: String(projectData.updated_at),
       last_modified: String(projectData.last_modified),
@@ -150,6 +161,17 @@ export class ApiResponseValidator {
           ? Number(projectData.folder_id)
           : null
     }
+
+    // 添加调试日志验证类型转换结果
+    console.log('[DEBUG] ApiResponseWrapper.validateProjectResponse 输出:', {
+      result,
+      resultType: typeof result,
+      resultKeys: Object.keys(result),
+      statusType: typeof result.status,
+      statusValue: result.status
+    })
+
+    return result
   }
 
   /**
@@ -163,7 +185,7 @@ export class ApiResponseValidator {
     }
 
     const projects = Array.isArray(response.projects) ? response.projects : []
-    const validatedProjects = projects.map((project) => this.validateProjectResponse(project))
+    const validatedProjects = projects.map((project: any) => this.validateProjectResponse(project))
 
     return {
       success: baseResponse.success,
@@ -185,6 +207,16 @@ export class ApiResponseValidator {
   static validateProjectDetailResponse(response: any): ProjectDetailResponse {
     const baseResponse = this.validateBaseResponse(response)
 
+    // 添加调试日志验证类型不匹配问题
+    console.log('[DEBUG] ApiResponseWrapper.validateProjectDetailResponse 输入:', {
+      response,
+      baseResponse,
+      projectDataFromData: baseResponse.data,
+      projectDataFromResponse: (response as any).project,
+      projectDataType: baseResponse.data ? typeof baseResponse.data : null,
+      projectResponseType: (response as any).project ? typeof (response as any).project : null
+    })
+
     if (!baseResponse.success) {
       throw new Error(baseResponse.message || '获取项目详情失败')
     }
@@ -202,6 +234,15 @@ export class ApiResponseValidator {
     }
 
     const project = this.validateProjectResponse(projectData)
+
+    // 添加调试日志验证类型转换结果
+    console.log('[DEBUG] ApiResponseWrapper.validateProjectDetailResponse 输出:', {
+      project,
+      projectType: typeof project,
+      projectKeys: Object.keys(project),
+      statusType: typeof project.status,
+      statusValue: project.status
+    })
 
     return {
       success: baseResponse.success,
