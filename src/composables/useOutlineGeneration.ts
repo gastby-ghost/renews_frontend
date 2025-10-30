@@ -39,10 +39,18 @@ export function useOutlineGeneration() {
     generatedOutline: []
   })
 
+  // 清理过期的标题任务
+  const cleanupExpiredOutlineTask = () => {
+    documentStore.cleanupExpiredTasks()
+  }
+
   // 同步文档状态到本地状态
   watch(
     () => documentState.value.generatedOutline,
     (newOutline) => {
+      // 清理过期任务
+      cleanupExpiredOutlineTask()
+
       state.isGenerating = loading.value && documentState.value.outlineTask?.status === 'running'
       state.progress = documentState.value.outlineTask?.progress || 0
       state.error = documentState.value.outlineTask?.error || null

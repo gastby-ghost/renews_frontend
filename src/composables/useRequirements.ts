@@ -94,7 +94,21 @@ export function useRequirements() {
   })
 
   const hasScopeTask = computed(() => {
-    return documentState.value.scopeTask !== null
+    const task = documentState.value.scopeTask
+    if (!task) return false
+
+    // 检查任务是否有效（未过期且未完成）
+    const now = Date.now()
+    const taskAge = now - task.createdAt
+    const EXPIRED_THRESHOLD = 30 * 60 * 1000 // 30分钟
+
+    // 如果任务过期，直接返回 false
+    if (taskAge > EXPIRED_THRESHOLD) {
+      return false
+    }
+
+    // 只有pending或running状态才认为有有效任务
+    return task.status === 'pending' || task.status === 'running'
   })
 
   const scopeTaskStatus = computed(() => {
@@ -290,10 +304,18 @@ ${form.specialRequirements || '无'}
     return brief
   }
 
+  // 清理过期的 Scope 任务（使用 Store 的统一清理方法）
+  const cleanupExpiredScopeTask = () => {
+    documentStore.cleanupExpiredTasks()
+  }
+
   // 监听 Scope 任务状态变化
   watch(
     () => documentState.value.scopeTask,
     (task) => {
+      // 立即清理过期的任务
+      cleanupExpiredScopeTask()
+
       if (task) {
         state.isExecutingScope = task.status === 'pending' || task.status === 'running'
       } else {
@@ -387,6 +409,9 @@ ${form.specialRequirements || '无'}
         console.error('加载需求数据失败:', error)
       }
     }
+
+    // 清理过期的 Scope 任务
+    cleanupExpiredScopeTask()
   }
 
   // 重置表单
@@ -444,12 +469,17 @@ ${form.specialRequirements || '无'}
 
   // 获取任务进度
   const getTaskProgress = computed(() => {
-    return documentState.value.scopeTask?.progress || 0
+    const task = documentState.value.scopeTask
+    if (!task || !hasScopeTask.value) return 0
+    return task.progress || 0
   })
 
   // 获取任务状态文本
   const getTaskStatusText = computed(() => {
-    const status = scopeTaskStatus.value
+    const task = documentState.value.scopeTask
+    if (!task || !hasScopeTask.value) return ''
+
+    const status = task.status
     switch (status) {
       case 'pending':
         return '等待执行'

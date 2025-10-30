@@ -240,6 +240,9 @@
     // 更新当前步骤
     documentStore.documentState.currentStep = 'content'
 
+    // 清理过期的任务
+    documentStore.cleanupExpiredTasks()
+
     // 加载项目信息
     await loadProject()
 

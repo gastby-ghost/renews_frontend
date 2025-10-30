@@ -707,6 +707,71 @@ export const useDocumentGenerateStore = defineStore(
       })
     }
 
+    /**
+     * 清理过期的任务
+     * 清理条件：
+     * 1. 任务创建时间超过30分钟
+     * 2. 已完成/失败的任务超过5分钟
+     */
+    const cleanupExpiredTasks = () => {
+      const now = Date.now()
+      const EXPIRED_THRESHOLD = 30 * 60 * 1000 // 30分钟
+      const COMPLETED_CLEANUP_THRESHOLD = 5 * 60 * 1000 // 5分钟
+
+      const state = documentState.value
+
+      // 检查并清理 scopeTask
+      if (state.scopeTask) {
+        const taskAge = now - state.scopeTask.createdAt
+        if (
+          taskAge > EXPIRED_THRESHOLD ||
+          (['completed', 'failed'].includes(state.scopeTask.status) &&
+            now - state.scopeTask.updatedAt > COMPLETED_CLEANUP_THRESHOLD)
+        ) {
+          state.scopeTask = null
+        }
+      }
+
+      // 检查并清理 titleTask
+      if (state.titleTask) {
+        const taskAge = now - state.titleTask.createdAt
+        if (
+          taskAge > EXPIRED_THRESHOLD ||
+          (['completed', 'failed'].includes(state.titleTask.status) &&
+            now - state.titleTask.updatedAt > COMPLETED_CLEANUP_THRESHOLD)
+        ) {
+          state.titleTask = null
+        }
+      }
+
+      // 检查并清理 outlineTask
+      if (state.outlineTask) {
+        const taskAge = now - state.outlineTask.createdAt
+        if (
+          taskAge > EXPIRED_THRESHOLD ||
+          (['completed', 'failed'].includes(state.outlineTask.status) &&
+            now - state.outlineTask.updatedAt > COMPLETED_CLEANUP_THRESHOLD)
+        ) {
+          state.outlineTask = null
+        }
+      }
+
+      // 检查并清理 search2titleTask
+      if (state.search2titleTask) {
+        const taskAge = now - state.search2titleTask.createdAt
+        if (
+          taskAge > EXPIRED_THRESHOLD ||
+          (['completed', 'failed'].includes(state.search2titleTask.status) &&
+            now - state.search2titleTask.updatedAt > COMPLETED_CLEANUP_THRESHOLD)
+        ) {
+          state.search2titleTask = null
+        }
+      }
+
+      // 更新文档状态的更新时间
+      updateDocumentState({})
+    }
+
     return {
       // 状态
       documentState,
@@ -736,7 +801,8 @@ export const useDocumentGenerateStore = defineStore(
       updateResearchBrief,
       cancelTask,
       checkServiceStatus,
-      cleanupCompletedTasks
+      cleanupCompletedTasks,
+      cleanupExpiredTasks
     }
   },
   {
