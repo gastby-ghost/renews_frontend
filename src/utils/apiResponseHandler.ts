@@ -163,9 +163,7 @@ export class ApiResponseValidator {
     }
 
     const projects = Array.isArray(response.projects) ? response.projects : []
-    const validatedProjects = projects.map((project) =>
-      this.validateProjectResponse({ success: true, data: project })
-    )
+    const validatedProjects = projects.map((project) => this.validateProjectResponse(project))
 
     return {
       success: baseResponse.success,
