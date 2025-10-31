@@ -456,51 +456,13 @@
 
       if (response) {
         search2titleTaskId.value = response.task_id
-
-        // 开始轮询任务状态
-        pollSearch2TitleStatus(response.task_id)
+        // Store内部已自动启动轮询，无需重复手动轮询
+        ElMessage.success('Search2Title任务已启动，正在执行中...')
       }
     } catch {
       ElMessage.error('Search2Title执行失败')
       search2titleLoading.value = false
     }
-  }
-
-  // 轮询Search2Title任务状态
-  const pollSearch2TitleStatus = async (taskId: string) => {
-    const interval = setInterval(async () => {
-      try {
-        const status = await documentStore.getSearch2TitleTaskStatus(taskId, 'user-id', projectId)
-
-        if (status) {
-          if (status.status === 'SUCCESS') {
-            clearInterval(interval)
-            search2titleLoading.value = false
-
-            // 更新素材和标题
-            if (status.result?.research_data?.web_search_data) {
-              // 更新搜索结果到store
-              documentStore.updateSearchResults(status.result.research_data.web_search_data)
-            }
-
-            if (status.result?.title_data?.titles) {
-              // 通过Store更新，数据会自动持久化
-              documentStore.updateDocumentState({
-                generatedTitles: status.result.title_data.titles
-              })
-            }
-
-            ElMessage.success('Search2Title执行完成')
-          } else if (status.status === 'FAILURE') {
-            clearInterval(interval)
-            search2titleLoading.value = false
-            ElMessage.error(status.error || 'Search2Title执行失败')
-          }
-        }
-      } catch (error) {
-        console.error('轮询Search2Title状态失败:', error)
-      }
-    }, 5000)
   }
 
   // 取消Search2Title任务

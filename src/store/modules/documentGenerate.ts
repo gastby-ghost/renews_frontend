@@ -126,6 +126,21 @@ class TaskPollingManager {
           }
         }
         const taskStatus = this.mapToTaskStatus(status.status)
+
+        // 任务完成时，更新Store中的数据和UI状态
+        if (taskStatus === TaskStatus.COMPLETED && status.result) {
+          // 更新搜索结果
+          if (status.result?.research_data?.web_search_data) {
+            this.store.updateSearchResults(status.result.research_data.web_search_data)
+          }
+          // 更新生成的标题
+          if (status.result?.title_data?.titles) {
+            this.store.updateDocumentState({
+              generatedTitles: status.result.title_data.titles
+            })
+          }
+        }
+
         return {
           status: taskStatus,
           data: status,
@@ -142,7 +157,19 @@ class TaskPollingManager {
     const poller = new AsyncTaskPoller(statusChecker, {
       interval,
       timeout: 120000,
-      maxAttempts: 40
+      maxAttempts: 40,
+      onStatusUpdate: (status: TaskStatus) => {
+        // 任务完成时停止loading状态
+        if (status === TaskStatus.COMPLETED || status === TaskStatus.FAILED) {
+          this.store.setLoading(false)
+
+          // 任务成功时显示成功消息
+          if (status === TaskStatus.COMPLETED) {
+            // 可以通过ElNotification或事件总线发送通知
+            console.log('Search2Title任务执行完成')
+          }
+        }
+      }
     })
 
     const task = await poller.start(`document-${type}-${taskId}`)
@@ -285,7 +312,20 @@ export const useDocumentGenerateStore = defineStore(
         }
         // 修复：添加async/await确保Promise被正确等待
         return await getSearch2TitleTaskStatus(taskId, userId, projectId)
-      }
+      },
+      // 添加缺失的方法
+      updateSearchResults: (results: SearchResultItem[]) => {
+        updateDocumentState({ searchResults: results })
+      },
+      updateDocumentState: (updates: Partial<DocumentState>) => {
+        updateDocumentState(updates)
+      },
+      // 添加设置loading状态的方法
+      setLoading: (value: boolean) => {
+        loading.value = value
+      },
+      // 获取loading状态
+      getLoading: () => loading.value
     }
 
     /**

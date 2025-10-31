@@ -159,6 +159,86 @@ export const documentGenerateService: ApiEndpointConfig = {
       response: {
         dataType: 'object'
       }
+    },
+
+    // ========== Search2Title Agent 服务 ==========
+    '/search2title-agent/execute': {
+      description:
+        'Execute Search2Title Agent - combines research and title generation in two-phase workflow',
+      methods: ['POST'],
+      request: {
+        bodyType: 'json',
+        requireAuth: true,
+        params: {
+          user_id: 'string',
+          project_id: 'string',
+          brief: 'string'
+        }
+      },
+      response: {
+        dataType: 'Search2TitleAgentResponse'
+      }
+    },
+    '/search2title-agent/status/{task_id}': {
+      description: 'Get the status of a search2title agent task',
+      methods: ['GET'],
+      request: {
+        requireAuth: true,
+        params: {
+          task_id: 'string',
+          user_id: 'string',
+          project_id: 'string'
+        }
+      },
+      response: {
+        dataType: 'Search2TitleAgentStatusResponse'
+      }
+    },
+    '/search2title-agent/tasks': {
+      description: 'List search2title agent tasks for a user',
+      methods: ['GET'],
+      request: {
+        requireAuth: true,
+        params: {
+          user_id: 'string',
+          project_id: 'string | null',
+          limit: 'number | null',
+          offset: 'number | null'
+        }
+      },
+      response: {
+        dataType: 'Search2TitleAgentListResponse'
+      }
+    },
+    '/search2title-agent/cancel/{task_id}': {
+      description: 'Cancel a running search2title agent task',
+      methods: ['POST'],
+      request: {
+        requireAuth: true,
+        params: {
+          task_id: 'string',
+          user_id: 'string',
+          project_id: 'string'
+        }
+      },
+      response: {
+        dataType: 'object'
+      }
+    },
+    '/search2title-agent/state/{task_id}': {
+      description: 'Get the current LangGraph state for a running search2title agent task',
+      methods: ['GET'],
+      request: {
+        requireAuth: true,
+        params: {
+          task_id: 'string',
+          user_id: 'string',
+          project_id: 'string'
+        }
+      },
+      response: {
+        dataType: 'object'
+      }
     }
   }
 }
