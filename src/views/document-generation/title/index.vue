@@ -152,19 +152,23 @@
           >
             <div class="section-header">
               <h3>「{{ titleGeneration.state.selectedTitle.title }}」对应素材</h3>
+              <div class="section-actions">
+                <el-tag type="success" size="large">
+                  共 {{ currentTitleMaterials.length }} 个素材
+                </el-tag>
+              </div>
             </div>
             <div class="materials-list">
-              <el-card
+              <UnifiedMaterialCard
                 v-for="material in currentTitleMaterials"
                 :key="material.id"
-                class="material-card"
-                shadow="hover"
-              >
-                <div class="material-content">
-                  <h4>{{ material.title }}</h4>
-                  <p class="material-summary">{{ material.summary }}</p>
-                </div>
-              </el-card>
+                :material="material"
+                :context="'search'"
+                :show-selection="false"
+                :show-score="true"
+                @preview="handleMaterialPreview"
+                @click="handleMaterialClick"
+              />
             </div>
           </div>
         </div>
@@ -200,6 +204,14 @@
       @materials-selected="handleMaterialsSelected"
     />
   </el-dialog>
+
+  <!-- 素材预览对话框 -->
+  <MaterialPreviewDialog
+    :material="previewMaterial"
+    :visible="showPreviewDialog"
+    context="search"
+    @update:visible="showPreviewDialog = $event"
+  />
 </template>
 
 <script setup lang="ts">
@@ -210,6 +222,8 @@
   import { useDocumentGenerateStore } from '@/store/modules/documentGenerate'
   import { useProjectStore } from '@/store/modules/project'
   import TitleCard from '@/components/custom/TitleCard.vue'
+  import UnifiedMaterialCard from '@/components/custom/material-card/UnifiedMaterialCard.vue'
+  import MaterialPreviewDialog from '@/components/custom/material-card/MaterialPreviewDialog.vue'
   import MaterialSelectionForTitle from '@/components/custom/material-search/MaterialSelectionForTitle.vue'
   import type { Title } from '@/types/ai'
   import type { Material } from '@/types/material'
@@ -241,6 +255,10 @@
 
   // 素材选择对话框状态
   const showMaterialSelectionDialog = ref(false)
+
+  // 素材预览对话框状态
+  const previewMaterial = ref<Material | null>(null)
+  const showPreviewDialog = ref(false)
 
   // Search2Title Agent状态
   const search2titleTaskId = ref<string | null>(null)
@@ -523,6 +541,18 @@
   const goBack = () => {
     router.push(`/document-generation/requirements/${projectId}`)
   }
+
+  // 处理素材预览
+  const handleMaterialPreview = (material: Material) => {
+    previewMaterial.value = material
+    showPreviewDialog.value = true
+  }
+
+  // 处理素材点击
+  const handleMaterialClick = (material: Material) => {
+    // 可以在此处添加点击逻辑，比如打开详情等
+    console.log('素材被点击:', material)
+  }
 </script>
 
 <style scoped lang="scss">
@@ -684,9 +714,10 @@
 
   .titles-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
-    gap: 20px;
-    margin-bottom: 30px;
+    grid-template-columns: repeat(auto-fit, minmax(520px, 1fr));
+    gap: 24px;
+    padding: 4px;
+    margin-bottom: 40px;
   }
 
   .title-card {
@@ -787,49 +818,33 @@
   // 素材相关样式
   .materials-section,
   .title-materials-section {
-    padding: 20px;
+    padding: 24px;
     margin-top: 30px;
     background: var(--el-bg-color-page);
     border-radius: 8px;
 
     .materials-list {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 16px;
-      margin-top: 16px;
-    }
-
-    .material-card {
-      .material-content {
-        h4 {
-          margin: 0 0 8px;
-          font-size: 15px;
-          color: var(--el-text-color-primary);
-        }
-
-        .material-summary {
-          display: -webkit-box;
-          margin: 0 0 12px;
-          overflow: hidden;
-          font-size: 13px;
-          line-height: 1.5;
-          color: var(--el-text-color-regular);
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
-        }
-
-        .material-tags {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 6px;
-        }
-      }
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
     }
   }
 
   .title-materials-section {
-    background: var(--el-color-success-light-9);
+    background: linear-gradient(
+      135deg,
+      var(--el-color-success-light-9) 0%,
+      var(--el-color-success-light-8) 100%
+    );
     border: 1px solid var(--el-color-success-light-3);
+    box-shadow: inset 0 1px 0 var(--el-color-success-light-7);
+
+    .section-header {
+      h3 {
+        color: var(--el-color-success-dark-2);
+      }
+    }
   }
 
   @media (width <= 1200px) {
@@ -860,6 +875,16 @@
     .navigation-actions {
       flex-direction: column;
       align-items: center;
+    }
+
+    .materials-section,
+    .title-materials-section {
+      padding: 16px;
+
+      .materials-list {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
     }
   }
 </style>
