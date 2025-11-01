@@ -284,10 +284,14 @@
             <!-- Agent搜索进度 -->
             <div v-if="searching" class="agent-progress">
               <el-progress
-                :percentage="searchProgress"
-                :status="searchProgress === 100 ? 'success' : undefined"
+                :percentage="
+                  searchProgress.current && searchProgress.total
+                    ? Math.round((searchProgress.current / searchProgress.total) * 100)
+                    : 0
+                "
+                :status="searchProgress.stage === 'completed' ? 'success' : undefined"
               />
-              <p class="progress-text">正在检索素材，请稍候...</p>
+              <p class="progress-text">{{ searchProgress.message || '正在检索素材，请稍候...' }}</p>
             </div>
 
             <!-- Agent搜索结果 -->
@@ -486,27 +490,25 @@
       const mockMaterials: Material[] = [
         {
           id: 'lib-1',
+          user_id: 'system',
           title: 'AI医疗市场研究报告',
           summary: '2025年中国AI+医疗市场正以年复合增长率58.3%的速度爆发式增长',
           url: 'https://example.com/report1',
           tags: ['AI医疗', '市场研究', '技术突破'],
           createdAt: new Date(),
           score: 0.95,
-          key_excerpts: ['市场增长率58.3%', '预计2030年市场规模1200亿元'],
-          content: '',
-          type: 'report'
+          key_excerpts: ['市场增长率58.3%', '预计2030年市场规模1200亿元']
         },
         {
           id: 'lib-2',
+          user_id: 'system',
           title: 'FDA人工智能医疗器械指南',
           summary: 'FDA发布人工智能医疗器械指南草案，提出全生命周期管理框架',
           url: 'https://example.com/guideline',
           tags: ['FDA指南', 'AI医疗器械', '监管政策'],
           createdAt: new Date(),
           score: 0.92,
-          key_excerpts: ['生命周期管理', '透明度问题', '偏见风险'],
-          content: '',
-          type: 'policy'
+          key_excerpts: ['生命周期管理', '透明度问题', '偏见风险']
         }
       ]
 
@@ -523,7 +525,8 @@
   }
 
   // 处理模式切换
-  const handleModeChange = (mode: 'library' | 'keyword' | 'agent') => {
+  const handleModeChange = (val: any) => {
+    const mode = val as 'library' | 'keyword' | 'agent'
     searchMode.value = mode
     // 重置相关状态
     if (mode === 'keyword') {
@@ -543,7 +546,7 @@
     try {
       const config = {
         keywords: keywordForm.keywords,
-        providers: ['tavily'] as const,
+        providers: ['tavily'] as string[],
         searchScope: '',
         filters: { tags: [] }
       }
@@ -565,7 +568,7 @@
     try {
       const config = {
         keywords: agentForm.brief,
-        providers: ['tavily'] as const,
+        providers: ['tavily'] as string[],
         searchScope: '',
         agentType: 'search' as const,
         agentConfig: {
@@ -580,7 +583,7 @@
 
       // 转换搜索结果为Material格式
       agentSearchResults.value = materialStore.transformSearchResultsToMaterials(
-        materialStore.searchResults
+        searchResults.value
       )
 
       ElMessage.success('Agent检索完成')
@@ -593,6 +596,13 @@
   const handleGenerateTitles = async () => {
     if (selectedMaterials.value.length === 0) {
       ElMessage.warning('请先选择素材')
+      return
+    }
+
+    // 检查研究简报
+    const researchBrief = props.researchBrief || documentStore.documentState.researchBrief
+    if (!researchBrief) {
+      ElMessage.warning('缺少研究简报，请先完善需求')
       return
     }
 
@@ -615,14 +625,16 @@
       documentStore.updateSearchResults(searchResults)
 
       // 调用title API生成标题
-      const response = await documentStore.generateTitles()
+      const response = await documentStore.generateTitles(researchBrief, searchResults)
 
       if (response) {
         ElMessage.success(`成功生成 ${response.title_count} 个标题`)
-        emit('materialsSelected', selectedMaterials.value)
+        // 直接关闭对话框，Store状态变化会自动更新父组件UI
+        emit('close')
       }
-    } catch {
-      ElMessage.error('标题生成失败')
+    } catch (error: any) {
+      console.error('标题生成失败:', error)
+      ElMessage.error(error?.message || '标题生成失败')
     } finally {
       titleGenerating.value = false
     }
