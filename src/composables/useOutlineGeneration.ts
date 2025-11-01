@@ -10,6 +10,7 @@ import { computed, reactive, watch } from 'vue'
 import { useDocumentGenerateStore } from '@/store/modules/documentGenerate'
 import { storeToRefs } from 'pinia'
 import type { OutlineSection } from '@/types/ai'
+import type { Material } from '@/types/material'
 
 /**
  * 大纲生成组合式函数返回状态
@@ -93,7 +94,9 @@ export function useOutlineGeneration() {
       content_direction: '',
       data_requirements: [],
       level: 1,
-      estimated_word_count: 500
+      estimated_word_count: 500,
+      priority: 'medium',
+      sources: []
     }
     state.generatedOutline.push(newSection)
   }
@@ -152,17 +155,46 @@ export function useOutlineGeneration() {
           content_direction: '介绍主题背景和重要性',
           data_requirements: ['行业数据', '案例分析'],
           level: 1,
-          estimated_word_count: 800
+          estimated_word_count: 800,
+          priority: 'high' as const,
+          sources: []
         },
         {
           title: '主要部分',
           content_direction: '详细阐述核心内容',
           data_requirements: ['统计数据', '专家观点'],
           level: 1,
-          estimated_word_count: 2000
+          estimated_word_count: 2000,
+          priority: 'medium' as const,
+          sources: []
         }
       ]
     }
+  }
+
+  // 基于素材生成大纲
+  const generateOutlineFromMaterials = async (materials: Material[]) => {
+    // 根据素材生成大纲，每个素材对应一个章节
+    const outline = materials.map((material, index) => {
+      // 从素材的summary中提取关键信息生成内容方向
+      const contentDirection = `基于素材"${material.title}"进行深入分析：${material.summary}`
+
+      // 使用素材的tags作为数据需求
+      const dataRequirements =
+        material.tags && material.tags.length > 0 ? [...material.tags] : [`素材${index + 1}的内容`]
+
+      return {
+        title: material.title,
+        content_direction: contentDirection,
+        data_requirements: dataRequirements,
+        level: 1,
+        estimated_word_count: 1000,
+        priority: 'medium' as const,
+        sources: material.url ? [material.url] : []
+      }
+    })
+
+    return { outline }
   }
 
   // 获取大纲工具状态
@@ -190,6 +222,7 @@ export function useOutlineGeneration() {
     validateOutline,
     exportOutline,
     generateOutline,
+    generateOutlineFromMaterials,
     getOutlineToolsStatus
   }
 }
