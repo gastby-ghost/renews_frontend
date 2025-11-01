@@ -2,183 +2,184 @@
   <div class="title-selection-container">
     <ArtTableHeader title="标题选择" :actions="headerActions" @back="goBack" />
 
-    <!-- 项目加载提示 -->
-    <div
-      v-if="loadingProject || (!projectStore.currentProject && projectId)"
-      class="project-loading"
-    >
-      <el-empty :description="loadingProject ? '正在加载项目信息...' : '项目信息加载失败'" />
-    </div>
-
-    <div v-else class="main-content">
-      <div class="step-indicator">
-        <div class="step-item completed">
-          <div class="step-number">✓</div>
-          <div class="step-label">需求</div>
-        </div>
-        <div class="step-connector completed"></div>
-        <div class="step-item active">
-          <div class="step-number">2</div>
-          <div class="step-label">标题</div>
-        </div>
-        <div class="step-connector"></div>
-        <div class="step-item">
-          <div class="step-number">3</div>
-          <div class="step-label">大纲</div>
-        </div>
-        <div class="step-connector"></div>
-        <div class="step-item">
-          <div class="step-number">4</div>
-          <div class="step-label">正文</div>
-        </div>
+    <div class="main-wrapper">
+      <!-- 项目加载提示 -->
+      <div
+        v-if="loadingProject || (!projectStore.currentProject && projectId)"
+        class="project-loading"
+      >
+        <el-empty :description="loadingProject ? '正在加载项目信息...' : '项目信息加载失败'" />
       </div>
 
-      <!-- 生成进度显示 -->
-      <div v-if="titleGeneration.state.isGenerating" class="generation-progress">
-        <el-progress
-          :percentage="titleGeneration.state.progress"
-          :status="titleGeneration.state.progress === 100 ? 'success' : undefined"
-          :stroke-width="6"
-        />
-        <p class="progress-text">正在生成标题，请稍候...</p>
-      </div>
-
-      <div class="title-generation-section">
-        <div class="generation-controls">
-          <div class="control-group">
-            <h4>标题生成控制</h4>
-            <el-form :model="titleControls" label-width="100px">
-              <el-form-item label="标题数量">
-                <el-slider
-                  v-model="titleControls.count"
-                  :min="3"
-                  :max="10"
-                  :step="1"
-                  show-input
-                  show-stops
-                />
-              </el-form-item>
-              <el-form-item label="标题长度">
-                <el-radio-group v-model="titleControls.length">
-                  <!-- 修复：使用 value 属性替代即将废弃的 label 属性 -->
-                  <el-radio value="short">简短</el-radio>
-                  <el-radio value="medium">适中</el-radio>
-                  <el-radio value="long">详细</el-radio>
-                </el-radio-group>
-              </el-form-item>
-              <el-form-item label="风格偏好">
-                <el-checkbox-group v-model="titleControls.styles">
-                  <el-checkbox value="creative">创意性</el-checkbox>
-                  <el-checkbox value="professional">专业性</el-checkbox>
-                  <el-checkbox value="catchy">吸引力</el-checkbox>
-                  <el-checkbox value="descriptive">描述性</el-checkbox>
-                </el-checkbox-group>
-              </el-form-item>
-              <el-form-item label="包含关键词">
-                <div class="keywords-section">
-                  <el-tag
-                    v-for="keyword in titleGeneration.state.customKeywords"
-                    :key="keyword"
-                    closable
-                    @close="titleGeneration.removeCustomKeyword(keyword)"
-                    type="info"
-                  >
-                    {{ keyword }}
-                  </el-tag>
-                  <el-input
-                    v-model="newKeyword"
-                    placeholder="添加关键词"
-                    size="small"
-                    style="width: 120px"
-                    @keyup.enter="addKeyword"
-                  />
-                </div>
-              </el-form-item>
-            </el-form>
+      <div v-else class="main-content">
+        <div class="step-indicator">
+          <div class="step-item completed">
+            <div class="step-number">✓</div>
+            <div class="step-label">需求</div>
+          </div>
+          <div class="step-connector completed"></div>
+          <div class="step-item active">
+            <div class="step-number">2</div>
+            <div class="step-label">标题</div>
+          </div>
+          <div class="step-connector"></div>
+          <div class="step-item">
+            <div class="step-number">3</div>
+            <div class="step-label">大纲</div>
+          </div>
+          <div class="step-connector"></div>
+          <div class="step-item">
+            <div class="step-number">4</div>
+            <div class="step-label">正文</div>
           </div>
         </div>
 
-        <div class="generation-actions">
-          <!-- 方式一：检索+生成标题 -->
-          <el-button type="primary" size="large" @click="openMaterialSelection">
-            <el-icon><Search /></el-icon>
-            检索素材后生成标题
-          </el-button>
+        <!-- 生成进度显示 -->
+        <div v-if="titleGeneration.state.isGenerating" class="generation-progress">
+          <el-progress
+            :percentage="titleGeneration.state.progress"
+            :status="titleGeneration.state.progress === 100 ? 'success' : undefined"
+            :stroke-width="6"
+          />
+          <p class="progress-text">正在生成标题，请稍候...</p>
+        </div>
 
-          <!-- 方式二：直接Search2Title -->
+        <div class="title-generation-section">
+          <div class="generation-controls">
+            <div class="control-group">
+              <h4>标题生成控制</h4>
+              <el-form :model="titleControls" label-width="100px">
+                <el-form-item label="标题数量">
+                  <el-slider
+                    v-model="titleControls.count"
+                    :min="3"
+                    :max="10"
+                    :step="1"
+                    show-input
+                    show-stops
+                  />
+                </el-form-item>
+                <el-form-item label="标题长度">
+                  <el-radio-group v-model="titleControls.length">
+                    <el-radio value="short">简短</el-radio>
+                    <el-radio value="medium">适中</el-radio>
+                    <el-radio value="long">详细</el-radio>
+                  </el-radio-group>
+                </el-form-item>
+                <el-form-item label="风格偏好">
+                  <el-checkbox-group v-model="titleControls.styles">
+                    <el-checkbox value="creative">创意性</el-checkbox>
+                    <el-checkbox value="professional">专业性</el-checkbox>
+                    <el-checkbox value="catchy">吸引力</el-checkbox>
+                    <el-checkbox value="descriptive">描述性</el-checkbox>
+                  </el-checkbox-group>
+                </el-form-item>
+                <el-form-item label="包含关键词">
+                  <div class="keywords-section">
+                    <el-tag
+                      v-for="keyword in titleGeneration.state.customKeywords"
+                      :key="keyword"
+                      closable
+                      @close="titleGeneration.removeCustomKeyword(keyword)"
+                      type="info"
+                    >
+                      {{ keyword }}
+                    </el-tag>
+                    <el-input
+                      v-model="newKeyword"
+                      placeholder="添加关键词"
+                      size="small"
+                      style="width: 120px"
+                      @keyup.enter="addKeyword"
+                    />
+                  </div>
+                </el-form-item>
+              </el-form>
+            </div>
+          </div>
+
+          <div class="generation-actions">
+            <!-- 方式一：检索+生成标题 -->
+            <el-button type="primary" size="large" @click="openMaterialSelection">
+              <el-icon><Search /></el-icon>
+              检索素材后生成标题
+            </el-button>
+
+            <!-- 方式二：直接Search2Title -->
+            <el-button
+              type="success"
+              size="large"
+              @click="executeSearch2Title"
+              :loading="search2titleLoading"
+              :disabled="!canGenerateSearch2Title"
+            >
+              <el-icon><MagicStick /></el-icon>
+              一键Search2Title
+            </el-button>
+
+            <el-button v-if="search2titleLoading" @click="cancelSearch2Title"> 取消任务 </el-button>
+
+            <p class="generation-tip" v-if="!canGenerateTitles && !canGenerateSearch2Title">
+              请确保有研究简报
+            </p>
+          </div>
+        </div>
+
+        <div class="titles-display-section" v-if="titleGeneration.hasGeneratedTitles">
+          <div class="section-header">
+            <h3>生成的标题选项</h3>
+            <el-tag type="info"
+              >共 {{ (titleGeneration.state.generatedTitles || []).length }} 个标题</el-tag
+            >
+          </div>
+
+          <div class="titles-grid">
+            <TitleCard
+              v-for="(title, index) in titleGeneration.state.generatedTitles"
+              :key="index"
+              :title="title"
+              :is-selected="titleGeneration.state.selectedTitle === title"
+              :score="getTitleScore(title)"
+              :suggestions="getTitleSuggestions(title)"
+              @select="titleGeneration.selectTitle"
+            />
+          </div>
+
+          <!-- 当前选中标题对应的素材 -->
+          <div
+            v-if="titleGeneration.state.selectedTitle && currentTitleMaterials.length > 0"
+            class="title-materials-section"
+          >
+            <div class="section-header">
+              <h3>「{{ titleGeneration.state.selectedTitle.title }}」对应素材</h3>
+            </div>
+            <div class="materials-list">
+              <el-card
+                v-for="material in currentTitleMaterials"
+                :key="material.id"
+                class="material-card"
+                shadow="hover"
+              >
+                <div class="material-content">
+                  <h4>{{ material.title }}</h4>
+                  <p class="material-summary">{{ material.summary }}</p>
+                </div>
+              </el-card>
+            </div>
+          </div>
+        </div>
+
+        <div class="navigation-actions">
+          <el-button @click="goBack" size="large">返回需求</el-button>
           <el-button
             type="success"
             size="large"
-            @click="executeSearch2Title"
-            :loading="search2titleLoading"
-            :disabled="!canGenerateSearch2Title"
+            @click="confirmTitle"
+            :disabled="!titleGeneration.hasSelectedTitle"
           >
-            <el-icon><MagicStick /></el-icon>
-            一键Search2Title
+            确认标题并继续
           </el-button>
-
-          <el-button v-if="search2titleLoading" @click="cancelSearch2Title"> 取消任务 </el-button>
-
-          <p class="generation-tip" v-if="!canGenerateTitles && !canGenerateSearch2Title">
-            请确保有研究简报
-          </p>
         </div>
-      </div>
-
-      <div class="titles-display-section" v-if="titleGeneration.hasGeneratedTitles">
-        <div class="section-header">
-          <h3>生成的标题选项</h3>
-          <el-tag type="info"
-            >共 {{ (titleGeneration.state.generatedTitles || []).length }} 个标题</el-tag
-          >
-        </div>
-
-        <div class="titles-grid">
-          <TitleCard
-            v-for="(title, index) in titleGeneration.state.generatedTitles"
-            :key="index"
-            :title="title"
-            :is-selected="titleGeneration.state.selectedTitle === title"
-            :score="getTitleScore(title)"
-            :suggestions="getTitleSuggestions(title)"
-            @select="titleGeneration.selectTitle"
-          />
-        </div>
-
-        <!-- 当前选中标题对应的素材 -->
-        <div
-          v-if="titleGeneration.state.selectedTitle && currentTitleMaterials.length > 0"
-          class="title-materials-section"
-        >
-          <div class="section-header">
-            <h3>「{{ titleGeneration.state.selectedTitle.title }}」对应素材</h3>
-          </div>
-          <div class="materials-list">
-            <el-card
-              v-for="material in currentTitleMaterials"
-              :key="material.id"
-              class="material-card"
-              shadow="hover"
-            >
-              <div class="material-content">
-                <h4>{{ material.title }}</h4>
-                <p class="material-summary">{{ material.summary }}</p>
-              </div>
-            </el-card>
-          </div>
-        </div>
-      </div>
-
-      <div class="navigation-actions">
-        <el-button @click="goBack" size="large">返回需求</el-button>
-        <el-button
-          type="success"
-          size="large"
-          @click="confirmTitle"
-          :disabled="!titleGeneration.hasSelectedTitle"
-        >
-          确认标题并继续
-        </el-button>
       </div>
     </div>
   </div>
@@ -507,6 +508,10 @@
     max-width: 1400px;
     padding: 20px;
     margin: 0 auto;
+  }
+
+  .main-wrapper {
+    width: 100%;
   }
 
   .step-indicator {

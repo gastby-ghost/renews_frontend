@@ -2,7 +2,7 @@
   <div class="requirements-container">
     <ArtTableHeader title="需求定义" :actions="headerActions" @back="goBack" />
 
-    <div class="requirements-content">
+    <div class="main-wrapper">
       <!-- 项目加载提示 -->
       <div v-if="!projectStore.currentProject && route.params.projectId" class="project-loading">
         <el-empty description="正在加载项目信息..." />
@@ -101,12 +101,12 @@
 
             <el-form-item label="语气风格" prop="tone">
               <el-radio-group v-model="state.form.tone">
-                <el-radio label="formal">正式</el-radio>
-                <el-radio label="casual">轻松</el-radio>
-                <el-radio label="professional">专业</el-radio>
-                <el-radio label="friendly">友好</el-radio>
-                <el-radio label="persuasive">说服性</el-radio>
-                <el-radio label="objective">客观</el-radio>
+                <el-radio value="formal">正式</el-radio>
+                <el-radio value="casual">轻松</el-radio>
+                <el-radio value="professional">专业</el-radio>
+                <el-radio value="friendly">友好</el-radio>
+                <el-radio value="persuasive">说服性</el-radio>
+                <el-radio value="objective">客观</el-radio>
               </el-radio-group>
             </el-form-item>
 
@@ -208,43 +208,43 @@
         </div>
       </div>
     </div>
-
-    <!-- 编辑简报对话框 -->
-    <el-dialog
-      v-model="state.briefingDialogVisible"
-      title="编辑AI简报"
-      width="900px"
-      :close-on-click-modal="false"
-    >
-      <el-tabs v-model="activeTab" class="briefing-edit-tabs">
-        <el-tab-pane label="编辑模式" name="edit">
-          <el-form :model="{}" label-width="80px">
-            <el-form-item label="简报内容">
-              <el-input
-                v-model="state.editableBriefing"
-                type="textarea"
-                :rows="15"
-                placeholder="请输入Markdown格式的简报内容"
-              />
-            </el-form-item>
-          </el-form>
-        </el-tab-pane>
-        <el-tab-pane label="预览模式" name="preview">
-          <div
-            class="briefing-preview markdown-body"
-            v-html="renderedEditableBriefing"
-            style="max-height: 500px; padding: 20px; overflow-y: auto"
-          ></div>
-        </el-tab-pane>
-      </el-tabs>
-      <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="state.briefingDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="saveBriefing">保存</el-button>
-        </span>
-      </template>
-    </el-dialog>
   </div>
+
+  <!-- 编辑简报对话框 -->
+  <el-dialog
+    v-model="state.briefingDialogVisible"
+    title="编辑AI简报"
+    width="900px"
+    :close-on-click-modal="false"
+  >
+    <el-tabs v-model="activeTab" class="briefing-edit-tabs">
+      <el-tab-pane label="编辑模式" name="edit">
+        <el-form label-width="80px">
+          <el-form-item label="简报内容">
+            <el-input
+              v-model="state.editableBriefing"
+              type="textarea"
+              :rows="15"
+              placeholder="请输入Markdown格式的简报内容"
+            />
+          </el-form-item>
+        </el-form>
+      </el-tab-pane>
+      <el-tab-pane label="预览模式" name="preview">
+        <div
+          class="briefing-preview markdown-body"
+          v-html="renderedEditableBriefing"
+          style="max-height: 500px; padding: 20px; overflow-y: auto"
+        ></div>
+      </el-tab-pane>
+    </el-tabs>
+    <template #footer>
+      <span class="dialog-footer">
+        <el-button @click="state.briefingDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="saveBriefing">保存</el-button>
+      </span>
+    </template>
+  </el-dialog>
 </template>
 
 <script setup lang="ts">
@@ -350,6 +350,10 @@
     max-width: 1200px;
     padding: 20px;
     margin: 0 auto;
+  }
+
+  .main-wrapper {
+    width: 100%;
   }
 
   .step-indicator {

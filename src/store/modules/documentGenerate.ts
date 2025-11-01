@@ -166,7 +166,7 @@ class TaskPollingManager {
           // 任务成功时显示成功消息
           if (status === TaskStatus.COMPLETED) {
             // 可以通过ElNotification或事件总线发送通知
-            console.log('Search2Title任务执行完成')
+            // console.log('Search2Title任务执行完成')
           }
         }
       }
