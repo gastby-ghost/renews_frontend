@@ -17,6 +17,28 @@
 
 ---
 
+## 核心开发命令
+
+**开发与构建：**
+
+- `pnpm dev` - 启动开发服务器，支持热重载和自动打开浏览器
+- `pnpm build` - 构建生产版本，包含 TypeScript 编译
+- `pnpm serve` - 本地预览生产版本
+
+**代码质量：**
+
+- `pnpm lint` - 运行 ESLint 进行代码质量检查
+- `pnpm fix` - 自动修复 ESLint 问题
+- `pnpm lint:prettier` - 使用 Prettier 格式化所有文件类型
+- `pnpm lint:stylelint` - 修复 SCSS/CSS 样式问题
+- `pnpm lint:lint-staged` - 运行 lint-staged 进行预提交检查
+
+**开发工具：**
+
+- `pnpm commit` - 使用 git-cz (Commitizen) 进行交互式提交
+- `pnpm clean:dev` - 清理开发缓存和临时文件
+- `pnpm prepare` - 设置 Husky git 钩子
+
 ## 项目概述和技术栈
 
 ### 项目简介
