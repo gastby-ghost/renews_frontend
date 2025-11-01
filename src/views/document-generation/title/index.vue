@@ -246,6 +246,20 @@
   const search2titleTaskId = ref<string | null>(null)
   const search2titleLoading = ref(false)
 
+  // 监听Search2Title任务状态变化
+  const updateSearch2TitleLoading = () => {
+    if (documentStore.documentState.search2titleTask) {
+      const task = documentStore.documentState.search2titleTask
+      // 根据任务状态更新loading状态
+      search2titleLoading.value = task.status === 'pending' || task.status === 'running'
+
+      // 如果任务完成或失败，清空taskId
+      if (task.status === 'completed' || task.status === 'failed') {
+        search2titleTaskId.value = null
+      }
+    }
+  }
+
   // 头部操作按钮
   const headerActions = computed(() => {
     return [
@@ -268,6 +282,11 @@
 
   const canGenerateTitles = computed(() => {
     return Boolean(documentStore.documentState.researchBrief)
+  })
+
+  // 监听documentStore变化，更新Search2Title loading状态
+  documentStore.$subscribe(() => {
+    updateSearch2TitleLoading()
   })
 
   // 当前选中标题对应的素材
@@ -311,6 +330,9 @@
 
     // 提取关键词
     extractKeywords()
+
+    // 初始化Search2Title loading状态
+    updateSearch2TitleLoading()
   })
 
   // 加载项目信息
@@ -457,7 +479,7 @@
 
       if (response) {
         search2titleTaskId.value = response.task_id
-        // Store内部已自动启动轮询，无需重复手动轮询
+        // 不在这里设置search2titleLoading为false，让watch监听自动处理
         ElMessage.success('Search2Title任务已启动，正在执行中...')
       }
     } catch {
@@ -472,7 +494,7 @@
 
     try {
       await documentStore.cancelSearch2TitleTask(search2titleTaskId.value, 'user-id', projectId)
-      search2titleLoading.value = false
+      // 让store更新完成后，监听器会自动更新search2titleLoading状态
       search2titleTaskId.value = null
     } catch {
       ElMessage.error('取消Search2Title任务失败')
