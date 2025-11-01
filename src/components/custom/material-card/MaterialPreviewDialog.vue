@@ -15,8 +15,8 @@
         </div>
         <div class="material-preview__mode-switch" v-if="context === 'management'">
           <el-radio-group v-model="previewMode" size="small">
-            <el-radio-button label="preview">预览模式</el-radio-button>
-            <el-radio-button label="edit">编辑模式</el-radio-button>
+            <el-radio-button value="preview">预览模式</el-radio-button>
+            <el-radio-button value="edit">编辑模式</el-radio-button>
           </el-radio-group>
         </div>
       </div>

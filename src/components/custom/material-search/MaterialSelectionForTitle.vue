@@ -107,15 +107,15 @@
         <!-- 检索模式切换 -->
         <div class="search-mode-switch">
           <el-radio-group v-model="searchMode" @change="handleModeChange">
-            <el-radio-button label="library">
+            <el-radio-button value="library">
               <el-icon><Folder /></el-icon>
               素材库
             </el-radio-button>
-            <el-radio-button label="keyword">
+            <el-radio-button value="keyword">
               <el-icon><EditPen /></el-icon>
               关键词检索
             </el-radio-button>
-            <el-radio-button label="agent">
+            <el-radio-button value="agent">
               <el-icon><Cpu /></el-icon>
               Agent检索
             </el-radio-button>

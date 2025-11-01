@@ -1,233 +1,1246 @@
-# CLAUDE.md
+# Art Design Pro 系统架构文档
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+## 目录
 
-## File Synchronization Requirement
+1. [项目概述和技术栈](#项目概述和技术栈)
+2. [系统整体架构设计](#系统整体架构设计)
+3. [分层架构详细说明](#分层架构详细说明)
+4. [核心模块和组件设计](#核心模块和组件设计)
+5. [数据流和状态管理](#数据流和状态管理)
+6. [服务层架构](#服务层架构)
+7. [异步任务轮询系统](#异步任务轮询系统)
+8. [路由和导航系统](#路由和导航系统)
+9. [安全和权限设计](#安全和权限设计)
+10. [性能优化策略](#性能优化策略)
+11. [开发规范和最佳实践](#开发规范和最佳实践)
+12. [部署和运维考虑](#部署和运维考虑)
 
-⚠️ **IMPORTANT**: Whenever updating this file, you **MUST** also update `CLAUDE_ZH.md` to ensure both files remain consistent and up-to-date.
+---
 
-## Design-First Development Philosophy
+## 项目概述和技术栈
 
-⚠️ **CRITICAL**: When building new pages or features, **always start with design** and **always consider existing components first**. This project emphasizes a component-first approach to ensure consistency, maintainability, and efficiency.
+### 项目简介
 
-### Design-First Workflow
+Art Design Pro 是一个基于 Vue 3 + TypeScript 的现代化后台管理系统，专注于用户体验和快速开发。项目采用 Element Plus 设计规范，提供了美观、实用的前端界面，支持多种主题模式和自定义设置。
 
-1. **Analyze Requirements** - Understand what needs to be built
-2. **Component Research** - Study existing components in `COMPONENT_LIBRARY.md` first
-3. **Design with Components** - Design the page using available components before creating new ones
-4. **Layout Planning** - Structure the page using existing layout components
-5. **Component Composition** - Combine existing components to create new functionality
-6. **Create New Components Only When Necessary** - Only build new components when existing ones cannot meet requirements
+### 核心特性
 
-### Component-First Principles
+- 🎨 **现代化UI设计**：基于 Element Plus 的精美界面设计
+- 🌓 **多主题支持**：浅色/暗黑主题切换，支持自定义主题
+- 🔍 **全局搜索**：支持全文搜索和智能搜索
+- 📱 **移动端适配**：响应式设计，完美适配移动设备
+- 🤖 **AI集成**：集成多种AI服务，支持智能搜索和内容生成
+- 📊 **丰富组件**：提供丰富的业务组件和图表组件
+- 🔐 **权限管理**：完整的权限控制系统
+- 🌍 **国际化**：支持多语言切换
 
-- **Reuse Over Create**: Always prefer using existing components over creating new ones
-- **Composition Over Customization**: Combine existing components rather than heavily customizing
-- **Consistency Over Uniqueness**: Maintain design consistency across the application
-- **Efficiency Over Novelty**: Build efficiently using proven components
+### 技术栈
 
-## Essential Development Commands
+#### 前端框架
 
-**Development & Build:**
+- **Vue 3.5.12**：采用 Composition API 和 `<script setup>` 语法
+- **TypeScript 5.6.3**：提供类型安全和更好的开发体验
+- **Vite 6.1.0**：现代化的构建工具，提供快速的开发体验
 
-- `pnpm dev` - Start development server with hot reload and auto-open browser
-- `pnpm build` - Build for production with TypeScript compilation
-- `pnpm serve` - Preview production build locally
+#### 状态管理
 
-**Code Quality:**
+- **Pinia 3.0.2**：Vue 3 官方推荐的状态管理库
+- **pinia-plugin-persistedstate 4.3.0**：状态持久化插件
 
-- `pnpm lint` - Run ESLint for code quality checks
-- `pnpm fix` - Auto-fix ESLint issues
-- `pnpm lint:prettier` - Format code with Prettier across all file types
-- `pnpm lint:stylelint` - Fix SCSS/CSS style issues
-- `pnpm lint:lint-staged` - Run lint-staged for pre-commit hooks
+#### UI组件库
 
-**Development Tools:**
+- **Element Plus 2.10.2**：基于 Vue 3 的企业级UI组件库
+- **@element-plus/icons-vue 2.3.1**：Element Plus 图标库
 
-- `pnpm commit` - Interactive commit with git-cz (Commitizen)
-- `pnpm clean:dev` - Clean development cache and temporary files
-- `pnpm prepare` - Setup Husky git hooks
+#### 路由和导航
 
-## Advanced Feature Systems
+- **Vue Router 4.4.2**：Vue 3 官方路由管理器
 
-### Material Library with AI Search
+#### HTTP客户端
 
-- **AI-Enhanced Search**: DeepSeek integration for intelligent material search
-- **Search Progress Visualization**: Real-time search progress components
-- **Material Card System**: Unified material display with batch management
-- **API Integration**: `@ai_api/search-tools` for advanced search capabilities
+- **Axios 1.7.5**：基于 Promise 的 HTTP 客户端
 
-### AI Document Generation
+#### 工具库
 
-- **5-Step Workflow**: Project list → Requirements → Title → Outline → Content
-- **AI Integration**: Complete AI-powered document creation with localStorage persistence
-- **Rich Text Editing**: WangEditor integration with AI suggestions
-- **State Management**: Vue 3 reactive system with project-specific storage
+- **@vueuse/core 11.0.0**：Vue 组合式函数工具集
+- **lodash-es 4.17.21**：实用的 JavaScript 工具库
+- **crypto-js 4.2.0**：加密算法库
+- **mitt 3.0.1**：小型事件发射器
 
-### API Management System
+#### 图表和可视化
 
-- **Centralized Configuration**: All APIs managed in `src/config/api/index.ts`
-- **Mock/Real Switching**: Runtime API switching with floating toggle button
-- **Development Tools**: Global debugging via `window.__DEV_TOOLS__`
-- **Type Safety**: Complete TypeScript integration with OpenAPI specifications
+- **ECharts 5.6.0**：强大的数据可视化库
 
-## Component Library
+#### 编辑器和富文本
 
-⚠️ **CRITICAL**: When working with UI components, building new features, or modifying existing component functionality, **ALWAYS read `COMPONENT_LIBRARY.md` first** for comprehensive documentation.
+- **@wangeditor/editor 5.1.23**：富文本编辑器
+- **@wangeditor/editor-for-vue**：WangEditor 的 Vue 3 组件
 
-### Auto-Import System
+#### 其他功能
 
-- **Components**: All components in `src/components/` are auto-imported
-- **Composables**: VueUse, Vue Router, Pinia functions auto-imported
-- **Element Plus**: Components and icons auto-imported
-- **Type Safety**: Auto-generated TypeScript definitions
+- **vue-i18n 9.14.0**：国际化支持
+- **nprogress 0.2.0**：页面加载进度条
+- **xlsx 0.18.5**：Excel 文件处理
+- **file-saver 2.0.5**：文件保存工具
+- **qrcode.vue 3.6.0**：二维码生成
+- **vue-draggable-plus 0.6.0**：拖拽功能
 
-### Key Component Categories
+#### 开发工具
 
-**Layout Components:**
+- **ESLint 9.9.1**：代码质量检查
+- **Prettier 3.5.3**：代码格式化
+- **Stylelint 16.20.0**：样式代码检查
+- **Husky 9.1.5**：Git 钩子管理
+- **lint-staged 15.5.2**：暂存文件检查
+- **commitizen 4.3.0**：规范化提交信息
 
-- `ArtLayouts` - Main layout with responsive design
-- `ArtHeaderBar` - Top navigation with global search and notifications
-- `ArtWorkTab` - Multi-tab navigation with persistent state
-- `ArtBreadcrumb` - Dynamic breadcrumb navigation
+---
 
-**Chart Components:**
+## 系统整体架构设计
 
-- Comprehensive ECharts wrappers (bar, line, pie, radar, scatter, map)
-- Responsive design with theme integration
-- Performance optimized with lazy loading
+### 架构概览
 
-**Form Components:**
+Art Design Pro 采用分层架构设计，从上到下分为表示层、业务逻辑层、数据访问层和基础设施层。系统遵循单向数据流原则，确保数据流向清晰可预测。
 
-- Enhanced search bars with advanced filtering
-- Excel import/export functionality
-- Rich text editor (WangEditor) integration
-- Drag verification components
+```mermaid
+graph TB
+    subgraph "表示层 (Presentation Layer)"
+        A[Views 页面组件] --> B[Components 业务组件]
+        B --> C[Composables 组合式函数]
+    end
 
-## Project Architecture
+    subgraph "业务逻辑层 (Business Logic Layer)"
+        C --> D[Store 状态管理]
+        D --> E[Services API服务]
+    end
 
-### Technology Stack
+    subgraph "数据访问层 (Data Access Layer)"
+        E --> F[Utils 工具函数]
+        F --> G[HTTP/Storage 数据访问]
+    end
 
-- **Vue 3** with Composition API and `<script setup>` syntax
-- **TypeScript** with strict mode for full type safety
-- **Vite** for fast development and optimized builds
-- **Element Plus** as primary UI component library
-- **Pinia** for state management with persistence
-- **Vue Router 4** with hash history
-- **SCSS** with CSS custom properties for theming
+    subgraph "基础设施层 (Infrastructure Layer)"
+        G --> H[Types 类型定义]
+        H --> I[Config 配置管理]
+    end
+```
 
-### Directory Structure
+### 核心架构原则
+
+1. **分层架构**：清晰的职责分离，每层只关注自己的核心功能
+2. **单向数据流**：数据从上到下流动，事件从下到上传递
+3. **模块化设计**：高内聚、低耦合的模块结构
+4. **类型安全**：使用 TypeScript 确保类型安全
+5. **组件化开发**：可复用的组件设计，提高开发效率
+6. **响应式设计**：基于 Vue 3 的响应式系统
+
+### 系统边界与接口
+
+```mermaid
+graph LR
+    subgraph "前端应用"
+        A[Vue 3 应用]
+        B[组件库]
+        C[状态管理]
+        D[路由系统]
+    end
+
+    subgraph "外部服务"
+        E[AI 服务 API]
+        F[核心服务 API]
+        G[素材服务 API]
+    end
+
+    subgraph "本地存储"
+        H[LocalStorage]
+        I[SessionStorage]
+        J[IndexedDB]
+    end
+
+    A --> E
+    A --> F
+    A --> G
+    C --> H
+    C --> I
+    A --> J
+```
+
+---
+
+## 分层架构详细说明
+
+### 📁 表示层 (Presentation Layer)
+
+#### `src/views/`
+
+**职责**：页面级组件，路由对应的视图 **特点**：组合多个业务组件，处理页面级布局 **示例**：dashboard、article、material-management等页面
+
+```typescript
+// 页面组件示例
+export default defineComponent({
+  name: 'MaterialSearch',
+  setup() {
+    // 使用组合式函数管理页面逻辑
+    const { searchResults, searching, executeSearch } = useMaterialSearch()
+
+    return {
+      searchResults,
+      searching,
+      executeSearch
+    }
+  }
+})
+```
+
+#### `src/components/`
+
+**职责**：可复用的UI组件 **子目录**：
+
+- `core/` - 核心UI组件（基础组件、布局、图表）
+- `custom/` - 自定义业务组件（素材搜索、素材卡片）
+- `dev/` - 开发工具组件
+
+**组件设计原则**：
+
+- 单一职责原则
+- 组合优于继承
+- 使用插槽提供扩展点
+- Props 验证和默认值
+- 事件命名规范
+
+#### `src/composables/`
+
+**职责**：可复用的业务逻辑和UI状态管理 **特点**：组合式函数，封装复杂的用户交互流程 **示例**：useMaterialSearch、useAuth、useTheme等
+
+```typescript
+// 组合式函数示例
+export function useMaterialSearch() {
+  const searching = ref(false)
+  const searchResults = ref<Material[]>([])
+
+  const executeSearch = async (config: SearchConfig) => {
+    searching.value = true
+    try {
+      const results = await materialApiService.search(config)
+      searchResults.value = results
+    } finally {
+      searching.value = false
+    }
+  }
+
+  return {
+    searching: readonly(searching),
+    searchResults: readonly(searchResults),
+    executeSearch
+  }
+}
+```
+
+### 📁 状态管理层 (State Management Layer)
+
+#### `src/store/`
+
+**职责**：全局状态管理 **子目录**：
+
+- `modules/` - 模块化状态（用户、项目、设置等）
+- `material.ts` - 素材相关状态管理
+- `user.ts` - 用户相关状态管理
+
+**状态管理原则**：
+
+- 单一数据源
+- 异步操作封装在action中
+- 使用computed派生状态
+- 状态持久化策略
+
+```typescript
+// Store 示例
+export const useMaterialStore = defineStore('material', () => {
+  // 状态
+  const materials = ref<Material[]>([])
+  const selectedMaterials = ref<string[]>([])
+  const loading = ref(false)
+
+  // 计算属性
+  const selectedMaterialList = computed(() =>
+    materials.value.filter((m) => selectedMaterials.value.includes(m.id))
+  )
+
+  // 操作
+  const addMaterial = (material: Material) => {
+    materials.value.unshift(material)
+  }
+
+  const toggleSelection = (id: string) => {
+    const index = selectedMaterials.value.indexOf(id)
+    if (index > -1) {
+      selectedMaterials.value.splice(index, 1)
+    } else {
+      selectedMaterials.value.push(id)
+    }
+  }
+
+  return {
+    materials: readonly(materials),
+    selectedMaterials: readonly(selectedMaterials),
+    selectedMaterialList,
+    loading: readonly(loading),
+    addMaterial,
+    toggleSelection
+  }
+})
+```
+
+### 📁 业务逻辑层 (Business Logic Layer)
+
+#### `src/services/`
+
+**职责**：API调用和业务逻辑封装 **子目录**：
+
+- `base/` - 基础API服务类
+- 具体服务文件（aiService、materialService等）
+
+**服务层设计**：
+
+- 继承BaseApiService，支持Mock/真实API切换
+- 统一错误处理
+- 请求/响应拦截
+- 类型安全的API调用
+
+```typescript
+// 服务层示例
+class MaterialApiService extends BaseApiService {
+  constructor() {
+    super('material')
+  }
+
+  async createMaterials(projectId: number, materials: MaterialCreateRequest[]) {
+    const request: AddCompleteMaterialRequest = {
+      project_id: projectId,
+      materials
+    }
+    return this.post<MaterialListResponse>('/materials/batch', request)
+  }
+
+  async getProjectMaterials(projectId: number, params?: any) {
+    return this.get<MaterialListResponse>(`/projects/${projectId}/materials`, params)
+  }
+}
+```
+
+### 📁 数据访问层 (Data Access Layer)
+
+#### `src/utils/http/`
+
+**职责**：HTTP请求处理 **功能**：请求拦截、响应处理、错误处理、认证管理
+
+```typescript
+// HTTP 拦截器示例
+axiosInstance.interceptors.request.use((request) => {
+  const { accessToken } = useUserStore()
+  if (accessToken) {
+    request.headers.set('Authorization', `Bearer ${accessToken}`)
+  }
+  return request
+})
+
+axiosInstance.interceptors.response.use(
+  (response) => {
+    // 统一响应处理
+    return response
+  },
+  (error) => {
+    // 统一错误处理
+    return Promise.reject(handleError(error))
+  }
+)
+```
+
+#### `src/utils/storage/`
+
+**职责**：本地存储管理 **功能**：数据持久化、版本管理、兼容性检查
+
+#### `src/mock/`
+
+**职责**：Mock数据管理 **功能**：开发环境数据模拟、API响应模拟
+
+### 📁 基础设施层 (Infrastructure Layer)
+
+#### `src/types/`
+
+**职责**：TypeScript类型定义 **子目录**：api、common、component、store等
+
+#### `src/utils/`
+
+**职责**：通用工具函数 **子目录**：auth、dataprocess、theme、validation等
+
+#### `src/router/`
+
+**职责**：路由配置和导航 **功能**：路由守卫、权限控制、路由别名
+
+#### `src/locales/`
+
+**职责**：国际化管理 **功能**：多语言支持、文本本地化
+
+#### `src/directives/`
+
+**职责**：Vue自定义指令 **示例**：auth、highlight、ripple、roles等
+
+---
+
+## 核心模块和组件设计
+
+### 素材管理模块
+
+素材管理是系统的核心功能模块，包含素材搜索、管理和组织等功能。
+
+#### 模块结构
+
+```mermaid
+graph TB
+    subgraph "素材管理模块"
+        A[MaterialSearch 素材搜索] --> B[MaterialManagement 素材管理]
+        A --> C[AgentMaterialSearch AI搜索]
+        B --> D[MaterialCard 素材卡片]
+        B --> E[MaterialList 素材列表]
+        C --> F[SearchConfig 搜索配置]
+        C --> G[AgentConfig Agent配置]
+    end
+
+    subgraph "状态管理"
+        H[materialStore] --> I[搜索状态]
+        H --> J[选中状态]
+        H --> K[分页状态]
+    end
+
+    subgraph "服务层"
+        L[materialService] --> M[素材CRUD]
+        L --> N[批量操作]
+        O[aiService] --> P[智能搜索]
+        O --> Q[内容生成]
+    end
+
+    A --> H
+    B --> H
+    C --> H
+    H --> L
+    H --> O
+```
+
+#### 核心组件
+
+1. **MaterialSearch**：素材搜索组件
+
+   - 支持关键词搜索
+   - 多种搜索提供商
+   - 搜索历史记录
+   - 高级筛选功能
+
+2. **AgentMaterialSearch**：AI智能搜索组件
+
+   - AI驱动的智能搜索
+   - 搜索结果分析
+   - 相关推荐
+   - 搜索路径可视化
+
+3. **MaterialManagement**：素材管理组件
+
+   - 素材列表展示
+   - 批量操作
+   - 标签管理
+   - 分页加载
+
+4. **MaterialCard**：素材卡片组件
+   - 素材信息展示
+   - 预览功能
+   - 选择操作
+   - 快捷操作
+
+### 用户认证模块
+
+用户认证模块负责用户登录、注册、权限验证等功能。
+
+#### 认证流程
+
+```mermaid
+sequenceDiagram
+    participant U as 用户
+    participant V as View组件
+    participant S as userStore
+    participant A as authService
+    participant H as HTTP工具
+    participant API as 后端API
+
+    U->>V: 登录操作
+    V->>S: 调用登录方法
+    S->>A: 发送登录请求
+    A->>H: HTTP请求
+    H->>API: 认证请求
+    API-->>H: 返回token
+    H-->>A: 处理响应
+    A-->>S: 返回认证结果
+    S->>S: 更新用户状态
+    S->>S: 设置token
+    S-->>V: 返回登录结果
+    V-->>U: 显示登录状态
+```
+
+#### 权限控制
+
+系统实现了多层次的权限控制：
+
+1. **路由级权限**：基于用户角色控制路由访问
+2. **组件级权限**：使用指令控制组件显示
+3. **操作级权限**：基于权限标记控制具体操作
+4. **API级权限**：后端API权限验证
+
+```typescript
+// 路由权限配置
+{
+  path: '/system',
+  name: 'System',
+  meta: {
+    roles: ['R_SUPER', 'R_ADMIN']
+  }
+}
+
+// 组件权限指令
+<v-auth auth-mark="add">
+  <el-button>新增</el-button>
+</v-auth>
+
+// 操作权限检查
+const hasPermission = (authMark: string) => {
+  return userStore.info.roles?.some(role =>
+    role.permissions?.includes(authMark)
+  )
+}
+```
+
+### 主题系统
+
+主题系统支持多种主题模式和自定义配置。
+
+#### 主题架构
+
+```mermaid
+graph TB
+    subgraph "主题系统"
+        A[主题配置] --> B[浅色主题]
+        A --> C[暗黑主题]
+        A --> D[自定义主题]
+
+        B --> E[主题变量]
+        C --> E
+        D --> E
+
+        E --> F[CSS变量]
+        F --> G[组件样式]
+
+        H[主题切换] --> A
+        I[主题设置] --> A
+        J[主题持久化] --> A
+    end
+```
+
+#### 主题实现
+
+```scss
+// 主题变量定义
+:root {
+  // 主色调
+  --el-color-primary: #409eff;
+  --el-color-success: #67c23a;
+  --el-color-warning: #e6a23c;
+  --el-color-danger: #f56c6c;
+  --el-color-info: #909399;
+
+  // 背景色
+  --el-bg-color: #ffffff;
+  --el-bg-color-page: #f2f3f5;
+
+  // 文字颜色
+  --el-text-color-primary: #303133;
+  --el-text-color-regular: #606266;
+  --el-text-color-secondary: #909399;
+}
+
+// 暗黑主题
+[data-theme='dark'] {
+  --el-bg-color: #141414;
+  --el-bg-color-page: #0a0a0a;
+  --el-text-color-primary: #e5eaf3;
+  --el-text-color-regular: #cfd3dc;
+  --el-text-color-secondary: #a3a6ad;
+}
+```
+
+---
+
+## 数据流和状态管理
+
+### 状态管理架构
+
+系统采用 Pinia 作为状态管理库，实现了模块化的状态管理。
+
+```mermaid
+graph TB
+    subgraph "状态管理架构"
+        A[Pinia Store] --> B[用户状态]
+        A --> C[素材状态]
+        A --> D[设置状态]
+        A --> E[项目状态]
+        A --> F[菜单状态]
+        A --> G[工作台状态]
+
+        H[持久化插件] --> A
+        I[开发工具] --> A
+    end
+
+    subgraph "组件层"
+        J[Vue组件] --> K[组合式函数]
+        K --> A
+    end
+
+    subgraph "服务层"
+        L[API服务] --> A
+        M[本地存储] --> A
+    end
+```
+
+### 核心状态模块
+
+#### 用户状态 (userStore)
+
+```typescript
+export const useUserStore = defineStore('userStore', () => {
+  // 状态
+  const isLogin = ref(false)
+  const info = ref<Partial<Api.Auth.UserResponse>>({})
+  const accessToken = ref('')
+  const refreshToken = ref('')
+
+  // 操作
+  const loginWithAuthResponse = async (authResponse: Api.Auth.AuthResponse) => {
+    if (authResponse.success && authResponse.token) {
+      setToken(authResponse.token, authResponse.refresh_token)
+      setLoginStatus(true)
+      await fetchUserInfo()
+      return true
+    }
+    return false
+  }
+
+  const logOut = async () => {
+    // 清空状态
+    info.value = {}
+    isLogin.value = false
+    accessToken.value = ''
+    refreshToken.value = ''
+
+    // 调用登出API
+    await authService.logout()
+
+    // 跳转到登录页
+    router.push(RoutesAlias.Login)
+  }
+
+  return {
+    isLogin: readonly(isLogin),
+    info: readonly(info),
+    accessToken: readonly(accessToken),
+    loginWithAuthResponse,
+    logOut
+  }
+})
+```
+
+#### 素材状态 (materialStore)
+
+```typescript
+export const useMaterialStore = defineStore('material', () => {
+  // 状态
+  const materials = ref<Material[]>([])
+  const selectedMaterials = ref<string[]>([])
+  const searchResults = ref<Material[]>([])
+  const loading = ref(false)
+
+  // 计算属性
+  const selectedMaterialList = computed(() =>
+    materials.value.filter((m) => selectedMaterials.value.includes(m.id))
+  )
+
+  // 操作
+  const addMaterial = (material: Material) => {
+    materials.value.unshift(material)
+  }
+
+  const toggleSelection = (id: string) => {
+    const index = selectedMaterials.value.indexOf(id)
+    if (index > -1) {
+      selectedMaterials.value.splice(index, 1)
+    } else {
+      selectedMaterials.value.push(id)
+    }
+  }
+
+  const searchWithSearchTools = async (config: SearchConfig) => {
+    loading.value = true
+    try {
+      const result = await aiService.searchTools(config)
+      const materials = transformSearchResultsToMaterials(result.results)
+      searchResults.value = materials
+      return materials
+    } finally {
+      loading.value = false
+    }
+  }
+
+  return {
+    materials: readonly(materials),
+    selectedMaterials: readonly(selectedMaterials),
+    searchResults: readonly(searchResults),
+    loading: readonly(loading),
+    selectedMaterialList,
+    addMaterial,
+    toggleSelection,
+    searchWithSearchTools
+  }
+})
+```
+
+### 数据流向
+
+```mermaid
+graph LR
+    A[用户操作] --> B[组件事件]
+    B --> C[Composable方法]
+    C --> D[Store Action]
+    D --> E[API服务]
+    E --> F[HTTP请求]
+    F --> G[后端API]
+    G --> F[响应数据]
+    F --> E[处理结果]
+    E --> D[更新状态]
+    D --> C[响应式更新]
+    C --> B[UI更新]
+    B --> A[用户看到结果]
+```
+
+### 状态持久化
+
+系统使用 `pinia-plugin-persistedstate` 插件实现状态持久化：
+
+```typescript
+// 用户状态持久化配置
+{
+  persist: {
+    key: 'user',
+    storage: localStorage,
+    paths: [
+      'language',
+      'isLogin',
+      'info',
+      'accessToken',
+      'refreshToken'
+    ]
+  }
+}
+
+// 设置状态持久化配置
+{
+  persist: {
+    key: 'setting',
+    storage: localStorage,
+    paths: [
+      'theme',
+      'layout',
+      'menu'
+    ]
+  }
+}
+```
+
+---
+
+## 服务层架构
+
+### API服务架构
+
+系统采用分层的服务架构，所有API服务继承自 `BaseApiService`，提供统一的功能和接口。
+
+```mermaid
+graph TB
+    subgraph "服务层架构"
+        A[BaseApiService] --> B[MaterialApiService]
+        A --> C[AiService]
+        A --> D[AuthService]
+        A --> E[ProjectService]
+        A --> F[SystemPreferencesService]
+
+        G[API配置管理] --> A
+        H[Mock数据管理] --> A
+        I[HTTP拦截器] --> A
+    end
+
+    subgraph "外部API"
+        J[AI服务API]
+        K[核心服务API]
+        L[素材服务API]
+    end
+
+    B --> L
+    C --> J
+    D --> K
+    E --> K
+    F --> K
+```
+
+### 基础API服务 (BaseApiService)
+
+`BaseApiService` 提供了所有API服务的通用功能：
+
+```typescript
+abstract class BaseApiService {
+  protected serviceName: string
+  private serviceConfig: ApiEndpointConfig | null = null
+
+  constructor(serviceName: string) {
+    this.serviceName = serviceName
+    this.serviceConfig = apiConfigManager.getServiceConfig(serviceName)
+  }
+
+  // 统一请求方法
+  protected async request<T>(config: ApiRequestConfig): Promise<T> {
+    const apiConfig = apiConfigManager.getConfig()
+
+    // 检查是否启用Mock模式
+    if (config.useMock !== false && apiConfig.useMock && this.mockImplementation) {
+      return this.handleMockRequest<T>(config)
+    }
+
+    // 使用真实API
+    return this.handleRealRequest<T>(config)
+  }
+
+  // HTTP方法封装
+  protected async get<T>(
+    path: string,
+    params?: any,
+    options?: Partial<ApiRequestConfig>
+  ): Promise<T>
+  protected async post<T>(path: string, data?: any, options?: Partial<ApiRequestConfig>): Promise<T>
+  protected async put<T>(path: string, data?: any, options?: Partial<ApiRequestConfig>): Promise<T>
+  protected async delete<T>(
+    path: string,
+    data?: any,
+    options?: Partial<ApiRequestConfig>
+  ): Promise<T>
+
+  // Mock实现（子类重写）
+  protected async mockImplementation?(config: ApiRequestConfig): Promise<any>
+}
+```
+
+### AI服务 (AiService)
+
+AI服务负责与后端AI API的交互，提供多种AI功能：
+
+```typescript
+class AiService extends BaseApiService {
+  constructor() {
+    super('ai')
+  }
+
+  // 搜索工具
+  async searchTools(request: {
+    queries: string[]
+    provider: 'tavily' | 'bocha'
+    max_results?: number
+  }) {
+    return this.post<SearchToolsResponse>('/search-tools/search', request)
+  }
+
+  // 搜索Agent
+  async executeSearchAgent(
+    userId: string,
+    projectId: string,
+    request: {
+      brief: string
+      max_concurrent_research_units?: number
+      max_researcher_iterations?: number
+    }
+  ) {
+    return this.post<SearchAgentResponse>('/search-agent/execute', request, {
+      params: { user_id: userId, project_id: projectId }
+    })
+  }
+
+  // 网页总结
+  async summarizeWebpageAsync(request: { url: string; model_name?: string; max_tokens?: number }) {
+    return this.post<WebpageSummaryAsyncResponse>('/webpage-summary/summarize-async', request)
+  }
+
+  // 标题生成
+  async generateTitles(request: { research_brief: string; web_search_data: any[] }) {
+    return this.post<TitleGenerationResponse>('/title-generate/generate', request)
+  }
+
+  // 大纲生成
+  async generateOutline(request: { title: any; research_brief: string; web_search_data: any[] }) {
+    return this.post<OutlineGenerationResponse>('/outline-generate/generate', request)
+  }
+}
+```
+
+### 异步任务轮询系统
+
+系统提供统一的异步任务轮询机制，用于处理AI Agent等长时间运行的异步任务。
+
+#### 适用场景
+
+- ✅ **AI Agent任务**：Search Agent、Scope Agent、Search2Title Agent
+- ✅ **异步检索任务**：需要定期检查任务状态
+- ✅ **长时间运行的任务**：执行时间超过30秒的异步操作
+
+#### 核心组件
+
+- **AsyncTaskPoller** (`/src/utils/polling/asyncTaskPoller.ts`) - 通用轮询器
+- **usePollingStore** (`/src/store/polling.ts`) - 轮询状态管理
+- **服务层轮询方法** - 各服务已集成的轮询方法
+
+#### 使用方式
+
+**1. 服务层直接调用（推荐）**
+
+```typescript
+// Search Agent轮询
+const result = await searchService.executeSearchAgentAndWait('userId', 'projectId', {
+  brief: '研究主题'
+})
+
+// Scope Agent轮询
+const task = await documentGenerateService.executeScopeAgentWithPolling('userId', 'projectId', {
+  query: '研究主题'
+})
+
+// 检索任务轮询
+const task = await searchService.createRetrievalAgentWithPolling('查询关键词', {
+  freshness: 'week',
+  summary: true
+})
+```
+
+**2. 通过Store调用**
+
+```typescript
+// 素材搜索中的Agent轮询
+await materialStore.searchWithAgent(config)
+
+// 文档生成中的Agent轮询
+await documentStore.executeScopeAgent(brief)
+```
+
+**3. 配置轮询参数**
+
+```typescript
+{
+  interval: 2000,      // 轮询间隔（毫秒）
+  timeout: 120000,     // 超时时间（毫秒）
+  maxAttempts: 60,     // 最大轮询次数
+  onProgress: (attempts, max) => {
+    // 进度更新回调
+    updateProgress((attempts / max) * 100)
+  }
+}
+```
+
+#### 任务状态
+
+- `PENDING` - 等待中
+- `RUNNING` - 执行中
+- `COMPLETED` - 已完成 ✅
+- `FAILED` - 执行失败 ❌
+- `CANCELLED` - 已取消
+- `TIMEOUT` - 超时 ⏰
+
+#### 相关文件
+
+- 核心轮询器：`src/utils/polling/asyncTaskPoller.ts`
+- 状态管理：`src/store/polling.ts`
+- 搜索服务：`src/services/searchService.ts`
+- 文档生成服务：`src/services/documentGenerateService.ts`
+- 素材Store：`src/store/material.ts`
+- 文档生成Store：`src/store/modules/documentGenerate.ts`
+
+### 素材服务 (MaterialApiService)
+
+素材服务负责素材相关的API操作：
+
+```typescript
+class MaterialApiService extends BaseApiService {
+  constructor() {
+    super('material')
+  }
+
+  // 批量创建素材
+  async createMaterials(projectId: number, materials: MaterialCreateRequest[]) {
+    const request: AddCompleteMaterialRequest = {
+      project_id: projectId,
+      materials
+    }
+    return this.post<MaterialListResponse>('/materials/batch', request)
+  }
+
+  // 获取项目素材
+  async getProjectMaterials(projectId: number, params?: any) {
+    return this.get<MaterialListResponse>(`/projects/${projectId}/materials`, params)
+  }
+
+  // 更新素材
+  async updateMaterial(materialId: number, updateData: Partial<MaterialCreateRequest>) {
+    const request: MaterialUpdateRequest = {
+      update_data: updateData
+    }
+    return this.put<MaterialResponse>(`/materials/${materialId}`, request)
+  }
+
+  // 批量删除素材
+  async deleteMaterials(materialIds: number[]) {
+    const request: MaterialDeleteRequest = {
+      material_ids: materialIds
+    }
+    return this.delete<MaterialDeleteResponse>('/materials', request)
+  }
+
+  // 搜索素材
+  async searchMaterials(params: MaterialSearchRequest) {
+    return this.post<MaterialSearchResponse>('/materials/search', params)
+  }
+}
+```
+
+### API配置管理
+
+系统提供了灵活的API配置管理，支持Mock/真实API切换：
+
+```typescript
+class ApiConfigManager {
+  private config: ApiConfig
+
+  // 获取配置
+  getConfig(): ApiConfig {
+    return { ...this.config }
+  }
+
+  // 更新配置
+  updateConfig(updates: Partial<ApiConfig>): void {
+    this.config = { ...this.config, ...updates }
+    this.saveToStorage()
+    this.notifyListeners()
+  }
+
+  // 设置是否使用Mock数据
+  setUseMock(useMock: boolean): void {
+    const currentConfig = this.getConfig()
+    if (currentConfig.useMock === useMock) return
+
+    const userStore = useUserStore()
+    if (userStore.isLogin) {
+      const userType = userStore.getUserType
+
+      // Mock用户无法切换到真实API模式
+      if (!useMock && userType === 'mock') {
+        userStore.logOut()
+        alert('Mock用户无法使用真实API，请使用真实账户重新登录')
+        return
+      }
+    }
+
+    this.updateConfig({ useMock })
+  }
+
+  // 获取服务配置
+  getServiceConfig(serviceName: string): ApiEndpointConfig | null {
+    const service = API_REGISTRY.services[serviceName]
+    return service || null
+  }
+}
+```
+
+### Mock数据管理
+
+系统提供了完整的Mock数据支持，便于前端独立开发：
+
+```typescript
+// Mock实现示例
+protected async mockImplementation(config: ApiRequestConfig): Promise<any> {
+  const url = config.url
+  const method = config.method
+
+  // 模拟网络延迟
+  await new Promise(resolve => setTimeout(resolve, 1000))
+
+  // 根据API路径返回相应的Mock数据
+  if (method === 'GET' && url.includes('/search-tools/status')) {
+    return mockDataManager.getMockData('search-tools-status')
+  }
+
+  if (method === 'POST' && url.includes('/search-tools/search')) {
+    const requestData = config.data
+    return mockDataManager.getMockData(
+      'search-tools',
+      requestData.queries || [],
+      requestData.provider || 'tavily'
+    )
+  }
+
+  // 默认Mock响应
+  return {
+    success: true,
+    message: `AI服务Mock响应 - ${method} ${url}`,
+    data: {
+      mock: true,
+      timestamp: Date.now()
+    }
+  }
+}
+```
+
+---
+
+## 路由和导航系统
+
+### 路由架构
+
+系统采用 Vue Router 4 实现路由管理，支持静态路由和动态路由两种模式。
+
+```mermaid
+graph TB
+    subgraph "路由系统"
+        A[Vue Router] --> B[静态路由]
+        A --> C[动态路由]
+        A --> D[路由守卫]
+
+        B --> E[登录页]
+        B --> F[注册页]
+        B --> G[错误页面]
+
+        C --> H[仪表板]
+        C --> I[素材管理]
+        C --> J[系统管理]
+        C --> K[文档生成]
+
+        D --> L[前置守卫]
+        D --> M[后置守卫]
+
+        L --> N[权限验证]
+        L --> O[登录检查]
+        L --> P[进度条]
+
+        M --> Q[页面标题]
+        M --> R[滚动行为]
+    end
+```
+
+### 项目结构规范
+
+#### 目录结构
 
 ```
 src/
-├── components/          # Auto-imported components
-│   ├── core/           # System components (layouts, charts, tables)
-│   ├── custom/         # Feature-specific components
-│   └── dev/            # Development tools
-├── config/api/         # Centralized API configuration
-├── services/           # Business logic and API services
-├── store/              # Pinia state management
-├── utils/              # Utility functions
-├── views/              # Page components
-└── types/              # TypeScript definitions
+├── assets/          # 静态资源
+│   ├── images/      # 图片
+│   ├── icons/       # 图标
+│   └── styles/      # 全局样式
+├── components/      # 组件
+│   ├── core/        # 核心组件
+│   ├── custom/      # 自定义组件
+│   └── dev/        # 开发组件
+├── composables/     # 组合式函数
+├── config/          # 配置文件
+├── locales/         # 国际化
+├── router/          # 路由配置
+├── services/        # API服务
+├── store/           # 状态管理
+├── types/           # 类型定义
+├── utils/           # 工具函数
+└── views/           # 页面组件
 ```
 
-### API Architecture
+#### 文件命名
 
-- **Service-Based Organization**: Modular API services in `src/services/`
-- **Base Service Class**: `BaseApiService` for consistent patterns
-- **HTTP Client**: Advanced Axios wrapper with retry, caching, and error handling
-- **Type Safety**: Full TypeScript integration with request/response types
+1. **组件文件**：使用PascalCase命名
+2. **工具文件**：使用camelCase命名
+3. **常量文件**：使用UPPER_CASE命名
+4. **类型文件**：使用camelCase命名
 
-### State Management
+```
+components/
+├── MaterialCard.vue
+├── SearchForm.vue
+└── UserAvatar.vue
 
-- **Modular Pinia Stores**: Separate stores for different concerns
-- **Persistence**: Automatic localStorage synchronization with versioning
-- **Key Stores**: `user`, `setting`, `menu`, `worktab`, `table`
+utils/
+├── request.ts
+├── storage.ts
+└── validation.ts
 
-## Development Guidelines
+types/
+├── api.ts
+├── user.ts
+└── material.ts
 
-### Page Development
+constants/
+├── API_ENDPOINTS.ts
+└── ERROR_CODES.ts
+```
 
-- Create pages in `src/views/` with appropriate subdirectories
-- Use `<script setup>` syntax for Vue 3 Composition API
-- Follow TypeScript strict mode requirements
-- Ensure mobile responsiveness with mobile-first approach
+### Git规范
 
-### Code Quality
+#### 提交信息规范
 
-- **TypeScript Strict Mode**: Full type safety required
-- **ESLint + Prettier**: Consistent code formatting
-- **Husky + lint-staged**: Pre-commit quality checks
-- **Commitizen**: Standardized commit message format
+使用Conventional Commits规范：
 
-### Testing Requirements
+```
+<type>[optional scope]: <description>
 
-- Test with both light and dark themes
-- Ensure mobile responsiveness
-- Verify internationalization for user-facing text
-- Test API switching between mock and real endpoints
+[optional body]
 
-### Key Directives
+[optional footer(s)]
+```
 
-- `v-permission` - Role-based element visibility
-- `v-highlight` - Text highlighting effects
-- `v-ripple` - Material Design ripple effects
+类型说明：
 
-## Development Tools & Debugging
+- `feat`: 新功能
+- `fix`: 修复bug
+- `docs`: 文档更新
+- `style`: 代码格式调整
+- `refactor`: 代码重构
+- `test`: 测试相关
+- `chore`: 构建过程或辅助工具的变动
 
-### Global Development Tools
+示例：
 
-Access via `window.__DEV_TOOLS__`:
+```
+feat(material): add material search functionality
 
-- API configuration inspection
-- Mock/real API switching
-- Request/response monitoring
-- Performance debugging
+- Add search form component
+- Implement search API integration
+- Add search results display
 
-### Keyboard Shortcuts
+Closes #123
+```
 
-- Development mode shortcuts for common operations
-- Theme switching hotkeys
-- Component inspection tools
+#### 分支管理
 
-## Performance & Optimization
+采用Git Flow工作流：
 
-### Build Optimizations
-
-- Vite for fast development and optimized production builds
-- Component lazy loading with route-based code splitting
-- Tree shaking for dead code elimination
-- Gzip compression for assets
-
-### Runtime Optimizations
-
-- Virtual scrolling for large data tables
-- Debounced search inputs
-- Memoized computed properties
-- Efficient re-rendering with Vue 3 reactivity
-
-## Important Conventions
-
-### Component Development
-
-- Follow existing component patterns in `src/components/core/`
-- Use CSS custom properties for theming
-- Implement proper TypeScript interfaces
-- Include accessibility considerations
-
-### API Development
-
-- Use the centralized API configuration system
-- Implement proper error handling with user-friendly messages
-- Add appropriate request caching when beneficial
-- Follow service-based architecture patterns
-
-### State Management
-
-- Use Pinia stores for shared state
-- Implement proper store persistence with versioning
-- Follow reactive patterns with Vue 3 Composition API
-- Use composables for reusable logic
-
-This architecture represents a mature, enterprise-grade Vue 3 application with comprehensive tooling, type safety, and developer experience optimizations. The modular design and extensive component library make it suitable for rapid development of complex admin interfaces while maintaining code quality and consistency.
+```
+main          # 主分支，用于生产环境
+├── develop   # 开发分支，用于集成功能
+├── feature/* # 功能分支
+├── release/* # 发布分支
+├── hotfix/*  # 热修复分支
+└── support/* # 支持分支
+```

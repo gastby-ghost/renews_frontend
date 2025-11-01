@@ -8,8 +8,8 @@
     <!-- 搜索模式切换 -->
     <div class="material-search-page__mode-switch">
       <el-radio-group v-model="searchMode" @change="handleModeChange">
-        <el-radio-button label="simple">普通搜索</el-radio-button>
-        <el-radio-button label="agent">Agent检索</el-radio-button>
+        <el-radio-button value="simple">普通搜索</el-radio-button>
+        <el-radio-button value="agent">Agent检索</el-radio-button>
       </el-radio-group>
     </div>
 
