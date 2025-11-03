@@ -1,46 +1,75 @@
 /**
  * 选题策划组合式函数
  *
- * 职责：统一管理需求定义和标题选择的 UI 逻辑
- * 将原来的 useRequirements 和 useTitleGeneration 合并为一个
+ * 职责：管理选题页面的所有功能和状态
+ *
+ * 主要功能：
+ * 1. 管理需求定义表单状态（主题、关键要点、特殊要求）
+ * 2. 处理 AI 简报生成和编辑
+ * 3. 执行 Scope Agent 流程
+ * 4. 生成和选择标题
+ * 5. 步骤导航控制
+ * 6. 管理搜索结果
  *
  * 状态来源：从 useDocumentGenerateStore 获取
+ * @since 2024-11-03 简化表单结构，移除目标受众、文档类型等字段
+ * @since 2024-11-03 整合所有通用方法，独立使用不依赖其他组合式函数
  */
 
 import { ref, reactive, computed, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { storeToRefs } from 'pinia'
 import { useDocumentGenerateStore } from '@/store/modules/documentGenerate'
 import { useProjectStore } from '@/store/modules/project'
-import type { Title, RequirementsForm } from '@/types/ai'
+import type { Title } from '@/types/ai'
 import type { FormInstance } from 'element-plus'
 
 /**
  * 需求表单状态接口
+ * @description 简化的需求定义表单状态
+ * @since 2024-11-03 移除了目标受众、文档类型、预期字数、语气风格等字段
  */
 export interface RequirementsState {
-  // 表单数据
-  form: RequirementsForm
+  /** 表单数据 */
+  form: {
+    /** 文档主题或标题 */
+    topic: string
+    /** 关键要点列表 */
+    keyPoints: string[]
+    /** 特殊要求 */
+    specialRequirements: string
+  }
+  /** 当前输入的关键要点 */
   currentKeyPoint: string
 
-  // 加载状态
+  /** 是否正在生成AI简报 */
   isGeneratingBriefing: boolean
+  /** 是否正在执行Scope任务 */
   isExecutingScope: boolean
 
-  // 编辑状态
+  /** 编辑简报对话框是否可见 */
   briefingDialogVisible: boolean
+  /** 可编辑的简报内容 */
   editableBriefing: string
 }
 
 /**
  * 标题生成状态接口
+ * @description 管理标题生成相关的所有状态
  */
 export interface TitleGenerationState {
+  /** 是否正在生成标题 */
   isGenerating: boolean
+  /** 生成进度百分比 */
   progress: number
+  /** 错误信息 */
   error: string | null
+  /** 已生成的标题列表 */
   generatedTitles: Title[]
+  /** 当前选中的标题 */
   selectedTitle: Title | null
+  /** 自定义关键词列表 */
   customKeywords: string[]
 }
 
@@ -48,6 +77,8 @@ export interface TitleGenerationState {
  * 选题策划组合式函数
  */
 export function useTopicSelection() {
+  const router = useRouter()
+
   // 获取 Store 状态
   const documentStore = useDocumentGenerateStore()
   const projectStore = useProjectStore()
@@ -57,10 +88,6 @@ export function useTopicSelection() {
   const requirementsState = reactive<RequirementsState>({
     form: {
       topic: '',
-      targetAudience: '',
-      documentType: '',
-      wordCount: 2000,
-      tone: 'professional',
       keyPoints: [],
       specialRequirements: ''
     },
@@ -86,12 +113,7 @@ export function useTopicSelection() {
 
   // 需求相关计算属性
   const canGenerateBriefing = computed(() => {
-    return !!(
-      requirementsState.form.topic &&
-      requirementsState.form.targetAudience &&
-      requirementsState.form.documentType &&
-      requirementsState.form.tone
-    )
+    return !!requirementsState.form.topic
   })
 
   const canConfirmRequirements = computed(() => {
@@ -117,14 +139,20 @@ export function useTopicSelection() {
     return documentState.value.scopeTask?.status || null
   })
 
-  // 标题相关计算属性
-  const hasGeneratedTitles = computed(() => titleState.generatedTitles.length > 0)
-  const hasSelectedTitle = computed(() => titleState.selectedTitle !== null)
+  // ====== 标题相关计算属性 ======
+  const hasGeneratedTitles = computed(() => documentState.value.generatedTitles.length > 0)
+  const hasSelectedTitle = computed(() => documentState.value.selectedTitle !== null)
+  const hasSearchResults = computed(() => documentState.value.searchResults.length > 0)
+
+  const canGenerateTitles = computed(() => {
+    return hasSearchResults.value && documentState.value.researchBrief.length > 0
+  })
+
   const canGenerateSearch2Title = computed(() => {
     return documentState.value.researchBrief && !titleState.isGenerating
   })
 
-  // 任务进度
+  // ====== 任务进度相关计算属性 ======
   const getTaskProgress = computed(() => {
     const task = documentState.value.scopeTask
     if (!task || !hasScopeTask.value) return 0
@@ -205,22 +233,32 @@ export function useTopicSelection() {
     }
   }
 
-  // 构建研究查询
-  const buildResearchQuery = (form: RequirementsForm): string => {
+  /**
+   * 构建研究查询字符串
+   * @param form - 需求表单数据
+   * @returns 格式化的研究查询字符串
+   * @description 将表单数据转换为 Markdown 格式的研究简报请求
+   */
+  const buildResearchQuery = (form: RequirementsState['form']): string => {
+    const keyPointsSection =
+      form.keyPoints.length > 0
+        ? form.keyPoints.map((point) => `- ${point}`).join('\n')
+        : '- 暂无关键要点'
+
+    const specialRequirementsSection = form.specialRequirements.trim()
+      ? form.specialRequirements.trim()
+      : '无'
+
     return `# 文档创作需求
 
 ## 基本信息
 - **主题**: ${form.topic}
-- **目标受众**: ${getAudienceText(form.targetAudience)}
-- **文档类型**: ${getDocumentTypeText(form.documentType)}
-- **预期字数**: ${form.wordCount}字
-- **语气风格**: ${getToneText(form.tone)}
 
 ## 关键要点
-${form.keyPoints.map((point) => `- ${point}`).join('\n')}
+${keyPointsSection}
 
 ## 特殊要求
-${form.specialRequirements || '无'}
+${specialRequirementsSection}
 
 ---
 
@@ -243,12 +281,9 @@ ${form.specialRequirements || '无'}
     requirementsState.briefingDialogVisible = false
   }
 
-  // ==================== 标题生成方法 ====================
+  // ==================== 标题相关方法 ====================
 
-  // 选择标题
-  const selectTitle = (title: Title) => {
-    documentStore.selectTitle(title)
-  }
+  // 注意：selectTitle 方法已移除，使用 useDocumentGenerate 的 selectTitle
 
   // 提取关键词
   const extractKeywords = (brief: string) => {
@@ -300,6 +335,126 @@ ${form.specialRequirements || '无'}
     }
   }
 
+  // ==================== 通用标题操作 ====================
+
+  // 选择标题
+  const selectTitle = (title: Title) => {
+    documentStore.selectTitle(title)
+    ElMessage.success('标题已选择')
+  }
+
+  // 执行 Scope Agent
+  const executeScopeAgent = async (userId: string, projectId: string, query: string) => {
+    try {
+      const response = await documentStore.executeScopeAgent(userId, projectId, query)
+      ElMessage.success('Scope分析任务已启动，正在后台处理')
+      return response
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Scope分析失败'
+      ElMessage.error(msg)
+      throw error
+    }
+  }
+
+  // 生成标题
+  const generateTitles = async () => {
+    if (!canGenerateTitles.value) {
+      ElMessage.error('研究简报或搜索数据不完整')
+      return
+    }
+
+    try {
+      const response = await documentStore.generateTitles(
+        documentState.value.researchBrief,
+        documentState.value.searchResults
+      )
+      ElMessage.success(`成功生成 ${response?.title_count || 0} 个标题`)
+      return response
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : '标题生成失败'
+      ElMessage.error(msg)
+      throw error
+    }
+  }
+
+  // ==================== 步骤导航 ====================
+
+  // 当前步骤是否可继续
+  const canProceedToNextStep = computed(() => {
+    switch (documentState.value.currentStep) {
+      case 'requirements':
+        return documentState.value.researchBrief.length > 10 && hasSearchResults.value
+      case 'title':
+        return hasSelectedTitle.value
+      case 'outline':
+        return documentState.value.generatedOutline.length > 0
+      case 'content':
+        return true
+      default:
+        return false
+    }
+  })
+
+  // 导航到下一步
+  const proceedToNextStep = async () => {
+    if (!canProceedToNextStep.value) {
+      ElMessage.warning('当前步骤未完成')
+      return
+    }
+
+    const steps = ['requirements', 'title', 'outline', 'content', 'complete']
+    const currentIndex = steps.indexOf(documentState.value.currentStep)
+
+    if (currentIndex < steps.length - 1) {
+      const nextStep = steps[currentIndex + 1] as any
+      documentStore.updateWorkflowStep(nextStep)
+
+      // 路由导航
+      const routeMap = {
+        title: '/document-generation/topic-selection',
+        outline: '/document-generation/outline',
+        content: '/document-generation/content'
+      }
+
+      const nextRoute = routeMap[nextStep as keyof typeof routeMap]
+      if (nextRoute) {
+        const currentProject = projectStore.currentProject
+        if (currentProject) {
+          await router.push(nextRoute + '/' + currentProject.id)
+        }
+      }
+    }
+  }
+
+  // 返回上一步
+  const goToPreviousStep = async () => {
+    const steps = ['requirements', 'title', 'outline', 'content', 'complete']
+    const currentIndex = steps.indexOf(documentState.value.currentStep)
+
+    if (currentIndex > 0) {
+      const prevStep = steps[currentIndex - 1] as any
+      documentStore.updateWorkflowStep(prevStep)
+
+      // 路由导航
+      const routeMap: Record<string, string> = {
+        outline: '/document-generation/outline'
+      }
+
+      // requirements和title都使用topic-selection页面
+      if (prevStep === 'requirements' || prevStep === 'title') {
+        routeMap[prevStep] = '/document-generation/topic-selection'
+      }
+
+      const prevRoute = routeMap[prevStep]
+      if (prevRoute) {
+        const currentProject = projectStore.currentProject
+        if (currentProject) {
+          await router.push(prevRoute + '/' + currentProject.id)
+        }
+      }
+    }
+  }
+
   // ==================== 状态监听 ====================
 
   // 监听Scope任务状态变化
@@ -337,44 +492,6 @@ ${form.specialRequirements || '无'}
     { immediate: true }
   )
 
-  // ==================== 助手函数 ====================
-
-  const getDocumentTypeText = (type: string) => {
-    const types: Record<string, string> = {
-      analysis: '分析报告',
-      press_release: '新闻稿',
-      blog: '博客文章',
-      technical_doc: '技术文档',
-      marketing: '营销文案',
-      product_description: '产品说明'
-    }
-    return types[type] || type
-  }
-
-  const getAudienceText = (audience: string) => {
-    const audiences: Record<string, string> = {
-      general: '普通大众',
-      professional: '专业人士',
-      executive: '企业决策者',
-      technical: '技术人员',
-      academic: '学术研究者',
-      student: '学生群体'
-    }
-    return audiences[audience] || audience
-  }
-
-  const getToneText = (tone: string) => {
-    const tones: Record<string, string> = {
-      formal: '正式',
-      casual: '轻松',
-      professional: '专业',
-      friendly: '友好',
-      persuasive: '说服性',
-      objective: '客观'
-    }
-    return tones[tone] || tone
-  }
-
   // ==================== 返回值 ====================
 
   return {
@@ -383,32 +500,44 @@ ${form.specialRequirements || '无'}
     titleState,
     documentState,
 
-    // 计算属性
+    // 本地计算属性
     canGenerateBriefing,
     canConfirmRequirements,
     hasScopeTask,
     scopeTaskStatus,
-    hasGeneratedTitles,
-    hasSelectedTitle,
     canGenerateSearch2Title,
     getTaskProgress,
     getTaskStatusText,
 
-    // 方法
+    // 标题相关计算属性
+    hasGeneratedTitles,
+    hasSelectedTitle,
+    hasSearchResults,
+    canGenerateTitles,
+
+    // 步骤导航
+    canProceedToNextStep,
+
+    // 方法 - 需求定义
     addKeyPoint,
     removeKeyPoint,
     generateAIBriefing,
     editBriefing,
     saveBriefing,
-    selectTitle,
+
+    // 方法 - 关键词管理
     extractKeywords,
     addCustomKeyword,
     removeCustomKeyword,
+
+    // 方法 - 标题操作
+    selectTitle,
+    executeScopeAgent,
+    generateTitles,
     executeSearch2Title,
 
-    // 助手函数
-    getDocumentTypeText,
-    getAudienceText,
-    getToneText
+    // 方法 - 步骤导航
+    proceedToNextStep,
+    goToPreviousStep
   }
 }

@@ -1,13 +1,13 @@
 <template>
   <div class="content-container">
-    <ArtTableHeader title="正文编辑 (Markdown)" :actions="headerActions" @back="goBack" />
+    <ArtTableHeader :title="`正文编辑 (Markdown)`" :actions="headerActions" @back="goBack" />
 
     <!-- 项目加载提示 -->
     <div
-      v-if="loadingProject || (!projectStore.currentProject && projectId)"
+      v-if="state.loadingProject || (!projectStore.currentProject && projectId)"
       class="project-loading"
     >
-      <el-empty :description="loadingProject ? '正在加载项目信息...' : '项目信息加载失败'" />
+      <el-empty :description="state.loadingProject ? '正在加载项目信息...' : '项目信息加载失败'" />
     </div>
 
     <div v-else class="main-content">
@@ -53,11 +53,18 @@
           </div>
           <div class="editor-actions">
             <el-button-group>
-              <el-button @click="togglePreview" :type="showPreview ? 'primary' : 'default'">
+              <el-button
+                @click="state.showPreview = !state.showPreview"
+                :type="state.showPreview ? 'primary' : 'default'"
+              >
                 <el-icon><View /></el-icon>
-                {{ showPreview ? '编辑' : '预览' }}
+                {{ state.showPreview ? '编辑' : '预览' }}
               </el-button>
-              <el-button @click="generateAIContent" :loading="generatingContent" type="primary">
+              <el-button
+                @click="generateAIContent"
+                :loading="state.generatingContent"
+                type="primary"
+              >
                 <el-icon><MagicStick /></el-icon>
                 AI生成
               </el-button>
@@ -66,7 +73,7 @@
               <el-icon><Check /></el-icon>
               保存
             </el-button>
-            <el-button @click="exportContent" :disabled="!hasContent">
+            <el-button @click="exportContent()" :disabled="!hasContent">
               <el-icon><Download /></el-icon>
               导出
             </el-button>
@@ -80,17 +87,17 @@
                 <el-icon><List /></el-icon>
                 文档大纲
               </h3>
-              <el-button @click="toggleOutline" size="small" link>
-                {{ showOutline ? '隐藏' : '显示' }}
+              <el-button @click="state.showOutline = !state.showOutline" size="small" link>
+                {{ state.showOutline ? '隐藏' : '显示' }}
               </el-button>
             </div>
 
-            <div v-if="showOutline" class="outline-content">
+            <div v-if="state.showOutline" class="outline-content">
               <div
-                v-for="(section, index) in documentOutline"
+                v-for="(section, index) in state.outline"
                 :key="section.id"
                 class="outline-item"
-                :class="{ active: currentSection === index }"
+                :class="{ active: state.currentSection === index }"
                 @click="navigateToSection(index)"
                 :style="{ paddingLeft: section.level * 20 + 'px' }"
               >
@@ -101,7 +108,7 @@
           </div>
 
           <div class="editor-panel">
-            <div v-if="!hasContent && !showPreview" class="empty-editor">
+            <div v-if="!hasContent && !state.showPreview" class="empty-editor">
               <div class="empty-icon">📝</div>
               <h3>开始创作您的 Markdown 文档</h3>
               <p>点击"AI生成"让AI帮您生成内容，或手动开始写作</p>
@@ -114,24 +121,24 @@
 
             <div v-else class="markdown-container">
               <!-- Markdown 编辑器 -->
-              <div v-show="!showPreview" class="markdown-editor" ref="editorContainer">
+              <div v-show="!state.showPreview" class="markdown-editor" ref="editorContainer">
                 <textarea
                   ref="markdownTextarea"
-                  v-model="documentContent"
+                  v-model="state.content"
                   class="markdown-input"
                   placeholder="使用 Markdown 语法开始写作..."
-                  @input="onContentChange"
+                  @input="handleContentChange"
                   @mouseup="handleTextSelection"
                   @keyup="handleTextSelection"
                 ></textarea>
 
                 <!-- 文本选择浮动工具栏 -->
                 <div
-                  v-if="showSelectionToolbar"
+                  v-if="state.showSelectionToolbar"
                   class="selection-toolbar"
                   :style="{
-                    top: toolbarPosition.top + 'px',
-                    left: toolbarPosition.left + 'px'
+                    top: state.toolbarPosition.top + 'px',
+                    left: state.toolbarPosition.left + 'px'
                   }"
                 >
                   <el-button-group size="small">
@@ -165,7 +172,11 @@
               </div>
 
               <!-- Markdown 预览 -->
-              <div v-show="showPreview" class="markdown-preview" v-html="renderedContent"></div>
+              <div
+                v-show="state.showPreview"
+                class="markdown-preview"
+                v-html="renderedContent"
+              ></div>
             </div>
           </div>
 
@@ -175,12 +186,12 @@
                 <el-icon><DataAnalysis /></el-icon>
                 内容统计
               </h3>
-              <el-button @click="toggleStats" size="small" link>
-                {{ showStats ? '隐藏' : '显示' }}
+              <el-button @click="state.showStats = !state.showStats" size="small" link>
+                {{ state.showStats ? '隐藏' : '显示' }}
               </el-button>
             </div>
 
-            <div v-if="showStats" class="stats-content">
+            <div v-if="state.showStats" class="stats-content">
               <!-- 基础统计 -->
               <div class="stats-section">
                 <h4>基础信息</h4>
@@ -293,16 +304,16 @@
     </div>
 
     <!-- AI 操作对话框 -->
-    <el-dialog v-model="aiDialogVisible" :title="aiDialogTitle" width="600px">
+    <el-dialog v-model="state.aiDialogVisible" :title="state.aiDialogTitle" width="600px">
       <div class="ai-dialog-content">
-        <div v-if="aiLoading" class="ai-loading">
+        <div v-if="state.aiLoading" class="ai-loading">
           <el-icon class="is-loading"><Loading /></el-icon>
           <p>AI 正在处理中，请稍候...</p>
         </div>
         <div v-else>
-          <div v-if="aiDialogType === 'polish'" class="ai-result">
+          <div v-if="state.aiDialogType === 'polish'" class="ai-result">
             <h4>原始文本</h4>
-            <div class="original-text">{{ selectedText }}</div>
+            <div class="original-text">{{ state.selectedText }}</div>
             <h4>润色结果</h4>
             <div class="result-text" v-html="aiResult"></div>
           </div>
@@ -311,8 +322,8 @@
       </div>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="aiDialogVisible = false">取消</el-button>
-          <el-button v-if="!aiLoading" type="primary" @click="applyAIResult">
+          <el-button @click="state.aiDialogVisible = false">取消</el-button>
+          <el-button v-if="!state.aiLoading" type="primary" @click="applyAIResult">
             应用到文档
           </el-button>
         </span>
@@ -322,7 +333,7 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, computed, onMounted, nextTick } from 'vue'
+  import { ref, nextTick } from 'vue'
   import { useRouter, useRoute } from 'vue-router'
   import { ElMessage } from 'element-plus'
   import {
@@ -347,358 +358,39 @@
     ArrowLeft,
     Loading
   } from '@element-plus/icons-vue'
-  import { useDocumentGenerateStore } from '@/store/modules/documentGenerate'
+  import { useContent } from '@/composables/useContent'
   import { useProjectStore } from '@/store/modules/project'
-  import MarkdownIt from 'markdown-it'
-  import StepIndicator, { type Step } from '@/components/custom/StepIndicator.vue'
-
-  interface DocumentSection {
-    id: string
-    title: string
-    level: number
-  }
+  import StepIndicator from '@/components/custom/StepIndicator.vue'
 
   const router = useRouter()
   const route = useRoute()
-  const documentStore = useDocumentGenerateStore()
+  const projectId = route.params.projectId as string
   const projectStore = useProjectStore()
 
-  const projectId = route.params.projectId as string
+  // 使用内容编辑组合式函数
+  const {
+    state,
+    editorContainer,
+    markdownTextarea,
+    documentTitle,
+    hasContent,
+    renderedContent,
+    lastSaved,
+    headerActions,
+    stats,
+    aiSuggestions,
+    stepList,
+    generateOutlineFromContent,
+    saveContent,
+    exportContent
+  } = useContent()
 
-  // 项目加载状态
-  const loadingProject = ref(false)
-
-  // 步骤指示器数据
-  const stepList: Step[] = [
-    { label: '选题', status: 'completed' },
-    { label: '大纲', status: 'completed' },
-    { label: '正文', status: 'active' }
-  ]
-
-  const documentTitle = ref('')
-  const documentContent = ref('')
-  const documentOutline = ref<DocumentSection[]>([])
-  const currentSection = ref(0)
-  const showOutline = ref(true)
-  const showStats = ref(true)
-  const showPreview = ref(false)
-  const generatingContent = ref(false)
-  const aiDialogVisible = ref(false)
-  const aiDialogTitle = ref('')
-  const aiDialogType = ref('')
-  const aiLoading = ref(false)
-  const selectedText = ref('')
+  // AI 结果数据
   const aiResult = ref('')
 
-  // 文本选择工具栏
-  const showSelectionToolbar = ref(false)
-  const toolbarPosition = ref({ top: 0, left: 0 })
-
-  // 编辑器引用
-  const editorContainer = ref<HTMLElement>()
-  const markdownTextarea = ref<HTMLTextAreaElement>()
-
-  // Markdown 渲染器
-  const md = new MarkdownIt({
-    html: true,
-    linkify: true,
-    typographer: true
-  })
-
-  onMounted(async () => {
-    documentStore.documentState.currentStep = 'content'
-    documentStore.cleanupExpiredTasks()
-    await loadProject()
-    loadExistingData()
-  })
-
-  // 监听内容变化，动态生成大纲
-  const generateOutlineFromContent = (content: string) => {
-    const headings: DocumentSection[] = []
-    const lines = content.split('\n')
-
-    lines.forEach((line, index) => {
-      const match = line.match(/^(#{1,6})\s+(.+)$/)
-      if (match) {
-        const level = match[1].length
-        const title = match[2].trim()
-        const id = `heading-${index}`
-
-        headings.push({
-          id,
-          title,
-          level
-        })
-      }
-    })
-
-    documentOutline.value = headings
-  }
-
-  // 计算属性
-  const lastSaved = computed(() => {
-    const saved = localStorage.getItem(`project_${projectId}_content_saved`)
-    return saved ? new Date(saved).toLocaleString('zh-CN') : '未保存'
-  })
-
-  const hasContent = computed(() => {
-    return documentContent.value.trim().length > 0
-  })
-
-  const renderedContent = computed(() => {
-    return md.render(documentContent.value)
-  })
-
-  const headerActions = computed(() => {
-    return [
-      {
-        label: '导出',
-        type: 'primary' as const,
-        icon: 'el-icon-download',
-        handler: exportContent
-      }
-    ]
-  })
-
-  // 内容统计
-  const stats = computed(() => {
-    const content = documentContent.value
-    const characters = content.length
-    const charactersNoSpaces = content.replace(/\s/g, '').length
-    const words = content
-      .trim()
-      .split(/\s+/)
-      .filter((w) => w.length > 0).length
-    const paragraphs = content.split(/\n\s*\n/).filter((p) => p.trim().length > 0).length
-    const sentences = content.split(/[。！？.!?]/).filter((s) => s.trim().length > 0).length
-
-    // 统计标题
-    const headings = (content.match(/^#{1,6}\s+.+$/gm) || []).length
-    const headingsByLevel: Record<number, number> = {}
-    for (let i = 1; i <= 6; i++) {
-      const pattern = new RegExp(`^#{${i}}\\s+.+$`, 'gm')
-      headingsByLevel[i] = (content.match(pattern) || []).length
-    }
-
-    // 统计链接和图片
-    const links = (content.match(/\[[^\]]+\]\([^)]+\)/g) || []).length
-    const images = (content.match(/!\[.*?\]\([^)]+\)/g) || []).length
-
-    // 统计代码块和列表
-    const codeBlocks = (content.match(/```[\s\S]*?```/g) || []).length
-    const listItems = (content.match(/^\s*[-*+]\s+.+$/gm) || []).length
-
-    // 可读性分析
-    const avgSentenceLength = sentences > 0 ? Math.round(words / sentences) : 0
-    const avgParagraphLength = paragraphs > 0 ? Math.round(words / paragraphs) : 0
-
-    // 简单的可读性评分（0-100）
-    let readabilityScore = 50
-    if (avgSentenceLength < 15) readabilityScore += 10
-    if (avgSentenceLength > 25) readabilityScore -= 10
-    if (avgParagraphLength < 50) readabilityScore += 5
-    if (avgParagraphLength > 150) readabilityScore -= 5
-    if (headings > 3) readabilityScore += 5
-    if (links > 0) readabilityScore += 5
-    readabilityScore = Math.max(0, Math.min(100, readabilityScore))
-
-    const readingTime = Math.ceil(words / 500)
-
-    return {
-      characters,
-      charactersNoSpaces,
-      words,
-      paragraphs,
-      sentences,
-      headings,
-      headingsByLevel,
-      links,
-      images,
-      codeBlocks,
-      listItems,
-      avgSentenceLength,
-      avgParagraphLength,
-      readabilityScore,
-      readingTime
-    }
-  })
-
-  const aiSuggestions = computed(() => {
-    const suggestions = []
-    const s = stats.value
-
-    if (s.avgSentenceLength > 25) {
-      suggestions.push('建议将长句拆分为短句，提高可读性')
-    }
-    if (s.paragraphs < 3 && s.words > 300) {
-      suggestions.push('文档较长，建议增加段落分隔')
-    }
-    if (s.headings === 0 && s.words > 200) {
-      suggestions.push('建议添加标题来组织文档结构')
-    }
-    if (s.links === 0) {
-      suggestions.push('考虑添加相关链接来丰富内容')
-    }
-    if (s.readabilityScore < 40) {
-      suggestions.push('文档可读性偏低，建议简化表达')
-    }
-
-    return suggestions
-  })
-
-  // 文本选择处理
-  const handleTextSelection = () => {
-    nextTick(() => {
-      const textarea = markdownTextarea.value
-      if (!textarea) return
-
-      const start = textarea.selectionStart
-      const end = textarea.selectionEnd
-      const selected = documentContent.value.substring(start, end)
-
-      if (selected.trim().length > 0) {
-        selectedText.value = selected
-
-        // 计算工具栏位置
-        const scrollTop = textarea.scrollTop
-        const scrollLeft = textarea.scrollLeft
-
-        // 简单计算光标位置（实际项目中可能需要更复杂的计算）
-        const lines = documentContent.value.substring(0, start).split('\n')
-        const lineHeight = 24
-        const top = (lines.length - 1) * lineHeight - scrollTop + 60
-        const left = 100 - scrollLeft
-
-        toolbarPosition.value = {
-          top: Math.max(top, 60),
-          left: Math.max(left, 20)
-        }
-
-        showSelectionToolbar.value = true
-      } else {
-        showSelectionToolbar.value = false
-      }
-    })
-  }
-
-  // AI 操作
-  const polishSelection = () => {
-    aiDialogTitle.value = 'AI 润色'
-    aiDialogType.value = 'polish'
-    aiLoading.value = true
-    aiDialogVisible.value = true
-
-    // 模拟 AI 润色
-    setTimeout(() => {
-      aiLoading.value = false
-      aiResult.value = `<p style="color: var(--el-color-success);">润色后的文本将在这里显示...<br>原始文本：${selectedText.value}</p>`
-    }, 1500)
-  }
-
-  const expandSelection = () => {
-    ElMessage.info('扩写功能开发中...')
-  }
-
-  const summarizeSelection = () => {
-    ElMessage.info('总结功能开发中...')
-  }
-
-  const translateSelection = () => {
-    ElMessage.info('翻译功能开发中...')
-  }
-
-  const rewriteSelection = () => {
-    ElMessage.info('改写功能开发中...')
-  }
-
-  const applyAIResult = () => {
-    const start = markdownTextarea.value?.selectionStart || 0
-    const end = markdownTextarea.value?.selectionEnd || 0
-
-    documentContent.value =
-      documentContent.value.substring(0, start) +
-      selectedText.value +
-      documentContent.value.substring(end)
-
-    aiDialogVisible.value = false
-    showSelectionToolbar.value = false
-    ElMessage.success('已应用到文档')
-  }
-
-  const getReadabilityTagType = (score: number) => {
-    if (score >= 70) return 'success'
-    if (score >= 50) return 'warning'
-    return 'danger'
-  }
-
-  const getReadabilityDesc = (score: number) => {
-    if (score >= 70) return '优秀 - 易于阅读和理解'
-    if (score >= 50) return '良好 - 基本符合阅读习惯'
-    return '较差 - 建议优化语言表达'
-  }
-
-  // 其他方法保持不变...
-  const loadProject = async () => {
-    try {
-      loadingProject.value = true
-      if (!projectId) {
-        ElMessage.error('项目ID不存在')
-        return
-      }
-      const numericProjectId = Number(projectId)
-      if (
-        projectStore.currentProject &&
-        Number(projectStore.currentProject.id) === numericProjectId
-      ) {
-        return
-      }
-      if (projectStore.projects.length === 0) {
-        try {
-          await projectStore.fetchProjects()
-        } catch (error) {
-          console.error('加载项目列表失败:', error)
-        }
-      }
-      const project = projectStore.projects.find((p) => Number(p.id) === numericProjectId)
-      if (project) {
-        projectStore.setCurrentProject(project)
-        return
-      }
-      try {
-        const { projectService } = await import('@/services/projectService')
-        const response = await projectService.getProjectDetail(numericProjectId)
-        if (response.project) {
-          projectStore.setCurrentProject(response.project)
-        }
-      } catch (apiError) {
-        console.error('从API获取项目失败:', apiError)
-        ElMessage.error('项目不存在或已被删除')
-      }
-    } catch (error) {
-      console.error('加载项目失败:', error)
-      ElMessage.error('加载项目信息失败')
-    } finally {
-      loadingProject.value = false
-    }
-  }
-
-  const loadExistingData = () => {
-    const titlesData = localStorage.getItem(`project_${projectId}_titles`)
-    if (titlesData) {
-      const { selectedTitle } = JSON.parse(titlesData)
-      documentTitle.value = selectedTitle.text
-    }
-
-    const contentData = localStorage.getItem(`project_${projectId}_content`)
-    if (contentData) {
-      documentContent.value = contentData
-      // 从内容动态生成大纲
-      generateOutlineFromContent(documentContent.value)
-    }
-  }
-
+  // 生成 AI 内容
   const generateAIContent = async () => {
-    generatingContent.value = true
+    state.generatingContent = true
     try {
       await new Promise((resolve) => setTimeout(resolve, 4000))
       const mockContent = `# ${documentTitle.value}
@@ -735,7 +427,7 @@
 
 展望未来，AI技术将继续快速发展，我们有理由相信...
 `
-      documentContent.value = mockContent
+      state.content = mockContent
       // 生成大纲
       generateOutlineFromContent(mockContent)
       saveContent()
@@ -743,44 +435,28 @@
     } catch {
       ElMessage.error('正文生成失败')
     } finally {
-      generatingContent.value = false
+      state.generatingContent = false
     }
   }
 
-  const onContentChange = () => {
-    saveContent()
-    generateOutlineFromContent(documentContent.value)
+  // 处理内容变化
+  const handleContentChange = () => {
+    // saveContent 和大纲生成通过 watch 自动处理
   }
 
-  const saveContent = () => {
-    localStorage.setItem(`project_${projectId}_content`, documentContent.value)
-    localStorage.setItem(`project_${projectId}_content_saved`, new Date().toISOString())
-  }
-
-  const toggleOutline = () => {
-    showOutline.value = !showOutline.value
-  }
-
-  const toggleStats = () => {
-    showStats.value = !showStats.value
-  }
-
-  const togglePreview = () => {
-    showPreview.value = !showPreview.value
-  }
-
+  // 导航到章节
   const navigateToSection = (index: number) => {
-    currentSection.value = index
+    state.currentSection = index
 
     // 跳转到对应标题位置
-    const outline = documentOutline.value
+    const outline = state.outline
     if (outline.length === 0 || !markdownTextarea.value) return
 
     const targetSection = outline[index]
     if (!targetSection) return
 
     // 计算目标标题在文档中的位置
-    const content = documentContent.value
+    const content = state.content
     const lines = content.split('\n')
     let charPosition = 0
 
@@ -814,17 +490,96 @@
     })
   }
 
-  const exportContent = () => {
-    const blob = new Blob([documentContent.value], { type: 'text/markdown' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `${documentTitle.value}.md`
-    a.click()
-    URL.revokeObjectURL(url)
-    ElMessage.success('文档导出成功')
+  // 文本选择处理
+  const handleTextSelection = () => {
+    nextTick(() => {
+      const textarea = markdownTextarea.value
+      if (!textarea) return
+
+      const start = textarea.selectionStart
+      const end = textarea.selectionEnd
+      const selected = state.content.substring(start, end)
+
+      if (selected.trim().length > 0) {
+        state.selectedText = selected
+
+        // 计算工具栏位置
+        const scrollTop = textarea.scrollTop
+        const scrollLeft = textarea.scrollLeft
+
+        // 简单计算光标位置
+        const lines = state.content.substring(0, start).split('\n')
+        const lineHeight = 24
+        const top = (lines.length - 1) * lineHeight - scrollTop + 60
+        const left = 100 - scrollLeft
+
+        state.toolbarPosition = {
+          top: Math.max(top, 60),
+          left: Math.max(left, 20)
+        }
+
+        state.showSelectionToolbar = true
+      } else {
+        state.showSelectionToolbar = false
+      }
+    })
   }
 
+  // AI 操作
+  const polishSelection = () => {
+    state.aiDialogTitle = 'AI 润色'
+    state.aiDialogType = 'polish'
+    state.aiLoading = true
+    state.aiDialogVisible = true
+
+    // 模拟 AI 润色
+    setTimeout(() => {
+      state.aiLoading = false
+      aiResult.value = `<p style="color: var(--el-color-success);">润色后的文本将在这里显示...<br>原始文本：${state.selectedText}</p>`
+    }, 1500)
+  }
+
+  const expandSelection = () => {
+    ElMessage.info('扩写功能开发中...')
+  }
+
+  const summarizeSelection = () => {
+    ElMessage.info('总结功能开发中...')
+  }
+
+  const translateSelection = () => {
+    ElMessage.info('翻译功能开发中...')
+  }
+
+  const rewriteSelection = () => {
+    ElMessage.info('改写功能开发中...')
+  }
+
+  const applyAIResult = () => {
+    const start = markdownTextarea.value?.selectionStart || 0
+    const end = markdownTextarea.value?.selectionEnd || 0
+
+    state.content =
+      state.content.substring(0, start) + state.selectedText + state.content.substring(end)
+
+    state.aiDialogVisible = false
+    state.showSelectionToolbar = false
+    ElMessage.success('已应用到文档')
+  }
+
+  const getReadabilityTagType = (score: number) => {
+    if (score >= 70) return 'success'
+    if (score >= 50) return 'warning'
+    return 'danger'
+  }
+
+  const getReadabilityDesc = (score: number) => {
+    if (score >= 70) return '优秀 - 易于阅读和理解'
+    if (score >= 50) return '良好 - 基本符合阅读习惯'
+    return '较差 - 建议优化语言表达'
+  }
+
+  // 完成文档
   const completeDocument = () => {
     if (!hasContent.value) {
       ElMessage.warning('请先创建文档内容')
@@ -843,6 +598,7 @@
     }, 1500)
   }
 
+  // 返回上一页
   const goBack = () => {
     router.push(`/document-generation/outline/${projectId}`)
   }

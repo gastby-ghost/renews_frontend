@@ -104,20 +104,20 @@
     </div>
 
     <el-dialog v-model="dialogVisible" title="创建新项目" width="600px">
-      <el-form ref="projectFormRef" :model="projectForm" :rules="projectRules" label-width="100px">
+      <el-form ref="projectFormRef" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="项目名称" prop="name">
-          <el-input v-model="projectForm.name" placeholder="请输入项目名称" />
+          <el-input v-model="form.name" placeholder="请输入项目名称" />
         </el-form-item>
         <el-form-item label="项目描述" prop="description">
           <el-input
-            v-model="projectForm.description"
+            v-model="form.description"
             type="textarea"
             :rows="3"
             placeholder="请输入项目描述"
           />
         </el-form-item>
         <el-form-item label="项目类型" prop="type">
-          <el-select v-model="projectForm.type" placeholder="请选择项目类型">
+          <el-select v-model="form.type" placeholder="请选择项目类型">
             <el-option label="文章创作" value="article" />
             <el-option label="报告生成" value="report" />
             <el-option label="营销文案" value="marketing" />
@@ -136,216 +136,41 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, reactive, onMounted, computed } from 'vue'
-  import { useRouter } from 'vue-router'
-  import { ElMessage, ElMessageBox } from 'element-plus'
-  import type { FormInstance, FormRules } from 'element-plus'
-  import { useProjectStore } from '@/store/modules/project'
-  import type { Api } from '@/typings/api'
-  import { debounce } from 'lodash-es'
+  import { onMounted } from 'vue'
+  import { ElMessage } from 'element-plus'
+  import { useProjectList } from '@/composables/useProjectList'
   import StepIndicator from '@/components/custom/StepIndicator.vue'
 
-  // 从Api.Project命名空间导入类型
-  type ProjectCreate = Api.Project.ProjectCreate
-
-  // 项目表单接口
-  interface ProjectForm {
-    name: string
-    description: string
-    type: string
-  }
-
-  const router = useRouter()
-  const projectStore = useProjectStore()
-  const dialogVisible = ref(false)
-  const projectFormRef = ref<FormInstance>()
-
-  const projectForm = reactive<ProjectForm>({
-    name: '',
-    description: '',
-    type: 'article'
-  })
-
-  const projectRules: FormRules = {
-    name: [
-      { required: true, message: '请输入项目名称', trigger: 'blur' },
-      { min: 2, max: 50, message: '项目名称长度在 2 到 50 个字符', trigger: 'blur' }
-    ],
-    description: [
-      { required: true, message: '请输入项目描述', trigger: 'blur' },
-      { min: 10, max: 500, message: '项目描述长度在 10 到 500 个字符', trigger: 'blur' }
-    ],
-    type: [{ required: true, message: '请选择项目类型', trigger: 'change' }]
-  }
-
-  const searchKeyword = ref('')
-
-  // 计算属性：使用store中的数据转换逻辑
-  const projectList = computed(() => {
-    return projectStore.projectsWithUiData
-  })
-
-  // 计算属性：直接使用项目列表，移除本地过滤逻辑
-  const filteredProjectList = computed(() => {
-    return projectList.value
-  })
-
-  // 防抖搜索函数
-  const debouncedSearch = debounce(() => {
-    // 统一使用store的搜索功能，移除本地过滤
-    if (searchKeyword.value.trim()) {
-      projectStore.searchProjects(searchKeyword.value.trim())
-    } else {
-      projectStore.fetchProjects()
-    }
-  }, 300)
-
-  const handleSearch = () => {
-    debouncedSearch()
-  }
+  // 使用项目列表组合式函数
+  const {
+    projectStore,
+    searchKeyword,
+    dialogVisible,
+    formRef: projectFormRef,
+    form,
+    rules,
+    filteredProjectList,
+    handleSearch,
+    createProject,
+    continueProject,
+    editProject,
+    deleteProject,
+    formatDate,
+    getStatusType,
+    getStatusText,
+    getActionText,
+    getStepStatus
+  } = useProjectList()
 
   // 初始化加载项目列表
   onMounted(async () => {
     try {
       await projectStore.fetchProjects()
-    } catch (error) {
-      console.error('加载项目列表失败:', error)
+    } catch (err) {
+      console.error('加载项目列表失败:', err)
       ElMessage.error('加载项目列表失败')
     }
   })
-
-  const getStatusType = (status: string): 'info' | 'warning' | 'success' => {
-    switch (status) {
-      case 'draft':
-        return 'info'
-      case 'in_progress':
-        return 'warning'
-      case 'completed':
-        return 'success'
-      default:
-        return 'info'
-    }
-  }
-
-  const getStatusText = (status: string): string => {
-    switch (status) {
-      case 'draft':
-        return '草稿'
-      case 'in_progress':
-        return '进行中'
-      case 'completed':
-        return '已完成'
-      default:
-        return '未知'
-    }
-  }
-
-  const getActionText = (status: string): string => {
-    switch (status) {
-      case 'draft':
-        return '开始创作'
-      case 'in_progress':
-        return '继续创作'
-      case 'completed':
-        return '查看详情'
-      default:
-        return '开始创作'
-    }
-  }
-
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return '-'
-    return new Date(dateString).toLocaleDateString('zh-CN')
-  }
-
-  const getStepStatus = (project: any, stepKey: number): 'active' | 'completed' | 'pending' => {
-    if (project.currentStep > stepKey) return 'completed'
-    if (project.currentStep === stepKey) return 'active'
-    return 'pending'
-  }
-
-  const continueProject = (project: any) => {
-    // 直接导航到当前组件对应的页面
-    const component = project.current_component
-    switch (component) {
-      case 'topic-selection':
-        router.push(`/document-generation/topic-selection/${project.id}`)
-        break
-      case 'outline':
-        router.push(`/document-generation/outline/${project.id}`)
-        break
-      case 'content':
-        router.push(`/document-generation/content/${project.id}`)
-        break
-      default:
-        router.push(`/document-generation/topic-selection/${project.id}`)
-    }
-  }
-
-  const editProject = () => {
-    // TODO: Implement project editing
-    ElMessage.info('编辑功能开发中')
-  }
-
-  const deleteProject = async (project: any) => {
-    try {
-      await ElMessageBox.confirm(
-        `确定要删除项目 "${project.name}" 吗？此操作不可恢复。`,
-        '删除确认',
-        {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: 'warning'
-        }
-      )
-
-      // 使用store删除项目
-      const success = await projectStore.deleteProjects([project.id])
-      if (success) {
-        ElMessage.success('项目删除成功')
-      } else {
-        ElMessage.error(projectStore.error || '项目删除失败')
-      }
-    } catch {
-      // User cancelled
-    }
-  }
-
-  const createProject = async () => {
-    if (!projectFormRef.value) return
-
-    try {
-      await projectFormRef.value.validate()
-
-      // 准备创建项目的数据 - 只发送API需要的字段
-      const projectData: ProjectCreate = {
-        name: projectForm.name,
-        status: 'draft',
-        current_component: 'topic-selection'
-      }
-
-      // 使用store创建项目
-      const newProject = await projectStore.createProject(projectData)
-
-      if (newProject) {
-        dialogVisible.value = false
-
-        // Reset form
-        projectForm.name = ''
-        projectForm.description = ''
-        projectForm.type = 'article'
-
-        ElMessage.success('项目创建成功')
-
-        // Navigate to topic selection page
-        router.push(`/document-generation/topic-selection/${newProject.id}`)
-      } else {
-        ElMessage.error(projectStore.error || '项目创建失败')
-      }
-    } catch (error) {
-      console.error('Form validation failed:', error)
-    }
-  }
 </script>
 
 <style scoped lang="scss">
