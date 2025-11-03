@@ -333,7 +333,7 @@
   import type { Material } from '@/types/material'
   import UnifiedMaterialCard from '@/components/custom/material-card/UnifiedMaterialCard.vue'
   import MaterialLibraryDialog from '@/components/custom/material-card/MaterialLibraryDialog.vue'
-  import StepIndicator, { type Step } from '@/components/core/StepIndicator.vue'
+  import StepIndicator, { type Step } from '@/components/custom/StepIndicator.vue'
   import {
     Document,
     Folder,

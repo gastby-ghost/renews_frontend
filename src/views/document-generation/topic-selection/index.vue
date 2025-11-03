@@ -431,7 +431,7 @@
   import MaterialSelectionForTitle from '@/components/custom/material-search/MaterialSelectionForTitle.vue'
   import type { Title } from '@/types/ai'
   import type { Material } from '@/types/material'
-  import StepIndicator, { type Step } from '@/components/core/StepIndicator.vue'
+  import StepIndicator, { type Step } from '@/components/custom/StepIndicator.vue'
   import '@/assets/styles/markdown.scss'
 
   const router = useRouter()

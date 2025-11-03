@@ -350,7 +350,7 @@
   import { useDocumentGenerateStore } from '@/store/modules/documentGenerate'
   import { useProjectStore } from '@/store/modules/project'
   import MarkdownIt from 'markdown-it'
-  import StepIndicator, { type Step } from '@/components/core/StepIndicator.vue'
+  import StepIndicator, { type Step } from '@/components/custom/StepIndicator.vue'
 
   interface DocumentSection {
     id: string
