@@ -77,22 +77,18 @@
         </div>
 
         <div class="project-progress">
-          <div class="progress-steps">
-            <div
-              v-for="step in projectSteps"
-              :key="step.key"
-              class="step-item"
-              :class="{
-                active: project.currentStep >= step.key,
-                completed: project.currentStep > step.key
-              }"
-            >
-              <div class="step-icon">
-                <i :class="step.icon"></i>
-              </div>
-              <div class="step-label">{{ step.label }}</div>
-            </div>
-          </div>
+          <StepIndicator
+            :steps="[
+              { label: '选题', icon: 'el-icon-edit', status: getStepStatus(project, 1) },
+              { label: '大纲', icon: 'el-icon-tickets', status: getStepStatus(project, 2) },
+              { label: '正文', icon: 'el-icon-notebook', status: getStepStatus(project, 3) }
+            ]"
+            size="small"
+          >
+            <template #icon="{ step }">
+              <i :class="step.icon"></i>
+            </template>
+          </StepIndicator>
         </div>
 
         <div class="project-actions">
@@ -147,6 +143,7 @@
   import { useProjectStore } from '@/store/modules/project'
   import type { Api } from '@/typings/api'
   import { debounce } from 'lodash-es'
+  import StepIndicator from '@/components/custom/StepIndicator.vue'
 
   // 从Api.Project命名空间导入类型
   type ProjectCreate = Api.Project.ProjectCreate
@@ -180,13 +177,6 @@
     ],
     type: [{ required: true, message: '请选择项目类型', trigger: 'change' }]
   }
-
-  const projectSteps = [
-    { key: 1, label: '选题', icon: 'el-icon-edit' },
-    { key: 2, label: '大纲', icon: 'el-icon-tickets' },
-    { key: 3, label: '正文', icon: 'el-icon-notebook' },
-    { key: 4, label: '完成', icon: 'el-icon-check' }
-  ]
 
   const searchKeyword = ref('')
 
@@ -266,6 +256,12 @@
   const formatDate = (dateString?: string) => {
     if (!dateString) return '-'
     return new Date(dateString).toLocaleDateString('zh-CN')
+  }
+
+  const getStepStatus = (project: any, stepKey: number): 'active' | 'completed' | 'pending' => {
+    if (project.currentStep > stepKey) return 'completed'
+    if (project.currentStep === stepKey) return 'active'
+    return 'pending'
   }
 
   const continueProject = (project: any) => {
@@ -436,74 +432,6 @@
 
   .project-progress {
     margin-bottom: 16px;
-  }
-
-  .progress-steps {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .step-item {
-    position: relative;
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-    align-items: center;
-
-    &:not(:last-child)::after {
-      position: absolute;
-      top: 15px;
-      left: 50%;
-      z-index: 1;
-      width: 100%;
-      height: 2px;
-      content: '';
-      background: var(--el-border-color);
-    }
-
-    &.active:not(:last-child)::after,
-    &.completed:not(:last-child)::after {
-      background: var(--el-color-primary);
-    }
-  }
-
-  .step-icon {
-    position: relative;
-    z-index: 2;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 30px;
-    height: 30px;
-    margin-bottom: 8px;
-    background: var(--el-border-color);
-    border-radius: 50%;
-
-    i {
-      font-size: 14px;
-      color: var(--el-text-color-secondary);
-    }
-
-    .step-item.active &,
-    .step-item.completed & {
-      background: var(--el-color-primary);
-
-      i {
-        color: white;
-      }
-    }
-  }
-
-  .step-label {
-    font-size: 12px;
-    color: var(--el-text-color-secondary);
-    text-align: center;
-
-    .step-item.active & {
-      font-weight: 500;
-      color: var(--el-color-primary);
-    }
   }
 
   .project-actions {
