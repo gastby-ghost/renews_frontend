@@ -192,6 +192,17 @@ export interface SearchToolsStatusResponse {
   available_providers: string[]
 }
 
+// 需求定义相关类型
+export interface RequirementsForm {
+  topic: string
+  targetAudience: string
+  documentType: string
+  wordCount: number
+  tone: string
+  keyPoints: string[]
+  specialRequirements: string
+}
+
 // 标题生成相关类型
 export interface Title {
   title: string

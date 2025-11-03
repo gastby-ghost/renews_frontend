@@ -62,8 +62,7 @@ export enum RoutesAlias {
   MaterialSearch = '/material/search', // 素材检索
   // 文档生成 - AI创作
   DocumentGeneration = '/document-generation/project-list', // 项目列表
-  DocumentRequirements = '/document-generation/requirements', // 需求表单
-  DocumentTitle = '/document-generation/title', // 标题选择
+  DocumentTopicSelection = '/document-generation/topic-selection', // 选题策划（需求定义和标题选择）
   DocumentOutline = '/document-generation/outline', // 大纲
   DocumentContent = '/document-generation/content' // 正文
 }

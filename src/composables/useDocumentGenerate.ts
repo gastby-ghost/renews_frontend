@@ -203,7 +203,7 @@ export function useDocumentGenerate() {
 
       // 路由导航
       const routeMap = {
-        title: '/document-generation/title',
+        title: '/document-generation/topic-selection',
         outline: '/document-generation/outline',
         content: '/document-generation/content'
       }
@@ -228,13 +228,16 @@ export function useDocumentGenerate() {
       documentStore.updateWorkflowStep(prevStep)
 
       // 路由导航
-      const routeMap = {
-        requirements: '/document-generation/requirements',
-        title: '/document-generation/title',
+      const routeMap: Record<string, string> = {
         outline: '/document-generation/outline'
       }
 
-      const prevRoute = routeMap[prevStep as keyof typeof routeMap]
+      // requirements和title都使用topic-selection页面
+      if (prevStep === 'requirements' || prevStep === 'title') {
+        routeMap[prevStep] = '/document-generation/topic-selection'
+      }
+
+      const prevRoute = routeMap[prevStep]
       if (prevRoute) {
         const currentProject = projectStore.currentProject
         if (currentProject) {

@@ -33,7 +33,7 @@
 
     <!-- 错误状态 -->
     <div v-else-if="projectStore.hasError" class="error-container">
-      <el-result icon="warning" title="加载失败" :sub-title="projectStore.error">
+      <el-result icon="warning" title="加载失败" :sub-title="projectStore.error || ''">
         <template #extra>
           <el-button type="primary" @click="projectStore.fetchProjects()"> 重新加载 </el-button>
         </template>
@@ -182,10 +182,10 @@
   }
 
   const projectSteps = [
-    { key: 1, label: '需求', icon: 'el-icon-edit' },
-    { key: 2, label: '标题', icon: 'el-icon-document' },
-    { key: 3, label: '大纲', icon: 'el-icon-tickets' },
-    { key: 4, label: '正文', icon: 'el-icon-notebook' }
+    { key: 1, label: '选题', icon: 'el-icon-edit' },
+    { key: 2, label: '大纲', icon: 'el-icon-tickets' },
+    { key: 3, label: '正文', icon: 'el-icon-notebook' },
+    { key: 4, label: '完成', icon: 'el-icon-check' }
   ]
 
   const searchKeyword = ref('')
@@ -272,11 +272,8 @@
     // 直接导航到当前组件对应的页面
     const component = project.current_component
     switch (component) {
-      case 'requirements':
-        router.push(`/document-generation/requirements/${project.id}`)
-        break
-      case 'title':
-        router.push(`/document-generation/title/${project.id}`)
+      case 'topic-selection':
+        router.push(`/document-generation/topic-selection/${project.id}`)
         break
       case 'outline':
         router.push(`/document-generation/outline/${project.id}`)
@@ -285,7 +282,7 @@
         router.push(`/document-generation/content/${project.id}`)
         break
       default:
-        router.push(`/document-generation/requirements/${project.id}`)
+        router.push(`/document-generation/topic-selection/${project.id}`)
     }
   }
 
@@ -328,7 +325,7 @@
       const projectData: ProjectCreate = {
         name: projectForm.name,
         status: 'draft',
-        current_component: 'requirements'
+        current_component: 'topic-selection'
       }
 
       // 使用store创建项目
@@ -344,8 +341,8 @@
 
         ElMessage.success('项目创建成功')
 
-        // Navigate to requirements page
-        router.push(`/document-generation/requirements/${newProject.id}`)
+        // Navigate to topic selection page
+        router.push(`/document-generation/topic-selection/${newProject.id}`)
       } else {
         ElMessage.error(projectStore.error || '项目创建失败')
       }

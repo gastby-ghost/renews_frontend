@@ -740,22 +740,11 @@ export const asyncRoutes: AppRouteRecord[] = [
         }
       },
       {
-        path: 'requirements/:projectId',
-        name: 'DocumentRequirements',
-        component: RoutesAlias.DocumentRequirements,
+        path: 'topic-selection/:projectId',
+        name: 'DocumentTopicSelection',
+        component: RoutesAlias.DocumentTopicSelection,
         meta: {
-          title: 'menus.documentGeneration.requirements',
-          keepAlive: true,
-          isHide: true,
-          activePath: '/document-generation/project-list'
-        }
-      },
-      {
-        path: 'title/:projectId',
-        name: 'DocumentTitle',
-        component: RoutesAlias.DocumentTitle,
-        meta: {
-          title: 'menus.documentGeneration.title',
+          title: 'menus.documentGeneration.topicSelection',
           keepAlive: true,
           isHide: true,
           activePath: '/document-generation/project-list'

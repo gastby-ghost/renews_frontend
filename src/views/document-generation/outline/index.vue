@@ -611,7 +611,7 @@
   }
 
   const goBack = () => {
-    router.push(`/document-generation/title/${projectId}`)
+    router.push(`/document-generation/topic-selection/${projectId}`)
   }
 
   // 素材相关方法

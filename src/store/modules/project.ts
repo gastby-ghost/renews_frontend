@@ -55,17 +55,14 @@ export const useProjectStore = defineStore(
         // 将current_component转换为currentStep
         let currentStep = 1
         switch (project.current_component) {
-          case 'requirements':
+          case 'topic-selection':
             currentStep = 1
             break
-          case 'title':
+          case 'outline':
             currentStep = 2
             break
-          case 'outline':
-            currentStep = 3
-            break
           case 'content':
-            currentStep = 4
+            currentStep = 3
             break
           default:
             currentStep = 1

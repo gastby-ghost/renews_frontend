@@ -59,16 +59,18 @@ Document Generate 是一个基于 Vue 3 + TypeScript 的 AI 驱动文档生成�
 
 #### 1. 页面层 (Views)
 
-- `requirements/` - 需求输入页面
-- `title/` - 标题选择页面
+- `topic-selection/` - 选题策划页面（合并需求定义和标题选择）
 - `outline/` - 大纲编辑页面
 - `content/` - 正文编辑页面
+
+> 📝 **注意**：原 `requirements/` 和 `title/` 页面已合并为 `topic-selection/`
 
 #### 2. 组合式函数 (Composables)
 
 - `useDocumentGenerate` - 统一工作流管理
-- `useTitleGeneration` - 标题生成专用逻辑
 - `useOutlineGeneration` - 大纲生成专用逻辑
+
+> 📝 **注意**：原 `useRequirements` 和 `useTitleGeneration` 已被移除，功能合并到新的 `topic-selection` 页面中
 
 #### 3. 状态管理 (Store)
 
@@ -227,7 +229,6 @@ class DocumentGenerateService extends BaseApiService {
 src/
 ├── composables/                    # 组合式函数
 │   ├── useDocumentGenerate.ts      # 统一工作流管理
-│   ├── useTitleGeneration.ts       # 标题生成逻辑
 │   └── useOutlineGeneration.ts     # 大纲生成逻辑
 ├── services/
 │   └── documentGenerateService.ts  # 文档生成服务
@@ -235,8 +236,7 @@ src/
 │   └── modules/
 │       └── documentGenerate.ts     # 状态管理
 ├── views/document-generation/
-│   ├── requirements/               # 需求页面
-│   ├── title/                      # 标题选择
+│   ├── topic-selection/            # 选题策划（需求+标题合并）
 │   ├── outline/                    # 大纲编辑
 │   └── content/                    # 正文编辑
 ├── config/api/modules/
@@ -244,6 +244,8 @@ src/
 └── mock/data/document-generate/    # Mock数据
     └── index.ts
 ```
+
+> 📝 **更新**：移除了 `useTitleGeneration.ts`，功能已整合到 `topic-selection` 页面中
 
 ### 关键文件说明
 
@@ -256,14 +258,17 @@ src/
 - 计算属性控制流程
 - 页面导航逻辑
 
-#### 2. useTitleGeneration.ts
+#### 2. topic-selection 页面
 
-**职责**：专注于标题生成和选择的 UI 逻辑 **特性**：
+**职责**：统一的选题策划页面（需求定义 + 标题选择） **特性**：
 
+- 标签页设计：需求定义、标题选择
+- Scope Agent 异步任务轮询
 - 标题生成进度追踪
 - 关键词提取和管理
 - 标题评分和建议
-- 本地状态管理
+- 素材选择和关联
+- AI简报编辑功能
 
 #### 3. useOutlineGeneration.ts
 
@@ -376,11 +381,12 @@ const response = await axios.post('/api/...')
 **推荐模式**：
 
 ```typescript
-// ✅ 正确：通过 Composables 共享逻辑
-const titleGeneration = useTitleGeneration()
-const { state, generateTitles } = titleGeneration
+// ✅ 正确：使用统一页面管理
+// topic-selection 页面内部整合了需求和标题的所有逻辑
+const documentStore = useDocumentGenerateStore()
+const { state } = documentStore
 
-// ❌ 错误：父子组件频繁通信
+// ❌ 错误：跨页面状态传递
 props: { data: Object },
 emit: ['update-data']
 ```
