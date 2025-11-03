@@ -1,5 +1,6 @@
 <template>
-  <div class="title-card" :class="{ selected: isSelected }" @click="$emit('select', title)">
+  <div class="title-card" :class="{ selected: isSelected }">
+    <!-- 头部区域 -->
     <div class="title-header">
       <div class="title-content">
         <h4>{{ title.title }}</h4>
@@ -8,13 +9,19 @@
           <el-rate :value="score" disabled show-score text-color="#ff9900" :max="5" />
         </div>
       </div>
-      <div class="title-selection">
-        <el-radio :model-value="isSelected" :value="true" @change="$emit('select', title)">
-          {{ isSelected ? '已选择' : '选择' }}
-        </el-radio>
+      <div class="title-actions">
+        <div class="title-selection">
+          <el-radio :model-value="isSelected" :value="true" @change="$emit('select', title)">
+            {{ isSelected ? '已选择' : '选择' }}
+          </el-radio>
+        </div>
+        <div class="action-buttons">
+          <el-button @click.stop="handleEdit" size="small" plain> 编辑 </el-button>
+        </div>
       </div>
     </div>
 
+    <!-- 内容区域 -->
     <div class="title-analysis">
       <div class="analysis-item"><strong>角度：</strong> {{ title.angle }}</div>
       <div class="analysis-item"><strong>时效性：</strong> {{ title.why_now }}</div>
@@ -60,12 +67,22 @@
         </el-tag>
       </div>
     </div>
+
+    <!-- 标题编辑对话框 -->
+    <TitleEditDialog
+      :visible="showEditDialog"
+      :title="title"
+      @update:visible="showEditDialog = $event"
+      @update="handleTitleUpdate"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
+  import { ref } from 'vue'
   import type { Title } from '@/types/ai'
   import type { Material } from '@/types/material'
+  import TitleEditDialog from './TitleEditDialog.vue'
 
   interface Props {
     title: Title
@@ -76,22 +93,35 @@
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const _props = withDefaults(defineProps<Props>(), {
+  const props = withDefaults(defineProps<Props>(), {
     isSelected: false,
     score: 0,
     suggestions: () => [],
     materials: () => []
   })
 
-  defineEmits<{
+  const emit = defineEmits<{
     select: [title: Title]
+    update: [oldTitle: Title, newTitle: Title]
   }>()
+
+  // 对话框显示状态
+  const showEditDialog = ref(false)
+
+  // 编辑标题
+  const handleEdit = () => {
+    showEditDialog.value = true
+  }
+
+  // 处理标题更新
+  const handleTitleUpdate = (oldTitle: Title, newTitle: Title) => {
+    emit('update', oldTitle, newTitle)
+  }
 </script>
 
 <style scoped lang="scss">
   .title-card {
     padding: 20px;
-    cursor: pointer;
     border: 2px solid var(--el-border-color);
     border-radius: 8px;
     transition: all 0.3s ease;
@@ -124,8 +154,21 @@
       }
     }
 
-    .title-selection {
+    .title-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
       margin-left: 15px;
+
+      .title-selection {
+        text-align: right;
+      }
+
+      .action-buttons {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+      }
     }
   }
 
@@ -194,5 +237,22 @@
     margin-right: 8px;
     font-size: 14px;
     color: var(--el-text-color-secondary);
+  }
+
+  // 移动端适配
+  @media (width <= 768px) {
+    .title-header {
+      flex-direction: column;
+      gap: 10px;
+
+      .title-actions {
+        width: 100%;
+        margin-left: 0;
+
+        .action-buttons {
+          justify-content: flex-end;
+        }
+      }
+    }
   }
 </style>

@@ -556,6 +556,28 @@ export const useDocumentGenerateStore = defineStore(
     }
 
     /**
+     * 更新标题内容
+     */
+    const updateTitle = (oldTitle: Title, newTitle: Title) => {
+      const titles = documentState.value.generatedTitles
+      const index = titles.findIndex((t) => t.title === oldTitle.title)
+
+      if (index !== -1) {
+        const updatedTitles = [...titles]
+        updatedTitles[index] = newTitle
+        updateDocumentState({ generatedTitles: updatedTitles })
+
+        // 如果更新的是当前选中的标题，也更新选中状态
+        if (
+          documentState.value.selectedTitle &&
+          documentState.value.selectedTitle.title === oldTitle.title
+        ) {
+          updateDocumentState({ selectedTitle: newTitle })
+        }
+      }
+    }
+
+    /**
      * 执行Search2Title Agent
      */
     const executeSearch2TitleAgent = async (userId: string, projectId: string, brief: string) => {
@@ -891,6 +913,7 @@ export const useDocumentGenerateStore = defineStore(
       generateTitles,
       generateOutline,
       selectTitle,
+      updateTitle,
       executeSearch2TitleAgent,
       getSearch2TitleTaskStatus,
       cancelSearch2TitleTask,

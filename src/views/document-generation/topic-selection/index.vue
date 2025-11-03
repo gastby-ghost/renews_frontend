@@ -240,6 +240,7 @@
                     :score="getTitleScore(title)"
                     :suggestions="getTitleSuggestions(title)"
                     @select="selectTitle"
+                    @update="updateTitle"
                   />
                 </div>
 
@@ -423,7 +424,8 @@
     addCustomKeyword,
     removeCustomKeyword,
     executeSearch2Title,
-    selectTitle
+    selectTitle,
+    updateTitle
   } = useTopicSelection()
 
   // ====== UI状态 ======
@@ -877,10 +879,19 @@
 
   .titles-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(520px, 1fr));
-    gap: 24px;
+    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+    gap: 20px;
     padding: 4px;
     margin-bottom: 40px;
+
+    @media (width <= 1400px) {
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    }
+
+    @media (width <= 768px) {
+      grid-template-columns: 1fr;
+      gap: 15px;
+    }
   }
 
   .title-materials-section {

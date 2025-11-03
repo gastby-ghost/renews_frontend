@@ -532,6 +532,8 @@ ${specialRequirementsSection}
 
     // 方法 - 标题操作
     selectTitle,
+    updateTitle: (oldTitle: Title, newTitle: Title) =>
+      documentStore.updateTitle(oldTitle, newTitle),
     executeScopeAgent,
     generateTitles,
     executeSearch2Title,
