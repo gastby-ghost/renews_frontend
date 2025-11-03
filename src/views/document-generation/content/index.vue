@@ -11,27 +11,7 @@
     </div>
 
     <div v-else class="main-content">
-      <div class="step-indicator">
-        <div class="step-item completed">
-          <div class="step-number">✓</div>
-          <div class="step-label">需求</div>
-        </div>
-        <div class="step-connector completed"></div>
-        <div class="step-item completed">
-          <div class="step-number">✓</div>
-          <div class="step-label">标题</div>
-        </div>
-        <div class="step-connector completed"></div>
-        <div class="step-item completed">
-          <div class="step-number">✓</div>
-          <div class="step-label">大纲</div>
-        </div>
-        <div class="step-connector completed"></div>
-        <div class="step-item active">
-          <div class="step-number">4</div>
-          <div class="step-label">正文</div>
-        </div>
-      </div>
+      <StepIndicator :steps="stepList" />
 
       <div class="content-editor">
         <div class="editor-header">
@@ -370,6 +350,7 @@
   import { useDocumentGenerateStore } from '@/store/modules/documentGenerate'
   import { useProjectStore } from '@/store/modules/project'
   import MarkdownIt from 'markdown-it'
+  import StepIndicator, { type Step } from '@/components/core/StepIndicator.vue'
 
   interface DocumentSection {
     id: string
@@ -386,6 +367,13 @@
 
   // 项目加载状态
   const loadingProject = ref(false)
+
+  // 步骤指示器数据
+  const stepList: Step[] = [
+    { label: '选题', status: 'completed' },
+    { label: '大纲', status: 'completed' },
+    { label: '正文', status: 'active' }
+  ]
 
   const documentTitle = ref('')
   const documentContent = ref('')
@@ -866,76 +854,6 @@
     flex-direction: column;
     height: calc(100vh - 120px);
     padding: 20px;
-  }
-
-  .step-indicator {
-    display: flex;
-    flex-shrink: 0;
-    align-items: center;
-    justify-content: center;
-    padding: 15px;
-    margin-bottom: 20px;
-    background: var(--el-bg-color);
-    border-radius: 8px;
-  }
-
-  .step-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-
-    .step-number {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 40px;
-      height: 40px;
-      margin-bottom: 8px;
-      font-weight: bold;
-      color: var(--el-text-color-secondary);
-      background: var(--el-border-color);
-      border-radius: 50%;
-    }
-
-    .step-label {
-      font-size: 14px;
-      color: var(--el-text-color-secondary);
-    }
-
-    &.active {
-      .step-number {
-        color: white;
-        background: var(--el-color-primary);
-      }
-
-      .step-label {
-        font-weight: 500;
-        color: var(--el-color-primary);
-      }
-    }
-
-    &.completed {
-      .step-number {
-        color: white;
-        background: var(--el-color-success);
-      }
-
-      .step-label {
-        color: var(--el-color-success);
-      }
-    }
-  }
-
-  .step-connector {
-    width: 60px;
-    height: 2px;
-    margin: 0 20px;
-    margin-top: -20px;
-    background: var(--el-border-color);
-
-    &.completed {
-      background: var(--el-color-success);
-    }
   }
 
   .main-content {

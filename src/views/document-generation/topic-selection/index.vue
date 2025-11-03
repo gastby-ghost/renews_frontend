@@ -9,27 +9,7 @@
       </div>
 
       <div v-else class="main-content">
-        <div class="step-indicator">
-          <div class="step-item active">
-            <div class="step-number">1</div>
-            <div class="step-label">选题</div>
-          </div>
-          <div class="step-connector"></div>
-          <div class="step-item">
-            <div class="step-number">2</div>
-            <div class="step-label">大纲</div>
-          </div>
-          <div class="step-connector"></div>
-          <div class="step-item">
-            <div class="step-number">3</div>
-            <div class="step-label">正文</div>
-          </div>
-          <div class="step-connector"></div>
-          <div class="step-item">
-            <div class="step-number">4</div>
-            <div class="step-label">完成</div>
-          </div>
-        </div>
+        <StepIndicator :steps="stepList" />
 
         <!-- 选题策划表单和标题选择 -->
         <el-card class="topic-content-card" shadow="never">
@@ -451,6 +431,7 @@
   import MaterialSelectionForTitle from '@/components/custom/material-search/MaterialSelectionForTitle.vue'
   import type { Title } from '@/types/ai'
   import type { Material } from '@/types/material'
+  import StepIndicator, { type Step } from '@/components/core/StepIndicator.vue'
   import '@/assets/styles/markdown.scss'
 
   const router = useRouter()
@@ -481,6 +462,13 @@
     removeCustomKeyword,
     executeSearch2Title
   } = useTopicSelection()
+
+  // 步骤指示器数据
+  const stepList: Step[] = [
+    { label: '选题', status: 'active' },
+    { label: '大纲', status: 'pending' },
+    { label: '正文', status: 'pending' }
+  ]
 
   // 标签页状态
   const activeTab = ref('requirements')
@@ -725,63 +713,6 @@
 
   .main-wrapper {
     width: 100%;
-  }
-
-  .step-indicator {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    margin-bottom: 30px;
-    background: var(--el-bg-color);
-    border-radius: 8px;
-  }
-
-  .step-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-
-    .step-number {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 40px;
-      height: 40px;
-      margin-bottom: 8px;
-      font-weight: bold;
-      color: var(--el-text-color-secondary);
-      background: var(--el-border-color);
-      border-radius: 50%;
-      transition: all 0.3s;
-    }
-
-    .step-label {
-      font-size: 14px;
-      color: var(--el-text-color-secondary);
-      transition: all 0.3s;
-    }
-
-    &.active {
-      .step-number {
-        color: white;
-        background: var(--el-color-primary);
-      }
-
-      .step-label {
-        font-weight: 500;
-        color: var(--el-color-primary);
-      }
-    }
-  }
-
-  .step-connector {
-    width: 60px;
-    height: 2px;
-    margin: 0 20px;
-    margin-top: -20px;
-    background: var(--el-border-color);
-    transition: background 0.3s;
   }
 
   .topic-content-card {

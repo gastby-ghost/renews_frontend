@@ -11,27 +11,7 @@
     </div>
 
     <div v-else class="main-content">
-      <div class="step-indicator">
-        <div class="step-item completed">
-          <div class="step-number">✓</div>
-          <div class="step-label">需求</div>
-        </div>
-        <div class="step-connector completed"></div>
-        <div class="step-item completed">
-          <div class="step-number">✓</div>
-          <div class="step-label">标题</div>
-        </div>
-        <div class="step-connector completed"></div>
-        <div class="step-item active">
-          <div class="step-number">3</div>
-          <div class="step-label">大纲</div>
-        </div>
-        <div class="step-connector"></div>
-        <div class="step-item">
-          <div class="step-number">4</div>
-          <div class="step-label">正文</div>
-        </div>
-      </div>
+      <StepIndicator :steps="stepList" />
 
       <!-- 素材分区 -->
       <div class="materials-section">
@@ -353,6 +333,7 @@
   import type { Material } from '@/types/material'
   import UnifiedMaterialCard from '@/components/custom/material-card/UnifiedMaterialCard.vue'
   import MaterialLibraryDialog from '@/components/custom/material-card/MaterialLibraryDialog.vue'
+  import StepIndicator, { type Step } from '@/components/core/StepIndicator.vue'
   import {
     Document,
     Folder,
@@ -374,6 +355,13 @@
   // 项目加载状态
   const loadingProject = ref(false)
   const generatingOutline = ref(false)
+
+  // 步骤指示器数据
+  const stepList: Step[] = [
+    { label: '选题', status: 'completed' },
+    { label: '大纲', status: 'active' },
+    { label: '正文', status: 'pending' }
+  ]
 
   // 素材相关状态
   const selectedMaterials = ref<Material[]>([])
@@ -682,75 +670,6 @@
     max-width: 1200px;
     padding: 20px;
     margin: 0 auto;
-  }
-
-  .step-indicator {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    margin-bottom: 40px;
-    background: var(--el-bg-color);
-    border-radius: 8px;
-  }
-
-  .step-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-
-    .step-number {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 40px;
-      height: 40px;
-      margin-bottom: 8px;
-      font-weight: bold;
-      color: var(--el-text-color-secondary);
-      background: var(--el-border-color);
-      border-radius: 50%;
-    }
-
-    .step-label {
-      font-size: 14px;
-      color: var(--el-text-color-secondary);
-    }
-
-    &.active {
-      .step-number {
-        color: white;
-        background: var(--el-color-primary);
-      }
-
-      .step-label {
-        font-weight: 500;
-        color: var(--el-color-primary);
-      }
-    }
-
-    &.completed {
-      .step-number {
-        color: white;
-        background: var(--el-color-success);
-      }
-
-      .step-label {
-        color: var(--el-color-success);
-      }
-    }
-  }
-
-  .step-connector {
-    width: 60px;
-    height: 2px;
-    margin: 0 20px;
-    margin-top: -20px;
-    background: var(--el-border-color);
-
-    &.completed {
-      background: var(--el-color-success);
-    }
   }
 
   .outline-content {
