@@ -65,6 +65,7 @@ export function generateScopeAgentStatusResponse(taskId: string): ScopeAgentStat
   const task = scopeTaskTracker.getTaskStatus(taskId)!
   console.log(`[DEBUG] generateScopeAgentStatusResponse - updated task:`, task)
 
+  // 返回一个新的对象，确保Vue能检测到变化
   const response = {
     task_id: taskId,
     status: task.status,
@@ -79,6 +80,7 @@ export function generateScopeAgentStatusResponse(taskId: string): ScopeAgentStat
   }
 
   console.log(`[DEBUG] generateScopeAgentStatusResponse - returning response:`, response)
+
   return response
 }
 

@@ -86,6 +86,15 @@
                   </template>
                   <template v-else>生成AI简报</template>
                 </el-button>
+                <el-button
+                  v-if="hasScopeTask"
+                  @click="cancelScopeTask"
+                  size="large"
+                  type="danger"
+                  plain
+                >
+                  取消任务
+                </el-button>
               </div>
 
               <!-- AI简报展示区域 -->
@@ -216,7 +225,12 @@
                   一键Search2Title
                 </el-button>
 
-                <el-button v-if="search2titleLoading" @click="cancelSearch2Title">
+                <el-button
+                  v-if="search2titleLoading"
+                  @click="handleCancelSearch2Title"
+                  type="danger"
+                  plain
+                >
                   取消任务
                 </el-button>
 
@@ -427,6 +441,8 @@
     addCustomKeyword,
     removeCustomKeyword,
     executeSearch2Title,
+    cancelSearch2Title,
+    cancelScopeTask,
     selectTitle,
     updateTitle
   } = useTopicSelection()
@@ -613,14 +629,9 @@
   }
 
   /** 取消Search2Title任务 */
-  const cancelSearch2Title = async () => {
-    try {
-      // TODO: 从组合式函数或store中获取取消方法
-      // 暂时保持原有逻辑
-      search2titleLoading.value = false
-    } catch {
-      ElMessage.error('取消Search2Title任务失败')
-    }
+  const handleCancelSearch2Title = async () => {
+    const projectId = route.params.projectId as string
+    await cancelSearch2Title(projectId)
   }
 
   // ====== 主要业务逻辑方法 ======
@@ -664,6 +675,34 @@
     router.push('/document-generation/project-list')
   }
 
+  // ====== 监听器 ======
+
+  /** 监听Search2Title任务状态变化 */
+  watch(
+    () => documentState.value.search2titleTask,
+    (task) => {
+      console.log('[DEBUG] search2titleTask watcher - task:', task)
+      if (task) {
+        const shouldLoading = task.status === 'pending' || task.status === 'running'
+        console.log(
+          '[DEBUG] search2titleTask watcher - task.status:',
+          task.status,
+          'shouldLoading:',
+          shouldLoading
+        )
+        search2titleLoading.value = shouldLoading
+      } else {
+        console.log('[DEBUG] search2titleTask watcher - no task, setting loading to false')
+        search2titleLoading.value = false
+      }
+      console.log(
+        '[DEBUG] search2titleTask watcher - final search2titleLoading:',
+        search2titleLoading.value
+      )
+    },
+    { immediate: true }
+  )
+
   // ====== 页面生命周期 ======
 
   /** 页面初始化
@@ -678,6 +717,8 @@
       console.log('  - canGenerateBriefing:', canGenerateBriefing.value)
       console.log('  - hasScopeTask:', hasScopeTask.value)
       console.log('  - scopeTask:', documentState.value.scopeTask)
+      console.log('  - search2titleTask:', documentState.value.search2titleTask)
+      console.log('  - search2titleLoading:', search2titleLoading.value)
 
       // 检查并清理无效的任务状态
       const scopeTask = documentState.value.scopeTask
@@ -700,6 +741,46 @@
         ) {
           console.log('[DEBUG] Clearing invalid task on mount')
           documentStore.updateDocumentState({ scopeTask: null })
+        }
+      }
+
+      // 检查search2title任务状态
+      const search2titleTask = documentState.value.search2titleTask
+      if (search2titleTask) {
+        const now = Date.now()
+        const taskAge = now - search2titleTask.createdAt
+
+        console.log('[DEBUG] Checking search2title task validity on mount:')
+        console.log('  - search2titleTask.createdAt:', search2titleTask.createdAt)
+        console.log('  - now:', now)
+        console.log('  - taskAge:', taskAge)
+        console.log('  - task.status:', search2titleTask.status)
+
+        // 如果任务时间戳异常或任务已完成但未清理，手动清理
+        if (
+          search2titleTask.createdAt > now ||
+          search2titleTask.status === 'completed' ||
+          search2titleTask.status === 'failed' ||
+          taskAge > 30 * 60 * 1000
+        ) {
+          console.log('[DEBUG] Clearing invalid search2title task on mount')
+          documentStore.updateDocumentState({ search2titleTask: null })
+        }
+      }
+
+      // 检查localStorage中是否有持久化的任务状态
+      const persistedStore = localStorage.getItem('document-generate-store')
+      if (persistedStore) {
+        try {
+          const parsed = JSON.parse(persistedStore)
+          console.log('[DEBUG] Persisted store data:', parsed)
+          console.log('[DEBUG] Has scopeTask in persisted data:', !!parsed.documentState?.scopeTask)
+          console.log(
+            '[DEBUG] Has search2titleTask in persisted data:',
+            !!parsed.documentState?.search2titleTask
+          )
+        } catch (e) {
+          console.error('[DEBUG] Failed to parse persisted store:', e)
         }
       }
     }, 1000)

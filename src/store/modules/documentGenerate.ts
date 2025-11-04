@@ -131,11 +131,11 @@ class TaskPollingManager {
         if (taskStatus === TaskStatus.COMPLETED && status.result) {
           // 更新搜索结果
           if (status.result?.research_data?.web_search_data) {
-            this.store.updateSearchResults(status.result.research_data.web_search_data)
+            this.store.updateSearchResults?.(status.result.research_data.web_search_data)
           }
           // 更新生成的标题
           if (status.result?.title_data?.titles) {
-            this.store.updateDocumentState({
+            this.store.updateDocumentState?.({
               generatedTitles: status.result.title_data.titles
             })
           }
@@ -161,7 +161,7 @@ class TaskPollingManager {
       onStatusUpdate: (status: TaskStatus) => {
         // 任务完成时停止loading状态
         if (status === TaskStatus.COMPLETED || status === TaskStatus.FAILED) {
-          this.store.setLoading(false)
+          this.store.setLoading?.(false)
 
           // 任务成功时显示成功消息
           if (status === TaskStatus.COMPLETED) {
@@ -256,9 +256,6 @@ export const useDocumentGenerateStore = defineStore(
     // 活动任务列表
     const activeTasks = ref<DocumentTask[]>([])
 
-    // 异步任务轮询管理器
-    const taskPollingManager = new TaskPollingManager(null)
-
     // 计算属性：是否有活动任务
     const hasActiveTasks = computed(() => activeTasks.value.length > 0)
 
@@ -301,31 +298,45 @@ export const useDocumentGenerateStore = defineStore(
       return stats
     })
 
-    // 初始化轮询管理器
-    taskPollingManager.store = {
-      // 修复：添加async/await确保Promise被正确等待
-      getScopeTaskStatus: async (taskId: string) => await getScopeTaskStatus(taskId),
-      getSearch2TitleTaskStatus: async (taskId: string, userId?: string, projectId?: string) => {
-        if (!userId || !projectId) {
-          console.error('getSearch2TitleTaskStatus 缺少必要参数: userId 或 projectId')
-          return null
-        }
-        // 修复：添加async/await确保Promise被正确等待
-        return await getSearch2TitleTaskStatus(taskId, userId, projectId)
-      },
-      // 添加缺失的方法
-      updateSearchResults: (results: SearchResultItem[]) => {
-        updateDocumentState({ searchResults: results })
-      },
-      updateDocumentState: (updates: Partial<DocumentState>) => {
-        updateDocumentState(updates)
-      },
-      // 添加设置loading状态的方法
-      setLoading: (value: boolean) => {
-        loading.value = value
-      },
-      // 获取loading状态
-      getLoading: () => loading.value
+    // 异步任务轮询管理器 - 延迟初始化以避免循环依赖
+    let taskPollingManager: TaskPollingManager | null = null
+
+    /**
+     * 获取任务轮询管理器实例
+     */
+    const getTaskPollingManager = (): TaskPollingManager => {
+      if (!taskPollingManager) {
+        taskPollingManager = new TaskPollingManager({
+          // 修复：添加async/await确保Promise被正确等待
+          getScopeTaskStatus: async (taskId: string) => await getScopeTaskStatus(taskId),
+          getSearch2TitleTaskStatus: async (
+            taskId: string,
+            userId?: string,
+            projectId?: string
+          ) => {
+            if (!userId || !projectId) {
+              console.error('getSearch2TitleTaskStatus 缺少必要参数: userId 或 projectId')
+              return null
+            }
+            // 修复：添加async/await确保Promise被正确等待
+            return await getSearch2TitleTaskStatus(taskId, userId, projectId)
+          },
+          // 添加缺失的方法
+          updateSearchResults: (results: SearchResultItem[]) => {
+            updateDocumentState({ searchResults: results })
+          },
+          updateDocumentState: (updates: Partial<DocumentState>) => {
+            updateDocumentState(updates)
+          },
+          // 添加设置loading状态的方法
+          setLoading: (value: boolean) => {
+            loading.value = value
+          },
+          // 获取loading状态
+          getLoading: () => loading.value
+        })
+      }
+      return taskPollingManager
     }
 
     /**
@@ -352,7 +363,7 @@ export const useDocumentGenerateStore = defineStore(
         updatedAt: Date.now()
       }
       activeTasks.value = []
-      taskPollingManager.clearAll()
+      getTaskPollingManager().clearAll()
     }
 
     /**
@@ -397,7 +408,7 @@ export const useDocumentGenerateStore = defineStore(
         activeTasks.value.push(task)
 
         // 开始轮询任务状态
-        taskPollingManager.startPolling(response.task_id, 'scope')
+        getTaskPollingManager().startPolling(response.task_id, 'scope')
 
         return response
       } catch (error: any) {
@@ -607,7 +618,7 @@ export const useDocumentGenerateStore = defineStore(
         activeTasks.value.push(task)
 
         // 开始轮询任务状态
-        taskPollingManager.startPolling(response.task_id, 'search2title', userId, projectId)
+        getTaskPollingManager().startPolling(response.task_id, 'search2title', userId, projectId)
 
         return response
       } catch (err) {
@@ -650,7 +661,7 @@ export const useDocumentGenerateStore = defineStore(
           // 任务完成时停止轮询并更新研究简报
           if (task.status === 'completed' || task.status === 'failed') {
             console.log(`[DEBUG] getScopeTaskStatus - task ${task.status}, stopping polling`)
-            taskPollingManager.stopPolling(taskId)
+            getTaskPollingManager().stopPolling(taskId)
 
             // 任务完成后更新文档状态
             if (task.status === 'completed' && status.result) {
@@ -705,7 +716,7 @@ export const useDocumentGenerateStore = defineStore(
 
           // 任务完成时停止轮询
           if (task.status === 'completed' || task.status === 'failed') {
-            taskPollingManager.stopPolling(taskId)
+            getTaskPollingManager().stopPolling(taskId)
 
             // 任务完成后更新文档状态
             if (task.status === 'completed' && status.result) {
@@ -754,7 +765,12 @@ export const useDocumentGenerateStore = defineStore(
           task.status = 'failed'
           task.error = '任务已取消'
           task.updatedAt = Date.now()
-          taskPollingManager.stopPolling(taskId)
+          getTaskPollingManager().stopPolling(taskId)
+
+          // 更新documentState中的search2titleTask状态
+          if (documentState.value.search2titleTask?.taskId === taskId) {
+            documentState.value.search2titleTask = { ...task }
+          }
         }
 
         return true
@@ -798,7 +814,7 @@ export const useDocumentGenerateStore = defineStore(
           task.status = 'failed'
           task.error = '任务已取消'
           task.updatedAt = Date.now()
-          taskPollingManager.stopPolling(taskId)
+          getTaskPollingManager().stopPolling(taskId)
         }
 
         return true
@@ -939,19 +955,7 @@ export const useDocumentGenerateStore = defineStore(
   {
     persist: {
       key: 'document-generate-store',
-      storage: localStorage,
-      // 只持久化必要的数据，避免存储过大的对象
-      paths: [
-        'documentState.researchBrief',
-        'documentState.searchResults',
-        'documentState.generatedTitles',
-        'documentState.selectedTitle',
-        'documentState.generatedOutline',
-        'documentState.currentStep',
-        'documentState.generationStats',
-        'documentState.createdAt',
-        'documentState.updatedAt'
-      ]
+      storage: localStorage
     }
   }
 )

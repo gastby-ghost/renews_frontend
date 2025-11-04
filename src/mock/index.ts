@@ -56,11 +56,14 @@ export class MockDataManager {
 
   /**
    * 获取Mock数据
+   * @description 状态查询接口（-status结尾）不使用缓存，确保返回最新的任务状态
    */
   getMockData(key: string, ...args: any[]): any {
     const cacheKey = `${key}-${JSON.stringify(args)}`
+    const isStatusQuery = key.includes('-status')
 
-    if (this.dataCache.has(cacheKey)) {
+    // 状态查询接口不使用缓存，直接生成新数据
+    if (!isStatusQuery && this.dataCache.has(cacheKey)) {
       return this.dataCache.get(cacheKey)
     }
 
@@ -227,8 +230,10 @@ export class MockDataManager {
         throw new Error(`未知的Mock数据类型: ${key}`)
     }
 
-    // 将生成的数据存入缓存，提高后续访问性能
-    this.dataCache.set(cacheKey, data)
+    // 只有非状态查询的数据才缓存
+    if (!isStatusQuery) {
+      this.dataCache.set(cacheKey, data)
+    }
     return data
   }
 

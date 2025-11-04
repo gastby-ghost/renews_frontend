@@ -131,7 +131,7 @@ export function useTopicSelection() {
 
     const now = Date.now()
     const taskAge = now - task.createdAt
-    const EXPIRED_THRESHOLD = 30 * 60 * 1000
+    const EXPIRED_THRESHOLD = 60 * 60 * 1000 // 延长到60分钟
 
     console.log('[DEBUG] hasScopeTask - taskAge:', taskAge, 'threshold:', EXPIRED_THRESHOLD)
     console.log('[DEBUG] hasScopeTask - now:', now, 'task.createdAt:', task.createdAt)
@@ -144,9 +144,10 @@ export function useTopicSelection() {
       return false
     }
 
-    if (taskAge > EXPIRED_THRESHOLD) {
-      console.log('[DEBUG] hasScopeTask - task expired, returning false')
-      // 清理过期任务
+    // 放宽过期时间限制，避免过早清理正在执行的任务
+    if (taskAge > EXPIRED_THRESHOLD && (task.status === 'completed' || task.status === 'failed')) {
+      console.log('[DEBUG] hasScopeTask - task expired and completed/failed, returning false')
+      // 只清理已完成的过期任务
       documentStore.updateDocumentState({ scopeTask: null })
       return false
     }
@@ -364,6 +365,57 @@ ${specialRequirementsSection}
     }
   }
 
+  // 取消Search2Title任务
+  const cancelSearch2Title = async (projectId: string) => {
+    const search2titleTask = documentState.value.search2titleTask
+    if (!search2titleTask) {
+      ElMessage.warning('没有正在执行的任务')
+      return
+    }
+
+    try {
+      const success = await documentStore.cancelSearch2TitleTask(
+        search2titleTask.taskId,
+        'user-id',
+        projectId
+      )
+
+      if (success) {
+        ElMessage.success('任务已取消')
+        // 不需要手动清理状态，store中的cancelSearch2TitleTask方法会更新状态
+      } else {
+        ElMessage.error('取消任务失败')
+      }
+    } catch (error) {
+      console.error('取消Search2Title任务失败:', error)
+      ElMessage.error('取消任务失败')
+    }
+  }
+
+  // 取消Scope任务
+  const cancelScopeTask = async () => {
+    const scopeTask = documentState.value.scopeTask
+    if (!scopeTask) {
+      ElMessage.warning('没有正在执行的任务')
+      return
+    }
+
+    try {
+      const success = await documentStore.cancelTask(scopeTask.taskId)
+
+      if (success) {
+        ElMessage.success('任务已取消')
+        // 清理本地任务状态
+        documentStore.updateDocumentState({ scopeTask: null })
+      } else {
+        ElMessage.error('取消任务失败')
+      }
+    } catch (error) {
+      console.error('取消Scope任务失败:', error)
+      ElMessage.error('取消任务失败')
+    }
+  }
+
   // ==================== 通用标题操作 ====================
 
   // 选择标题
@@ -489,8 +541,8 @@ ${specialRequirementsSection}
   // 监听Scope任务状态变化
   watch(
     () => documentState.value.scopeTask,
-    (task) => {
-      console.log('[DEBUG] scopeTask watcher - task:', task)
+    (task, oldTask) => {
+      console.log('[DEBUG] scopeTask watcher - task:', task, 'oldTask:', oldTask)
       if (task) {
         const shouldExecute = task.status === 'pending' || task.status === 'running'
         console.log(
@@ -500,6 +552,12 @@ ${specialRequirementsSection}
           shouldExecute
         )
         requirementsState.isExecutingScope = shouldExecute
+
+        // 任务完成时自动更新研究简报
+        if (task.status === 'completed' && task.result?.research_brief) {
+          console.log('[DEBUG] scopeTask watcher - updating research brief from task result')
+          documentStore.updateResearchBrief(task.result.research_brief)
+        }
       } else {
         console.log('[DEBUG] scopeTask watcher - no task, setting isExecutingScope to false')
         requirementsState.isExecutingScope = false
@@ -509,7 +567,7 @@ ${specialRequirementsSection}
         requirementsState.isExecutingScope
       )
     },
-    { immediate: true }
+    { immediate: true, deep: true }
   )
 
   // 监听标题生成状态
@@ -579,6 +637,8 @@ ${specialRequirementsSection}
     executeScopeAgent,
     generateTitles,
     executeSearch2Title,
+    cancelSearch2Title,
+    cancelScopeTask,
 
     // 方法 - 步骤导航
     proceedToNextStep,
