@@ -541,26 +541,25 @@
     if (!titleState.selectedTitle) return []
 
     const selectedSources = titleState.selectedTitle.sources || []
-    if (
-      selectedSources.length > 0 &&
-      documentState.value.titleSearchResults &&
-      Array.isArray(documentState.value.titleSearchResults)
-    ) {
+
+    if (selectedSources.length > 0 && documentState.value.titleSearchResults) {
       return documentState.value.titleSearchResults
         .filter((_, index) => selectedSources.includes(index.toString()))
-        .map((result) => ({
-          id: `search-${result.query}-${Math.random().toString(36).substring(2, 9)}`,
-          title: result.aititle || '',
-          summary: result.summary || '',
-          url: result.url,
-          tags: result.tags || [],
-          createdAt: result.published_date ? new Date(result.published_date) : new Date(),
-          score: result.score,
-          key_excerpts: result.key_excerpts || [],
-          content: '',
-          type: 'article' as const,
-          user_id: String(projectStore.currentProject?.user_id || '')
-        })) as Material[]
+        .map((result) => {
+          return {
+            id: `search-${result.query || 'unknown'}-${Math.random().toString(36).substring(2, 9)}`,
+            title: result.aititle || '',
+            summary: result.summary || '',
+            url: result.url,
+            tags: result.tags || [],
+            createdAt: result.published_date ? new Date(result.published_date) : new Date(),
+            score: result.score,
+            key_excerpts: result.key_excerpts || [],
+            content: '',
+            type: 'article' as const,
+            user_id: String(projectStore.currentProject?.user_id || '')
+          }
+        }) as Material[]
     }
 
     return []

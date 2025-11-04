@@ -13,6 +13,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { documentGenerateService } from '@/services/documentGenerateService'
 import { AsyncTaskPoller, TaskStatus } from '@/utils/polling/asyncTaskPoller'
+import { normalizeSearchData } from '@/utils/dataprocess/array'
 import type {
   ScopeAgentResponse,
   ScopeAgentStatusResponse,
@@ -275,7 +276,6 @@ export const useDocumentGenerateStore = defineStore(
       const state = documentState.value
       return {
         hasResearchBrief: state.researchBrief.length > 10,
-        hasSearchResults: state.searchResults.length > 0,
         hasTitleSearchResults: state.titleSearchResults.length > 0,
         hasGeneratedTitles: state.generatedTitles.length > 0,
         hasSelectedTitle: state.selectedTitle !== null,
@@ -327,9 +327,6 @@ export const useDocumentGenerateStore = defineStore(
             return await getSearch2TitleTaskStatus(taskId, userId, projectId)
           },
           // 添加缺失的方法
-          updateSearchResults: (results: SearchResultItem[]) => {
-            updateDocumentState({ searchResults: results })
-          },
           updateTitleSearchResults: (results: SearchResultItem[]) => {
             updateDocumentState({ titleSearchResults: results })
           },
@@ -747,7 +744,10 @@ export const useDocumentGenerateStore = defineStore(
               }
 
               if (status.result.research_data?.web_search_data) {
-                updates.titleSearchResults = status.result.research_data.web_search_data
+                // 使用 normalizeSearchData 统一处理数据格式
+                updates.titleSearchResults = normalizeSearchData<SearchResultItem>(
+                  status.result.research_data.web_search_data
+                )
               }
 
               if (Object.keys(updates).length > 0) {
@@ -801,13 +801,6 @@ export const useDocumentGenerateStore = defineStore(
      */
     const updateWorkflowStep = (step: DocumentState['currentStep']) => {
       updateDocumentState({ currentStep: step })
-    }
-
-    /**
-     * 更新搜索数据
-     */
-    const updateSearchResults = (results: SearchResultItem[]) => {
-      updateDocumentState({ searchResults: results })
     }
 
     /**
@@ -967,7 +960,6 @@ export const useDocumentGenerateStore = defineStore(
       cancelSearch2TitleTask,
       getScopeTaskStatus,
       updateWorkflowStep,
-      updateSearchResults,
       updateTitleSearchResults,
       updateResearchBrief,
       cancelTask,

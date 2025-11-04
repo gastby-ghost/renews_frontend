@@ -75,3 +75,41 @@ export function shuffle<T>(arr: T[]): T[] {
   }
   return array
 }
+
+// 统一处理可能为字符串或对象数组的数据，确保返回对象数组
+export function normalizeSearchData<T extends Record<string, any>>(data: string | T[] | T): T[] {
+  // 如果是字符串，尝试解析为JSON
+  if (typeof data === 'string') {
+    try {
+      const parsed = JSON.parse(data)
+      return normalizeSearchData(parsed)
+    } catch (e) {
+      console.error('Failed to parse search data:', e)
+      return []
+    }
+  }
+
+  // 如果是数组，处理每个元素
+  if (Array.isArray(data)) {
+    return data.map((item) => {
+      if (typeof item === 'string') {
+        try {
+          return JSON.parse(item)
+        } catch (e) {
+          console.error('Failed to parse search result item:', e)
+          return {} as T
+        }
+      }
+      return item as T
+    })
+  }
+
+  // 如果是单个对象，放入数组中
+  if (typeof data === 'object' && data !== null) {
+    return [data as T]
+  }
+
+  // 其他情况返回空数组
+  console.warn('Data is not a valid string, array, or object, converting to empty array')
+  return []
+}

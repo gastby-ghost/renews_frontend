@@ -172,10 +172,10 @@ export function useTopicSelection() {
   // ====== 标题相关计算属性 ======
   const hasGeneratedTitles = computed(() => documentState.value.generatedTitles.length > 0)
   const hasSelectedTitle = computed(() => documentState.value.selectedTitle !== null)
-  const hasSearchResults = computed(() => documentState.value.searchResults.length > 0)
+  const hasTitleSearchResults = computed(() => documentState.value.titleSearchResults.length > 0)
 
   const canGenerateTitles = computed(() => {
-    return hasSearchResults.value && documentState.value.researchBrief.length > 0
+    return hasTitleSearchResults.value && documentState.value.researchBrief.length > 0
   })
 
   const canGenerateSearch2Title = computed(() => {
@@ -464,7 +464,7 @@ ${specialRequirementsSection}
   const canProceedToNextStep = computed(() => {
     switch (documentState.value.currentStep) {
       case 'requirements':
-        return documentState.value.researchBrief.length > 10 && hasSearchResults.value
+        return documentState.value.researchBrief.length > 10 && hasTitleSearchResults.value
       case 'title':
         return hasSelectedTitle.value
       case 'outline':
@@ -612,7 +612,7 @@ ${specialRequirementsSection}
     // 标题相关计算属性
     hasGeneratedTitles,
     hasSelectedTitle,
-    hasSearchResults,
+    hasTitleSearchResults,
     canGenerateTitles,
 
     // 步骤导航
