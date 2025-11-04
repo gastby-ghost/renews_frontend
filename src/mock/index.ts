@@ -2,17 +2,8 @@
  * Mock数据统一导出文件
  */
 
-// 素材相关Mock数据
-export * from './data/material/list'
-
-// 搜索相关Mock数据
-export * from './data/search/results'
-
-// 文档生成相关Mock数据
-export * from './data/document-generate'
-
+import { MockTaskTracker } from '@/utils/mockTaskTracker'
 import { generateMockMaterialList, generateMockTags } from './data/material/list'
-
 import {
   generateMockSearchToolsStatus,
   generateMockAIProviders,
@@ -26,7 +17,6 @@ import {
   generateMockSearchAgentList,
   generateMockSearchToolsResponse
 } from './data/search/results'
-
 import {
   generateScopeAgentResponse,
   generateScopeAgentStatusResponse,
@@ -39,6 +29,18 @@ import {
   generateOutlineGenerationResponse,
   generateOutlineToolsStatusResponse
 } from './data/document-generate'
+
+// 素材相关Mock数据
+export * from './data/material/list'
+
+// 搜索相关Mock数据
+export * from './data/search/results'
+
+// 文档生成相关Mock数据
+export * from './data/document-generate'
+
+// 导出 MockTaskTracker 类
+export { MockTaskTracker }
 
 // Mock数据管理器
 export class MockDataManager {

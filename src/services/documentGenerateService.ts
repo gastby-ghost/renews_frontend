@@ -7,7 +7,7 @@
 import BaseApiService from './base/apiService'
 import type { ApiRequestConfig } from '@/config/api/types'
 import type { Api } from '@/typings/api'
-import { documentGenerateMockManager } from '@/mock/document-generate'
+import { mockDataManager } from '@/mock'
 import {
   AsyncTaskPoller,
   type PollingConfig,
@@ -424,7 +424,7 @@ class DocumentGenerateService extends BaseApiService {
 
   /**
    * Mock实现方法
-   * 解耦业务逻辑与Mock数据，使用独立的管理器
+   * 解耦业务逻辑与Mock数据，使用统一的MockDataManager
    */
   protected async mockImplementation(config: ApiRequestConfig): Promise<any> {
     const apiConfig = this.getCurrentConfig()
@@ -438,40 +438,41 @@ class DocumentGenerateService extends BaseApiService {
     const requestData = config.data
 
     try {
-      // 根据API路径调用对应的Mock管理器方法
+      // 根据API路径调用对应的Mock数据生成函数
       if (method === 'POST' && url.includes('/scope-agent/execute')) {
-        return documentGenerateMockManager.getScopeAgentExecute(params.user_id, params.project_id)
+        return mockDataManager.getMockData('scope-agent-execute', params.user_id, params.project_id)
       }
 
       if (method === 'GET' && url.includes('/scope-agent/status/')) {
         const parts = url.split('/')
         const statusIndex = parts.indexOf('status')
         const taskId = statusIndex > -1 ? parts[statusIndex + 1] : ''
-        return documentGenerateMockManager.getScopeAgentStatus(taskId)
+        return mockDataManager.getMockData('scope-agent-status', taskId)
       }
 
       if (method === 'GET' && url.includes('/scope-agent/tasks')) {
-        return documentGenerateMockManager.getScopeAgentList(params.user_id, params.project_id)
+        return mockDataManager.getMockData('scope-agent-list', params.user_id, params.project_id)
       }
 
       if (method === 'POST' && url.includes('/title-agent/generate')) {
-        return documentGenerateMockManager.getTitleGeneration()
+        return mockDataManager.getMockData('title-generation')
       }
 
       if (method === 'GET' && url.includes('/title-agent/status')) {
-        return documentGenerateMockManager.getTitleToolsStatus()
+        return mockDataManager.getMockData('title-tools-status')
       }
 
       if (method === 'POST' && url.includes('/outline-agent/generate')) {
-        return documentGenerateMockManager.getOutlineGeneration()
+        return mockDataManager.getMockData('outline-generation')
       }
 
       if (method === 'GET' && url.includes('/outline-agent/status')) {
-        return documentGenerateMockManager.getOutlineToolsStatus()
+        return mockDataManager.getMockData('outline-tools-status')
       }
 
       if (method === 'POST' && url.includes('/search2title-agent/execute')) {
-        return documentGenerateMockManager.getSearch2TitleAgentExecute(
+        return mockDataManager.getMockData(
+          'search2title-agent-execute',
           params.user_id,
           params.project_id,
           requestData.brief
@@ -482,18 +483,30 @@ class DocumentGenerateService extends BaseApiService {
         const parts = url.split('/')
         const statusIndex = parts.indexOf('status')
         const taskId = statusIndex > -1 ? parts[statusIndex + 1] : ''
-        return documentGenerateMockManager.getSearch2TitleAgentStatus(taskId)
+        return mockDataManager.getMockData('search2title-agent-status', taskId, requestData?.brief)
       }
 
       if (method === 'GET' && url.includes('/search2title-agent/tasks')) {
-        return documentGenerateMockManager.getSearch2TitleAgentList(
+        return mockDataManager.getMockData(
+          'search2title-agent-list',
           params.user_id,
           params.project_id
         )
       }
 
       // 默认Mock响应
-      return documentGenerateMockManager.getDefaultResponse(url, method)
+      return {
+        success: true,
+        message: `文档生成服务Mock响应 - ${method} ${url}`,
+        data: {
+          mock: true,
+          timestamp: Date.now(),
+          request_info: {
+            url,
+            method
+          }
+        }
+      }
     } catch (error) {
       console.error(`[API-${this.serviceName}] Mock数据获取失败:`, error)
 

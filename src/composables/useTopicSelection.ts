@@ -122,17 +122,46 @@ export function useTopicSelection() {
 
   const hasScopeTask = computed(() => {
     const task = documentState.value.scopeTask
-    if (!task) return false
+    console.log('[DEBUG] hasScopeTask - task:', task)
+
+    if (!task) {
+      console.log('[DEBUG] hasScopeTask - no task found, returning false')
+      return false
+    }
 
     const now = Date.now()
     const taskAge = now - task.createdAt
     const EXPIRED_THRESHOLD = 30 * 60 * 1000
 
-    if (taskAge > EXPIRED_THRESHOLD) {
+    console.log('[DEBUG] hasScopeTask - taskAge:', taskAge, 'threshold:', EXPIRED_THRESHOLD)
+    console.log('[DEBUG] hasScopeTask - now:', now, 'task.createdAt:', task.createdAt)
+
+    // 修复时间戳异常检查 - 如果任务时间戳是未来时间，则认为任务无效
+    if (task.createdAt > now) {
+      console.log('[DEBUG] hasScopeTask - future timestamp detected, clearing task')
+      // 清理无效任务
+      documentStore.updateDocumentState({ scopeTask: null })
       return false
     }
 
-    return task.status === 'pending' || task.status === 'running'
+    if (taskAge > EXPIRED_THRESHOLD) {
+      console.log('[DEBUG] hasScopeTask - task expired, returning false')
+      // 清理过期任务
+      documentStore.updateDocumentState({ scopeTask: null })
+      return false
+    }
+
+    const isActive = task.status === 'pending' || task.status === 'running'
+    console.log('[DEBUG] hasScopeTask - task status:', task.status, 'isActive:', isActive)
+
+    // 如果任务已完成但状态未更新，清理任务
+    if (task.status === 'completed' || task.status === 'failed') {
+      console.log('[DEBUG] hasScopeTask - task completed/failed but not cleared, clearing task')
+      documentStore.updateDocumentState({ scopeTask: null })
+      return false
+    }
+
+    return isActive
   })
 
   const scopeTaskStatus = computed(() => {
@@ -461,11 +490,24 @@ ${specialRequirementsSection}
   watch(
     () => documentState.value.scopeTask,
     (task) => {
+      console.log('[DEBUG] scopeTask watcher - task:', task)
       if (task) {
-        requirementsState.isExecutingScope = task.status === 'pending' || task.status === 'running'
+        const shouldExecute = task.status === 'pending' || task.status === 'running'
+        console.log(
+          '[DEBUG] scopeTask watcher - task.status:',
+          task.status,
+          'shouldExecute:',
+          shouldExecute
+        )
+        requirementsState.isExecutingScope = shouldExecute
       } else {
+        console.log('[DEBUG] scopeTask watcher - no task, setting isExecutingScope to false')
         requirementsState.isExecutingScope = false
       }
+      console.log(
+        '[DEBUG] scopeTask watcher - final isExecutingScope:',
+        requirementsState.isExecutingScope
+      )
     },
     { immediate: true }
   )

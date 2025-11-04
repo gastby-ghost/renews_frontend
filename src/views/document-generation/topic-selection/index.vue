@@ -72,6 +72,7 @@
 
               <div class="requirements-actions">
                 <el-button
+                  ref="generateButtonRef"
                   type="primary"
                   size="large"
                   @click="generateAIBriefing(requirementsFormRef)"
@@ -379,6 +380,7 @@
   // 组合式函数和状态管理
   import { useTopicSelection } from '@/composables/useTopicSelection'
   import { useProjectStore } from '@/store/modules/project'
+  import { useDocumentGenerateStore } from '@/store/modules/documentGenerate'
 
   // 自定义组件
   import TitleCard from '@/components/custom/TitleCard.vue'
@@ -398,6 +400,7 @@
   const router = useRouter()
   const route = useRoute()
   const projectStore = useProjectStore()
+  const documentStore = useDocumentGenerateStore()
 
   // ====== 使用组合式函数 ======
   /**
@@ -441,6 +444,8 @@
   const activeEditTab = ref<'edit' | 'preview'>('edit')
   /** 需求表单引用 */
   const requirementsFormRef = ref<FormInstance>()
+  /** 生成按钮引用 */
+  const generateButtonRef = ref()
 
   // ====== 对话框状态 ======
   /** 素材选择对话框是否显示 */
@@ -665,6 +670,39 @@
    * @description 加载项目信息并初始化Search2Title loading状态
    */
   onMounted(async () => {
+    // 添加按钮状态调试日志
+    setTimeout(() => {
+      console.log('[DEBUG] Button state after mount:')
+      console.log('  - isGeneratingBriefing:', requirementsState.isGeneratingBriefing)
+      console.log('  - isExecutingScope:', requirementsState.isExecutingScope)
+      console.log('  - canGenerateBriefing:', canGenerateBriefing.value)
+      console.log('  - hasScopeTask:', hasScopeTask.value)
+      console.log('  - scopeTask:', documentState.value.scopeTask)
+
+      // 检查并清理无效的任务状态
+      const scopeTask = documentState.value.scopeTask
+      if (scopeTask) {
+        const now = Date.now()
+        const taskAge = now - scopeTask.createdAt
+
+        console.log('[DEBUG] Checking task validity on mount:')
+        console.log('  - task.createdAt:', scopeTask.createdAt)
+        console.log('  - now:', now)
+        console.log('  - taskAge:', taskAge)
+        console.log('  - task.status:', scopeTask.status)
+
+        // 如果任务时间戳异常或任务已完成但未清理，手动清理
+        if (
+          scopeTask.createdAt > now ||
+          scopeTask.status === 'completed' ||
+          scopeTask.status === 'failed' ||
+          taskAge > 30 * 60 * 1000
+        ) {
+          console.log('[DEBUG] Clearing invalid task on mount')
+          documentStore.updateDocumentState({ scopeTask: null })
+        }
+      }
+    }, 1000)
     // 加载项目信息
     const projectId = route.params.projectId as string
     if (projectId) {

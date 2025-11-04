@@ -624,11 +624,16 @@ export const useDocumentGenerateStore = defineStore(
      */
     const getScopeTaskStatus = async (taskId: string): Promise<ScopeAgentStatusResponse | null> => {
       try {
+        console.log(`[DEBUG] getScopeTaskStatus - taskId: ${taskId}`)
         const status = await documentGenerateService.getScopeAgentStatus(taskId)
+        console.log(`[DEBUG] getScopeTaskStatus - status:`, status)
 
         // 更新本地任务状态
         const task = activeTasks.value.find((t) => t.taskId === taskId)
         if (task) {
+          console.log(
+            `[DEBUG] getScopeTaskStatus - found task, updating status from ${task.status} to ${status.status}`
+          )
           // 更新任务状态
           task.status = status.status as any
           task.progress = status.progress
@@ -638,11 +643,13 @@ export const useDocumentGenerateStore = defineStore(
 
           // 替换 documentState 中的 scopeTask 对象以触发响应式更新
           if (documentState.value.scopeTask?.taskId === taskId) {
+            console.log(`[DEBUG] getScopeTaskStatus - updating documentState.scopeTask`)
             documentState.value.scopeTask = { ...task }
           }
 
           // 任务完成时停止轮询并更新研究简报
           if (task.status === 'completed' || task.status === 'failed') {
+            console.log(`[DEBUG] getScopeTaskStatus - task ${task.status}, stopping polling`)
             taskPollingManager.stopPolling(taskId)
 
             // 任务完成后更新文档状态
@@ -659,6 +666,8 @@ export const useDocumentGenerateStore = defineStore(
               }
             }
           }
+        } else {
+          console.log(`[DEBUG] getScopeTaskStatus - task not found in activeTasks`)
         }
 
         return status

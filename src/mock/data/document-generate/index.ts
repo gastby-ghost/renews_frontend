@@ -18,15 +18,22 @@ import type {
   OutlineSection
 } from '@/types/ai'
 
+import { MockTaskTracker } from '@/utils/mockTaskTracker'
 import documentGenerateTitle from '../../json/document-generate-title.json'
 import searchData from '../../json/search.json'
+
+// 任务跟踪器实例
+const scopeTaskTracker = new MockTaskTracker()
+const search2TitleTaskTracker = new MockTaskTracker()
 /**
  * 生成Scope Agent执行响应
  */
 export function generateScopeAgentResponse(userId: string, projectId: string): ScopeAgentResponse {
+  const now = Date.now()
+  console.log(`[DEBUG] generateScopeAgentResponse - creating task at timestamp: ${now}`)
   return {
     success: true,
-    task_id: `scope-agent-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    task_id: `scope-agent-${now}-${Math.random().toString(36).substr(2, 9)}`,
     message: 'Scope agent execution started successfully',
     user_id: userId,
     project_id: projectId,
@@ -38,27 +45,41 @@ export function generateScopeAgentResponse(userId: string, projectId: string): S
  * 生成Scope Agent状态响应
  */
 export function generateScopeAgentStatusResponse(taskId: string): ScopeAgentStatusResponse {
-  const statuses = ['pending', 'running', 'completed', 'failed'] as const
-  const currentStatus = statuses[Math.floor(Math.random() * statuses.length)]
+  console.log(`[DEBUG] generateScopeAgentStatusResponse - taskId: ${taskId}`)
 
-  return {
+  // 使用任务跟踪器更新任务状态
+  const taskRecord = scopeTaskTracker.getTaskStatus(taskId)
+  console.log(`[DEBUG] generateScopeAgentStatusResponse - taskRecord:`, taskRecord)
+
+  if (!taskRecord) {
+    console.log(`[DEBUG] generateScopeAgentStatusResponse - creating new task`)
+    // 如果任务不存在，创建一个
+    scopeTaskTracker.createTask(taskId, {
+      research_brief:
+        '我需要进行关于人工智能在医疗领域应用的新闻选题调研。\n\n主题和范围：人工智能技术在医疗健康领域的应用、发展和影响，重点关注诊断辅助、药物研发、医疗影像分析、个性化治疗等具体应用场景。\n\n关键信息维度：\n- 时间：重点关注近期的技术突破和应用案例（近3-6个月）\n- 地点：全球范围，特别关注中国、美国、欧洲等主要医疗科技发展地区\n- 人物：AI医疗领域的领军企业、科研机构、医疗专家\n- 事件：AI医疗产品的获批上市、临床试验结果、技术突破、政策支持\n- 影响：AI医疗对医疗效率、诊断准确性、医疗成本的影响\n- 争议：数据隐私、算法偏见、监管挑战、伦理问题\n- 数据：AI医疗市场规模、应用效果数据、用户接受度统计\n\n语言与地区：中文为主，主要关注中国及全球AI医疗发展动态\n\n时效性要求：重点关注近期（近3个月）的重要进展和突破性成果\n\n期望体裁：深度报道，结合案例分析和技术解读\n\n来源优先级：\n1. 官方监管机构公告（如国家药监局、FDA等）\n2. 权威医学期刊和学术论文\n3. 上市公司公告和财报\n4. 知名医疗科技公司官方发布\n5. 权威医疗媒体和专业机构报告\n6. 学术会议和行业峰会信息'
+    })
+  }
+
+  // 根据时间更新任务状态
+  scopeTaskTracker.updateTaskByTime(taskId)
+  const task = scopeTaskTracker.getTaskStatus(taskId)!
+  console.log(`[DEBUG] generateScopeAgentStatusResponse - updated task:`, task)
+
+  const response = {
     task_id: taskId,
-    status: currentStatus,
-    progress: currentStatus === 'completed' ? 100 : Math.floor(Math.random() * 90),
-    result:
-      currentStatus === 'completed'
-        ? {
-            brief:
-              '我需要进行关于人工智能在医疗领域应用的新闻选题调研。\n\n主题和范围：人工智能技术在医疗健康领域的应用、发展和影响，重点关注诊断辅助、药物研发、医疗影像分析、个性化治疗等具体应用场景。\n\n关键信息维度：\n- 时间：重点关注近期的技术突破和应用案例（近3-6个月）\n- 地点：全球范围，特别关注中国、美国、欧洲等主要医疗科技发展地区\n- 人物：AI医疗领域的领军企业、科研机构、医疗专家\n- 事件：AI医疗产品的获批上市、临床试验结果、技术突破、政策支持\n- 影响：AI医疗对医疗效率、诊断准确性、医疗成本的影响\n- 争议：数据隐私、算法偏见、监管挑战、伦理问题\n- 数据：AI医疗市场规模、应用效果数据、用户接受度统计\n\n语言与地区：中文为主，主要关注中国及全球AI医疗发展动态\n\n时效性要求：重点关注近期（近3个月）的重要进展和突破性成果\n\n期望体裁：深度报道，结合案例分析和技术解读\n\n来源优先级：\n1. 官方监管机构公告（如国家药监局、FDA等）\n2. 权威医学期刊和学术论文\n3. 上市公司公告和财报\n4. 知名医疗科技公司官方发布\n5. 权威医疗媒体和专业机构报告\n6. 学术会议和行业峰会信息'
-          }
-        : null,
-    error: currentStatus === 'failed' ? 'Scope analysis failed due to insufficient data' : null,
+    status: task.status,
+    progress: task.progress,
+    result: task.status === 'completed' ? task.result : null,
+    error: task.status === 'failed' ? task.error : null,
     user_id: 'user-123',
     project_id: 'project-456',
     agent_type: 'scope-agent',
-    created_at: Date.now() - 300000,
-    updated_at: Date.now()
+    created_at: task.createdAt,
+    updated_at: task.updatedAt
   }
+
+  console.log(`[DEBUG] generateScopeAgentStatusResponse - returning response:`, response)
+  return response
 }
 
 /**
@@ -116,52 +137,54 @@ export function generateSearch2TitleAgentStatusResponse(
   taskId: string,
   brief?: string
 ): Search2TitleAgentStatusResponse {
-  const statuses = ['pending', 'running', 'completed', 'failed'] as const
-  const currentStatus = statuses[Math.floor(Math.random() * statuses.length)]
+  // 使用任务跟踪器更新任务状态
+  const taskRecord = search2TitleTaskTracker.getTaskStatus(taskId)
 
-  // 从JSON文件中获取搜索结果数据
-  const mockSearchResults = Object.values(documentGenerateTitle.title_sources_details).flat()
+  if (!taskRecord) {
+    // 从JSON文件中获取搜索结果数据
+    const mockSearchResults = Object.values(documentGenerateTitle.title_sources_details).flat()
+    // 从JSON文件中获取标题数据
+    const mockTitles: Title[] = documentGenerateTitle.titles
 
-  // 从JSON文件中获取标题数据
-  const mockTitles: Title[] = documentGenerateTitle.titles
+    // 创建任务，初始化结果数据
+    search2TitleTaskTracker.createTask(taskId, {
+      research_data: {
+        research_brief: brief || '我需要进行关于人工智能在医疗领域应用的新闻选题调研',
+        research_path: ['分析AI医疗市场现状', '调研FDA最新监管政策', '收集技术突破案例'],
+        web_search_data: mockSearchResults
+      },
+      title_data: {
+        titles: mockTitles,
+        generation_summary: documentGenerateTitle.generation_summary
+      }
+    })
+  }
 
-  const result =
-    currentStatus === 'completed'
-      ? {
-          research_data: {
-            research_brief: brief || '我需要进行关于人工智能在医疗领域应用的新闻选题调研',
-            research_path: ['分析AI医疗市场现状', '调研FDA最新监管政策', '收集技术突破案例'],
-            web_search_data: mockSearchResults
-          },
-          title_data: {
-            titles: mockTitles,
-            generation_summary: documentGenerateTitle.generation_summary
-          }
-        }
-      : null
+  // 根据时间更新任务状态
+  search2TitleTaskTracker.updateSearch2TitleTaskByTime(taskId)
+  const task = search2TitleTaskTracker.getTaskStatus(taskId)!
 
   return {
     task_id: taskId,
-    status: currentStatus,
-    progress: currentStatus === 'completed' ? 100 : Math.floor(Math.random() * 90),
-    result,
-    error:
-      currentStatus === 'failed' ? 'Search2Title execution failed due to insufficient data' : null,
+    status: task.status,
+    progress: task.progress,
+    result: task.status === 'completed' ? task.result : null,
+    error: task.status === 'failed' ? task.error : null,
     user_id: 'user-123',
     project_id: 'project-456',
     agent_type: 'search2title-agent',
-    created_at: Date.now() - 300000,
-    updated_at: Date.now(),
+    created_at: task.createdAt,
+    updated_at: task.updatedAt,
     is_default_project: false,
-    research_data: currentStatus === 'completed' ? searchData : null,
+    research_data: task.status === 'completed' ? searchData : null,
     title_data:
-      currentStatus === 'completed'
+      task.status === 'completed'
         ? {
-            titles: mockTitles,
+            titles: documentGenerateTitle.titles,
             generation_summary: documentGenerateTitle.generation_summary
           }
         : null,
-    current_phase: currentStatus === 'running' ? 'title_generation' : null
+    current_phase: task.status === 'running' ? 'title_generation' : null
   }
 }
 
