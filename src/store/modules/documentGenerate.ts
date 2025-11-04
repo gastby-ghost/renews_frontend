@@ -45,8 +45,11 @@ export interface DocumentState {
   // 当前研究简报
   researchBrief: string
 
-  // 搜索数据
+  // 通用搜索数据（用于其他功能）
   searchResults: SearchResultItem[]
+
+  // 标题生成专用搜索结果（仅用于标题选择阶段）
+  titleSearchResults: SearchResultItem[]
 
   // 生成的内容
   generatedTitles: Title[]
@@ -129,9 +132,9 @@ class TaskPollingManager {
 
         // 任务完成时，更新Store中的数据和UI状态
         if (taskStatus === TaskStatus.COMPLETED && status.result) {
-          // 更新搜索结果
+          // 更新标题专用搜索结果
           if (status.result?.research_data?.web_search_data) {
-            this.store.updateSearchResults?.(status.result.research_data.web_search_data)
+            this.store.updateTitleSearchResults?.(status.result.research_data.web_search_data)
           }
           // 更新生成的标题
           if (status.result?.title_data?.titles) {
@@ -230,6 +233,7 @@ export const useDocumentGenerateStore = defineStore(
     const documentState = ref<DocumentState>({
       researchBrief: '',
       searchResults: [],
+      titleSearchResults: [],
       generatedTitles: [],
       selectedTitle: null,
       generatedOutline: [],
@@ -272,6 +276,7 @@ export const useDocumentGenerateStore = defineStore(
       return {
         hasResearchBrief: state.researchBrief.length > 10,
         hasSearchResults: state.searchResults.length > 0,
+        hasTitleSearchResults: state.titleSearchResults.length > 0,
         hasGeneratedTitles: state.generatedTitles.length > 0,
         hasSelectedTitle: state.selectedTitle !== null,
         hasGeneratedOutline: state.generatedOutline.length > 0,
@@ -325,6 +330,9 @@ export const useDocumentGenerateStore = defineStore(
           updateSearchResults: (results: SearchResultItem[]) => {
             updateDocumentState({ searchResults: results })
           },
+          updateTitleSearchResults: (results: SearchResultItem[]) => {
+            updateDocumentState({ titleSearchResults: results })
+          },
           updateDocumentState: (updates: Partial<DocumentState>) => {
             updateDocumentState(updates)
           },
@@ -346,6 +354,7 @@ export const useDocumentGenerateStore = defineStore(
       documentState.value = {
         researchBrief: '',
         searchResults: [],
+        titleSearchResults: [],
         generatedTitles: [],
         selectedTitle: null,
         generatedOutline: [],
@@ -370,6 +379,13 @@ export const useDocumentGenerateStore = defineStore(
      * 更新文档状态
      */
     const updateDocumentState = (updates: Partial<DocumentState>) => {
+      // 确保 titleSearchResults 始终是数组
+      if (updates.titleSearchResults !== undefined) {
+        updates.titleSearchResults = Array.isArray(updates.titleSearchResults)
+          ? updates.titleSearchResults
+          : []
+      }
+
       Object.assign(documentState.value, {
         ...updates,
         updatedAt: Date.now()
@@ -731,7 +747,7 @@ export const useDocumentGenerateStore = defineStore(
               }
 
               if (status.result.research_data?.web_search_data) {
-                updates.searchResults = status.result.research_data.web_search_data
+                updates.titleSearchResults = status.result.research_data.web_search_data
               }
 
               if (Object.keys(updates).length > 0) {
@@ -799,6 +815,13 @@ export const useDocumentGenerateStore = defineStore(
      */
     const updateResearchBrief = (brief: string) => {
       updateDocumentState({ researchBrief: brief })
+    }
+
+    /**
+     * 更新标题专用搜索结果
+     */
+    const updateTitleSearchResults = (results: SearchResultItem[]) => {
+      updateDocumentState({ titleSearchResults: results })
     }
 
     /**
@@ -945,6 +968,7 @@ export const useDocumentGenerateStore = defineStore(
       getScopeTaskStatus,
       updateWorkflowStep,
       updateSearchResults,
+      updateTitleSearchResults,
       updateResearchBrief,
       cancelTask,
       checkServiceStatus,

@@ -21,7 +21,6 @@ import type {
 import { MockTaskTracker } from '@/utils/mockTaskTracker'
 import documentGenerateTitle from '../../json/document-generate-title.json'
 import searchData from '../../json/search.json'
-
 // 任务跟踪器实例
 const scopeTaskTracker = new MockTaskTracker()
 const search2TitleTaskTracker = new MockTaskTracker()
@@ -137,6 +136,7 @@ export function generateSearch2TitleAgentResponse(
  */
 export function generateSearch2TitleAgentStatusResponse(
   taskId: string,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   brief?: string
 ): Search2TitleAgentStatusResponse {
   // 使用任务跟踪器更新任务状态
@@ -144,17 +144,12 @@ export function generateSearch2TitleAgentStatusResponse(
 
   if (!taskRecord) {
     // 从JSON文件中获取搜索结果数据
-    const mockSearchResults = Object.values(documentGenerateTitle.title_sources_details).flat()
     // 从JSON文件中获取标题数据
     const mockTitles: Title[] = documentGenerateTitle.titles
 
     // 创建任务，初始化结果数据
     search2TitleTaskTracker.createTask(taskId, {
-      research_data: {
-        research_brief: brief || '我需要进行关于人工智能在医疗领域应用的新闻选题调研',
-        research_path: ['分析AI医疗市场现状', '调研FDA最新监管政策', '收集技术突破案例'],
-        web_search_data: mockSearchResults
-      },
+      research_data: searchData,
       title_data: {
         titles: mockTitles,
         generation_summary: documentGenerateTitle.generation_summary
@@ -178,7 +173,7 @@ export function generateSearch2TitleAgentStatusResponse(
     created_at: task.createdAt,
     updated_at: task.updatedAt,
     is_default_project: false,
-    research_data: task.status === 'completed' ? searchData : null,
+    research_data: task.status === 'completed' ? task.result.research_data.web_search_data : null,
     title_data:
       task.status === 'completed'
         ? {

@@ -534,15 +534,20 @@
   })
 
   /** 当前选中标题对应的素材列表
-   * @description 根据选中标题的sources字段从searchResults中过滤出对应素材
+   * @description 根据选中标题的sources字段从titleSearchResults中过滤出对应素材
+   * @description sources字段中的值直接对应titleSearchResults数组的索引位置
    */
   const currentTitleMaterials = computed(() => {
     if (!titleState.selectedTitle) return []
 
     const selectedSources = titleState.selectedTitle.sources || []
-    if (selectedSources.length > 0 && documentState.value.searchResults) {
-      return documentState.value.searchResults
-        .filter((_, index) => selectedSources.includes((index + 1).toString()))
+    if (
+      selectedSources.length > 0 &&
+      documentState.value.titleSearchResults &&
+      Array.isArray(documentState.value.titleSearchResults)
+    ) {
+      return documentState.value.titleSearchResults
+        .filter((_, index) => selectedSources.includes(index.toString()))
         .map((result) => ({
           id: `search-${result.query}-${Math.random().toString(36).substring(2, 9)}`,
           title: result.aititle || '',
