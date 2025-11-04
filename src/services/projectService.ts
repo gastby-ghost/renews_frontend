@@ -472,6 +472,7 @@ class ProjectService extends BaseApiService {
         ]
         const mockData = {
           success: true,
+          message: '获取项目列表成功',
           projects,
           total_count: 2,
           page: 1,

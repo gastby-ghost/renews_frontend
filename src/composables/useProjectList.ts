@@ -14,6 +14,7 @@ import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { storeToRefs } from 'pinia'
+import { useDebounceFn } from '@vueuse/core'
 import { useProjectStore } from '@/store/modules/project'
 import type { Api } from '@/typings/api'
 
@@ -28,8 +29,8 @@ export function useProjectList() {
   const router = useRouter()
   const projectStore = useProjectStore()
 
-  // Store 状态
-  const { projects: projectList, loading, error } = storeToRefs(projectStore)
+  // Store 状态 - 使用 projectsWithUiData 获取格式化后的数据
+  const { projectsWithUiData: projectList, loading, error } = storeToRefs(projectStore)
 
   // 本地状态
   const searchKeyword = ref('')
@@ -199,19 +200,10 @@ export function useProjectList() {
   }
 
   // 获取步骤状态
-  const getStepStatus = (project: ProjectResponse, stepIndex: number) => {
-    const currentStep = getCurrentStep(project.status)
+  const getStepStatus = (project: any, stepIndex: number) => {
+    // 直接使用 project.currentStep，由 Store 的 projectsWithUiData 计算属性提供
+    const currentStep = project.currentStep || 1
     return stepIndex <= currentStep ? 'completed' : 'pending'
-  }
-
-  // 获取当前步骤
-  const getCurrentStep = (status: string) => {
-    const stepMap: Record<string, number> = {
-      draft: 0,
-      in_progress: 1,
-      completed: 3
-    }
-    return stepMap[status] || 0
   }
 
   // ========== 工具函数 ==========
