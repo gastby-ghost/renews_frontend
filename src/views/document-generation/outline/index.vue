@@ -13,18 +13,106 @@
     <div v-else class="main-content">
       <StepIndicator :steps="stepList" />
 
+      <!-- 标题信息分区 -->
+      <div class="art-card title-section">
+        <div class="title-header" @click="titleCollapsed = !titleCollapsed">
+          <div class="title-info">
+            <h3>
+              <el-icon><Document /></el-icon>
+              当前标题
+            </h3>
+            <p class="title-subtitle">查看选中标题的详细信息和研究角度</p>
+          </div>
+          <div class="title-controls">
+            <el-tag v-if="selectedTitle" type="primary" size="large"> 已选择标题 </el-tag>
+            <el-tag v-else type="info" size="large"> 未选择标题 </el-tag>
+            <el-button :icon="titleCollapsed ? ArrowDown : ArrowUp" link>
+              {{ titleCollapsed ? '展开' : '收起' }}
+            </el-button>
+          </div>
+        </div>
+
+        <el-collapse-transition>
+          <div v-show="!titleCollapsed" class="title-content">
+            <div v-if="selectedTitle" class="title-details">
+              <div class="title-main">
+                <div class="title-text">
+                  <h4>{{ selectedTitle }}</h4>
+                  <div class="title-meta">
+                    <el-tag type="success" size="small">选题阶段已确认</el-tag>
+                    <span class="generation-date">
+                      生成时间：{{ new Date().toLocaleDateString() }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div v-if="titleDescription" class="title-description">
+                <h5>
+                  <el-icon><ChatDotSquare /></el-icon>
+                  研究角度
+                </h5>
+                <p>{{ titleDescription }}</p>
+              </div>
+
+              <div v-if="documentStore.documentState.researchBrief" class="research-brief">
+                <h5>
+                  <el-icon><Reading /></el-icon>
+                  研究简报
+                </h5>
+                <div class="brief-content">
+                  {{ documentStore.documentState.researchBrief }}
+                </div>
+              </div>
+
+              <div class="title-actions">
+                <el-button size="small" @click="editTitle" class="art-button">
+                  <el-icon><Edit /></el-icon>
+                  编辑标题
+                </el-button>
+                <el-button
+                  size="small"
+                  type="primary"
+                  plain
+                  @click="viewSearchResults"
+                  class="art-button"
+                >
+                  <el-icon><Search /></el-icon>
+                  查看搜索结果
+                </el-button>
+              </div>
+            </div>
+
+            <div v-else class="empty-title">
+              <el-empty description="暂未选择标题">
+                <template #image>
+                  <el-icon :size="60"><DocumentAdd /></el-icon>
+                </template>
+                <div class="empty-title-actions">
+                  <p>请先返回选题页面选择标题</p>
+                  <el-button type="primary" @click="goBackToTitleSelection">
+                    <el-icon><ArrowLeft /></el-icon>
+                    返回选题
+                  </el-button>
+                </div>
+              </el-empty>
+            </div>
+          </div>
+        </el-collapse-transition>
+      </div>
+
       <!-- 素材分区 -->
-      <div class="materials-section">
+      <div class="art-card materials-section">
         <div class="materials-header" @click="materialsCollapsed = !materialsCollapsed">
           <div class="materials-title">
             <h3>素材管理</h3>
-            <p class="materials-subtitle">选择素材用于大纲生成和绑定</p>
+            <p class="materials-subtitle">选择素材用于后续内容生成和章节绑定</p>
           </div>
           <div class="materials-controls">
             <el-tag :type="selectedMaterials.length > 0 ? 'success' : 'info'" size="large">
               已选择 {{ selectedMaterials.length }} 个素材
             </el-tag>
-            <el-button :icon="materialsCollapsed ? 'ArrowDown' : 'ArrowUp'" link>
+            <el-button :icon="materialsCollapsed ? ArrowDown : ArrowUp" link>
               {{ materialsCollapsed ? '展开' : '收起' }}
             </el-button>
           </div>
@@ -32,33 +120,11 @@
 
         <el-collapse-transition>
           <div v-show="!materialsCollapsed" class="materials-content">
-            <!-- 生成模式切换 -->
-            <div class="generation-mode">
-              <div class="mode-selector">
-                <el-radio-group v-model="generationMode" size="large">
-                  <el-radio-button value="title">
-                    <el-icon><Document /></el-icon>
-                    基于标题生成
-                  </el-radio-button>
-                  <el-radio-button value="material">
-                    <el-icon><Folder /></el-icon>
-                    基于素材生成
-                  </el-radio-button>
-                </el-radio-group>
-              </div>
-              <div class="mode-description">
-                <p v-if="generationMode === 'title'">
-                  根据已选择的标题和研究简报，AI自动生成可能的大纲结构
-                </p>
-                <p v-else> 根据已选择的素材内容，为每个素材分配对应的章节 </p>
-              </div>
-            </div>
-
             <!-- 素材选择区域 -->
             <div class="materials-selection">
               <div class="materials-list">
                 <div class="materials-list-header">
-                  <h4>选择素材（用于大纲生成和后续绑定）</h4>
+                  <h4>选择素材（用于后续内容生成和章节绑定）</h4>
                   <div class="materials-actions">
                     <el-button
                       v-if="selectedMaterials.length > 0"
@@ -180,7 +246,7 @@
         </el-collapse-transition>
       </div>
 
-      <div class="outline-content">
+      <div class="art-card outline-content">
         <div class="outline-header">
           <div class="selected-title">
             <h3>{{ selectedTitle }}</h3>
@@ -190,25 +256,14 @@
             <el-button
               @click="generateAIOutline"
               :loading="generatingOutline"
-              :disabled="
-                (generationMode === 'title' && !canGenerateFromTitle) ||
-                (generationMode === 'material' && !canGenerateFromMaterials)
-              "
+              :disabled="!canGenerateFromTitle"
               type="primary"
+              class="art-button"
             >
               <el-icon><MagicStick /></el-icon>
               AI生成大纲
-              <el-tag
-                v-if="generationMode === 'material'"
-                size="small"
-                type="warning"
-                effect="plain"
-                style="margin-left: 8px"
-              >
-                素材模式
-              </el-tag>
             </el-button>
-            <el-button @click="addSection" :disabled="!canAddSection">
+            <el-button @click="addSection" :disabled="!canAddSection" class="art-button">
               <el-icon><Plus /></el-icon>
               添加章节
             </el-button>
@@ -217,6 +272,7 @@
               :disabled="outlineGeneration.state.generatedOutline.length === 0"
               type="danger"
               plain
+              class="art-button"
             >
               <el-icon><Delete /></el-icon>
               清空大纲
@@ -301,12 +357,15 @@
         </div>
 
         <div class="outline-actions-bottom">
-          <el-button @click="goBack" size="large">返回标题</el-button>
+          <el-button @click="goBack" size="large" class="art-button art-button--secondary"
+            >返回标题</el-button
+          >
           <el-button
             type="success"
             size="large"
             @click="confirmOutline"
             :disabled="outlineGeneration.state.generatedOutline.length === 0"
+            class="art-button art-button--primary"
           >
             确认大纲并继续
           </el-button>
@@ -336,12 +395,19 @@
   import StepIndicator, { type Step } from '@/components/custom/StepIndicator.vue'
   import {
     Document,
-    Folder,
     FolderOpened,
     Link,
     Plus,
     MagicStick,
-    Delete
+    Delete,
+    DocumentAdd,
+    Edit,
+    Search,
+    ChatDotSquare,
+    Reading,
+    ArrowLeft,
+    ArrowDown,
+    ArrowUp
   } from '@element-plus/icons-vue'
 
   const router = useRouter()
@@ -363,10 +429,12 @@
     { label: '正文', status: 'pending' }
   ]
 
+  // 标题分区状态
+  const titleCollapsed = ref(false)
+
   // 素材相关状态
   const selectedMaterials = ref<Material[]>([])
   const materialsCollapsed = ref(false)
-  const generationMode = ref<'material' | 'title'>('title') // 'material': 基于素材生成, 'title': 基于标题生成
 
   // 素材库对话框相关状态
   const showMaterialLibraryDialog = ref(false)
@@ -485,46 +553,26 @@
     return outlineGeneration.state.generatedOutline.length < 10
   })
 
-  // 素材相关计算属性
-  const canGenerateFromMaterials = computed(() => {
-    return selectedMaterials.value.length > 0
-  })
-
   const canGenerateFromTitle = computed(() => {
     return documentStore.documentState.selectedTitle && documentStore.documentState.researchBrief
   })
 
   const generateAIOutline = async () => {
-    // 检查模式条件
-    if (generationMode.value === 'title') {
-      if (!canGenerateFromTitle.value) {
-        ElMessage.warning('请先选择标题并完善研究简报')
-        return
-      }
-    } else if (generationMode.value === 'material') {
-      if (!canGenerateFromMaterials.value) {
-        ElMessage.warning('请先选择素材')
-        return
-      }
+    // 检查条件
+    if (!canGenerateFromTitle.value) {
+      ElMessage.warning('请先选择标题并完善研究简报')
+      return
     }
 
     generatingOutline.value = true
     try {
-      let response
-
-      if (generationMode.value === 'material') {
-        // 基于素材生成大纲
-        response = await outlineGeneration.generateOutlineFromMaterials(selectedMaterials.value)
-        ElMessage.success('基于素材的AI大纲生成成功！')
-      } else {
-        // 基于标题生成大纲
-        response = await outlineGeneration.generateOutline(
-          documentStore.documentState.selectedTitle,
-          documentStore.documentState.researchBrief,
-          documentStore.documentState.searchResults
-        )
-        ElMessage.success('基于标题的AI大纲生成成功！')
-      }
+      // 基于标题生成大纲
+      const response = await outlineGeneration.generateOutline(
+        documentStore.documentState.selectedTitle,
+        documentStore.documentState.researchBrief,
+        documentStore.documentState.searchResults
+      )
+      ElMessage.success('AI大纲生成成功！')
 
       // 保存到store
       if (response) {
@@ -658,6 +706,21 @@
     }
   }
 
+  // 标题相关方法
+  const editTitle = () => {
+    ElMessage.info('编辑标题功能开发中...')
+    // TODO: 跳转到标题编辑页面或打开编辑对话框
+  }
+
+  const viewSearchResults = () => {
+    ElMessage.info('查看搜索结果功能开发中...')
+    // TODO: 显示搜索结果弹窗或跳转到搜索结果页面
+  }
+
+  const goBackToTitleSelection = () => {
+    router.push(`/document-generation/topic-selection/${projectId}`)
+  }
+
   // 素材库对话框相关方法
   const handleMaterialLibraryConfirm = (materials: Material[]) => {
     selectedMaterials.value = materials
@@ -667,67 +730,223 @@
 
 <style scoped lang="scss">
   .outline-container {
-    max-width: 1200px;
-    padding: 20px;
-    margin: 0 auto;
+    max-width: none; // 覆盖任何可能的最大宽度限制
+    // 容器由 ArtPageContent 控制，这里只需要设置合适的内边距
+    padding: var(--art-padding-lg, 24px);
+  }
+
+  .main-content {
+    // 主要内容区域，确保充分利用可用空间
+    width: 100%;
+  }
+
+  // 标题分区样式
+  .title-section {
+    margin-bottom: var(--art-spacing-lg, 24px);
+    overflow: hidden;
+  }
+
+  .title-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--art-padding-lg, 24px) var(--art-padding-xl, 32px);
+    cursor: pointer;
+    background: var(--art-fill-color-light);
+    border-bottom: 1px solid var(--art-border-color);
+    transition: all 0.3s ease;
+
+    &:hover {
+      background: var(--art-fill-color);
+    }
+
+    .title-info {
+      flex: 1;
+
+      h3 {
+        display: flex;
+        gap: var(--art-spacing-sm, 8px);
+        align-items: center;
+        margin: 0 0 var(--art-spacing-xs, 4px);
+        font-size: var(--art-font-size-base-lg, 18px);
+        font-weight: var(--art-font-weight-medium, 500);
+        color: var(--art-text-color-primary);
+
+        .el-icon {
+          color: var(--el-color-primary);
+        }
+      }
+
+      .title-subtitle {
+        margin: 0;
+        font-size: var(--art-font-size-xs, 13px);
+        line-height: var(--art-line-height-normal, 1.4);
+        color: var(--art-text-color-secondary);
+      }
+    }
+
+    .title-controls {
+      display: flex;
+      gap: var(--art-spacing-lg, 16px);
+      align-items: center;
+    }
+  }
+
+  .title-content {
+    padding: var(--art-padding-xl, 32px);
+    background: var(--art-main-bg-color);
+  }
+
+  .title-details {
+    .title-main {
+      margin-bottom: var(--art-spacing-xl, 32px);
+    }
+
+    .title-text {
+      h4 {
+        margin: 0 0 var(--art-spacing-md, 16px);
+        font-size: var(--art-font-size-xl, 24px);
+        font-weight: var(--art-font-weight-semibold, 600);
+        line-height: var(--art-line-height-relaxed, 1.6);
+        color: var(--art-text-color-primary);
+      }
+
+      .title-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--art-spacing-lg, 20px);
+        align-items: center;
+
+        .generation-date {
+          font-size: var(--art-font-size-sm, 14px);
+          color: var(--art-text-color-secondary);
+        }
+      }
+    }
+
+    .title-description,
+    .research-brief {
+      margin-bottom: var(--art-spacing-xl, 32px);
+
+      h5 {
+        display: flex;
+        gap: var(--art-spacing-sm, 8px);
+        align-items: center;
+        margin: 0 0 var(--art-spacing-md, 16px);
+        font-size: var(--art-font-size-base, 16px);
+        font-weight: var(--art-font-weight-medium, 500);
+        color: var(--art-text-color-primary);
+
+        .el-icon {
+          color: var(--el-color-primary);
+        }
+      }
+
+      p,
+      .brief-content {
+        padding: var(--art-spacing-lg, 20px);
+        margin: 0;
+        font-size: var(--art-font-size-sm, 14px);
+        line-height: var(--art-line-height-relaxed, 1.6);
+        color: var(--art-text-color-regular);
+        background: var(--art-fill-color-light);
+        border: 1px solid var(--art-border-color);
+        border-left: 4px solid var(--el-color-primary);
+        border-radius: var(--art-border-radius, 8px);
+      }
+    }
+
+    .title-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--art-spacing-md, 12px);
+    }
+  }
+
+  .empty-title {
+    padding: var(--art-padding-2xl, 60px) var(--art-padding-lg, 24px);
+    text-align: center;
+
+    p {
+      margin: var(--art-spacing-md, 12px) 0;
+      font-size: var(--art-font-size-sm, 14px);
+      line-height: var(--art-line-height-relaxed, 1.6);
+      color: var(--art-text-color-secondary);
+    }
+
+    .el-button {
+      margin-top: var(--art-spacing-md, 12px);
+    }
+  }
+
+  // Art Card 样式
+  .art-card {
+    margin-bottom: var(--art-spacing-lg, 24px);
+    background: var(--art-main-bg-color);
+    border: 1px solid var(--art-border-color);
+    border-radius: var(--art-border-radius, 8px);
+    box-shadow: var(--art-box-shadow-sm);
+    transition: all 0.3s ease;
+
+    &:hover {
+      border-color: var(--el-color-primary-light-6);
+      box-shadow: var(--art-box-shadow);
+    }
   }
 
   .outline-content {
-    padding: 30px;
-    background: var(--el-bg-color);
-    border-radius: 8px;
+    padding: var(--art-padding-xl, 32px);
   }
 
   .outline-header {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    padding-bottom: 20px;
-    margin-bottom: 30px;
-    border-bottom: 1px solid var(--el-border-color);
+    padding-bottom: var(--art-spacing-lg, 24px);
+    margin-bottom: var(--art-spacing-xl, 32px);
+    border-bottom: 1px solid var(--art-border-color);
   }
 
   .selected-title {
     flex: 1;
 
     h3 {
-      margin: 0 0 8px;
-      font-size: 20px;
-      color: var(--el-text-color-primary);
+      margin: 0 0 var(--art-spacing-sm, 8px);
+      font-size: var(--art-font-size-lg, 20px);
+      font-weight: var(--art-font-weight-semibold, 600);
+      color: var(--art-text-color-primary);
     }
 
     .title-description {
       margin: 0;
-      font-size: 14px;
-      color: var(--el-text-color-secondary);
+      font-size: var(--art-font-size-sm, 14px);
+      line-height: var(--art-line-height-relaxed, 1.6);
+      color: var(--art-text-color-secondary);
     }
   }
 
   .outline-actions {
     display: flex;
-    gap: 10px;
+    gap: var(--art-spacing-md, 12px);
   }
 
   // 素材分区样式
   .materials-section {
-    margin-bottom: 30px;
     overflow: hidden;
-    background: var(--el-bg-color);
-    border: 1px solid var(--el-border-color);
-    border-radius: 8px;
   }
 
   .materials-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 20px 30px;
+    padding: var(--art-padding-lg, 24px) var(--art-padding-xl, 32px);
     cursor: pointer;
-    background: var(--el-fill-color-light);
-    transition: background 0.3s;
+    background: var(--art-fill-color-light);
+    border-bottom: 1px solid var(--art-border-color);
+    transition: all 0.3s ease;
 
     &:hover {
-      background: var(--el-fill-color);
+      background: var(--art-fill-color);
     }
   }
 
@@ -735,63 +954,29 @@
     flex: 1;
 
     h3 {
-      margin: 0 0 4px;
-      font-size: 18px;
-      color: var(--el-text-color-primary);
+      margin: 0 0 var(--art-spacing-xs, 4px);
+      font-size: var(--art-font-size-base-lg, 18px);
+      font-weight: var(--art-font-weight-medium, 500);
+      color: var(--art-text-color-primary);
     }
 
     .materials-subtitle {
       margin: 0;
-      font-size: 13px;
-      color: var(--el-text-color-secondary);
+      font-size: var(--art-font-size-xs, 13px);
+      line-height: var(--art-line-height-normal, 1.4);
+      color: var(--art-text-color-secondary);
     }
   }
 
   .materials-controls {
     display: flex;
-    gap: 15px;
+    gap: var(--art-spacing-lg, 16px);
     align-items: center;
   }
 
   .materials-content {
-    padding: 30px;
-    background: var(--el-bg-color);
-  }
-
-  .generation-mode {
-    padding: 20px;
-    margin-bottom: 30px;
-    background: var(--el-fill-color-light);
-    border-radius: 6px;
-
-    .mode-selector {
-      margin-bottom: 15px;
-
-      .el-radio-group {
-        display: flex;
-        gap: 10px;
-      }
-
-      .el-radio-button {
-        flex: 1;
-
-        .el-radio-button__content {
-          display: flex;
-          gap: 8px;
-          align-items: center;
-          justify-content: center;
-        }
-      }
-    }
-
-    .mode-description {
-      p {
-        margin: 0;
-        font-size: 14px;
-        line-height: 1.6;
-        color: var(--el-text-color-regular);
-      }
-    }
+    padding: var(--art-padding-xl, 32px);
+    background: var(--art-main-bg-color);
   }
 
   .materials-selection {
@@ -799,49 +984,57 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 20px;
+      margin-bottom: var(--art-spacing-lg, 20px);
 
       h4 {
         margin: 0;
-        font-size: 16px;
-        color: var(--el-text-color-primary);
+        font-size: var(--art-font-size-base, 16px);
+        font-weight: var(--art-font-weight-medium, 500);
+        color: var(--art-text-color-primary);
       }
     }
 
     .empty-materials {
-      padding: 40px 20px;
+      padding: var(--art-padding-xl, 40px) var(--art-padding-lg, 24px);
       text-align: center;
 
       p {
-        margin: 10px 0 0;
-        font-size: 14px;
-        color: var(--el-text-color-secondary);
+        margin: var(--art-spacing-md, 12px) 0;
+        font-size: var(--art-font-size-sm, 14px);
+        line-height: var(--art-line-height-relaxed, 1.6);
+        color: var(--art-text-color-secondary);
+      }
+
+      .el-button {
+        margin-top: var(--art-spacing-md, 12px);
       }
     }
 
     .materials-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 16px;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: var(--art-spacing-lg, 16px);
     }
   }
 
   .material-binding {
-    padding: 20px;
-    margin-top: 30px;
-    background: var(--el-fill-color-light);
-    border-radius: 6px;
+    padding: var(--art-padding-lg, 24px);
+    margin-top: var(--art-spacing-xl, 32px);
+    background: var(--art-fill-color-light);
+    border: 1px solid var(--art-border-color);
+    border-radius: var(--art-border-radius, 8px);
 
     .binding-header {
-      margin-bottom: 20px;
+      margin-bottom: var(--art-spacing-lg, 20px);
 
       h4 {
         display: flex;
-        gap: 8px;
+        gap: var(--art-spacing-sm, 8px);
         align-items: center;
-        margin: 0 0 8px;
-        font-size: 16px;
-        color: var(--el-text-color-primary);
+        margin: 0 0 var(--art-spacing-sm, 8px);
+        font-size: var(--art-font-size-base, 16px);
+        font-weight: var(--art-font-weight-medium, 500);
+        color: var(--art-text-color-primary);
 
         .el-icon {
           color: var(--el-color-primary);
@@ -850,57 +1043,66 @@
 
       p {
         margin: 0;
-        font-size: 13px;
-        color: var(--el-text-color-secondary);
+        font-size: var(--art-font-size-xs, 13px);
+        line-height: var(--art-line-height-normal, 1.4);
+        color: var(--art-text-color-secondary);
       }
     }
 
     .binding-grid {
       display: grid;
-      gap: 16px;
+      gap: var(--art-spacing-lg, 16px);
     }
 
     .binding-section {
-      padding: 16px;
-      background: var(--el-bg-color);
-      border: 1px solid var(--el-border-color);
-      border-radius: 6px;
+      padding: var(--art-padding-lg, 16px);
+      background: var(--art-main-bg-color);
+      border: 1px solid var(--art-border-color);
+      border-radius: var(--art-border-radius, 8px);
+      transition: all 0.3s ease;
+
+      &:hover {
+        border-color: var(--el-color-primary-light-6);
+        box-shadow: var(--art-box-shadow-sm);
+      }
 
       .section-title {
         display: flex;
-        gap: 10px;
+        gap: var(--art-spacing-md, 12px);
         align-items: center;
-        margin-bottom: 12px;
+        margin-bottom: var(--art-spacing-md, 12px);
 
         .section-number {
           display: flex;
           align-items: center;
           justify-content: center;
-          min-width: 24px;
-          height: 24px;
-          font-size: 12px;
-          font-weight: bold;
+          min-width: 28px;
+          height: 28px;
+          font-size: var(--art-font-size-xs, 12px);
+          font-weight: var(--art-font-weight-bold, 700);
           color: white;
           background: var(--el-color-primary);
-          border-radius: 4px;
+          border-radius: var(--art-border-radius, 6px);
         }
 
         h5 {
           margin: 0;
-          font-size: 15px;
-          color: var(--el-text-color-primary);
+          font-size: var(--art-font-size-base-sm, 15px);
+          font-weight: var(--art-font-weight-medium, 500);
+          color: var(--art-text-color-primary);
         }
       }
 
       .bound-materials {
         display: flex;
         flex-wrap: wrap;
-        gap: 8px;
-        min-height: 40px;
-        padding: 12px;
-        margin-bottom: 12px;
-        background: var(--el-fill-color-blank);
-        border-radius: 4px;
+        gap: var(--art-spacing-sm, 8px);
+        min-height: 48px;
+        padding: var(--art-spacing-md, 12px);
+        margin-bottom: var(--art-spacing-md, 12px);
+        background: var(--art-fill-color-blank);
+        border: 1px solid var(--art-border-dashed-color);
+        border-radius: var(--art-border-radius-sm, 6px);
 
         .el-tag {
           margin: 0;
@@ -910,39 +1112,51 @@
   }
 
   .empty-outline {
-    padding: 60px 20px;
+    padding: var(--art-padding-2xl, 60px) var(--art-padding-lg, 24px);
     text-align: center;
 
     .empty-icon {
-      margin-bottom: 20px;
+      margin-bottom: var(--art-spacing-lg, 20px);
       font-size: 48px;
+      opacity: 0.7;
     }
 
     h4 {
-      margin: 0 0 10px;
-      font-size: 18px;
-      color: var(--el-text-color-primary);
+      margin: 0 0 var(--art-spacing-md, 12px);
+      font-size: var(--art-font-size-base-lg, 18px);
+      font-weight: var(--art-font-weight-medium, 500);
+      color: var(--art-text-color-primary);
     }
 
     p {
       margin: 0;
-      font-size: 14px;
-      color: var(--el-text-color-secondary);
+      font-size: var(--art-font-size-sm, 14px);
+      line-height: var(--art-line-height-relaxed, 1.6);
+      color: var(--art-text-color-secondary);
     }
   }
 
   .outline-tree {
-    margin-bottom: 30px;
+    margin-bottom: var(--art-spacing-xl, 32px);
   }
 
   .outline-section {
-    padding: 15px;
-    margin-bottom: 20px;
-    background: var(--el-fill-color-light);
-    border-radius: 6px;
+    box-sizing: border-box;
+    padding: var(--art-padding-lg, 16px);
+    margin-bottom: var(--art-spacing-lg, 20px);
+    overflow: hidden;
+    background: var(--art-fill-color-light);
+    border: 1px solid var(--art-border-color);
+    border-radius: var(--art-border-radius, 8px);
+    transition: all 0.3s ease;
 
     &:last-child {
       margin-bottom: 0;
+    }
+
+    &:hover {
+      border-color: var(--el-color-primary-light-6);
+      box-shadow: var(--art-box-shadow-sm);
     }
   }
 
@@ -950,200 +1164,298 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 10px;
+    margin-bottom: var(--art-spacing-md, 12px);
   }
 
   .section-info {
     display: flex;
     flex: 1;
-    gap: 10px;
+    gap: var(--art-spacing-md, 12px);
     align-items: center;
   }
 
   .section-number {
-    min-width: 30px;
-    font-weight: bold;
+    min-width: 32px;
+    font-size: var(--art-font-size-lg, 16px);
+    font-weight: var(--art-font-weight-bold, 700);
     color: var(--el-color-primary);
   }
 
   .section-title-input {
     flex: 1;
-    padding: 8px 12px;
-    font-size: 16px;
-    font-weight: 500;
-    background: white;
-    border: 1px solid var(--el-border-color);
-    border-radius: 4px;
+    padding: var(--art-spacing-sm, 8px) var(--art-spacing-md, 12px);
+    font-size: var(--art-font-size-base, 16px);
+    font-weight: var(--art-font-weight-medium, 500);
+    background: var(--art-main-bg-color);
+    border: 1px solid var(--art-border-color);
+    border-radius: var(--art-border-radius-sm, 6px);
+    transition: all 0.3s ease;
 
     &:focus {
+      background: var(--art-main-bg-color);
       border-color: var(--el-color-primary);
       outline: none;
       box-shadow: 0 0 0 2px var(--el-color-primary-light-8);
+    }
+
+    &:hover {
+      border-color: var(--el-color-primary-light-6);
     }
   }
 
   .section-controls {
     display: flex;
-    gap: 5px;
+    gap: var(--art-spacing-xs, 6px);
   }
 
   .section-content {
-    padding: 15px;
-    margin-top: 15px;
-    background: var(--el-fill-color-blank);
-    border-radius: 4px;
+    box-sizing: border-box;
+    padding: var(--art-padding-lg, 16px);
+    margin-top: var(--art-spacing-lg, 16px);
+    overflow: hidden;
+    background: var(--art-fill-color-blank);
+    border: 1px solid var(--art-border-color);
+    border-radius: var(--art-border-radius-sm, 6px);
   }
 
   .content-direction {
-    margin-bottom: 15px;
+    margin-bottom: var(--art-spacing-lg, 16px);
 
     label {
       display: block;
-      margin-bottom: 8px;
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--el-text-color-primary);
+      margin-bottom: var(--art-spacing-sm, 8px);
+      font-size: var(--art-font-size-sm, 14px);
+      font-weight: var(--art-font-weight-medium, 500);
+      color: var(--art-text-color-primary);
     }
   }
 
   .content-direction-textarea {
+    box-sizing: border-box;
     width: 100%;
-    min-height: 80px;
-    padding: 8px 12px;
+    max-width: 100%;
+    min-height: 96px;
+    padding: var(--art-spacing-md, 12px);
     font-family: inherit;
-    font-size: 14px;
+    font-size: var(--art-font-size-sm, 14px);
+    line-height: var(--art-line-height-relaxed, 1.6);
     resize: vertical;
-    border: 1px solid var(--el-border-color);
-    border-radius: 4px;
+    background: var(--art-main-bg-color);
+    border: 1px solid var(--art-border-color);
+    border-radius: var(--art-border-radius-sm, 6px);
+    transition: all 0.3s ease;
 
     &:focus {
+      background: var(--art-main-bg-color);
       border-color: var(--el-color-primary);
       outline: none;
       box-shadow: 0 0 0 2px var(--el-color-primary-light-8);
+    }
+
+    &:hover {
+      border-color: var(--el-color-primary-light-6);
     }
   }
 
   .data-requirements {
     label {
       display: block;
-      margin-bottom: 8px;
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--el-text-color-primary);
+      margin-bottom: var(--art-spacing-sm, 8px);
+      font-size: var(--art-font-size-sm, 14px);
+      font-weight: var(--art-font-weight-medium, 500);
+      color: var(--art-text-color-primary);
     }
 
     .el-tag {
-      margin-right: 8px;
-      margin-bottom: 8px;
+      margin-right: var(--art-spacing-sm, 8px);
+      margin-bottom: var(--art-spacing-sm, 8px);
     }
   }
 
   .outline-actions-bottom {
     display: flex;
-    gap: 15px;
+    gap: var(--art-spacing-lg, 20px);
     justify-content: center;
-    padding-top: 20px;
-    margin-top: 30px;
-    border-top: 1px solid var(--el-border-color);
+    padding-top: var(--art-spacing-lg, 24px);
+    margin-top: var(--art-spacing-xl, 32px);
+    border-top: 1px solid var(--art-border-color);
+
+    .art-button {
+      min-width: 120px;
+      font-weight: var(--art-font-weight-medium, 500);
+
+      &--primary {
+        background: var(--el-color-primary);
+        border-color: var(--el-color-primary);
+
+        &:hover {
+          background: var(--el-color-primary-light-3);
+          border-color: var(--el-color-primary-light-3);
+        }
+      }
+
+      &--secondary {
+        color: var(--art-text-color-primary);
+        background: var(--art-fill-color-light);
+        border-color: var(--art-border-color);
+
+        &:hover {
+          background: var(--art-fill-color);
+          border-color: var(--el-color-primary-light-6);
+        }
+      }
+    }
   }
 
-  @media (width <= 768px) {
-    .outline-container {
-      padding: 15px;
+  // 响应式设计 - 使用系统标准断点
+  @media (max-width: $device-phone) {
+    // 标题分区移动端适配
+    .title-header {
+      padding: var(--art-padding-md, 16px) var(--art-padding-lg, 20px);
+    }
+
+    .title-info {
+      h3 {
+        font-size: var(--art-font-size-base, 16px);
+      }
+
+      .title-subtitle {
+        font-size: var(--art-font-size-xs, 12px);
+      }
+    }
+
+    .title-controls {
+      gap: var(--art-spacing-md, 12px);
+    }
+
+    .title-content {
+      padding: var(--art-padding-lg, 20px);
+    }
+
+    .title-text {
+      h4 {
+        font-size: var(--art-font-size-lg, 20px);
+      }
+    }
+
+    .title-meta {
+      flex-direction: column;
+      gap: var(--art-spacing-sm, 8px);
+      align-items: flex-start;
+    }
+
+    .title-actions {
+      flex-direction: column;
+      align-items: stretch;
+
+      .el-button {
+        width: 100%;
+      }
     }
 
     .outline-content {
-      padding: 20px;
+      padding: var(--art-padding-lg, 20px);
     }
 
     .outline-header {
       flex-direction: column;
-      gap: 20px;
+      gap: var(--art-spacing-lg, 20px);
+      align-items: stretch;
     }
 
     .outline-actions {
       flex-wrap: wrap;
+      justify-content: center;
     }
 
     .section-header {
       flex-direction: column;
-      gap: 10px;
+      gap: var(--art-spacing-md, 12px);
       align-items: flex-start;
     }
 
     .section-controls {
       flex-wrap: wrap;
-    }
-
-    .step-indicator {
-      padding: 15px;
-    }
-
-    .step-connector {
-      width: 40px;
-      margin: 0 10px;
+      justify-content: flex-start;
     }
 
     .outline-actions-bottom {
       flex-direction: column;
+      gap: var(--art-spacing-md, 16px);
       align-items: center;
+
+      .art-button {
+        width: 100%;
+        max-width: 200px;
+      }
     }
 
     // 素材分区移动端适配
-    .materials-section {
-      margin-bottom: 20px;
-    }
-
     .materials-header {
-      padding: 15px 20px;
+      padding: var(--art-padding-md, 16px) var(--art-padding-lg, 20px);
     }
 
     .materials-title {
       h3 {
-        font-size: 16px;
+        font-size: var(--art-font-size-base, 16px);
       }
 
       .materials-subtitle {
-        font-size: 12px;
+        font-size: var(--art-font-size-xs, 12px);
       }
     }
 
     .materials-controls {
-      gap: 10px;
+      gap: var(--art-spacing-md, 12px);
     }
 
     .materials-content {
-      padding: 20px;
-    }
-
-    .generation-mode {
-      padding: 16px;
-
-      .mode-selector {
-        .el-radio-group {
-          flex-direction: column;
-        }
-      }
+      padding: var(--art-padding-lg, 20px);
     }
 
     .materials-selection {
       .materials-list-header {
         flex-direction: column;
-        gap: 10px;
+        gap: var(--art-spacing-md, 12px);
         align-items: flex-start;
       }
 
       .materials-grid {
         grid-template-columns: 1fr;
+        gap: var(--art-spacing-md, 12px);
       }
     }
 
     .material-binding {
-      padding: 16px;
+      padding: var(--art-padding-md, 16px);
 
       .binding-section {
-        padding: 12px;
+        padding: var(--art-spacing-md, 12px);
       }
+    }
+
+    .outline-section {
+      padding: var(--art-spacing-md, 12px);
+    }
+
+    .section-content {
+      padding: var(--art-spacing-md, 12px);
+    }
+
+    .content-direction-textarea {
+      min-height: 80px;
+    }
+  }
+
+  // 平板设备适配
+  @media (max-width: $device-ipad) {
+    .materials-grid {
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    }
+
+    .outline-actions {
+      flex-wrap: wrap;
+      gap: var(--art-spacing-sm, 8px);
     }
   }
 
