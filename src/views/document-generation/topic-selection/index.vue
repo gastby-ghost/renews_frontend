@@ -543,12 +543,24 @@
     const selectedSources = titleState.selectedTitle.sources || []
 
     if (selectedSources.length > 0 && documentState.value.titleSearchResults) {
-      return documentState.value.titleSearchResults
+      // 防护性检查：确保titleSearchResults是对象数组
+      const searchResults = Array.isArray(documentState.value.titleSearchResults)
+        ? documentState.value.titleSearchResults.filter(
+            (item) => typeof item === 'object' && item !== null
+          )
+        : []
+
+      if (searchResults.length === 0) {
+        console.warn('[DEBUG] titleSearchResults is empty or not an object array')
+        return []
+      }
+
+      return searchResults
         .filter((_, index) => selectedSources.includes(index.toString()))
         .map((result) => {
           return {
             id: `search-${result.query || 'unknown'}-${Math.random().toString(36).substring(2, 9)}`,
-            title: result.aititle || '',
+            title: result.aititle || '', // cSpell:ignore aititle
             summary: result.summary || '',
             url: result.url,
             tags: result.tags || [],

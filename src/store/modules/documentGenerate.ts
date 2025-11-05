@@ -133,9 +133,12 @@ class TaskPollingManager {
 
         // 任务完成时，更新Store中的数据和UI状态
         if (taskStatus === TaskStatus.COMPLETED && status.result) {
-          // 更新标题专用搜索结果
+          // 更新标题专用搜索结果（使用normalizeSearchData确保数据格式正确）
           if (status.result?.research_data?.web_search_data) {
-            this.store.updateTitleSearchResults?.(status.result.research_data.web_search_data)
+            const normalizedResults = normalizeSearchData<SearchResultItem>(
+              status.result.research_data.web_search_data
+            )
+            this.store.updateTitleSearchResults?.(normalizedResults)
           }
           // 更新生成的标题
           if (status.result?.title_data?.titles) {
@@ -812,9 +815,11 @@ export const useDocumentGenerateStore = defineStore(
 
     /**
      * 更新标题专用搜索结果
+     * @description 使用normalizeSearchData确保数据始终是对象数组格式
      */
-    const updateTitleSearchResults = (results: SearchResultItem[]) => {
-      updateDocumentState({ titleSearchResults: results })
+    const updateTitleSearchResults = (results: SearchResultItem[] | string) => {
+      const normalizedResults = normalizeSearchData<SearchResultItem>(results)
+      updateDocumentState({ titleSearchResults: normalizedResults })
     }
 
     /**
