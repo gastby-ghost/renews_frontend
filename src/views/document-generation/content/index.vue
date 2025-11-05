@@ -10,101 +10,96 @@
       <el-empty :description="state.loadingProject ? '正在加载项目信息...' : '项目信息加载失败'" />
     </div>
 
-    <div v-else class="main-content">
+    <div v-else class="main-content art-page-content">
       <StepIndicator :steps="stepList" />
 
-      <div class="content-editor">
+      <div class="content-editor art-card">
         <div class="editor-header">
           <div class="document-info">
-            <h2>{{ documentTitle }}</h2>
+            <div class="document-title-row">
+              <h2>{{ documentTitle }}</h2>
+              <div class="editor-actions">
+                <el-button
+                  @click="state.showPreview = !state.showPreview"
+                  :type="state.showPreview ? 'primary' : 'default'"
+                  size="small"
+                >
+                  <el-icon><View /></el-icon>
+                  {{ state.showPreview ? '编辑' : '预览' }}
+                </el-button>
+                <el-button
+                  @click="generateAIContent"
+                  :loading="state.generatingContent"
+                  type="primary"
+                  size="small"
+                >
+                  <el-icon><MagicStick /></el-icon>
+                  AI生成
+                </el-button>
+                <el-button @click="saveContent" type="success" size="small">
+                  <el-icon><Check /></el-icon>
+                  保存
+                </el-button>
+                <el-button @click="exportContent()" :disabled="!hasContent" size="small">
+                  <el-icon><Download /></el-icon>
+                  导出
+                </el-button>
+              </div>
+            </div>
             <div class="document-meta">
-              <el-space wrap>
+              <el-space wrap size="small">
                 <el-tag size="small" type="info">
                   <el-icon><Document /></el-icon>
-                  字数: {{ stats.characters }}
+                  {{ stats.characters }}字
                 </el-tag>
                 <el-tag size="small" type="success">
                   <el-icon><Clock /></el-icon>
-                  阅读时间: {{ stats.readingTime }} 分钟
+                  {{ stats.readingTime }}分钟
                 </el-tag>
                 <el-tag size="small" type="warning">
                   <el-icon><DocumentCopy /></el-icon>
-                  段落: {{ stats.paragraphs }}
-                </el-tag>
-                <el-tag size="small" type="info">
-                  <el-icon><Collection /></el-icon>
-                  标题: {{ stats.headings }}
+                  {{ stats.paragraphs }}段
                 </el-tag>
                 <el-tag size="small" type="primary">
-                  <el-icon><Link /></el-icon>
-                  链接: {{ stats.links }}
-                </el-tag>
-                <el-tag size="small" type="danger">
-                  <el-icon><Star /></el-icon>
-                  图片: {{ stats.images }}
-                </el-tag>
-                <el-tag size="small" type="success">
                   <el-icon><DataAnalysis /></el-icon>
-                  可读性: {{ stats.readabilityScore }}
+                  可读性 {{ stats.readabilityScore }}
                 </el-tag>
               </el-space>
-              <div class="last-saved">最后保存: {{ lastSaved }}</div>
+              <div class="last-saved">{{ lastSaved }}</div>
             </div>
-          </div>
-          <div class="editor-actions">
-            <el-button-group>
-              <el-button
-                @click="state.showPreview = !state.showPreview"
-                :type="state.showPreview ? 'primary' : 'default'"
-              >
-                <el-icon><View /></el-icon>
-                {{ state.showPreview ? '编辑' : '预览' }}
-              </el-button>
-              <el-button
-                @click="generateAIContent"
-                :loading="state.generatingContent"
-                type="primary"
-              >
-                <el-icon><MagicStick /></el-icon>
-                AI生成
-              </el-button>
-            </el-button-group>
-            <el-button @click="saveContent" type="success">
-              <el-icon><Check /></el-icon>
-              保存
-            </el-button>
-            <el-button @click="exportContent()" :disabled="!hasContent">
-              <el-icon><Download /></el-icon>
-              导出
-            </el-button>
           </div>
         </div>
 
-        <div class="editor-layout">
-          <div class="outline-panel">
+        <div
+          class="editor-layout"
+          :class="{
+            'layout-collapsed-outline': !state.showOutline,
+            'layout-collapsed-stats': !state.showStats
+          }"
+        >
+          <div class="outline-panel art-card" :class="{ 'outline-collapsed': !state.showOutline }">
             <div class="panel-header">
-              <h3>
+              <el-button @click="state.showOutline = !state.showOutline" size="small" text>
                 <el-icon><List /></el-icon>
-                文档大纲
-              </h3>
-              <el-button @click="state.showOutline = !state.showOutline" size="small" link>
-                {{ state.showOutline ? '隐藏' : '显示' }}
+                <span v-if="state.showOutline">大纲</span>
               </el-button>
             </div>
 
-            <div v-if="state.showOutline" class="outline-content">
-              <div
-                v-for="(section, index) in state.outline"
-                :key="section.id"
-                class="outline-item"
-                :class="{ active: state.currentSection === index }"
-                @click="navigateToSection(index)"
-                :style="{ paddingLeft: section.level * 20 + 'px' }"
-              >
-                <span class="outline-number">{{ index + 1 }}</span>
-                <span class="outline-title">{{ section.title }}</span>
+            <el-collapse-transition>
+              <div v-show="state.showOutline" class="outline-content">
+                <div
+                  v-for="(section, index) in state.outline"
+                  :key="section.id"
+                  class="outline-item"
+                  :class="{ active: state.currentSection === index }"
+                  @click="navigateToSection(index)"
+                  :style="{ paddingLeft: section.level * 20 + 'px' }"
+                >
+                  <span class="outline-number">{{ index + 1 }}</span>
+                  <span class="outline-title">{{ section.title }}</span>
+                </div>
               </div>
-            </div>
+            </el-collapse-transition>
           </div>
 
           <div class="editor-panel">
@@ -180,113 +175,116 @@
             </div>
           </div>
 
-          <div class="stats-panel">
+          <div class="stats-panel art-card" :class="{ 'stats-collapsed': !state.showStats }">
             <div class="panel-header">
-              <h3>
+              <el-button @click="state.showStats = !state.showStats" size="small" text>
                 <el-icon><DataAnalysis /></el-icon>
-                内容统计
-              </h3>
-              <el-button @click="state.showStats = !state.showStats" size="small" link>
-                {{ state.showStats ? '隐藏' : '显示' }}
+                <span v-if="state.showStats">统计</span>
               </el-button>
             </div>
 
-            <div v-if="state.showStats" class="stats-content">
-              <!-- 基础统计 -->
-              <div class="stats-section">
-                <h4>基础信息</h4>
-                <div class="stat-item">
-                  <span class="stat-label">总字符数</span>
-                  <span class="stat-value">{{ stats.characters }}</span>
-                </div>
-                <div class="stat-item">
-                  <span class="stat-label">字符数（无空格）</span>
-                  <span class="stat-value">{{ stats.charactersNoSpaces }}</span>
-                </div>
-                <div class="stat-item">
-                  <span class="stat-label">单词数</span>
-                  <span class="stat-value">{{ stats.words }}</span>
-                </div>
-                <div class="stat-item">
-                  <span class="stat-label">段落数</span>
-                  <span class="stat-value">{{ stats.paragraphs }}</span>
-                </div>
-                <div class="stat-item">
-                  <span class="stat-label">句子数</span>
-                  <span class="stat-value">{{ stats.sentences }}</span>
-                </div>
-              </div>
-
-              <!-- 结构统计 -->
-              <div class="stats-section">
-                <h4>文档结构</h4>
-                <div class="stat-item">
-                  <span class="stat-label">标题数量</span>
-                  <span class="stat-value">{{ stats.headings }}</span>
-                </div>
-                <div class="stat-item" v-for="(count, level) in stats.headingsByLevel" :key="level">
-                  <span class="stat-label">H{{ level }}</span>
-                  <span class="stat-value">{{ count }}</span>
-                </div>
-                <div class="stat-item">
-                  <span class="stat-label">链接数量</span>
-                  <span class="stat-value">{{ stats.links }}</span>
-                </div>
-                <div class="stat-item">
-                  <span class="stat-label">图片数量</span>
-                  <span class="stat-value">{{ stats.images }}</span>
-                </div>
-                <div class="stat-item">
-                  <span class="stat-label">代码块</span>
-                  <span class="stat-value">{{ stats.codeBlocks }}</span>
-                </div>
-                <div class="stat-item">
-                  <span class="stat-label">列表项</span>
-                  <span class="stat-value">{{ stats.listItems }}</span>
-                </div>
-              </div>
-
-              <!-- 可读性分析 -->
-              <div class="stats-section">
-                <h4>可读性分析</h4>
-                <div class="stat-item">
-                  <span class="stat-label">平均句子长度</span>
-                  <span class="stat-value">{{ stats.avgSentenceLength }} 词</span>
-                </div>
-                <div class="stat-item">
-                  <span class="stat-label">平均段落长度</span>
-                  <span class="stat-value">{{ stats.avgParagraphLength }} 词</span>
-                </div>
-                <div class="stat-item">
-                  <span class="stat-label">可读性分数</span>
-                  <el-tag :type="getReadabilityTagType(stats.readabilityScore)" size="small">
-                    {{ stats.readabilityScore }}
-                  </el-tag>
-                </div>
-                <div class="readability-desc">
-                  {{ getReadabilityDesc(stats.readabilityScore) }}
-                </div>
-              </div>
-
-              <!-- AI 建议 -->
-              <div class="stats-section">
-                <h4>AI 建议</h4>
-                <div v-if="aiSuggestions.length > 0" class="suggestion-list">
-                  <div
-                    v-for="(suggestion, index) in aiSuggestions"
-                    :key="index"
-                    class="suggestion-item"
-                  >
-                    <el-icon><InfoFilled /></el-icon>
-                    <span>{{ suggestion }}</span>
+            <el-collapse-transition>
+              <div v-show="state.showStats" class="stats-content">
+                <!-- 基础统计 -->
+                <div class="stats-section">
+                  <h4>基础信息</h4>
+                  <div class="stat-item">
+                    <span class="stat-label">总字符数</span>
+                    <span class="stat-value">{{ stats.characters }}</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-label">字符数（无空格）</span>
+                    <span class="stat-value">{{ stats.charactersNoSpaces }}</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-label">单词数</span>
+                    <span class="stat-value">{{ stats.words }}</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-label">段落数</span>
+                    <span class="stat-value">{{ stats.paragraphs }}</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-label">句子数</span>
+                    <span class="stat-value">{{ stats.sentences }}</span>
                   </div>
                 </div>
-                <div v-else class="no-suggestions">
-                  <el-icon><Check /></el-icon>
-                  文档质量良好，暂无建议
+
+                <!-- 结构统计 -->
+                <div class="stats-section">
+                  <h4>文档结构</h4>
+                  <div class="stat-item">
+                    <span class="stat-label">标题数量</span>
+                    <span class="stat-value">{{ stats.headings }}</span>
+                  </div>
+                  <div
+                    class="stat-item"
+                    v-for="(count, level) in stats.headingsByLevel"
+                    :key="level"
+                  >
+                    <span class="stat-label">H{{ level }}</span>
+                    <span class="stat-value">{{ count }}</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-label">链接数量</span>
+                    <span class="stat-value">{{ stats.links }}</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-label">图片数量</span>
+                    <span class="stat-value">{{ stats.images }}</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-label">代码块</span>
+                    <span class="stat-value">{{ stats.codeBlocks }}</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-label">列表项</span>
+                    <span class="stat-value">{{ stats.listItems }}</span>
+                  </div>
+                </div>
+
+                <!-- 可读性分析 -->
+                <div class="stats-section">
+                  <h4>可读性分析</h4>
+                  <div class="stat-item">
+                    <span class="stat-label">平均句子长度</span>
+                    <span class="stat-value">{{ stats.avgSentenceLength }} 词</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-label">平均段落长度</span>
+                    <span class="stat-value">{{ stats.avgParagraphLength }} 词</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-label">可读性分数</span>
+                    <el-tag :type="getReadabilityTagType(stats.readabilityScore)" size="small">
+                      {{ stats.readabilityScore }}
+                    </el-tag>
+                  </div>
+                  <div class="readability-desc">
+                    {{ getReadabilityDesc(stats.readabilityScore) }}
+                  </div>
+                </div>
+
+                <!-- AI 建议 -->
+                <div class="stats-section">
+                  <h4>AI 建议</h4>
+                  <div v-if="aiSuggestions.length > 0" class="suggestion-list">
+                    <div
+                      v-for="(suggestion, index) in aiSuggestions"
+                      :key="index"
+                      class="suggestion-item"
+                    >
+                      <el-icon><InfoFilled /></el-icon>
+                      <span>{{ suggestion }}</span>
+                    </div>
+                  </div>
+                  <div v-else class="no-suggestions">
+                    <el-icon><Check /></el-icon>
+                    文档质量良好，暂无建议
+                  </div>
                 </div>
               </div>
-            </div>
+            </el-collapse-transition>
           </div>
         </div>
       </div>
@@ -302,34 +300,34 @@
         </el-button>
       </div>
     </div>
-
-    <!-- AI 操作对话框 -->
-    <el-dialog v-model="state.aiDialogVisible" :title="state.aiDialogTitle" width="600px">
-      <div class="ai-dialog-content">
-        <div v-if="state.aiLoading" class="ai-loading">
-          <el-icon class="is-loading"><Loading /></el-icon>
-          <p>AI 正在处理中，请稍候...</p>
-        </div>
-        <div v-else>
-          <div v-if="state.aiDialogType === 'polish'" class="ai-result">
-            <h4>原始文本</h4>
-            <div class="original-text">{{ state.selectedText }}</div>
-            <h4>润色结果</h4>
-            <div class="result-text" v-html="aiResult"></div>
-          </div>
-          <!-- 其他AI操作结果 -->
-        </div>
-      </div>
-      <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="state.aiDialogVisible = false">取消</el-button>
-          <el-button v-if="!state.aiLoading" type="primary" @click="applyAIResult">
-            应用到文档
-          </el-button>
-        </span>
-      </template>
-    </el-dialog>
   </div>
+
+  <!-- AI 操作对话框 -->
+  <el-dialog v-model="state.aiDialogVisible" :title="state.aiDialogTitle" width="600px">
+    <div class="ai-dialog-content">
+      <div v-if="state.aiLoading" class="ai-loading">
+        <el-icon class="is-loading"><Loading /></el-icon>
+        <p>AI 正在处理中，请稍候...</p>
+      </div>
+      <div v-else>
+        <div v-if="state.aiDialogType === 'polish'" class="ai-result">
+          <h4>原始文本</h4>
+          <div class="original-text">{{ state.selectedText }}</div>
+          <h4>润色结果</h4>
+          <div class="result-text" v-html="aiResult"></div>
+        </div>
+        <!-- 其他AI操作结果 -->
+      </div>
+    </div>
+    <template #footer>
+      <span class="dialog-footer">
+        <el-button @click="state.aiDialogVisible = false">取消</el-button>
+        <el-button v-if="!state.aiLoading" type="primary" @click="applyAIResult">
+          应用到文档
+        </el-button>
+      </span>
+    </template>
+  </el-dialog>
 </template>
 
 <script setup lang="ts">
@@ -340,9 +338,6 @@
     Document,
     Clock,
     DocumentCopy,
-    Collection,
-    Link,
-    Star,
     DataAnalysis,
     View,
     MagicStick,
@@ -627,116 +622,223 @@
     min-height: 0;
     padding: 20px;
     overflow: hidden;
-    background: var(--el-bg-color);
+    background: var(--art-main-bg-color);
+    border: 1px solid var(--art-border-color);
     border-radius: 8px;
+    box-shadow: var(--art-box-shadow-sm);
   }
 
   .editor-header {
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
-    gap: 15px;
-    padding-bottom: 15px;
-    margin-bottom: 20px;
+    gap: 12px;
+    padding-bottom: 12px;
+    margin-bottom: 16px;
     border-bottom: 1px solid var(--el-border-color);
+  }
+
+  .document-title-row {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    justify-content: space-between;
+
+    h2 {
+      flex: 1;
+      min-width: 0;
+      margin: 0;
+      overflow: hidden;
+      font-size: 20px;
+      color: var(--el-text-color-primary);
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
   }
 
   .document-info {
     flex: 1;
 
-    h2 {
-      margin: 0 0 8px;
-      font-size: 24px;
-      color: var(--el-text-color-primary);
-    }
-
     .document-meta {
       display: flex;
-      flex-direction: column;
-      gap: 10px;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: center;
+      justify-content: space-between;
 
       .last-saved {
-        font-size: 14px;
+        font-size: 12px;
         color: var(--el-text-color-secondary);
+        white-space: nowrap;
       }
     }
   }
 
   .editor-actions {
     display: flex;
-    gap: 10px;
-    justify-content: flex-end;
+    flex-shrink: 0;
+    gap: 8px;
   }
 
   .editor-layout {
     display: grid;
     flex: 1;
-    grid-template-columns: 250px 1fr 320px;
-    gap: 20px;
+    grid-template-columns: 50px 1fr 50px;
+    gap: 16px;
     overflow: hidden;
+    transition: grid-template-columns 0.3s ease;
+
+    &.layout-collapsed-outline {
+      grid-template-columns: 50px 1fr 50px;
+    }
+
+    &.layout-collapsed-stats {
+      grid-template-columns: 50px 1fr 50px;
+    }
+
+    &.layout-collapsed-outline.layout-collapsed-stats {
+      grid-template-columns: 50px 1fr 50px;
+    }
+
+    // 展开状态下的布局
+    &:not(.layout-collapsed-outline, .layout-collapsed-stats) {
+      grid-template-columns: 180px 1fr 220px;
+    }
+
+    &.layout-collapsed-outline:not(.layout-collapsed-stats) {
+      grid-template-columns: 50px 1fr 220px;
+    }
+
+    &.layout-collapsed-stats:not(.layout-collapsed-outline) {
+      grid-template-columns: 180px 1fr 50px;
+    }
   }
 
   .outline-panel,
   .stats-panel {
     display: flex;
     flex-direction: column;
-    padding: 15px;
+    padding: 0;
     overflow: hidden;
-    background: var(--el-fill-color-light);
+    background: var(--art-main-bg-color);
+    border: 1px solid var(--art-border-color);
     border-radius: 6px;
-  }
+    box-shadow: var(--art-box-shadow-sm);
+    transition: all 0.3s ease;
 
-  .panel-header {
-    display: flex;
-    flex-shrink: 0;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 15px;
-
-    h3 {
+    .panel-header {
       display: flex;
-      gap: 8px;
       align-items: center;
-      margin: 0;
-      font-size: 16px;
-      color: var(--el-text-color-primary);
+      justify-content: center;
+      padding: 12px;
+      background: var(--el-fill-color-light);
+      border-bottom: 1px solid var(--art-border-color);
+      transition: all 0.3s ease;
+
+      .el-button {
+        justify-content: center;
+        width: 100%;
+        padding: 6px 8px;
+        font-size: 12px;
+
+        .el-icon {
+          font-size: 14px;
+        }
+      }
+    }
+
+    .outline-content,
+    .stats-content {
+      flex: 1;
+      padding: 12px;
+      overflow-y: auto;
+      transition: padding 0.3s ease;
     }
   }
 
-  .outline-content {
-    flex: 1;
-    overflow-y: auto;
+  .outline-panel {
+    &.outline-collapsed {
+      .panel-header {
+        min-height: 40px;
+        padding: 8px 6px;
+
+        .el-button {
+          width: auto;
+          padding: 4px 6px;
+
+          span:not(:first-child) {
+            display: none;
+          }
+        }
+      }
+
+      .outline-content {
+        padding: 0;
+      }
+    }
+  }
+
+  .stats-panel {
+    &.stats-collapsed {
+      .panel-header {
+        min-height: 40px;
+        padding: 8px 6px;
+
+        .el-button {
+          width: auto;
+          padding: 4px 6px;
+
+          span:not(:first-child) {
+            display: none;
+          }
+        }
+      }
+
+      .stats-content {
+        padding: 0;
+      }
+    }
   }
 
   .outline-item {
     display: flex;
     align-items: center;
-    padding: 8px 10px;
-    margin-bottom: 5px;
+    padding: 6px 8px;
+    margin-bottom: 4px;
+    font-size: 12px;
     cursor: pointer;
+    border: 1px solid transparent;
     border-radius: 4px;
     transition: all 0.3s ease;
 
     &:hover {
-      background: var(--el-fill-color);
+      background: var(--el-fill-color-light);
+      border-color: var(--el-color-primary-light-7);
     }
 
     &.active {
       background: var(--el-color-primary-light-9);
+      border-color: var(--el-color-primary);
       border-left: 3px solid var(--el-color-primary);
     }
   }
 
   .outline-number {
-    min-width: 20px;
+    min-width: 16px;
     margin-right: 8px;
-    font-weight: bold;
+    font-size: 11px;
+    font-weight: 600;
     color: var(--el-color-primary);
   }
 
   .outline-title {
-    font-size: 14px;
+    flex: 1;
+    overflow: hidden;
+    font-size: 12px;
+    font-weight: 500;
     color: var(--el-text-color-regular);
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .editor-panel {
@@ -778,8 +880,16 @@
     flex: 1;
     flex-direction: column;
     overflow: hidden;
-    border: 1px solid var(--el-border-color);
-    border-radius: 6px;
+    background: var(--art-main-bg-color);
+    border: 2px solid var(--art-border-color);
+    border-radius: 8px;
+    box-shadow: var(--art-box-shadow);
+    transition: all 0.3s ease;
+
+    &:hover {
+      border-color: var(--el-color-primary-light-7);
+      box-shadow: var(--art-box-shadow-lg);
+    }
   }
 
   .markdown-editor {
@@ -797,23 +907,30 @@
     line-height: 1.6;
     color: var(--el-text-color-regular);
     resize: none;
-    background: var(--el-bg-color);
+    background: var(--art-main-bg-color);
     border: none;
     outline: none;
+    transition: all 0.3s ease;
 
     &:focus {
+      background: var(--art-main-bg-color);
       outline: none;
+    }
+
+    &::placeholder {
+      font-style: italic;
+      color: var(--el-text-color-placeholder);
     }
   }
 
   .selection-toolbar {
     position: absolute;
     z-index: 10;
-    padding: 5px;
-    background: var(--el-bg-color);
-    border: 1px solid var(--el-border-color);
-    border-radius: 4px;
-    box-shadow: 0 2px 12px rgb(0 0 0 / 15%);
+    padding: 6px;
+    background: var(--art-main-bg-color);
+    border: 1px solid var(--art-border-color);
+    border-radius: 6px;
+    box-shadow: var(--art-box-shadow);
     animation: fadeIn 0.2s ease;
   }
 
@@ -899,17 +1016,31 @@
   }
 
   .stats-section {
-    margin-bottom: 20px;
+    margin-bottom: 24px;
 
     &:last-child {
       margin-bottom: 0;
     }
 
     h4 {
-      margin: 0 0 12px;
-      font-size: 14px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      padding-bottom: 8px;
+      margin: 0 0 16px;
+      font-size: 15px;
       font-weight: 600;
       color: var(--el-text-color-primary);
+      border-bottom: 1px solid var(--art-border-dashed-color);
+
+      &::before {
+        display: inline-block;
+        width: 3px;
+        height: 16px;
+        content: '';
+        background: var(--el-color-primary);
+        border-radius: 2px;
+      }
     }
   }
 
@@ -917,51 +1048,71 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 0;
-    border-bottom: 1px solid var(--el-border-color-lighter);
+    padding: 10px 0;
+    border-bottom: 1px solid var(--art-border-dashed-color);
+    transition: all 0.3s ease;
 
     &:last-child {
       border-bottom: none;
+    }
+
+    &:hover {
+      padding-right: 8px;
+      padding-left: 8px;
+      background: var(--el-fill-color-light);
+      border-radius: 4px;
     }
   }
 
   .stat-label {
     font-size: 13px;
+    font-weight: 500;
     color: var(--el-text-color-regular);
   }
 
   .stat-value {
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
-    color: var(--el-text-color-primary);
+    color: var(--el-color-primary);
   }
 
   .readability-desc {
-    padding: 8px;
-    margin-top: 8px;
-    font-size: 12px;
+    padding: 12px;
+    margin-top: 12px;
+    font-size: 13px;
     color: var(--el-text-color-secondary);
     background: var(--el-fill-color-light);
-    border-radius: 4px;
+    border-left: 3px solid var(--el-color-success);
+    border-radius: 6px;
   }
 
   .suggestion-list {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
   }
 
   .suggestion-item {
     display: flex;
-    gap: 8px;
+    gap: 10px;
     align-items: flex-start;
-    padding: 10px;
+    padding: 12px;
     font-size: 13px;
     color: var(--el-text-color-regular);
     background: var(--el-fill-color-light);
-    border-radius: 4px;
+    border: 1px solid var(--el-border-color-light);
+    border-radius: 6px;
+    transition: all 0.3s ease;
+
+    &:hover {
+      background: var(--el-fill-color);
+      border-color: var(--el-color-primary-light-7);
+      transform: translateY(-1px);
+    }
 
     .el-icon {
+      margin-top: 2px;
+      font-size: 16px;
       color: var(--el-color-primary);
     }
   }
@@ -969,14 +1120,17 @@
   .no-suggestions {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
     align-items: center;
-    padding: 20px;
-    font-size: 13px;
+    padding: 24px;
+    font-size: 14px;
     color: var(--el-text-color-secondary);
+    background: var(--el-color-success-light-9);
+    border: 1px solid var(--el-color-success-light-7);
+    border-radius: 8px;
 
     .el-icon {
-      font-size: 24px;
+      font-size: 28px;
       color: var(--el-color-success);
     }
   }
@@ -984,9 +1138,14 @@
   .content-actions {
     display: flex;
     flex-shrink: 0;
-    gap: 20px;
+    gap: 16px;
+    align-items: center;
     justify-content: center;
-    margin-top: 20px;
+    padding: 12px 0;
+    margin-top: 16px;
+    background: var(--el-fill-color-light);
+    border-top: 1px solid var(--art-border-color);
+    border-radius: 6px;
   }
 
   .ai-dialog-content {
@@ -1033,29 +1192,75 @@
   }
 
   @media (width <= 1200px) {
+    .content-container {
+      padding: 16px;
+    }
+
     .editor-layout {
-      grid-template-columns: 200px 1fr 280px;
+      grid-template-columns: 160px 1fr 200px;
+      gap: 12px;
+
+      &:not(.layout-collapsed-outline, .layout-collapsed-stats) {
+        grid-template-columns: 160px 1fr 200px;
+      }
+
+      &.layout-collapsed-outline:not(.layout-collapsed-stats) {
+        grid-template-columns: 50px 1fr 200px;
+      }
+
+      &.layout-collapsed-stats:not(.layout-collapsed-outline) {
+        grid-template-columns: 160px 1fr 50px;
+      }
+    }
+
+    .document-title-row h2 {
+      font-size: 18px;
+    }
+
+    .editor-actions .el-button {
+      padding: 6px 10px;
+      font-size: 12px;
     }
   }
 
-  @media (width <= 768px) {
+  @media (width <= 900px) {
     .content-container {
-      height: auto;
-      padding: 15px;
-    }
-
-    .main-content {
-      min-height: auto;
+      padding: 12px;
     }
 
     .editor-layout {
       grid-template-columns: 1fr;
-      gap: 15px;
+      gap: 12px;
+
+      &.layout-collapsed-outline,
+      &.layout-collapsed-stats,
+      &.layout-collapsed-outline.layout-collapsed-stats {
+        grid-template-columns: 1fr;
+      }
     }
 
     .outline-panel,
     .stats-panel {
       order: 2;
+      max-height: 240px;
+
+      &.outline-collapsed,
+      &.stats-collapsed {
+        .panel-header {
+          justify-content: flex-start;
+          padding: 12px;
+
+          .el-button {
+            width: 100%;
+            padding: 8px 12px;
+            font-size: 14px;
+
+            span:not(:first-child) {
+              display: inline;
+            }
+          }
+        }
+      }
     }
 
     .editor-panel {
@@ -1063,9 +1268,142 @@
       min-height: 400px;
     }
 
+    .editor-header {
+      gap: 8px;
+      padding-bottom: 8px;
+      margin-bottom: 12px;
+    }
+
+    .document-title-row {
+      flex-direction: column;
+      gap: 8px;
+      align-items: flex-start;
+
+      h2 {
+        font-size: 18px;
+        white-space: normal;
+      }
+    }
+
+    .document-meta {
+      flex-direction: column;
+      gap: 8px;
+      align-items: flex-start;
+    }
+
     .editor-actions {
-      flex-wrap: wrap;
       justify-content: flex-start;
+      width: 100%;
+    }
+
+    .content-actions {
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 12px 0;
+      margin-top: 12px;
+    }
+  }
+
+  @media (width <= 600px) {
+    .content-container {
+      height: auto;
+      padding: 8px;
+    }
+
+    .main-content {
+      min-height: auto;
+    }
+
+    .content-editor {
+      padding: 12px;
+    }
+
+    .editor-header {
+      gap: 8px;
+      padding-bottom: 8px;
+      margin-bottom: 8px;
+    }
+
+    .document-title-row h2 {
+      font-size: 16px;
+    }
+
+    .document-meta .el-space {
+      flex-wrap: wrap;
+      gap: 6px !important;
+    }
+
+    .document-meta .el-tag {
+      padding: 2px 6px;
+      font-size: 11px;
+    }
+
+    .editor-actions .el-button {
+      padding: 4px 8px;
+      font-size: 11px;
+    }
+
+    .editor-layout {
+      gap: 8px;
+    }
+
+    .markdown-input {
+      padding: 12px;
+      font-size: 13px;
+    }
+
+    .outline-panel .outline-content,
+    .stats-panel .stats-content {
+      padding: 8px;
+    }
+
+    .outline-item {
+      padding: 4px 6px;
+      margin-bottom: 2px;
+      font-size: 11px;
+    }
+
+    .outline-number {
+      min-width: 14px;
+      margin-right: 6px;
+      font-size: 10px;
+    }
+
+    .outline-title {
+      font-size: 11px;
+    }
+
+    .stats-section {
+      margin-bottom: 16px;
+    }
+
+    .stats-section h4 {
+      margin-bottom: 12px;
+      font-size: 13px;
+    }
+
+    .stat-item {
+      padding: 6px 0;
+      font-size: 12px;
+    }
+
+    .stat-label {
+      font-size: 11px;
+    }
+
+    .stat-value {
+      font-size: 12px;
+    }
+
+    .content-actions {
+      gap: 8px;
+      padding: 8px 0;
+      margin-top: 8px;
+    }
+
+    .content-actions .el-button {
+      padding: 6px 12px;
+      font-size: 12px;
     }
   }
 </style>
