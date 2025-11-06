@@ -6,7 +6,7 @@
 
 import BaseApiService from './base/apiService'
 import type { ApiRequestConfig } from '@/config/api/types'
-import * as Api from '@/types/api'
+import type { AiSearchAgentResponse, AiSearchToolsResponse } from '@/types/api'
 import { mockDataManager } from '@/mock'
 import {
   AsyncTaskPoller,
@@ -16,11 +16,34 @@ import {
 } from '@/utils/polling/asyncTaskPoller'
 
 // 素材搜索相关类型
-type SearchAgentResponse = Api.Ai.SearchAgentResponse
-type SearchAgentStatusResponse = Api.Ai.SearchAgentStatusResponse
-type SearchAgentListResponse = Api.Ai.SearchAgentListResponse
-type SearchToolsResponse = Api.Ai.SearchToolsResponse
-type SearchToolsStatusResponse = Api.Ai.SearchToolsStatusResponse
+type SearchAgentResponse = AiSearchAgentResponse
+type SearchToolsResponse = AiSearchToolsResponse
+
+// 自定义类型 - 搜索状态和列表响应
+interface SearchAgentStatusResponse {
+  task_id: string
+  status: string
+  progress?: number
+  result?: any
+  error?: string
+}
+
+interface SearchAgentListResponse {
+  tasks: Array<{
+    task_id: string
+    status: string
+    created_at: string
+  }>
+  total_count: number
+}
+
+interface SearchToolsStatusResponse {
+  task_id: string
+  status: string
+  progress?: number
+  result?: AiSearchToolsResponse
+  error?: string
+}
 
 class SearchService extends BaseApiService {
   constructor() {

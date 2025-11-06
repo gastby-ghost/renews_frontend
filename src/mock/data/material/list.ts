@@ -2,11 +2,10 @@
  * 素材管理Mock数据
  */
 
-import type {
-  MaterialResponse,
-  MaterialListResponse,
-  TagResponse
-} from '@/services/materialService'
+import * as MaterialApi from '@/types/api'
+type MaterialResponse = MaterialApi.Material.MaterialResponse
+type MaterialListResponse = MaterialApi.Material.MaterialListResponse
+type MaterialTagResponse = MaterialApi.MaterialTag.MaterialTagResponse
 
 // 生成Mock素材数据
 const generateMockMaterial = (index: number): MaterialResponse => {
@@ -53,6 +52,7 @@ const generateMockMaterial = (index: number): MaterialResponse => {
 
   return {
     id: index + 1,
+    user_id: 1,
     title: titles[titleIndex],
     summary: summaries[titleIndex],
     url: `https://example.com/material-${index + 1}`,
@@ -62,10 +62,9 @@ const generateMockMaterial = (index: number): MaterialResponse => {
       `关键摘录2 - ${titles[titleIndex]}`,
       `关键摘录3 - ${titles[titleIndex]}`
     ],
-    user_id: 1,
+    tags: tags[titleIndex],
     created_at: new Date(Date.now() - Math.random() * 86400000 * 30).toISOString(),
-    updated_at: new Date(Date.now() - Math.random() * 86400000 * 7).toISOString(),
-    tags: tags[titleIndex]
+    updated_at: new Date(Date.now() - Math.random() * 86400000 * 7).toISOString()
   }
 }
 
@@ -105,7 +104,7 @@ export const generateMockMaterialList = (
 }
 
 // 生成标签Mock数据
-export const generateMockTags = (): TagResponse[] => {
+export const generateMockTags = (): MaterialTagResponse[] => {
   const tagNames = [
     '设计',
     '创意',
@@ -136,8 +135,6 @@ export const generateMockTags = (): TagResponse[] => {
   return tagNames.map((name, index) => ({
     id: index + 1,
     name,
-    is_system: index < 10, // 前10个为系统标签
-    material_count: Math.floor(Math.random() * 50) + 1,
     created_at: new Date(Date.now() - Math.random() * 86400000 * 60).toISOString()
   }))
 }
@@ -189,10 +186,8 @@ export const mockBatchDeleteMaterials = (materialIds: number[]) => {
 }
 
 // 创建标签Mock数据
-export const mockCreateTag = (name: string): TagResponse => ({
+export const mockCreateTag = (name: string): MaterialTagResponse => ({
   id: Date.now(),
   name,
-  is_system: false,
-  material_count: 0,
   created_at: new Date().toISOString()
 })

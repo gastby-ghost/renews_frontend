@@ -1,19 +1,19 @@
 import BaseApiService from './base/apiService'
 import type { ApiRequestConfig } from '@/config/api/types'
-import * as Api from '@/types/api'
-
-// 素材管理相关类型
-type MaterialResponse = Api.Material.MaterialResponse
-type MaterialListResponse = Api.Material.MaterialListResponse
-type MaterialCreateRequest = Api.Material.MaterialCreateRequest
-type AddCompleteMaterialRequest = Api.Material.AddCompleteMaterialRequest
-type MaterialUpdateRequest = Api.Material.MaterialUpdateRequest
-type MaterialDeleteRequest = Api.Material.MaterialDeleteRequest
-type MaterialDeleteResponse = Api.Material.MaterialDeleteResponse
-type TagCreateRequest = Api.Material.TagCreateRequest
-type TagResponse = Api.Material.TagResponse
-type MaterialSearchRequest = Api.Material.MaterialSearchRequest
-type MaterialStatsRequest = Api.Material.MaterialStatsRequest
+import type {
+  MaterialResponse,
+  MaterialListResponse,
+  MaterialCreate,
+  MaterialUpdateRequest,
+  AddCompleteMaterialRequest,
+  MaterialDeleteRequest,
+  MaterialDeleteResponse,
+  AddExternalMaterialRequest,
+  MaterialAddToProjectResponse,
+  MaterialTagCreate,
+  MaterialTagResponse,
+  TagListResponse
+} from '@/types/api'
 
 // 扩展类型定义 - 为搜索和统计功能添加明确类型
 interface MaterialSearchResponse {
@@ -32,17 +32,9 @@ interface MaterialStatsResponse {
   last_updated?: string
 }
 
-// 标签列表响应类型
-interface TagListResponse {
-  success: boolean
-  message: string
-  tags: TagResponse[]
-  total_count: number
-}
-
 /**
- * 素材管理服务 - 基于OpenAPI配置
- * 使用新的BaseApiService架构，支持Mock/真实API切换
+ * 素材管理服务 - 基于 material.json OpenAPI 3.1.0 规范
+ * 提供完整的素材管理功能
  */
 class MaterialApiService extends BaseApiService {
   constructor() {
@@ -50,11 +42,11 @@ class MaterialApiService extends BaseApiService {
   }
 
   /**
-   * 批量创建素材
+   * 批量创建素材 - POST /api/v1/core/materials/batch
    */
   async createMaterials(
     projectId: number,
-    materials: MaterialCreateRequest[],
+    materials: MaterialCreate[],
     options?: ApiRequestConfig
   ) {
     const request: AddCompleteMaterialRequest = {
@@ -66,7 +58,92 @@ class MaterialApiService extends BaseApiService {
   }
 
   /**
-   * 获取项目素材列表
+   * 创建单个素材 - POST /api/v1/core/materials
+   */
+  async createMaterial(material: MaterialCreate, options?: ApiRequestConfig) {
+    return this.post<MaterialResponse>('/materials', material, options)
+  }
+
+  /**
+   * 获取用户的所有素材 - GET /api/v1/core/materials
+   */
+  async getAllMaterials(
+    params?: {
+      page?: number
+      page_size?: number
+      keywords?: string
+      library_id?: number
+    },
+    requestBody?: {
+      tags?: string[]
+    },
+    options?: ApiRequestConfig
+  ) {
+    // 根据 OpenAPI 规范，tags 参数在请求体中传递
+    if (requestBody?.tags && requestBody.tags.length > 0) {
+      return this.post<MaterialListResponse>('/materials', requestBody, {
+        ...options,
+        params
+      })
+    }
+    return this.get<MaterialListResponse>('/materials', params, options)
+  }
+
+  /**
+   * 批量删除素材 - DELETE /api/v1/core/materials
+   * 支持两种方式：查询参数或请求体
+   */
+  async deleteMaterials(materialIds: number[], options?: ApiRequestConfig) {
+    const request: MaterialDeleteRequest = {
+      material_ids: materialIds
+    }
+
+    return this.delete<MaterialDeleteResponse>('/materials', request, options)
+  }
+
+  /**
+   * 获取素材详情 - GET /api/v1/core/materials/{material_id}
+   */
+  async getMaterial(materialId: number, options?: ApiRequestConfig) {
+    return this.get<MaterialResponse>(`/materials/${materialId}`, undefined, options)
+  }
+
+  /**
+   * 更新素材 - PUT /api/v1/core/materials/{material_id}
+   */
+  async updateMaterial(
+    materialId: number,
+    updateData: Partial<MaterialCreate>,
+    options?: ApiRequestConfig
+  ) {
+    const request: MaterialUpdateRequest = {
+      update_data: updateData
+    }
+
+    return this.put<MaterialResponse>(`/materials/${materialId}`, request, options)
+  }
+
+  /**
+   * 将素材添加到项目 - POST /api/v1/core/projects/{project_id}/materials
+   */
+  async addMaterialsToProject(
+    projectId: number,
+    materialIds: number[],
+    options?: ApiRequestConfig
+  ) {
+    const request: AddExternalMaterialRequest = {
+      material_ids: materialIds
+    }
+
+    return this.post<MaterialAddToProjectResponse>(
+      `/projects/${projectId}/materials`,
+      request,
+      options
+    )
+  }
+
+  /**
+   * 获取项目关联的素材 - GET /api/v1/core/projects/{project_id}/materials
    */
   async getProjectMaterials(
     projectId: number,
@@ -80,8 +157,8 @@ class MaterialApiService extends BaseApiService {
     },
     options?: ApiRequestConfig
   ) {
-    // 根据OpenAPI规范，tags参数应该在请求体中传递
-    if (requestBody?.tags) {
+    // 根据 OpenAPI 规范，tags 参数在请求体中传递
+    if (requestBody?.tags && requestBody.tags.length > 0) {
       return this.post<MaterialListResponse>(`/projects/${projectId}/materials`, requestBody, {
         ...options,
         params
@@ -91,62 +168,7 @@ class MaterialApiService extends BaseApiService {
   }
 
   /**
-   * 获取所有素材列表
-   */
-  async getAllMaterials(
-    params?: {
-      page?: number
-      page_size?: number
-      keywords?: string
-    },
-    requestBody?: {
-      tags?: string[]
-    },
-    options?: ApiRequestConfig
-  ) {
-    // 根据OpenAPI规范，tags参数应该在请求体中传递
-    if (requestBody?.tags) {
-      return this.post<MaterialListResponse>('/materials', requestBody, { ...options, params })
-    }
-    return this.get<MaterialListResponse>('/materials', params, options)
-  }
-
-  /**
-   * 更新素材
-   */
-  async updateMaterial(
-    materialId: number,
-    updateData: Partial<MaterialCreateRequest>,
-    options?: ApiRequestConfig
-  ) {
-    const request: MaterialUpdateRequest = {
-      update_data: updateData
-    }
-
-    return this.put<MaterialResponse>(`/materials/${materialId}`, request, options)
-  }
-
-  /**
-   * 批量删除素材
-   */
-  async deleteMaterials(materialIds: number[], options?: ApiRequestConfig) {
-    const request: MaterialDeleteRequest = {
-      material_ids: materialIds
-    }
-
-    return this.delete<MaterialDeleteResponse>('/materials', request, options)
-  }
-
-  /**
-   * 创建标签
-   */
-  async createTag(name: string, options?: ApiRequestConfig) {
-    const request: TagCreateRequest = { name }
-    return this.post<TagResponse>('/tags', request, options)
-  }
-
-  /**
-   * 获取标签列表
+   * 获取用户的所有标签 - GET /api/v1/core/tags
    */
   async getTags(
     params?: {
@@ -160,23 +182,44 @@ class MaterialApiService extends BaseApiService {
   }
 
   /**
-   * 搜索素材
+   * 创建标签 - POST /api/v1/core/tags
    */
-  async searchMaterials(params: MaterialSearchRequest, options?: ApiRequestConfig) {
+  async createTag(name: string, options?: ApiRequestConfig) {
+    const request: MaterialTagCreate = { name }
+    return this.post<MaterialTagResponse>('/tags', request, options)
+  }
+
+  /**
+   * 搜索素材（扩展功能）
+   */
+  async searchMaterials(
+    params: {
+      keywords: string
+      filters?: Record<string, any>
+      project_id?: number
+    },
+    options?: ApiRequestConfig
+  ) {
     return this.post<MaterialSearchResponse>('/materials/search', params, options)
   }
 
   /**
-   * 获取素材统计数据
+   * 获取素材统计数据（扩展功能）
    */
-  async getMaterialStats(params?: MaterialStatsRequest, options?: ApiRequestConfig) {
+  async getMaterialStats(
+    params?: {
+      project_id?: number
+      group_by?: string
+    },
+    options?: ApiRequestConfig
+  ) {
     return this.get<MaterialStatsResponse>('/materials/stats', params, options)
   }
 
   /**
    * 将搜索结果转换为API所需格式
    */
-  static convertSearchResultToMaterialData(searchResult: any): MaterialCreateRequest {
+  static convertSearchResultToMaterialData(searchResult: any): MaterialCreate {
     return {
       title: searchResult.title || '',
       summary: searchResult.summary || searchResult.excerpt || '',
@@ -206,25 +249,17 @@ class MaterialApiService extends BaseApiService {
   }
 
   /**
-   * Mock实现方法 - 支持所有可变参数API
-   * 提供完整的mock数据支持，便于前端独立开发
+   * Mock实现 - 基于 material.json OpenAPI 规范
+   * 提供完整的 mock 数据支持
    */
   protected async mockImplementation(config: ApiRequestConfig): Promise<any> {
     const apiConfig = this.getCurrentConfig()
-
-    console.log(`[API-${this.serviceName}] 执行Mock实现:`, {
-      url: config.url,
-      method: config.method,
-      data: config.data,
-      params: config.params,
-      apiConfig
-    })
+    const mockDelay = apiConfig?.mockDelay || 1000
 
     // 模拟网络延迟
-    await new Promise((resolve) => setTimeout(resolve, apiConfig.mockDelay || 1000))
+    await new Promise((resolve) => setTimeout(resolve, mockDelay))
 
-    const url = config.url
-    const method = config.method
+    const { url, method } = config
     const requestData = config.data
     const params = config.params || {}
 
@@ -237,7 +272,7 @@ class MaterialApiService extends BaseApiService {
           user_id: 1,
           title: material.title,
           summary: material.summary,
-          url: material.url,
+          url: material.url || '',
           score: material.score || 0,
           key_excerpts: material.key_excerpts || [],
           tags: material.tags || [],
@@ -253,90 +288,53 @@ class MaterialApiService extends BaseApiService {
         }
       }
 
-      // 获取项目素材列表 - POST /projects/{project_id}/materials (带请求体)
-      if (method === 'POST' && url.includes('/projects/') && url.includes('/materials')) {
-        const parts = url.split('/')
-        const projectId = parts[parts.indexOf('projects') + 1] || '0'
-
+      // 创建单个素材 - POST /materials (不是批量)
+      if (method === 'POST' && url.match(/\/materials$/) && !requestData.materials) {
+        const material = requestData as MaterialCreate
         return {
           success: true,
-          message: '获取项目素材列表成功',
-          materials: this.generateMockMaterials(parseInt(projectId)),
-          total_count: 10,
-          page: params.page || 1,
-          page_size: params.page_size || 10,
-          total_pages: 1
-        }
-      }
-
-      // 获取项目素材列表 - GET /projects/{project_id}/materials
-      if (method === 'GET' && url.includes('/projects/') && url.includes('/materials')) {
-        const parts = url.split('/')
-        const projectId = parts[parts.indexOf('projects') + 1] || '0'
-
-        return {
-          success: true,
-          message: '获取项目素材列表成功',
-          materials: this.generateMockMaterials(parseInt(projectId)),
-          total_count: 10,
-          page: params.page || 1,
-          page_size: params.page_size || 10,
-          total_pages: 1
-        }
-      }
-
-      // 获取所有素材列表 - POST /materials (带请求体)
-      if (method === 'POST' && url === '/materials') {
-        return {
-          success: true,
-          message: '获取素材列表成功',
-          materials: this.generateMockMaterials(0),
-          total_count: 20,
-          page: params.page || 1,
-          page_size: params.page_size || 10,
-          total_pages: 2
+          message: '创建素材成功',
+          id: Math.floor(Math.random() * 10000) + 1000,
+          user_id: 1,
+          title: material.title,
+          summary: material.summary,
+          url: material.url || '',
+          score: material.score || 0,
+          key_excerpts: material.key_excerpts || [],
+          tags: material.tags || [],
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         }
       }
 
       // 获取所有素材列表 - GET /materials
-      if (method === 'GET' && url === '/materials') {
+      if (method === 'GET' && url.match(/\/materials$/)) {
         return {
           success: true,
           message: '获取素材列表成功',
           materials: this.generateMockMaterials(0),
           total_count: 20,
           page: params.page || 1,
-          page_size: params.page_size || 10,
-          total_pages: 2
+          page_size: params.page_size || 20,
+          total_pages: 1
         }
       }
 
-      // 更新素材 - PUT /materials/{material_id}
-      if (method === 'PUT' && url.includes('/materials/')) {
-        const parts = url.split('/')
-        const materialId = parts[parts.indexOf('materials') + 1] || '0'
-        const requestBody = requestData as MaterialUpdateRequest
-
+      // 获取所有素材列表 - POST /materials (带请求体 - tags)
+      if (method === 'POST' && url.match(/\/materials$/) && requestData?.tags) {
         return {
           success: true,
-          message: '更新素材成功',
-          material: {
-            id: parseInt(materialId),
-            user_id: 1,
-            title: requestBody.update_data?.title || `素材 ${materialId}`,
-            summary: requestBody.update_data?.summary || '素材摘要',
-            url: requestBody.update_data?.url || 'https://example.com',
-            score: requestBody.update_data?.score || 0,
-            key_excerpts: requestBody.update_data?.key_excerpts || [],
-            tags: requestBody.update_data?.tags || [],
-            created_at: new Date(Date.now() - 86400000).toISOString(),
-            updated_at: new Date().toISOString()
-          }
+          message: '获取素材列表成功',
+          materials: this.generateMockMaterials(0),
+          total_count: 20,
+          page: params.page || 1,
+          page_size: params.page_size || 20,
+          total_pages: 1
         }
       }
 
       // 批量删除素材 - DELETE /materials
-      if (method === 'DELETE' && url === '/materials') {
+      if (method === 'DELETE' && url.match(/\/materials$/)) {
         const requestBody = requestData as MaterialDeleteRequest
         return {
           success: true,
@@ -351,29 +349,77 @@ class MaterialApiService extends BaseApiService {
         }
       }
 
+      // 将素材添加到项目 - POST /projects/{project_id}/materials
+      if (
+        method === 'POST' &&
+        url.match(/\/projects\/\d+\/materials$/) &&
+        requestData?.material_ids
+      ) {
+        const requestBody = requestData as AddExternalMaterialRequest
+
+        return {
+          success: true,
+          message: '将素材添加到项目成功',
+          added_count: requestBody.material_ids?.length || 0,
+          details:
+            requestBody.material_ids?.map((id) => ({
+              material_id: id,
+              status: 'success'
+            })) || []
+        }
+      }
+
+      // 获取项目素材列表 - POST /projects/{project_id}/materials (带请求体 - tags)
+      if (method === 'POST' && url.match(/\/projects\/\d+\/materials$/) && requestData?.tags) {
+        const projectId = url.split('/')[2]
+
+        return {
+          success: true,
+          message: '获取项目素材列表成功',
+          materials: this.generateMockMaterials(parseInt(projectId)),
+          total_count: 10,
+          page: params.page || 1,
+          page_size: params.page_size || 20,
+          total_pages: 1
+        }
+      }
+
+      // 获取项目素材列表 - GET /projects/{project_id}/materials
+      if (method === 'GET' && url.match(/\/projects\/\d+\/materials$/)) {
+        const projectId = url.split('/')[2]
+
+        return {
+          success: true,
+          message: '获取项目素材列表成功',
+          materials: this.generateMockMaterials(parseInt(projectId)),
+          total_count: 10,
+          page: params.page || 1,
+          page_size: params.page_size || 20,
+          total_pages: 1
+        }
+      }
+
       // 创建标签 - POST /tags
-      if (method === 'POST' && url === '/tags') {
-        const requestBody = requestData as TagCreateRequest
+      if (method === 'POST' && url.match(/\/tags$/)) {
+        const requestBody = requestData as MaterialTagCreate
         return {
           success: true,
           message: '创建标签成功',
-          tag: {
-            id: Math.floor(Math.random() * 1000) + 100,
-            name: requestBody.name,
-            created_at: new Date().toISOString()
-          }
+          id: Math.floor(Math.random() * 1000) + 100,
+          name: requestBody.name,
+          created_at: new Date().toISOString()
         }
       }
 
       // 获取标签列表 - GET /tags
-      if (method === 'GET' && url === '/tags') {
+      if (method === 'GET' && url.match(/\/tags$/)) {
         return {
           success: true,
           message: '获取标签列表成功',
           tags: [
-            { id: 1, name: '技术', created_at: '2023-01-01T00:00:00Z' },
-            { id: 2, name: '设计', created_at: '2023-01-02T00:00:00Z' },
-            { id: 3, name: '产品', created_at: '2023-01-03T00:00:00Z' }
+            { id: 1, name: '技术', created_at: '2024-01-01T00:00:00Z' },
+            { id: 2, name: '设计', created_at: '2024-01-02T00:00:00Z' },
+            { id: 3, name: '产品', created_at: '2024-01-03T00:00:00Z' }
           ],
           total_count: 3
         }
@@ -381,7 +427,7 @@ class MaterialApiService extends BaseApiService {
 
       // 搜索素材 - POST /materials/search
       if (method === 'POST' && url.includes('/materials/search')) {
-        const requestBody = requestData as MaterialSearchRequest
+        const requestBody = requestData as any
         return {
           success: true,
           message: '搜索素材成功',
@@ -440,17 +486,14 @@ class MaterialApiService extends BaseApiService {
 
   /**
    * 生成模拟素材数据
-   * @param projectId 项目ID
-   * @param keywords 关键词（用于搜索结果）
-   * @returns 模拟素材数组
    */
   private generateMockMaterials(projectId: number, keywords: string = ''): MaterialResponse[] {
-    const baseMaterials = [
+    const baseMaterials: MaterialResponse[] = [
       {
         id: 1,
         user_id: 1,
         title: 'AI技术发展趋势',
-        summary: '详细分析了人工智能在2024年的最新发展趋势...',
+        summary: '详细分析了人工智能在2024年的最新发展趋势，包括机器学习、深度学习等领域的突破...',
         url: 'https://example.com/article1',
         score: 0.95,
         key_excerpts: ['机器学习', '深度学习', '神经网络'],
@@ -462,7 +505,7 @@ class MaterialApiService extends BaseApiService {
         id: 2,
         user_id: 1,
         title: '用户体验设计原则',
-        summary: '探讨现代UX/UI设计的核心原则和最佳实践...',
+        summary: '探讨现代UX/UI设计的核心原则和最佳实践，帮助设计师提升产品质量...',
         url: 'https://example.com/article2',
         score: 0.88,
         key_excerpts: ['用户体验', '界面设计', '交互设计'],
@@ -474,7 +517,7 @@ class MaterialApiService extends BaseApiService {
         id: 3,
         user_id: 1,
         title: '产品管理方法论',
-        summary: '介绍敏捷产品管理和精益创业的核心方法...',
+        summary: '介绍敏捷产品管理和精益创业的核心方法，帮助产品经理更好地规划产品路线...',
         url: 'https://example.com/article3',
         score: 0.92,
         key_excerpts: ['产品管理', '敏捷开发', '精益创业'],

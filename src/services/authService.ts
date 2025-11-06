@@ -5,8 +5,22 @@
 
 import BaseApiService from './base/apiService'
 import type { ApiRequestConfig } from '@/config/api/types'
-import * as Api from '@/types/api'
-import mockModule from '@/mock'
+import type {
+  PendingRegistrationResponse,
+  AuthResponse,
+  RefreshTokenResponse,
+  ForgotPasswordResponse,
+  VerificationResponse,
+  AccountSettingsResponse,
+  UserResponse,
+  CleanupResponse,
+  HealthCheckResponse,
+  MetricsResponse,
+  UserPreferenceResponse,
+  UpdateUserPreferenceRequest,
+  DefaultPreferencesResponse
+} from '@/types/api'
+import { mockDataManager } from '@/mock'
 
 class AuthService extends BaseApiService {
   constructor() {
@@ -24,7 +38,7 @@ class AuthService extends BaseApiService {
     },
     options?: ApiRequestConfig
   ) {
-    return this.post<Api.Auth.PendingRegistrationResponse>('/register', params, options)
+    return this.post<PendingRegistrationResponse>('/register', params, options)
   }
 
   /**
@@ -38,14 +52,14 @@ class AuthService extends BaseApiService {
     },
     options?: ApiRequestConfig
   ) {
-    return this.post<Api.Auth.AuthResponse>('/login', params, options)
+    return this.post<AuthResponse>('/login', params, options)
   }
 
   /**
    * 刷新访问令牌
    */
   async refreshToken(refreshToken: string, options?: ApiRequestConfig) {
-    return this.post<Api.Auth.RefreshTokenResponse>('/refresh-token', undefined, {
+    return this.post<RefreshTokenResponse>('/refresh-token', undefined, {
       params: { refresh_token: refreshToken },
       ...options
     })
@@ -55,7 +69,7 @@ class AuthService extends BaseApiService {
    * 用户登出
    */
   async logout(options?: ApiRequestConfig) {
-    return this.post<Api.Auth.AuthResponse>('/logout', undefined, options)
+    return this.post<AuthResponse>('/logout', undefined, options)
   }
 
   /**
@@ -67,14 +81,14 @@ class AuthService extends BaseApiService {
     },
     options?: ApiRequestConfig
   ) {
-    return this.post<Api.Auth.ForgotPasswordResponse>('/forgot-password', params, options)
+    return this.post<ForgotPasswordResponse>('/forgot-password', params, options)
   }
 
   /**
    * 验证邮箱
    */
   async verifyEmail(token: string, options?: ApiRequestConfig) {
-    return this.get<Api.Auth.VerificationResponse>(`/verify/${token}`, undefined, options)
+    return this.get<VerificationResponse>(`/verify/${token}`, undefined, options)
   }
 
   /**
@@ -101,14 +115,14 @@ class AuthService extends BaseApiService {
     }
 
     // 真实API模式下的正常请求
-    return this.get<Api.Auth.AccountSettingsResponse>('/account', undefined, options)
+    return this.get<AccountSettingsResponse>('/account', undefined, options)
   }
 
   /**
    * 更新账户信息
    */
-  async updateAccount(data: Partial<Api.Auth.UserResponse>, options?: ApiRequestConfig) {
-    return this.put<Api.Auth.AccountSettingsResponse>('/account', data, options)
+  async updateAccount(data: Partial<UserResponse>, options?: ApiRequestConfig) {
+    return this.put<AccountSettingsResponse>('/account', data, options)
   }
 
   /**
@@ -128,66 +142,66 @@ class AuthService extends BaseApiService {
    * 清理过期令牌
    */
   async cleanupExpiredTokens(options?: ApiRequestConfig) {
-    return this.post<Api.Auth.CleanupResponse>('/cleanup-expired-tokens', undefined, options)
+    return this.post<CleanupResponse>('/cleanup-expired-tokens', undefined, options)
   }
 
   /**
    * 基础健康检查
    */
   async healthCheck(options?: ApiRequestConfig) {
-    return this.get<Api.Auth.HealthCheckResponse>('/health', undefined, options)
+    return this.get<HealthCheckResponse>('/health', undefined, options)
   }
 
   /**
    * 详细健康检查
    */
   async detailedHealthCheck(options?: ApiRequestConfig) {
-    return this.get<Api.Auth.HealthCheckResponse>('/health/detailed', undefined, options)
+    return this.get<HealthCheckResponse>('/health/detailed', undefined, options)
   }
 
   /**
    * 就绪性检查
    */
   async readinessCheck(options?: ApiRequestConfig) {
-    return this.get<Api.Auth.HealthCheckResponse>('/health/ready', undefined, options)
+    return this.get<HealthCheckResponse>('/health/ready', undefined, options)
   }
 
   /**
    * 存活检查
    */
   async livenessCheck(options?: ApiRequestConfig) {
-    return this.get<Api.Auth.HealthCheckResponse>('/health/live', undefined, options)
+    return this.get<HealthCheckResponse>('/health/live', undefined, options)
   }
 
   /**
    * 获取服务指标
    */
   async getMetrics(options?: ApiRequestConfig) {
-    return this.get<Api.Auth.MetricsResponse>('/metrics', undefined, options)
+    return this.get<MetricsResponse>('/metrics', undefined, options)
   }
 
   /**
    * 获取用户偏好设置
    */
   async getUserPreferences(options?: ApiRequestConfig) {
-    return this.get<Api.Auth.UserPreferenceResponse>('/preferences', undefined, options)
+    return this.get<UserPreferenceResponse>('/preferences', undefined, options)
   }
 
   /**
    * 更新用户偏好设置
    */
   async updateUserPreferences(
-    data: Partial<Api.Auth.UpdateUserPreferenceRequest>,
+    data: Partial<UpdateUserPreferenceRequest>,
     options?: ApiRequestConfig
   ) {
-    return this.put<Api.Auth.UserPreferenceResponse>('/preferences', data, options)
+    return this.put<UserPreferenceResponse>('/preferences', data, options)
   }
 
   /**
    * 获取默认偏好设置
    */
   async getDefaultPreferences(options?: ApiRequestConfig) {
-    return this.get<Api.Auth.DefaultPreferencesResponse>('/preferences/default', undefined, options)
+    return this.get<DefaultPreferencesResponse>('/preferences/default', undefined, options)
   }
 
   /**
@@ -256,51 +270,51 @@ class AuthService extends BaseApiService {
 
     if (method === 'GET' && url.includes('/health')) {
       if (url.includes('/health/detailed')) {
-        return this.mockDataManager.getMockData('auth-health', 'detailed')
+        return mockDataManager.getMockData('auth-health', 'detailed')
       }
       if (url.includes('/health/ready')) {
-        return this.mockDataManager.getMockData('auth-health', 'ready')
+        return mockDataManager.getMockData('auth-health', 'ready')
       }
       if (url.includes('/health/live')) {
-        return this.mockDataManager.getMockData('auth-health', 'live')
+        return mockDataManager.getMockData('auth-health', 'live')
       }
-      return this.mockDataManager.getMockData('auth-health', 'basic')
+      return mockDataManager.getMockData('auth-health', 'basic')
     }
 
     if (method === 'GET' && url.includes('/metrics')) {
-      return this.mockDataManager.getMockData('auth-metrics')
+      return mockDataManager.getMockData('auth-metrics')
     }
 
     if (method === 'GET' && url.includes('/preferences')) {
       if (url.includes('/preferences/default')) {
-        return this.mockDataManager.getMockData('auth-default-preferences')
+        return mockDataManager.getMockData('auth-default-preferences')
       }
-      return this.mockDataManager.getMockData('auth-preferences')
+      return mockDataManager.getMockData('auth-preferences')
     }
 
     if (method === 'PUT' && url.includes('/preferences')) {
-      return this.mockDataManager.getMockData('auth-preferences')
+      return mockDataManager.getMockData('auth-preferences')
     }
 
     if (method === 'POST' && url.includes('/register')) {
-      return this.mockDataManager.getMockData('auth-register', data)
+      return mockDataManager.getMockData('auth-register', data)
     }
 
     if (method === 'GET' && url.includes('/verify/')) {
       const token = url.split('/verify/')[1]
-      return this.mockDataManager.getMockData('auth-verify', token)
+      return mockDataManager.getMockData('auth-verify', token)
     }
 
     if (method === 'POST' && url.includes('/forgot-password')) {
-      return this.mockDataManager.getMockData('auth-forgot-password', data?.email)
+      return mockDataManager.getMockData('auth-forgot-password', data?.email)
     }
 
     if (method === 'GET' && url.includes('/account')) {
-      return this.mockDataManager.getMockData('auth-account')
+      return mockDataManager.getMockData('auth-account')
     }
 
     if (method === 'PUT' && url.includes('/account')) {
-      return this.mockDataManager.getMockData('auth-account')
+      return mockDataManager.getMockData('auth-account')
     }
 
     if (method === 'DELETE' && url.includes('/account')) {
@@ -308,16 +322,16 @@ class AuthService extends BaseApiService {
     }
 
     if (method === 'POST' && url.includes('/logout')) {
-      return this.mockDataManager.getMockData('auth-logout')
+      return mockDataManager.getMockData('auth-logout')
     }
 
     if (method === 'POST' && url.includes('/refresh-token')) {
       const refreshToken = params?.refresh_token || ''
-      return this.mockDataManager.getMockData('auth-refresh-token', refreshToken)
+      return mockDataManager.getMockData('auth-refresh-token', refreshToken)
     }
 
     if (method === 'POST' && url.includes('/cleanup-expired-tokens')) {
-      return this.mockDataManager.getMockData('auth-cleanup')
+      return mockDataManager.getMockData('auth-cleanup')
     }
 
     // 默认响应
@@ -329,12 +343,8 @@ class AuthService extends BaseApiService {
   }
 
   /**
-   * 获取MockDataManager实例
+   * 直接使用导入的 mockDataManager
    */
-  private get mockDataManager() {
-    const { mockDataManager } = mockModule
-    return mockDataManager
-  }
 }
 
 // 创建单例实例

@@ -610,7 +610,16 @@ export const useMaterialStore = defineStore('material', () => {
       // 调用API批量创建素材
       const response = await materialApiService.createMaterials(projectId, materialsData)
 
-      // 将API返回的素材转换为前端格式并添加到本地状态
+      // 防御性检查：确保 response 和 materials 字段存在
+      if (!response) {
+        throw new Error('API 返回数据为空')
+      }
+
+      if (!response.materials || !Array.isArray(response.materials)) {
+        throw new Error('API 返回数据格式错误：缺少 materials 字段或不是数组')
+      }
+
+      // 将API返回的素材转换为前端格式
       const newMaterials = response.materials.map((apiMaterial) =>
         MaterialApiService.convertApiMaterialToMaterial(apiMaterial)
       )
@@ -651,6 +660,15 @@ export const useMaterialStore = defineStore('material', () => {
     try {
       const response = await materialApiService.getProjectMaterials(projectId, params)
 
+      // 防御性检查：确保 response 和 materials 字段存在
+      if (!response) {
+        throw new Error('API 返回数据为空')
+      }
+
+      if (!response.materials || !Array.isArray(response.materials)) {
+        throw new Error('API 返回数据格式错误：缺少 materials 字段或不是数组')
+      }
+
       // 将API返回的素材转换为前端格式
       const materials = response.materials.map((apiMaterial) =>
         MaterialApiService.convertApiMaterialToMaterial(apiMaterial)
@@ -662,12 +680,13 @@ export const useMaterialStore = defineStore('material', () => {
       return {
         materials,
         totalCount: response.total_count,
-        page: response.page,
-        pageSize: response.page_size,
+        page: response.page || params?.page || 1,
+        pageSize: response.page_size || params?.page_size || 20,
         totalPages: response.total_pages
       }
     } catch (error) {
       state.value.error = error instanceof Error ? error.message : '从数据库加载素材失败'
+      console.error('加载项目素材失败:', error)
       throw error
     } finally {
       state.value.loading = false
@@ -691,6 +710,15 @@ export const useMaterialStore = defineStore('material', () => {
     try {
       const response = await materialApiService.getAllMaterials(params)
 
+      // 防御性检查：确保 response 和 materials 字段存在
+      if (!response) {
+        throw new Error('API 返回数据为空')
+      }
+
+      if (!response.materials || !Array.isArray(response.materials)) {
+        throw new Error('API 返回数据格式错误：缺少 materials 字段或不是数组')
+      }
+
       // 将API返回的素材转换为前端格式
       const materials = response.materials.map((apiMaterial) =>
         MaterialApiService.convertApiMaterialToMaterial(apiMaterial)
@@ -702,12 +730,13 @@ export const useMaterialStore = defineStore('material', () => {
       return {
         materials,
         totalCount: response.total_count,
-        page: response.page,
-        pageSize: response.page_size,
+        page: response.page || params?.page || 1,
+        pageSize: response.page_size || params?.page_size || 20,
         totalPages: response.total_pages
       }
     } catch (error) {
       state.value.error = error instanceof Error ? error.message : '从数据库加载素材失败'
+      console.error('加载素材失败:', error)
       throw error
     } finally {
       state.value.loading = false
