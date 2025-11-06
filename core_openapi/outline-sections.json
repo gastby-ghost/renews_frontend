@@ -1,0 +1,316 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "写作助手核心服务 - 大纲章节模块",
+    "description": "提供写作助手的核心功能API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "POST/api/v1/core/outlines/{outline_id}/sections": {
+      "post": {
+        "tags": ["大纲章节", "大纲章节管理"],
+        "summary": "Create Section",
+        "description": "创建章节\n\n业务规则：\n1. 大纲必须存在且属于当前用户\n2. 章节顺序不能重复\n3. 自动更新大纲的章节计数\n\n异常处理：\n- 大纲不存在 → 404错误\n- 章节顺序重复 → 400错误\n- 创建失败 → 提示\"创建章节失败\"",
+        "operationId": "create_section_api_v1_core_outlines__outline_id__sections_post",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "outline_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "description": "大纲ID",
+              "title": "Outline Id"
+            },
+            "description": "大纲ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/OutlineSectionCreate" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OutlineSectionCreateResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "GET/api/v1/core/outlines/{outline_id}/sections": {
+      "get": {
+        "tags": ["大纲章节", "大纲章节管理"],
+        "summary": "Get Sections By Outline",
+        "description": "获取大纲的所有章节\n\n异常处理：\n- 大纲不存在 → 404错误\n- 无权限访问 → 403错误",
+        "operationId": "get_sections_by_outline_api_v1_core_outlines__outline_id__sections_get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "outline_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "description": "大纲ID",
+              "title": "Outline Id"
+            },
+            "description": "大纲ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OutlineSectionListResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "GET/api/v1/core/sections/{section_id}": {
+      "get": {
+        "tags": ["大纲章节", "大纲章节管理"],
+        "summary": "Get Section By Id",
+        "description": "获取章节详情\n\n异常处理：\n- 章节不存在 → 404错误\n- 无权限访问 → 403错误",
+        "operationId": "get_section_by_id_api_v1_core_sections__section_id__get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "section_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "description": "章节ID",
+              "title": "Section Id"
+            },
+            "description": "章节ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OutlineSectionDetailResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "PUT/api/v1/core/sections/{section_id}": {
+      "put": {
+        "tags": ["大纲章节", "大纲章节管理"],
+        "summary": "Update Section",
+        "description": "更新章节\n\n异常处理：\n- 章节不存在 → 404错误\n- 无权限访问 → 403错误\n- 更新失败 → 提示\"更新章节失败\"",
+        "operationId": "update_section_api_v1_core_sections__section_id__put",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "section_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "description": "章节ID",
+              "title": "Section Id"
+            },
+            "description": "章节ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/OutlineSectionUpdate" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OutlineSectionUpdateResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "DELETE/api/v1/core/sections/{section_id}": {
+      "delete": {
+        "tags": ["大纲章节", "大纲章节管理"],
+        "summary": "Delete Section",
+        "description": "删除章节\n\n异常处理：\n- 章节不存在 → 404错误\n- 无权限访问 → 403错误\n- 删除失败 → 提示\"删除章节失败\"",
+        "operationId": "delete_section_api_v1_core_sections__section_id__delete",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "section_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "description": "章节ID",
+              "title": "Section Id"
+            },
+            "description": "章节ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OutlineSectionDeleteResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "POST/api/v1/core/outlines/{outline_id}/sections/batch": {
+      "post": {
+        "tags": ["大纲章节", "大纲章节管理"],
+        "summary": "Bulk Create Sections",
+        "description": "批量创建章节\n\n业务规则：\n1. 大纲必须存在且属于当前用户\n2. 章节顺序不能重复\n3. 自动更新大纲的章节计数\n\n异常处理：\n- 大纲不存在 → 404错误\n- 章节顺序重复 → 400错误\n- 创建失败 → 提示\"批量创建章节失败\"",
+        "operationId": "bulk_create_sections_api_v1_core_outlines__outline_id__sections_batch_post",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "outline_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "description": "大纲ID",
+              "title": "Outline Id"
+            },
+            "description": "大纲ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/OutlineSectionBatchCreate" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OutlineSectionBatchCreateResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "PUT/api/v1/core/sections/reorder": {
+      "put": {
+        "tags": ["大纲章节", "大纲章节管理"],
+        "summary": "Reorder Sections",
+        "description": "重新排序章节\n\n业务规则：\n1. 所有章节必须属于同一个大纲\n2. 大纲必须属于当前用户\n\n异常处理：\n- 大纲不存在 → 404错误\n- 无权限访问 → 403错误\n- 章节不属于同一大纲 → 400错误\n- 排序失败 → 提示\"重新排序失败\"",
+        "operationId": "reorder_sections_api_v1_core_sections_reorder_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/OutlineSectionReorder" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OutlineSectionReorderResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        },
+        "security": [{ "HTTPBearer": [] }]
+      }
+    }
+  },
+  "components": { "schemas": {} }
+}

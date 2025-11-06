@@ -1,0 +1,596 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "写作助手核心服务 - 素材关系模块",
+    "description": "提供写作助手的核心功能API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "POST/api/v1/core/material-relations/titles/{title_candidate_id}/materials": {
+      "post": {
+        "tags": ["素材关系", "material-relations"],
+        "summary": "Bind Material To Title",
+        "description": "绑定素材到标题候选",
+        "operationId": "bind_material_to_title_api_v1_core_material_relations_titles__title_candidate_id__materials_post",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "title_candidate_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "title": "Title Candidate Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/MaterialTitleBindRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MaterialBindResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "GET/api/v1/core/material-relations/titles/{title_candidate_id}/materials": {
+      "get": {
+        "tags": ["素材关系", "material-relations"],
+        "summary": "Get Title Materials",
+        "description": "获取标题候选关联的素材列表",
+        "operationId": "get_title_materials_api_v1_core_material_relations_titles__title_candidate_id__materials_get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "title_candidate_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "title": "Title Candidate Id" }
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "跳过数量",
+              "default": 0,
+              "title": "Skip"
+            },
+            "description": "跳过数量"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "返回数量",
+              "default": 100,
+              "title": "Limit"
+            },
+            "description": "返回数量"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MaterialTitleListResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "DELETE/api/v1/core/material-relations/titles/{title_candidate_id}/materials/{material_id}": {
+      "delete": {
+        "tags": ["素材关系", "material-relations"],
+        "summary": "Unbind Material From Title",
+        "description": "解除素材与标题候选的绑定",
+        "operationId": "unbind_material_from_title_api_v1_core_material_relations_titles__title_candidate_id__materials__material_id__delete",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "title_candidate_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "title": "Title Candidate Id" }
+          },
+          {
+            "name": "material_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "title": "Material Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MaterialUnbindResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "PUT/api/v1/core/material-relations/titles/relations/{relation_id}/score": {
+      "put": {
+        "tags": ["素材关系", "material-relations"],
+        "summary": "Update Title Relevance Score",
+        "description": "更新素材-标题关联的相关性评分",
+        "operationId": "update_title_relevance_score_api_v1_core_material_relations_titles_relations__relation_id__score_put",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "relation_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "title": "Relation Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/MaterialTitleUpdateScoreRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MaterialUpdateResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "POST/api/v1/core/material-relations/sections/{outline_section_id}/materials": {
+      "post": {
+        "tags": ["素材关系", "material-relations"],
+        "summary": "Bind Material To Section",
+        "description": "绑定素材到大纲章节",
+        "operationId": "bind_material_to_section_api_v1_core_material_relations_sections__outline_section_id__materials_post",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "outline_section_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "title": "Outline Section Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/MaterialSectionBindRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MaterialBindResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "GET/api/v1/core/material-relations/sections/{outline_section_id}/materials": {
+      "get": {
+        "tags": ["素材关系", "material-relations"],
+        "summary": "Get Section Materials",
+        "description": "获取大纲章节关联的素材列表",
+        "operationId": "get_section_materials_api_v1_core_material_relations_sections__outline_section_id__materials_get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "outline_section_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "title": "Outline Section Id" }
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "跳过数量",
+              "default": 0,
+              "title": "Skip"
+            },
+            "description": "跳过数量"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "返回数量",
+              "default": 100,
+              "title": "Limit"
+            },
+            "description": "返回数量"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MaterialSectionListResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "DELETE/api/v1/core/material-relations/sections/{outline_section_id}/materials/{material_id}": {
+      "delete": {
+        "tags": ["素材关系", "material-relations"],
+        "summary": "Unbind Material From Section",
+        "description": "解除素材与大纲章节的绑定",
+        "operationId": "unbind_material_from_section_api_v1_core_material_relations_sections__outline_section_id__materials__material_id__delete",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "outline_section_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "title": "Outline Section Id" }
+          },
+          {
+            "name": "material_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "title": "Material Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MaterialUnbindResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "PUT/api/v1/core/material-relations/sections/relations/{relation_id}/binding-type": {
+      "put": {
+        "tags": ["素材关系", "material-relations"],
+        "summary": "Update Section Binding Type",
+        "description": "更新素材-章节关联的绑定类型",
+        "operationId": "update_section_binding_type_api_v1_core_material_relations_sections_relations__relation_id__binding_type_put",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "relation_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "title": "Relation Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/MaterialSectionUpdateTypeRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MaterialUpdateResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "GET/api/v1/core/material-relations/materials/{material_id}/relations": {
+      "get": {
+        "tags": ["素材关系", "material-relations"],
+        "summary": "Get Material All Relations",
+        "description": "获取素材的所有关联关系",
+        "operationId": "get_material_all_relations_api_v1_core_material_relations_materials__material_id__relations_get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "material_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "title": "Material Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MaterialRelationsResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "POST/api/v1/core/material-relations/titles/{title_candidate_id}/materials/batch": {
+      "post": {
+        "tags": ["素材关系", "material-relations"],
+        "summary": "Batch Bind Materials To Title",
+        "description": "批量绑定素材到标题候选",
+        "operationId": "batch_bind_materials_to_title_api_v1_core_material_relations_titles__title_candidate_id__materials_batch_post",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "title_candidate_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "title": "Title Candidate Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/MaterialBatchBindTitleRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MaterialBatchResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "POST/api/v1/core/material-relations/sections/{outline_section_id}/materials/batch": {
+      "post": {
+        "tags": ["素材关系", "material-relations"],
+        "summary": "Batch Bind Materials To Section",
+        "description": "批量绑定素材到大纲章节",
+        "operationId": "batch_bind_materials_to_section_api_v1_core_material_relations_sections__outline_section_id__materials_batch_post",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "outline_section_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "title": "Outline Section Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/MaterialBatchBindSectionRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MaterialBatchResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "POST/api/v1/core/material-relations/titles/{title_candidate_id}/materials/batch-unbind": {
+      "post": {
+        "tags": ["素材关系", "material-relations"],
+        "summary": "Batch Unbind Materials From Title",
+        "description": "批量解除素材与标题候选的绑定",
+        "operationId": "batch_unbind_materials_from_title_api_v1_core_material_relations_titles__title_candidate_id__materials_batch_unbind_post",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "title_candidate_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "title": "Title Candidate Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/MaterialBatchUnbindRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MaterialBatchResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "POST/api/v1/core/material-relations/sections/{outline_section_id}/materials/batch-unbind": {
+      "post": {
+        "tags": ["素材关系", "material-relations"],
+        "summary": "Batch Unbind Materials From Section",
+        "description": "批量解除素材与大纲章节的绑定",
+        "operationId": "batch_unbind_materials_from_section_api_v1_core_material_relations_sections__outline_section_id__materials_batch_unbind_post",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "outline_section_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "title": "Outline Section Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/MaterialBatchUnbindRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MaterialBatchResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": { "schemas": {} }
+}

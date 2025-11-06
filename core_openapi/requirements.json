@@ -1,0 +1,228 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "写作助手核心服务 - 需求模块",
+    "description": "提供写作助手的核心功能API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "POST/api/v1/core/projects/{project_id}/requirements": {
+      "post": {
+        "tags": ["需求", "需求管理"],
+        "summary": "Create Requirement",
+        "description": "为项目创建需求\n\n业务规则：\n1. 每个项目只能创建一个需求\n2. 项目必须存在且属于当前用户\n3. 主题长度必须在2-500字符之间\n\n异常处理：\n- 项目不存在 → 404错误\n- 项目已有需求 → 提示\"该项目已存在需求\"\n- 创建失败 → 提示\"创建需求失败\"",
+        "operationId": "create_requirement_api_v1_core_projects__project_id__requirements_post",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "description": "项目ID",
+              "title": "Project Id"
+            },
+            "description": "项目ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/RequirementCreate" } }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/RequirementCreateResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "GET/api/v1/core/projects/{project_id}/requirements": {
+      "get": {
+        "tags": ["需求", "需求管理"],
+        "summary": "Get Project Requirements",
+        "description": "获取项目的所有需求\n\n说明：一个项目只有一个需求，这里返回最多一个元素的数组",
+        "operationId": "get_project_requirements_api_v1_core_projects__project_id__requirements_get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "description": "项目ID",
+              "title": "Project Id"
+            },
+            "description": "项目ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/RequirementListResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "GET/api/v1/core/requirements/{requirement_id}": {
+      "get": {
+        "tags": ["需求", "需求管理"],
+        "summary": "Get Requirement Detail",
+        "description": "获取需求详情\n\n异常处理：\n- 需求不存在 → 404错误",
+        "operationId": "get_requirement_detail_api_v1_core_requirements__requirement_id__get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "requirement_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "description": "需求ID",
+              "title": "Requirement Id"
+            },
+            "description": "需求ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/RequirementDetailResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "PUT/api/v1/core/requirements/{requirement_id}": {
+      "put": {
+        "tags": ["需求", "需求管理"],
+        "summary": "Update Requirement",
+        "description": "更新需求信息\n\n业务规则：\n1. 主题长度必须在2-500字符之间\n2. 字数必须大于0\n\n异常处理：\n- 需求不存在 → 404错误\n- 更新失败 → 提示\"更新需求失败\"",
+        "operationId": "update_requirement_api_v1_core_requirements__requirement_id__put",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "requirement_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "description": "需求ID",
+              "title": "Requirement Id"
+            },
+            "description": "需求ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/RequirementUpdate" } }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/RequirementUpdateResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "DELETE/api/v1/core/requirements/{requirement_id}": {
+      "delete": {
+        "tags": ["需求", "需求管理"],
+        "summary": "Delete Requirement",
+        "description": "删除需求\n\n异常处理：\n- 需求不存在 → 404错误\n- 删除失败 → 提示\"删除需求失败\"",
+        "operationId": "delete_requirement_api_v1_core_requirements__requirement_id__delete",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "requirement_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "description": "需求ID",
+              "title": "Requirement Id"
+            },
+            "description": "需求ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/RequirementDeleteResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": { "schemas": {} }
+}

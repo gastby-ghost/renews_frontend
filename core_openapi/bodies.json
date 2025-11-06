@@ -1,0 +1,474 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "写作助手核心服务 - 正文模块",
+    "description": "提供写作助手的核心功能API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "POST/api/v1/core/bodies/projects/{project_id}/bodies": {
+      "post": {
+        "tags": ["正文", "bodies"],
+        "summary": "Create Body",
+        "description": "创建正文",
+        "operationId": "create_body_api_v1_core_bodies_projects__project_id__bodies_post",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "title": "Project Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/BodyCreate" } }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/BodyCreateResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "GET/api/v1/core/bodies/projects/{project_id}/bodies": {
+      "get": {
+        "tags": ["正文", "bodies"],
+        "summary": "Get Bodies",
+        "description": "获取项目的所有正文（分页）",
+        "operationId": "get_bodies_api_v1_core_bodies_projects__project_id__bodies_get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "title": "Project Id" }
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "跳过数量",
+              "default": 0,
+              "title": "Skip"
+            },
+            "description": "跳过数量"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "返回数量",
+              "default": 100,
+              "title": "Limit"
+            },
+            "description": "返回数量"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/BodyHistoryResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "GET/api/v1/core/bodies/projects/{project_id}/bodies/active": {
+      "get": {
+        "tags": ["正文", "bodies"],
+        "summary": "Get Active Body",
+        "description": "获取活动正文",
+        "operationId": "get_active_body_api_v1_core_bodies_projects__project_id__bodies_active_get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "title": "Project Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/BodyActiveResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "GET/api/v1/core/bodies/projects/{project_id}/bodies/history": {
+      "get": {
+        "tags": ["正文", "bodies"],
+        "summary": "Get Body History",
+        "description": "获取正文历史",
+        "operationId": "get_body_history_api_v1_core_bodies_projects__project_id__bodies_history_get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "title": "Project Id" }
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "跳过数量",
+              "default": 0,
+              "title": "Skip"
+            },
+            "description": "跳过数量"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "返回数量",
+              "default": 100,
+              "title": "Limit"
+            },
+            "description": "返回数量"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/BodyHistoryResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "GET/api/v1/core/bodies/bodies/{body_id}": {
+      "get": {
+        "tags": ["正文", "bodies"],
+        "summary": "Get Body",
+        "description": "获取正文详情",
+        "operationId": "get_body_api_v1_core_bodies_bodies__body_id__get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "body_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "title": "Body Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/BodyDetailResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "PUT/api/v1/core/bodies/bodies/{body_id}": {
+      "put": {
+        "tags": ["正文", "bodies"],
+        "summary": "Update Body",
+        "description": "更新正文内容",
+        "operationId": "update_body_api_v1_core_bodies_bodies__body_id__put",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "body_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "title": "Body Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/BodyUpdate" } }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/BodyUpdateResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "DELETE/api/v1/core/bodies/bodies/{body_id}": {
+      "delete": {
+        "tags": ["正文", "bodies"],
+        "summary": "Delete Body",
+        "description": "删除正文",
+        "operationId": "delete_body_api_v1_core_bodies_bodies__body_id__delete",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "body_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "title": "Body Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/BodyDeactivateResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "PUT/api/v1/core/bodies/bodies/{body_id}/activate": {
+      "put": {
+        "tags": ["正文", "bodies"],
+        "summary": "Activate Body",
+        "description": "激活正文版本",
+        "operationId": "activate_body_api_v1_core_bodies_bodies__body_id__activate_put",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "body_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "title": "Body Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/BodyActivateRequest" } }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/BodyActivateResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "PUT/api/v1/core/bodies/bodies/{body_id}/deactivate": {
+      "put": {
+        "tags": ["正文", "bodies"],
+        "summary": "Deactivate Body",
+        "description": "停用正文版本",
+        "operationId": "deactivate_body_api_v1_core_bodies_bodies__body_id__deactivate_put",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "body_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "title": "Body Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/BodyDeactivateRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/BodyDeactivateResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "GET/api/v1/core/bodies/bodies/{body_id}/stats": {
+      "get": {
+        "tags": ["正文", "bodies"],
+        "summary": "Get Text Stats",
+        "description": "获取文本统计",
+        "operationId": "get_text_stats_api_v1_core_bodies_bodies__body_id__stats_get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "body_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "title": "Body Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/TextStatsResponse" } }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "GET/api/v1/core/bodies/bodies/{body_id}/readability": {
+      "get": {
+        "tags": ["正文", "bodies"],
+        "summary": "Get Readability Analysis",
+        "description": "获取可读性分析",
+        "operationId": "get_readability_analysis_api_v1_core_bodies_bodies__body_id__readability_get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "body_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "title": "Body Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ReadabilityAnalysisResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": { "schemas": {} }
+}
