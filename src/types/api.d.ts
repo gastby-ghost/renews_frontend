@@ -141,6 +141,47 @@ declare namespace Api {
       data: UserResponse
       third_party_accounts: any[]
     }
+
+    /** 健康检查响应 */
+    interface HealthCheckResponse {
+      status: string
+      timestamp: string
+      service?: string
+      version?: string
+      uptime?: number
+      checks?: Record<string, any>
+    }
+
+    /** 指标响应 */
+    interface MetricsResponse {
+      total_requests: number
+      successful_requests: number
+      failed_requests: number
+      average_response_time: number
+      error_rate: number
+      last_updated: string
+      by_service?: Record<
+        string,
+        {
+          requests: number
+          errors: number
+          avg_response_time: number
+        }
+      >
+    }
+
+    /** 登出响应 */
+    interface LogoutResponse {
+      success: boolean
+      message: string
+    }
+
+    /** 清理响应 */
+    interface CleanupResponse {
+      success: boolean
+      message: string
+      cleaned_count?: number
+    }
   }
 
   /** 用户偏好类型 */
@@ -168,8 +209,7 @@ declare namespace Api {
     interface UpdateUserPreferenceRequest {
       theme?: 'light' | 'dark' | 'auto' | null
       font_size?: 'small' | 'medium' | 'large' | null
-      auto_save_interval?: number | null
-      shortcut_settings?: Record<string, any> | null
+      auto_save_frequency?: '1' | '3' | '5' | '10' | '15' | '30' | null
       language?: string | null
       timezone?: string | null
       notifications_enabled?: boolean | null

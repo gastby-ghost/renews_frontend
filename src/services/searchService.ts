@@ -6,7 +6,7 @@
 
 import BaseApiService from './base/apiService'
 import type { ApiRequestConfig } from '@/config/api/types'
-import type { Api } from '@/typings/api'
+import * as Api from '@/types/api'
 import { mockDataManager } from '@/mock'
 import {
   AsyncTaskPoller,

@@ -5,6 +5,8 @@
 
 import BaseApiService from './base/apiService'
 import type { ApiRequestConfig } from '@/config/api/types'
+import * as Api from '@/types/api'
+import mockModule from '@/mock'
 
 class AuthService extends BaseApiService {
   constructor() {
@@ -43,13 +45,10 @@ class AuthService extends BaseApiService {
    * 刷新访问令牌
    */
   async refreshToken(refreshToken: string, options?: ApiRequestConfig) {
-    return this.post<Api.Auth.RefreshTokenResponse>(
-      '/refresh-token',
-      {
-        refresh_token: refreshToken
-      },
-      options
-    )
+    return this.post<Api.Auth.RefreshTokenResponse>('/refresh-token', undefined, {
+      params: { refresh_token: refreshToken },
+      ...options
+    })
   }
 
   /**
@@ -129,7 +128,66 @@ class AuthService extends BaseApiService {
    * 清理过期令牌
    */
   async cleanupExpiredTokens(options?: ApiRequestConfig) {
-    return this.delete<Api.Auth.AuthResponse>('/cleanup-expired-tokens', undefined, options)
+    return this.post<Api.Auth.CleanupResponse>('/cleanup-expired-tokens', undefined, options)
+  }
+
+  /**
+   * 基础健康检查
+   */
+  async healthCheck(options?: ApiRequestConfig) {
+    return this.get<Api.Auth.HealthCheckResponse>('/health', undefined, options)
+  }
+
+  /**
+   * 详细健康检查
+   */
+  async detailedHealthCheck(options?: ApiRequestConfig) {
+    return this.get<Api.Auth.HealthCheckResponse>('/health/detailed', undefined, options)
+  }
+
+  /**
+   * 就绪性检查
+   */
+  async readinessCheck(options?: ApiRequestConfig) {
+    return this.get<Api.Auth.HealthCheckResponse>('/health/ready', undefined, options)
+  }
+
+  /**
+   * 存活检查
+   */
+  async livenessCheck(options?: ApiRequestConfig) {
+    return this.get<Api.Auth.HealthCheckResponse>('/health/live', undefined, options)
+  }
+
+  /**
+   * 获取服务指标
+   */
+  async getMetrics(options?: ApiRequestConfig) {
+    return this.get<Api.Auth.MetricsResponse>('/metrics', undefined, options)
+  }
+
+  /**
+   * 获取用户偏好设置
+   */
+  async getUserPreferences(options?: ApiRequestConfig) {
+    return this.get<Api.Auth.UserPreferenceResponse>('/preferences', undefined, options)
+  }
+
+  /**
+   * 更新用户偏好设置
+   */
+  async updateUserPreferences(
+    data: Partial<Api.Auth.UpdateUserPreferenceRequest>,
+    options?: ApiRequestConfig
+  ) {
+    return this.put<Api.Auth.UserPreferenceResponse>('/preferences', data, options)
+  }
+
+  /**
+   * 获取默认偏好设置
+   */
+  async getDefaultPreferences(options?: ApiRequestConfig) {
+    return this.get<Api.Auth.DefaultPreferencesResponse>('/preferences/default', undefined, options)
   }
 
   /**
@@ -163,34 +221,119 @@ class AuthService extends BaseApiService {
       return { valid: false, userType: 'real' }
     }
   }
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  protected async mockImplementation(_config: ApiRequestConfig): Promise<any> {
+
+  protected async mockImplementation(config: ApiRequestConfig): Promise<any> {
     // 模拟网络延迟
     await new Promise((resolve) => setTimeout(resolve, 1000))
 
-    // 生成可识别的Mock token，包含mock标识
-    const mockToken = `mock-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`
-    const mockRefreshToken = `mock-refresh-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`
+    const { url, method, data, params } = config
 
-    // 返回模拟数据
-    return {
-      success: true,
-      message: 'Mock登录成功',
-      token: mockToken,
-      refresh_token: mockRefreshToken,
-      expires_in: 3600,
-      user: {
-        id: 'mock-user-id',
-        username: 'mockuser',
-        email: 'mock@example.com',
-        is_active: true,
-        is_verified: true,
-        created_at: '2023-01-01T00:00:00Z',
-        updated_at: '2023-12-31T23:59:59Z',
-        avatar: null,
-        roles: ['user']
+    // 根据请求路径和方法返回相应的Mock数据
+    if (method === 'POST' && url.includes('/login')) {
+      // 生成可识别的Mock token，包含mock标识
+      const mockToken = `mock-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`
+      const mockRefreshToken = `mock-refresh-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`
+
+      return {
+        success: true,
+        message: 'Mock登录成功',
+        token: mockToken,
+        refresh_token: mockRefreshToken,
+        expires_in: 3600,
+        user: {
+          id: 'mock-user-id',
+          username: 'mockuser',
+          email: 'mock@example.com',
+          is_active: true,
+          is_verified: true,
+          created_at: '2023-01-01T00:00:00Z',
+          updated_at: '2023-12-31T23:59:59Z',
+          avatar: null,
+          roles: ['user']
+        }
       }
     }
+
+    if (method === 'GET' && url.includes('/health')) {
+      if (url.includes('/health/detailed')) {
+        return this.mockDataManager.getMockData('auth-health', 'detailed')
+      }
+      if (url.includes('/health/ready')) {
+        return this.mockDataManager.getMockData('auth-health', 'ready')
+      }
+      if (url.includes('/health/live')) {
+        return this.mockDataManager.getMockData('auth-health', 'live')
+      }
+      return this.mockDataManager.getMockData('auth-health', 'basic')
+    }
+
+    if (method === 'GET' && url.includes('/metrics')) {
+      return this.mockDataManager.getMockData('auth-metrics')
+    }
+
+    if (method === 'GET' && url.includes('/preferences')) {
+      if (url.includes('/preferences/default')) {
+        return this.mockDataManager.getMockData('auth-default-preferences')
+      }
+      return this.mockDataManager.getMockData('auth-preferences')
+    }
+
+    if (method === 'PUT' && url.includes('/preferences')) {
+      return this.mockDataManager.getMockData('auth-preferences')
+    }
+
+    if (method === 'POST' && url.includes('/register')) {
+      return this.mockDataManager.getMockData('auth-register', data)
+    }
+
+    if (method === 'GET' && url.includes('/verify/')) {
+      const token = url.split('/verify/')[1]
+      return this.mockDataManager.getMockData('auth-verify', token)
+    }
+
+    if (method === 'POST' && url.includes('/forgot-password')) {
+      return this.mockDataManager.getMockData('auth-forgot-password', data?.email)
+    }
+
+    if (method === 'GET' && url.includes('/account')) {
+      return this.mockDataManager.getMockData('auth-account')
+    }
+
+    if (method === 'PUT' && url.includes('/account')) {
+      return this.mockDataManager.getMockData('auth-account')
+    }
+
+    if (method === 'DELETE' && url.includes('/account')) {
+      return { success: true, message: '账户删除成功' }
+    }
+
+    if (method === 'POST' && url.includes('/logout')) {
+      return this.mockDataManager.getMockData('auth-logout')
+    }
+
+    if (method === 'POST' && url.includes('/refresh-token')) {
+      const refreshToken = params?.refresh_token || ''
+      return this.mockDataManager.getMockData('auth-refresh-token', refreshToken)
+    }
+
+    if (method === 'POST' && url.includes('/cleanup-expired-tokens')) {
+      return this.mockDataManager.getMockData('auth-cleanup')
+    }
+
+    // 默认响应
+    return {
+      success: true,
+      message: `Mock响应 - ${method} ${url}`,
+      data: { mock: true, timestamp: Date.now() }
+    }
+  }
+
+  /**
+   * 获取MockDataManager实例
+   */
+  private get mockDataManager() {
+    const { mockDataManager } = mockModule
+    return mockDataManager
   }
 }
 

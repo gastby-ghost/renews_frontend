@@ -39,8 +39,10 @@ export interface ApiPathConfig {
     bodyType?: 'json' | 'form' | 'file'
     /** 是否需要认证 */
     requireAuth?: boolean
-    /** 请求参数schema */
+    /** 请求参数schema（POST/PUT等） */
     params?: Record<string, any>
+    /** 查询参数schema（GET等） */
+    query?: Record<string, any>
     /** 请求头 */
     headers?: Record<string, string>
   }

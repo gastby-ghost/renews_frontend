@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { projectService } from '@/services/projectService'
-import type { Api } from '@/typings/api'
+import * as Api from '@/types/api'
 
 // 从Api.Project命名空间导入类型
 type ProjectResponse = Api.Project.ProjectResponse

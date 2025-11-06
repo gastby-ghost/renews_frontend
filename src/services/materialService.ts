@@ -1,6 +1,6 @@
 import BaseApiService from './base/apiService'
 import type { ApiRequestConfig } from '@/config/api/types'
-import type { Api } from '@/typings/api'
+import * as Api from '@/types/api'
 
 // 素材管理相关类型
 type MaterialResponse = Api.Material.MaterialResponse

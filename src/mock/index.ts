@@ -29,6 +29,19 @@ import {
   generateOutlineGenerationResponse,
   generateOutlineToolsStatusResponse
 } from './data/document-generate'
+import {
+  generateHealthCheckResponse,
+  generateMetricsResponse,
+  generateUserPreferencesResponse,
+  generateDefaultPreferencesResponse,
+  generateRegisterResponse,
+  generateVerifyEmailResponse,
+  generateForgotPasswordResponse,
+  generateAccountResponse,
+  generateLogoutResponse,
+  generateRefreshTokenResponse,
+  generateCleanupResponse
+} from './data/auth'
 
 // 素材相关Mock数据
 export * from './data/material/list'
@@ -38,6 +51,9 @@ export * from './data/search/results'
 
 // 文档生成相关Mock数据
 export * from './data/document-generate'
+
+// 认证相关Mock数据
+export * from './data/auth'
 
 // 导出 MockTaskTracker 类
 export { MockTaskTracker }
@@ -222,6 +238,78 @@ export class MockDataManager {
       case 'outline-tools-status': {
         // 生成大纲工具状态Mock数据
         data = generateOutlineToolsStatusResponse()
+        break
+      }
+
+      // ========== 认证相关Mock数据 ==========
+      case 'auth-health': {
+        // 生成基础健康检查Mock数据
+        // 参数: 健康检查类型 (basic/detailed/ready/live)
+        data = generateHealthCheckResponse(args[0] || 'basic')
+        break
+      }
+
+      case 'auth-metrics': {
+        // 生成服务指标Mock数据
+        data = generateMetricsResponse()
+        break
+      }
+
+      case 'auth-preferences': {
+        // 生成用户偏好设置Mock数据
+        data = generateUserPreferencesResponse()
+        break
+      }
+
+      case 'auth-default-preferences': {
+        // 生成默认偏好设置Mock数据
+        data = generateDefaultPreferencesResponse()
+        break
+      }
+
+      case 'auth-register': {
+        // 生成注册响应Mock数据
+        // 参数: username, email, password
+        data = generateRegisterResponse(args[0] || {})
+        break
+      }
+
+      case 'auth-verify': {
+        // 生成邮箱验证Mock数据
+        // 参数: verification token
+        data = generateVerifyEmailResponse(args[0] || '')
+        break
+      }
+
+      case 'auth-forgot-password': {
+        // 生成忘记密码Mock数据
+        // 参数: email
+        data = generateForgotPasswordResponse(args[0] || '')
+        break
+      }
+
+      case 'auth-account': {
+        // 生成账户信息Mock数据
+        data = generateAccountResponse()
+        break
+      }
+
+      case 'auth-logout': {
+        // 生成登出响应Mock数据
+        data = generateLogoutResponse()
+        break
+      }
+
+      case 'auth-refresh-token': {
+        // 生成刷新令牌Mock数据
+        // 参数: refreshToken
+        data = generateRefreshTokenResponse(args[0] || '')
+        break
+      }
+
+      case 'auth-cleanup': {
+        // 生成清理过期令牌Mock数据
+        data = generateCleanupResponse()
         break
       }
 

@@ -46,7 +46,8 @@ export const authService: ApiEndpointConfig = {
         requireAuth: false,
         params: {
           email: 'string',
-          password: 'string'
+          password: 'string',
+          remember_me: 'boolean'
         }
       },
       response: {
@@ -70,7 +71,7 @@ export const authService: ApiEndpointConfig = {
     },
     // 验证邮箱
     '/verify/{token}': {
-      description: '验证邮箱地址',
+      description: '统一的邮件验证令牌处理',
       methods: ['GET'],
       request: {
         requireAuth: false
@@ -81,13 +82,13 @@ export const authService: ApiEndpointConfig = {
     },
     // 获取账户信息
     '/account': {
-      description: '获取当前用户账户信息',
-      methods: ['GET'],
+      description: '获取账户设置',
+      methods: ['GET', 'PUT', 'DELETE'],
       request: {
         requireAuth: true
       },
       response: {
-        dataType: 'UserAccountResponse'
+        dataType: 'AccountSettingsResponse'
       }
     },
     // 刷新令牌
@@ -95,11 +96,10 @@ export const authService: ApiEndpointConfig = {
       description: '刷新访问令牌',
       methods: ['POST'],
       request: {
-        bodyType: 'json',
-        requireAuth: false,
-        params: {
+        query: {
           refresh_token: 'string'
-        }
+        },
+        requireAuth: false
       },
       response: {
         dataType: 'AuthResponse'
@@ -118,13 +118,90 @@ export const authService: ApiEndpointConfig = {
     },
     // 清理过期令牌
     '/cleanup-expired-tokens': {
-      description: '清理过期的认证令牌',
-      methods: ['DELETE'],
+      description: '清理过期的验证令牌（管理员功能）',
+      methods: ['POST'],
       request: {
         requireAuth: true
       },
       response: {
         dataType: 'CleanupResponse'
+      }
+    },
+    // 基础健康检查
+    '/health': {
+      description: '基础健康检查',
+      methods: ['GET'],
+      request: {
+        requireAuth: false
+      },
+      response: {
+        dataType: 'HealthCheckResponse'
+      }
+    },
+    // 详细健康检查
+    '/health/detailed': {
+      description: '详细健康检查',
+      methods: ['GET'],
+      request: {
+        requireAuth: false
+      },
+      response: {
+        dataType: 'HealthCheckResponse'
+      }
+    },
+    // 就绪性检查
+    '/health/ready': {
+      description: '就绪性检查 - 服务是否准备好接收请求',
+      methods: ['GET'],
+      request: {
+        requireAuth: false
+      },
+      response: {
+        dataType: 'HealthCheckResponse'
+      }
+    },
+    // 存活检查
+    '/health/live': {
+      description: '存活检查 - 服务是否正在运行',
+      methods: ['GET'],
+      request: {
+        requireAuth: false
+      },
+      response: {
+        dataType: 'HealthCheckResponse'
+      }
+    },
+    // 获取服务指标
+    '/metrics': {
+      description: '获取服务指标',
+      methods: ['GET'],
+      request: {
+        requireAuth: false
+      },
+      response: {
+        dataType: 'MetricsResponse'
+      }
+    },
+    // 获取用户偏好设置
+    '/preferences': {
+      description: '获取当前用户的偏好设置',
+      methods: ['GET', 'PUT'],
+      request: {
+        requireAuth: true
+      },
+      response: {
+        dataType: 'UserPreferenceResponse'
+      }
+    },
+    // 获取默认偏好设置
+    '/preferences/default': {
+      description: '获取默认偏好设置',
+      methods: ['GET'],
+      request: {
+        requireAuth: false
+      },
+      response: {
+        dataType: 'DefaultPreferencesResponse'
       }
     }
   }

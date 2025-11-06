@@ -3,7 +3,7 @@
  * 提供类型安全的API响应处理，确保所有API响应都有正确的类型定义
  */
 
-import type { Api } from '@/typings/api'
+import * as Api from '@/types/api'
 
 // 基础API响应接口
 export interface BaseApiResponse<T = any> {

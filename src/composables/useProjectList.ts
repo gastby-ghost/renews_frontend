@@ -16,7 +16,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { storeToRefs } from 'pinia'
 import { useDebounceFn } from '@vueuse/core'
 import { useProjectStore } from '@/store/modules/project'
-import type { Api } from '@/typings/api'
+import * as Api from '@/types/api'
 
 // 从Api.Project命名空间导入类型
 type ProjectCreate = Api.Project.ProjectCreate

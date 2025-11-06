@@ -3,7 +3,7 @@
  * 避免与 userStore 产生循环依赖
  */
 
-import type { Api } from '@/typings/api'
+import * as Api from '@/types/api'
 
 export class AuthManager {
   private static instance: AuthManager

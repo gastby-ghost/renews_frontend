@@ -5,7 +5,7 @@ import { HttpError, handleError, showError } from './error'
 import { $t } from '@/locales'
 import { isTokenExpired } from '@/utils/auth'
 import { apiLogger } from '@/utils/apiLogger'
-import type { Api } from '@/typings/api'
+import * as Api from '@/types/api'
 
 /** 请求配置常量 */
 const REQUEST_TIMEOUT = 15000
