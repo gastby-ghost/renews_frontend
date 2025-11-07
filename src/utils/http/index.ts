@@ -289,10 +289,18 @@ async function handleTokenRefreshError(originalRequest: ExtendedAxiosRequestConf
   originalRequest._retry = true
 
   try {
+    console.log('[HTTP] 开始刷新令牌，当前令牌状态:', {
+      hasAccessToken: !!userStore.accessToken,
+      hasRefreshToken: !!userStore.refreshToken,
+      tokenExpired: userStore.accessToken ? isTokenExpired(userStore.accessToken) : 'no token'
+    })
+
     // 尝试刷新令牌
     const refreshSuccess = await userStore.refreshAccessToken()
+    console.log('[HTTP] 令牌刷新结果:', refreshSuccess)
 
     if (refreshSuccess) {
+      console.log('[HTTP] 令牌刷新成功，更新队列中的请求')
       // 刷新成功，更新所有队列中的请求
       const { accessToken } = userStore
       refreshSubscribers.forEach((callback) => callback(accessToken))
@@ -304,11 +312,13 @@ async function handleTokenRefreshError(originalRequest: ExtendedAxiosRequestConf
       }
       return request(originalRequest)
     } else {
+      console.log('[HTTP] 令牌刷新失败，执行降级处理')
       // 刷新失败，执行降级处理
       handleRefreshFailure()
       throw createHttpError($t('httpMsg.tokenRefreshFailed'), ApiStatus.unauthorized)
     }
   } catch (error) {
+    console.error('[HTTP] 令牌刷新过程中出错:', error)
     // 刷新过程中出错，执行降级处理
     handleRefreshFailure()
     throw error

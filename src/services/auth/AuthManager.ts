@@ -69,24 +69,35 @@ export class AuthManager {
   async refreshAccessToken(refreshToken: string): Promise<boolean> {
     const service = this.getAuthService()
     try {
+      console.log(
+        '[AuthManager] 开始刷新令牌，使用刷新令牌:',
+        refreshToken.substring(0, 10) + '...'
+      )
       const response = await service.refreshToken(refreshToken)
+      console.log('[AuthManager] 刷新令牌响应:', response)
 
       // 处理刷新令牌响应
       if (response && typeof response === 'object' && Object.keys(response).length === 0) {
-        console.log('[AuthManager] 刷新令牌成功')
+        console.log('[AuthManager] 刷新令牌成功 - 空对象响应')
         return true
       }
 
       if (response && 'success' in response) {
         const authResponse = response as Api.Auth.AuthResponse
+        console.log('[AuthManager] 检查AuthResponse:', {
+          success: authResponse.success,
+          hasToken: !!authResponse.token
+        })
         if (authResponse.success && authResponse.token) {
+          console.log('[AuthManager] 刷新令牌成功 - 有token响应')
           return true
         }
       }
 
+      console.log('[AuthManager] 刷新令牌失败 - 响应格式不匹配')
       return false
     } catch (error) {
-      console.error('刷新令牌失败:', error)
+      console.error('[AuthManager] 刷新令牌异常:', error)
       return false
     }
   }

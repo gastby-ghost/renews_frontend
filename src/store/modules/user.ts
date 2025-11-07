@@ -174,8 +174,18 @@ export const useUserStore = defineStore(
      */
     const refreshAccessToken = async (): Promise<boolean> => {
       try {
+        console.log('[UserStore] 开始刷新访问令牌:', {
+          hasRefreshToken: !!refreshToken.value,
+          refreshTokenPrefix: refreshToken.value
+            ? refreshToken.value.substring(0, 10) + '...'
+            : 'none',
+          currentAccessToken: accessToken.value
+            ? accessToken.value.substring(0, 10) + '...'
+            : 'none'
+        })
+
         if (!refreshToken.value) {
-          console.warn('没有可用的刷新令牌')
+          console.warn('[UserStore] 没有可用的刷新令牌')
           return false
         }
 
@@ -185,13 +195,15 @@ export const useUserStore = defineStore(
         if (success) {
           // 如果刷新成功，需要从响应中获取新令牌并更新
           // 这里可能需要根据实际实现来获取新令牌
-          console.log('[UserStore] 令牌刷新成功')
+          console.log('[UserStore] 令牌刷新成功，但可能需要更新令牌值')
+          // TODO: 这里可能需要从authManager获取新令牌并更新store
           return true
         }
 
+        console.log('[UserStore] 令牌刷新失败，authManager返回false')
         return false
       } catch (error) {
-        console.error('刷新令牌失败:', error)
+        console.error('[UserStore] 刷新令牌异常:', error)
         return false
       }
     }
