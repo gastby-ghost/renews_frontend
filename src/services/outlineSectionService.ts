@@ -31,8 +31,15 @@ export interface OutlineSection {
   updated_at: string
 }
 
-// Type alias for OutlineSection used as detail response for type safety and API consistency
-export type OutlineSectionDetailResponse = OutlineSection
+export interface OutlineSectionDetailResponse {
+  id: number
+  outline_id: number
+  title: string
+  content_direction?: string
+  order_index: number
+  created_at: string
+  updated_at: string
+}
 
 export interface OutlineSectionUpdate {
   title?: string
@@ -40,8 +47,15 @@ export interface OutlineSectionUpdate {
   order_index?: number
 }
 
-// Type alias for OutlineSection used as update response for type safety and API consistency
-export type OutlineSectionUpdateResponse = OutlineSection
+export interface OutlineSectionUpdateResponse {
+  id: number
+  outline_id: number
+  title: string
+  content_direction?: string
+  order_index: number
+  created_at: string
+  updated_at: string
+}
 
 export interface OutlineSectionDeleteResponse {
   id: number

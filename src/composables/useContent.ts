@@ -18,6 +18,7 @@ import { storeToRefs } from 'pinia'
 import MarkdownIt from 'markdown-it'
 import { useDocumentGenerateStore } from '@/store/modules/documentGenerate'
 import { useProjectStore } from '@/store/modules/project'
+import { bodyService } from '@/services/bodyService'
 
 /**
  * 文档章节接口
@@ -283,13 +284,46 @@ export function useContent() {
 
   // ==================== 内容管理 ====================
 
-  // 保存内容
-  const saveContent = () => {
+  // 保存内容到服务器
+  const saveContent = async () => {
     if (!projectId) return
 
-    localStorage.setItem(`project_${projectId}_content`, state.content)
-    localStorage.setItem(`project_${projectId}_content_saved`, String(Date.now()))
-    ElMessage.success('内容已保存')
+    try {
+      const numericProjectId = Number(projectId)
+
+      // 尝试获取活动正文
+      let activeBody
+      try {
+        activeBody = await bodyService.getActiveBody(numericProjectId)
+      } catch {
+        // 没有活动正文，需要创建新的
+        activeBody = null
+      }
+
+      if (activeBody) {
+        // 更新现有正文
+        await bodyService.updateBody(activeBody.id, {
+          title: state.title || documentTitle.value,
+          content: state.content
+        })
+      } else {
+        // 创建新正文
+        await bodyService.createBody(numericProjectId, {
+          title: state.title || documentTitle.value,
+          content: state.content,
+          status: 'active'
+        })
+      }
+
+      localStorage.setItem(`project_${projectId}_content_saved`, String(Date.now()))
+      ElMessage.success('内容已保存到服务器')
+    } catch (error) {
+      console.error('Save content error:', error)
+      // 保存到本地作为备选
+      localStorage.setItem(`project_${projectId}_content`, state.content)
+      localStorage.setItem(`project_${projectId}_content_saved`, String(Date.now()))
+      ElMessage.warning('服务器保存失败，已保存到本地')
+    }
   }
 
   // 自动保存
@@ -298,10 +332,13 @@ export function useContent() {
     if (autoSaveTimer) {
       clearTimeout(autoSaveTimer)
     }
-    autoSaveTimer = window.setTimeout(() => {
+    autoSaveTimer = window.setTimeout(async () => {
       if (state.content.trim()) {
-        localStorage.setItem(`project_${projectId}_content`, state.content)
-        localStorage.setItem(`project_${projectId}_content_saved`, String(Date.now()))
+        try {
+          await saveContent()
+        } catch (error) {
+          console.error('Auto save error:', error)
+        }
       }
     }, 3000)
   }
@@ -379,33 +416,14 @@ export function useContent() {
     try {
       // TODO: 实现 AI API 调用
       // const response = await aiService.generateContent(prompt, state.content)
-      // state.aiResult = response.content
 
       // 模拟请求
       await new Promise((resolve) => setTimeout(resolve, 1000))
-      state.aiResult = 'AI 功能开发中...'
     } catch (error) {
       ElMessage.error('AI 请求失败')
       console.error('AI request error:', error)
     } finally {
       state.aiLoading = false
-    }
-  }
-
-  // 插入 AI 结果
-  const insertAiResult = () => {
-    if (!state.aiResult) return
-
-    const textarea = markdownTextarea.value
-    if (textarea) {
-      const start = textarea.selectionStart
-      const end = textarea.selectionEnd
-      const newContent =
-        state.content.substring(0, start) + state.aiResult + state.content.substring(end)
-      state.content = newContent
-
-      state.aiDialogVisible = false
-      state.aiResult = ''
     }
   }
 
@@ -496,7 +514,6 @@ export function useContent() {
     // 方法 - AI
     openAiDialog,
     handleAiRequest,
-    insertAiResult,
 
     // 方法 - 项目
     loadProject

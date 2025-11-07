@@ -310,16 +310,12 @@ export function mockGetMaterialAllRelations(materialId: number): MaterialRelatio
   const titleRelations = []
   const sectionRelations = []
 
-  for (const [titleCandidateId, relations] of mockTitleRelations.entries()) {
-    // DEBUG: titleCandidateId is used for iteration but not directly referenced
-    console.log('[DEBUG] Processing titleCandidateId:', titleCandidateId)
+  for (const relations of mockTitleRelations.values()) {
     const materialRelations = relations.filter((r) => r.material_id === materialId)
     titleRelations.push(...materialRelations)
   }
 
-  for (const [outlineSectionId, relations] of mockSectionRelations.entries()) {
-    // DEBUG: outlineSectionId is used for iteration but not directly referenced
-    console.log('[DEBUG] Processing outlineSectionId:', outlineSectionId)
+  for (const relations of mockSectionRelations.values()) {
     const materialRelations = relations.filter((r) => r.material_id === materialId)
     sectionRelations.push(...materialRelations)
   }
@@ -372,9 +368,7 @@ export function mockBatchBindMaterialsToTitle(
         success: true
       })
       successCount += 1
-    } catch (error) {
-      // DEBUG: error parameter is caught but not used for error details
-      console.log('[DEBUG] Error caught during material binding:', error)
+    } catch {
       items.push({
         material_id: materialId,
         success: false,
@@ -496,9 +490,7 @@ export function mockBatchUnbindMaterialsFromTitle(
         success: true
       })
       successCount += 1
-    } catch (error) {
-      // DEBUG: error parameter is caught but not used for error details
-      console.log('[DEBUG] Error caught during material unbinding:', error)
+    } catch {
       items.push({
         material_id: materialId,
         success: false,
@@ -553,9 +545,7 @@ export function mockBatchUnbindMaterialsFromSection(
         success: true
       })
       successCount += 1
-    } catch (error) {
-      // DEBUG: error parameter is caught but not used for error details
-      console.log('[DEBUG] Error caught during section material unbinding:', error)
+    } catch {
       items.push({
         material_id: materialId,
         success: false,
