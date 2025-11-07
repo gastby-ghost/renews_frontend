@@ -1,16 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { projectService } from '@/services/projectService'
-import * as Api from '@/types/api'
-
-// 从Api.Project命名空间导入类型
-type ProjectResponse = Api.Project.ProjectResponse
-// type ProjectDetailResponse = Api.Project.ProjectDetailResponse
-// type ProjectListResponse = Api.Project.ProjectListResponse
-type ProjectCreate = Api.Project.ProjectCreate
-type ProjectUpdate = Api.Project.ProjectUpdate
-// type ProjectDeleteResponse = Api.Project.ProjectDeleteResponse
-// type ProjectStatisticsResponse = Api.Project.ProjectStatisticsResponse
+import type { ProjectResponse, ProjectCreate, ProjectUpdate } from '@/types/api'
 
 /**
  * 项目状态管理
@@ -50,12 +41,10 @@ export const useProjectStore = defineStore('projectStore', () => {
   // 计算属性：将API数据转换为UI需要的格式
   const projectsWithUiData = computed(() => {
     return projects.value.map((project: ProjectResponse) => {
-      // 将current_component转换为currentStep
+      // 将current_component转换为currentStep（根据新的OpenAPI规范）
       let currentStep = 1
       switch (project.current_component) {
         case 'topic-selection':
-        case 'requirement':
-        case 'title':
           currentStep = 1
           break
         case 'outline':

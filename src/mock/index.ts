@@ -42,6 +42,18 @@ import {
   generateRefreshTokenResponse,
   generateCleanupResponse
 } from './data/auth'
+import {
+  generateProjectListResponse,
+  generateProjectDetailResponse,
+  generateProjectCreateResponse,
+  generateProjectUpdateResponse,
+  generateProjectDeleteResponse,
+  generateProjectStatusUpdateResponse,
+  generateProjectComponentUpdateResponse,
+  generateProjectStatisticsResponse,
+  generateProjectDuplicateResponse,
+  generateProjectSearchResponse
+} from './data/project'
 
 // 素材相关Mock数据
 export * from './data/material/list'
@@ -54,6 +66,9 @@ export * from './data/document-generate'
 
 // 认证相关Mock数据
 export * from './data/auth'
+
+// 项目相关Mock数据
+export * from './data/project'
 
 // 导出 MockTaskTracker 类
 export { MockTaskTracker }
@@ -310,6 +325,75 @@ export class MockDataManager {
       case 'auth-cleanup': {
         // 生成清理过期令牌Mock数据
         data = generateCleanupResponse()
+        break
+      }
+
+      // ========== 项目相关Mock数据 ==========
+      case 'project-list': {
+        // 生成项目列表Mock数据
+        data = generateProjectListResponse()
+        break
+      }
+
+      case 'project-detail': {
+        // 生成项目详情Mock数据
+        // 参数: 项目ID
+        data = generateProjectDetailResponse(args[0] || 1)
+        break
+      }
+
+      case 'project-create': {
+        // 生成项目创建Mock数据
+        // 参数: 项目名称
+        data = generateProjectCreateResponse(args[0] || '新项目')
+        break
+      }
+
+      case 'project-update': {
+        // 生成项目更新Mock数据
+        // 参数: 项目ID, 更新数据
+        data = generateProjectUpdateResponse(args[0] || 1, args[1] || {})
+        break
+      }
+
+      case 'project-delete': {
+        // 生成项目删除Mock数据
+        // 参数: 项目ID数组
+        data = generateProjectDeleteResponse(args[0] || [1])
+        break
+      }
+
+      case 'project-status-update': {
+        // 生成项目状态更新Mock数据
+        // 参数: 项目ID, 新状态
+        data = generateProjectStatusUpdateResponse(args[0] || 1, args[1] || 'TITLE_GENERATION')
+        break
+      }
+
+      case 'project-component-update': {
+        // 生成项目组件更新Mock数据
+        // 参数: 项目ID, 新组件
+        data = generateProjectComponentUpdateResponse(args[0] || 1, args[1] || 'topic-selection')
+        break
+      }
+
+      case 'project-statistics': {
+        // 生成项目统计Mock数据
+        data = generateProjectStatisticsResponse()
+        break
+      }
+
+      case 'project-duplicate': {
+        // 生成项目复制Mock数据
+        // 参数: 原始项目ID, 新名称
+        data = generateProjectDuplicateResponse(args[0] || 1, args[1] || '项目副本')
+        break
+      }
+
+      case 'project-search': {
+        // 生成项目搜索Mock数据
+        // 参数: 搜索关键词
+        data = generateProjectSearchResponse(args[0] || '')
         break
       }
 

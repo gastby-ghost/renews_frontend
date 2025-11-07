@@ -157,8 +157,9 @@ class ProjectService extends BaseApiService {
    *
    * 业务规则：
    * 1. 项目名称必须唯一（用户维度）
-   * 2. 默认状态为"draft"
-   * 3. 默认当前组件为"requirement"
+   * 2. 默认状态为"TITLE_GENERATION"
+   * 3. 默认当前组件为"topic-selection"
+   * 4. 默认项目类型为"article"
    *
    * 异常处理：
    * - 项目名称已存在 → 提示"项目名称已存在"
@@ -285,7 +286,11 @@ class ProjectService extends BaseApiService {
    * 更新项目状态
    * PATCH /api/v1/core/projects/{project_id}/status
    *
-   * 支持的常用状态：draft, active, completed, archived
+   * 支持的状态：
+   * - TITLE_GENERATION: 标题生成阶段
+   * - OUTLINE_GENERATION: 大纲生成阶段
+   * - BODY_GENERATION: 正文生成阶段
+   * - COMPLETED: 已完成
    */
   async updateProjectStatus(
     projectId: number,
@@ -308,7 +313,10 @@ class ProjectService extends BaseApiService {
    * 更新项目组件
    * PATCH /api/v1/core/projects/{project_id}/component
    *
-   * 支持的常用组件：requirement, title, outline, content, review
+   * 支持的组件：
+   * - topic-selection: 选题阶段
+   * - outline: 大纲阶段
+   * - content: 内容阶段
    */
   async updateProjectComponent(
     projectId: number,
@@ -451,8 +459,8 @@ class ProjectService extends BaseApiService {
             id: 1,
             user_id: 1,
             name: '示例项目1',
-            status: 'active',
-            current_component: 'requirement',
+            status: 'TITLE_GENERATION',
+            current_component: 'topic-selection',
             folder_id: null,
             last_modified: '2023-12-31T23:59:59Z',
             created_at: '2023-01-01T00:00:00Z',
@@ -462,12 +470,34 @@ class ProjectService extends BaseApiService {
             id: 2,
             user_id: 1,
             name: '示例项目2',
-            status: 'draft',
-            current_component: 'title',
+            status: 'OUTLINE_GENERATION',
+            current_component: 'outline',
             folder_id: 1,
             last_modified: '2023-12-30T23:59:59Z',
             created_at: '2023-02-01T00:00:00Z',
             updated_at: '2023-12-30T23:59:59Z'
+          },
+          {
+            id: 3,
+            user_id: 1,
+            name: '示例项目3',
+            status: 'BODY_GENERATION',
+            current_component: 'content',
+            folder_id: null,
+            last_modified: '2023-12-29T23:59:59Z',
+            created_at: '2023-03-01T00:00:00Z',
+            updated_at: '2023-12-29T23:59:59Z'
+          },
+          {
+            id: 4,
+            user_id: 1,
+            name: '示例项目4',
+            status: 'COMPLETED',
+            current_component: 'content',
+            folder_id: 2,
+            last_modified: '2023-12-28T23:59:59Z',
+            created_at: '2023-04-01T00:00:00Z',
+            updated_at: '2023-12-28T23:59:59Z'
           }
         ]
         const mockData = {
@@ -497,8 +527,8 @@ class ProjectService extends BaseApiService {
           id: parseInt(projectId),
           user_id: 1,
           name: `项目 ${projectId}`,
-          status: 'active',
-          current_component: 'requirement',
+          status: 'TITLE_GENERATION',
+          current_component: 'topic-selection',
           folder_id: null,
           last_modified: '2023-12-31T23:59:59Z',
           created_at: '2023-01-01T00:00:00Z',
@@ -521,8 +551,8 @@ class ProjectService extends BaseApiService {
           id: Math.floor(Math.random() * 1000) + 100,
           user_id: 1,
           name: requestData.name,
-          status: requestData.status || 'draft',
-          current_component: requestData.current_component || 'requirement',
+          status: requestData.status || 'TITLE_GENERATION',
+          current_component: requestData.current_component || 'topic-selection',
           folder_id: requestData.folder_id || null,
           last_modified: new Date().toISOString(),
           created_at: new Date().toISOString(),
@@ -555,8 +585,8 @@ class ProjectService extends BaseApiService {
             id: parseInt(projectId),
             user_id: 1,
             name: requestData.name || `项目 ${projectId}`,
-            status: requestData.status || 'active',
-            current_component: requestData.current_component || 'requirement',
+            status: requestData.status || 'TITLE_GENERATION',
+            current_component: requestData.current_component || 'topic-selection',
             folder_id: requestData.folder_id || null,
             last_modified: new Date().toISOString(),
             created_at: '2023-01-01T00:00:00Z',
@@ -591,7 +621,7 @@ class ProjectService extends BaseApiService {
             user_id: 1,
             name: `项目 ${projectId}`,
             status: requestData.status,
-            current_component: 'requirement',
+            current_component: 'topic-selection',
             folder_id: null,
             last_modified: new Date().toISOString(),
             created_at: '2023-01-01T00:00:00Z',
@@ -612,7 +642,7 @@ class ProjectService extends BaseApiService {
             id: parseInt(projectId),
             user_id: 1,
             name: `项目 ${projectId}`,
-            status: 'active',
+            status: 'TITLE_GENERATION',
             current_component: requestData.current_component,
             folder_id: null,
             last_modified: new Date().toISOString(),
@@ -634,8 +664,8 @@ class ProjectService extends BaseApiService {
             id: Math.floor(Math.random() * 1000) + 100,
             user_id: 1,
             name: requestData.name || `项目 ${projectId} 副本`,
-            status: 'draft',
-            current_component: 'requirement',
+            status: 'TITLE_GENERATION',
+            current_component: 'topic-selection',
             folder_id: null,
             last_modified: new Date().toISOString(),
             created_at: new Date().toISOString(),
@@ -654,8 +684,8 @@ class ProjectService extends BaseApiService {
               id: 1,
               user_id: 1,
               name: '搜索结果项目1',
-              status: 'active',
-              current_component: 'requirement',
+              status: 'TITLE_GENERATION',
+              current_component: 'topic-selection',
               folder_id: null,
               last_modified: '2023-12-31T23:59:59Z',
               created_at: '2023-01-01T00:00:00Z',
@@ -675,10 +705,10 @@ class ProjectService extends BaseApiService {
           success: true,
           message: '获取项目统计信息成功',
           data: {
-            draft: 5,
-            active: 3,
-            completed: 2,
-            archived: 1
+            TITLE_GENERATION: 5,
+            OUTLINE_GENERATION: 3,
+            BODY_GENERATION: 2,
+            COMPLETED: 4
           }
         }
       }

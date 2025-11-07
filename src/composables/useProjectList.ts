@@ -16,11 +16,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { storeToRefs } from 'pinia'
 import { useDebounceFn } from '@vueuse/core'
 import { useProjectStore } from '@/store/modules/project'
-import * as Api from '@/types/api'
-
-// 从Api.Project命名空间导入类型
-type ProjectCreate = Api.Project.ProjectCreate
-type ProjectResponse = Api.Project.ProjectResponse
+import type { ProjectCreate, ProjectResponse } from '@/types/api'
 
 /**
  * 项目列表组合式函数
@@ -89,7 +85,7 @@ export function useProjectList() {
 
       const projectData: ProjectCreate = {
         name: form.name.trim(),
-        status: 'draft',
+        status: 'TITLE_GENERATION',
         current_component: 'topic-selection'
       }
 
@@ -117,11 +113,12 @@ export function useProjectList() {
 
   // 继续项目（根据状态跳转到对应页面）
   const continueProject = (project: ProjectResponse) => {
-    // 根据项目状态决定跳转路径
+    // 根据项目状态决定跳转路径（符合新OpenAPI规范）
     const routeMap: Record<string, string> = {
-      draft: '/document-generation/topic-selection',
-      in_progress: '/document-generation/topic-selection',
-      completed: '/document-generation/content'
+      TITLE_GENERATION: '/document-generation/topic-selection',
+      OUTLINE_GENERATION: '/document-generation/outline',
+      BODY_GENERATION: '/document-generation/content',
+      COMPLETED: '/document-generation/content'
     }
 
     const route = routeMap[project.status] || '/document-generation/topic-selection'
@@ -169,10 +166,10 @@ export function useProjectList() {
   // 获取状态类型
   const getStatusType = (status: string) => {
     const statusMap: Record<string, any> = {
-      draft: 'info',
-      in_progress: 'warning',
-      completed: 'success',
-      archived: 'info'
+      TITLE_GENERATION: 'info',
+      OUTLINE_GENERATION: 'warning',
+      BODY_GENERATION: 'warning',
+      COMPLETED: 'success'
     }
     return statusMap[status] || 'info'
   }
@@ -180,10 +177,10 @@ export function useProjectList() {
   // 获取状态文本
   const getStatusText = (status: string) => {
     const statusMap: Record<string, string> = {
-      draft: '草稿',
-      in_progress: '进行中',
-      completed: '已完成',
-      archived: '已归档'
+      TITLE_GENERATION: '标题生成',
+      OUTLINE_GENERATION: '大纲生成',
+      BODY_GENERATION: '正文生成',
+      COMPLETED: '已完成'
     }
     return statusMap[status] || '未知'
   }
@@ -191,10 +188,10 @@ export function useProjectList() {
   // 获取按钮文本
   const getActionText = (status: string) => {
     const actionMap: Record<string, string> = {
-      draft: '开始创作',
-      in_progress: '继续创作',
-      completed: '查看内容',
-      archived: '查看详情'
+      TITLE_GENERATION: '开始创作',
+      OUTLINE_GENERATION: '继续创作',
+      BODY_GENERATION: '继续创作',
+      COMPLETED: '查看内容'
     }
     return actionMap[status] || '查看详情'
   }
