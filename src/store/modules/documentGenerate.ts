@@ -939,6 +939,164 @@ export const useDocumentGenerateStore = defineStore(
       updateDocumentState({})
     }
 
+    // ==================== 核心服务API方法实现 ====================
+
+    /**
+     * 创建研究简报
+     */
+    const createResearchBrief = async (projectId: number, content: string) => {
+      loading.value = true
+      error.value = null
+      try {
+        const response = await documentGenerateService.createResearchBrief(projectId, { content })
+        if (response.success) {
+          updateDocumentState({ researchBrief: content })
+          return response.data
+        }
+        throw new Error(response.message || '创建研究简报失败')
+      } catch (err: any) {
+        error.value = err.message || '创建研究简报失败'
+        throw err
+      } finally {
+        loading.value = false
+      }
+    }
+
+    /**
+     * 获取项目研究简报列表
+     */
+    const getProjectBriefs = async (projectId: number) => {
+      loading.value = true
+      error.value = null
+      try {
+        const response = await documentGenerateService.getProjectBriefs(projectId)
+        if (response.success) {
+          return response.data
+        }
+        throw new Error(response.message || '获取研究简报列表失败')
+      } catch (err: any) {
+        error.value = err.message || '获取研究简报列表失败'
+        throw err
+      } finally {
+        loading.value = false
+      }
+    }
+
+    /**
+     * 创建标题候选
+     */
+    const createTitleCandidate = async (projectId: number, content: string) => {
+      loading.value = true
+      error.value = null
+      try {
+        const response = await documentGenerateService.createTitleCandidate(projectId, { content })
+        if (response.success) {
+          return response.data
+        }
+        throw new Error(response.message || '创建标题候选失败')
+      } catch (err: any) {
+        error.value = err.message || '创建标题候选失败'
+        throw err
+      } finally {
+        loading.value = false
+      }
+    }
+
+    /**
+     * 批量创建标题候选
+     */
+    const bulkCreateTitleCandidates = async (projectId: number, candidates: string[]) => {
+      loading.value = true
+      error.value = null
+      try {
+        const response = await documentGenerateService.bulkCreateTitleCandidates(projectId, {
+          candidates: candidates.map((content) => ({ content }))
+        })
+        if (response.success) {
+          const newTitles = response.data.map((c) => ({
+            title: c.content,
+            angle: '',
+            why_now: '',
+            news_values: [],
+            verifiability: '',
+            sources: [],
+            risk_notes: '',
+            feasibility: ''
+          }))
+          updateDocumentState({
+            generatedTitles: [...documentState.value.generatedTitles, ...newTitles]
+          })
+          return response.data
+        }
+        throw new Error(response.message || '批量创建标题候选失败')
+      } catch (err: any) {
+        error.value = err.message || '批量创建标题候选失败'
+        throw err
+      } finally {
+        loading.value = false
+      }
+    }
+
+    /**
+     * 选择标题候选
+     */
+    const selectTitleCandidate = async (candidateId: number) => {
+      loading.value = true
+      error.value = null
+      try {
+        const response = await documentGenerateService.selectTitleCandidate(candidateId, {})
+        if (response.success) {
+          return response.data
+        }
+        throw new Error(response.message || '选择标题候选失败')
+      } catch (err: any) {
+        error.value = err.message || '选择标题候选失败'
+        throw err
+      } finally {
+        loading.value = false
+      }
+    }
+
+    /**
+     * 创建标题版本
+     */
+    const createTitle = async (projectId: number, content: string) => {
+      loading.value = true
+      error.value = null
+      try {
+        const response = await documentGenerateService.createTitle(projectId, { content })
+        if (response.success) {
+          return response.data
+        }
+        throw new Error(response.message || '创建标题失败')
+      } catch (err: any) {
+        error.value = err.message || '创建标题失败'
+        throw err
+      } finally {
+        loading.value = false
+      }
+    }
+
+    /**
+     * 获取项目活动标题
+     */
+    const getActiveTitle = async (projectId: number) => {
+      loading.value = true
+      error.value = null
+      try {
+        const response = await documentGenerateService.getActiveTitle(projectId)
+        if (response.success) {
+          return response.data
+        }
+        throw new Error(response.message || '获取活动标题失败')
+      } catch (err: any) {
+        error.value = err.message || '获取活动标题失败'
+        throw err
+      } finally {
+        loading.value = false
+      }
+    }
+
     return {
       // 状态
       documentState,
@@ -970,7 +1128,16 @@ export const useDocumentGenerateStore = defineStore(
       cancelTask,
       checkServiceStatus,
       cleanupCompletedTasks,
-      cleanupExpiredTasks
+      cleanupExpiredTasks,
+
+      // 核心服务API方法
+      createResearchBrief,
+      getProjectBriefs,
+      createTitleCandidate,
+      bulkCreateTitleCandidates,
+      selectTitleCandidate,
+      createTitle,
+      getActiveTitle
     }
   },
   {

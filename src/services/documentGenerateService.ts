@@ -16,21 +16,21 @@ import {
 } from '@/utils/polling/asyncTaskPoller'
 
 // 文档生成服务相关类型
-type ScopeAgentResponse = Api.Ai.ScopeAgentResponse
-type ScopeAgentStatusResponse = Api.Ai.ScopeAgentStatusResponse
-type ScopeAgentListResponse = Api.Ai.ScopeAgentListResponse
-type ScopeAgentRequest = Api.Ai.ScopeAgentRequest
-type Search2TitleAgentResponse = Api.Ai.Search2TitleAgentResponse
-type Search2TitleAgentStatusResponse = Api.Ai.Search2TitleAgentStatusResponse
-type Search2TitleAgentListResponse = Api.Ai.Search2TitleAgentListResponse
-type Search2TitleAgentRequest = Api.Ai.Search2TitleAgentRequest
-type TitleGenerationResponse = Api.Ai.TitleGenerationResponse
-type TitleToolsStatusResponse = Api.Ai.TitleToolsStatusResponse
-type TitleGenerationRequest = Api.Ai.TitleGenerationRequest
-type OutlineGenerationResponse = Api.Ai.OutlineGenerationResponse
-type OutlineGenerationStatusResponse = Api.Ai.OutlineGenerationStatusResponse
-type OutlineGenerationRequest = Api.Ai.OutlineGenerationRequest
-type SearchResultItem = Api.Ai.SearchResultItem
+type ScopeAgentResponse = any
+type ScopeAgentStatusResponse = any
+type ScopeAgentListResponse = any
+type ScopeAgentRequest = any
+type Search2TitleAgentResponse = any
+type Search2TitleAgentStatusResponse = any
+type Search2TitleAgentListResponse = any
+type Search2TitleAgentRequest = any
+type TitleGenerationResponse = any
+type TitleToolsStatusResponse = any
+type TitleGenerationRequest = any
+type OutlineGenerationResponse = any
+type OutlineGenerationStatusResponse = any
+type OutlineGenerationRequest = any
+type SearchResultItem = any
 
 class DocumentGenerateService extends BaseApiService {
   constructor() {
@@ -344,6 +344,380 @@ class DocumentGenerateService extends BaseApiService {
     return poller.start(`search2title-agent-${taskId}`)
   }
 
+  // ============= 核心服务 - 研究简报模块 =============
+
+  /**
+   * 创建研究简报
+   * @param projectId - 项目ID
+   * @param request - 研究简报创建请求
+   * @param options - 请求配置选项
+   * @returns 研究简报创建响应
+   */
+  async createResearchBrief(
+    projectId: number,
+    request: Api.ResearchBriefCreate,
+    options?: ApiRequestConfig
+  ): Promise<Api.ResearchBriefCreateResponse> {
+    return this.post<Api.ResearchBriefCreateResponse>(
+      `/api/v1/core/projects/${projectId}/briefs`,
+      request,
+      options
+    )
+  }
+
+  /**
+   * 获取项目的所有研究简报
+   * @param projectId - 项目ID
+   * @param options - 请求配置选项
+   * @returns 研究简报列表响应
+   */
+  async getProjectBriefs(
+    projectId: number,
+    options?: ApiRequestConfig
+  ): Promise<Api.ResearchBriefListResponse> {
+    return this.get<Api.ResearchBriefListResponse>(
+      `/api/v1/core/projects/${projectId}/briefs`,
+      undefined,
+      options
+    )
+  }
+
+  /**
+   * 获取研究简报详情
+   * @param briefId - 简报ID
+   * @param options - 请求配置选项
+   * @returns 研究简报详情响应
+   */
+  async getBriefDetail(
+    briefId: number,
+    options?: ApiRequestConfig
+  ): Promise<Api.ResearchBriefDetailResponse> {
+    return this.get<Api.ResearchBriefDetailResponse>(
+      `/api/v1/core/briefs/${briefId}`,
+      undefined,
+      options
+    )
+  }
+
+  /**
+   * 更新研究简报
+   * @param briefId - 简报ID
+   * @param request - 研究简报更新请求
+   * @param options - 请求配置选项
+   * @returns 研究简报更新响应
+   */
+  async updateResearchBrief(
+    briefId: number,
+    request: Api.ResearchBriefUpdate,
+    options?: ApiRequestConfig
+  ): Promise<Api.ResearchBriefUpdateResponse> {
+    return this.put<Api.ResearchBriefUpdateResponse>(
+      `/api/v1/core/briefs/${briefId}`,
+      request,
+      options
+    )
+  }
+
+  /**
+   * 删除研究简报
+   * @param briefId - 简报ID
+   * @param options - 请求配置选项
+   * @returns 研究简报删除响应
+   */
+  async deleteResearchBrief(
+    briefId: number,
+    options?: ApiRequestConfig
+  ): Promise<Api.ResearchBriefDeleteResponse> {
+    return this.delete<Api.ResearchBriefDeleteResponse>(`/api/v1/core/briefs/${briefId}`, options)
+  }
+
+  // ============= 核心服务 - 标题候选模块 =============
+
+  /**
+   * 创建标题候选
+   * @param projectId - 项目ID
+   * @param request - 标题候选创建请求
+   * @param options - 请求配置选项
+   * @returns 标题候选创建响应
+   */
+  async createTitleCandidate(
+    projectId: number,
+    request: Api.TitleCandidateCreate,
+    options?: ApiRequestConfig
+  ): Promise<Api.TitleCandidateCreateResponse> {
+    return this.post<Api.TitleCandidateCreateResponse>(
+      `/api/v1/core/projects/${projectId}/title-candidates`,
+      request,
+      options
+    )
+  }
+
+  /**
+   * 批量创建标题候选
+   * @param projectId - 项目ID
+   * @param request - 标题候选批量创建请求
+   * @param options - 请求配置选项
+   * @returns 标题候选列表响应
+   */
+  async bulkCreateTitleCandidates(
+    projectId: number,
+    request: Api.TitleCandidateCreateBulk,
+    options?: ApiRequestConfig
+  ): Promise<Api.TitleCandidateListResponse> {
+    return this.post<Api.TitleCandidateListResponse>(
+      `/api/v1/core/projects/${projectId}/title-candidates/bulk`,
+      request,
+      options
+    )
+  }
+
+  /**
+   * 获取项目的所有标题候选
+   * @param projectId - 项目ID
+   * @param status - 状态筛选（可选）
+   * @param skip - 跳过数量（可选）
+   * @param limit - 返回数量（可选）
+   * @param options - 请求配置选项
+   * @returns 标题候选列表响应
+   */
+  async getProjectTitleCandidates(
+    projectId: number,
+    status?: 'generated' | 'selected' | 'rejected',
+    skip?: number,
+    limit?: number,
+    options?: ApiRequestConfig
+  ): Promise<Api.TitleCandidateListResponse> {
+    const params: any = {}
+    if (status) params.status = status
+    if (skip !== undefined) params.skip = skip
+    if (limit !== undefined) params.limit = limit
+
+    return this.get<Api.TitleCandidateListResponse>(
+      `/api/v1/core/projects/${projectId}/title-candidates`,
+      params,
+      options
+    )
+  }
+
+  /**
+   * 获取标题候选详情
+   * @param candidateId - 标题候选ID
+   * @param options - 请求配置选项
+   * @returns 标题候选详情响应
+   */
+  async getTitleCandidateDetail(
+    candidateId: number,
+    options?: ApiRequestConfig
+  ): Promise<Api.TitleCandidateDetailResponse> {
+    return this.get<Api.TitleCandidateDetailResponse>(
+      `/api/v1/core/title-candidates/${candidateId}`,
+      undefined,
+      options
+    )
+  }
+
+  /**
+   * 更新标题候选
+   * @param candidateId - 标题候选ID
+   * @param request - 标题候选更新请求
+   * @param options - 请求配置选项
+   * @returns 标题候选更新响应
+   */
+  async updateTitleCandidate(
+    candidateId: number,
+    request: Api.TitleCandidateUpdate,
+    options?: ApiRequestConfig
+  ): Promise<Api.TitleCandidateUpdateResponse> {
+    return this.put<Api.TitleCandidateUpdateResponse>(
+      `/api/v1/core/title-candidates/${candidateId}`,
+      request,
+      options
+    )
+  }
+
+  /**
+   * 删除标题候选
+   * @param candidateId - 标题候选ID
+   * @param options - 请求配置选项
+   * @returns 标题候选删除响应
+   */
+  async deleteTitleCandidate(
+    candidateId: number,
+    options?: ApiRequestConfig
+  ): Promise<Api.TitleCandidateDeleteResponse> {
+    return this.delete<Api.TitleCandidateDeleteResponse>(
+      `/api/v1/core/title-candidates/${candidateId}`,
+      options
+    )
+  }
+
+  /**
+   * 选择标题候选
+   * @param candidateId - 标题候选ID
+   * @param request - 标题候选选择请求
+   * @param options - 请求配置选项
+   * @returns 标题候选选择响应
+   */
+  async selectTitleCandidate(
+    candidateId: number,
+    request: Api.TitleCandidateSelect,
+    options?: ApiRequestConfig
+  ): Promise<Api.TitleCandidateSelectResponse> {
+    return this.put<Api.TitleCandidateSelectResponse>(
+      `/api/v1/core/title-candidates/${candidateId}/select`,
+      request,
+      options
+    )
+  }
+
+  /**
+   * 拒绝标题候选
+   * @param candidateId - 标题候选ID
+   * @param request - 标题候选选择请求
+   * @param options - 请求配置选项
+   * @returns 标题候选更新响应
+   */
+  async rejectTitleCandidate(
+    candidateId: number,
+    request: Api.TitleCandidateSelect,
+    options?: ApiRequestConfig
+  ): Promise<Api.TitleCandidateUpdateResponse> {
+    return this.put<Api.TitleCandidateUpdateResponse>(
+      `/api/v1/core/title-candidates/${candidateId}/reject`,
+      request,
+      options
+    )
+  }
+
+  // ============= 核心服务 - 标题版本模块 =============
+
+  /**
+   * 为项目创建标题（版本化）
+   * @param projectId - 项目ID
+   * @param request - 标题创建请求
+   * @param options - 请求配置选项
+   * @returns 标题创建响应
+   */
+  async createTitle(
+    projectId: number,
+    request: Api.TitleCreate,
+    options?: ApiRequestConfig
+  ): Promise<Api.TitleCreateResponse> {
+    return this.post<Api.TitleCreateResponse>(
+      `/api/v1/core/projects/${projectId}/titles`,
+      request,
+      options
+    )
+  }
+
+  /**
+   * 获取项目活动标题
+   * @param projectId - 项目ID
+   * @param options - 请求配置选项
+   * @returns 标题详情响应
+   */
+  async getActiveTitle(
+    projectId: number,
+    options?: ApiRequestConfig
+  ): Promise<Api.TitleDetailResponse> {
+    return this.get<Api.TitleDetailResponse>(
+      `/api/v1/core/projects/${projectId}/titles/active`,
+      undefined,
+      options
+    )
+  }
+
+  /**
+   * 获取项目标题历史（所有版本）
+   * @param projectId - 项目ID
+   * @param skip - 跳过数量（可选）
+   * @param limit - 返回数量（可选）
+   * @param options - 请求配置选项
+   * @returns 标题历史响应
+   */
+  async getTitleHistory(
+    projectId: number,
+    skip?: number,
+    limit?: number,
+    options?: ApiRequestConfig
+  ): Promise<Api.TitleHistoryResponse> {
+    const params: any = {}
+    if (skip !== undefined) params.skip = skip
+    if (limit !== undefined) params.limit = limit
+
+    return this.get<Api.TitleHistoryResponse>(
+      `/api/v1/core/projects/${projectId}/titles/history`,
+      params,
+      options
+    )
+  }
+
+  /**
+   * 获取标题详情
+   * @param titleId - 标题ID
+   * @param options - 请求配置选项
+   * @returns 标题详情响应
+   */
+  async getTitleDetail(
+    titleId: number,
+    options?: ApiRequestConfig
+  ): Promise<Api.TitleDetailResponse> {
+    return this.get<Api.TitleDetailResponse>(`/api/v1/core/titles/${titleId}`, undefined, options)
+  }
+
+  /**
+   * 更新标题
+   * @param titleId - 标题ID
+   * @param request - 标题更新请求
+   * @param options - 请求配置选项
+   * @returns 标题更新响应
+   */
+  async updateTitle(
+    titleId: number,
+    request: Api.TitleUpdate,
+    options?: ApiRequestConfig
+  ): Promise<Api.TitleUpdateResponse> {
+    return this.put<Api.TitleUpdateResponse>(`/api/v1/core/titles/${titleId}`, request, options)
+  }
+
+  /**
+   * 激活标题版本
+   * @param titleId - 标题ID
+   * @param request - 标题激活请求
+   * @param options - 请求配置选项
+   * @returns 标题激活响应
+   */
+  async activateTitle(
+    titleId: number,
+    request: Api.TitleActivateRequest,
+    options?: ApiRequestConfig
+  ): Promise<Api.TitleActivateResponse> {
+    return this.put<Api.TitleActivateResponse>(
+      `/api/v1/core/titles/${titleId}/activate`,
+      request,
+      options
+    )
+  }
+
+  /**
+   * 停用标题版本
+   * @param titleId - 标题ID
+   * @param request - 标题停用请求
+   * @param options - 请求配置选项
+   * @returns 标题停用响应
+   */
+  async deactivateTitle(
+    titleId: number,
+    request: Api.TitleDeactivateRequest,
+    options?: ApiRequestConfig
+  ): Promise<Api.TitleDeactivateResponse> {
+    return this.put<Api.TitleDeactivateResponse>(
+      `/api/v1/core/titles/${titleId}/deactivate`,
+      request,
+      options
+    )
+  }
+
   // ============= 便捷方法 =============
 
   /**
@@ -438,7 +812,343 @@ class DocumentGenerateService extends BaseApiService {
     const requestData = config.data
 
     try {
-      // 根据API路径调用对应的Mock数据生成函数
+      // ============= 核心服务 - 研究简报模块 Mock =============
+      if (method === 'POST' && url.match(/\/api\/v1\/core\/projects\/\d+\/briefs$/)) {
+        return {
+          success: true,
+          message: '研究简报创建成功',
+          data: {
+            id: Math.floor(Math.random() * 10000) + 1000,
+            project_id: parseInt(url.match(/\/projects\/(\d+)/)?.[1] || '0'),
+            user_id: 1,
+            content: requestData?.content || '',
+            metadata: requestData?.metadata || {},
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }
+        }
+      }
+
+      if (method === 'GET' && url.match(/\/api\/v1\/core\/projects\/\d+\/briefs$/)) {
+        return {
+          success: true,
+          message: '获取研究简报列表成功',
+          data: [
+            {
+              id: 1,
+              project_id: parseInt(url.match(/\/projects\/(\d+)/)?.[1] || '0'),
+              user_id: 1,
+              content: '研究简报示例内容',
+              metadata: {},
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            }
+          ],
+          total_count: 1
+        }
+      }
+
+      if (method === 'GET' && url.match(/\/api\/v1\/core\/briefs\/\d+$/)) {
+        return {
+          success: true,
+          message: '获取研究简报详情成功',
+          data: {
+            id: parseInt(url.match(/\/briefs\/(\d+)$/)?.[1] || '0'),
+            project_id: 1,
+            user_id: 1,
+            content: '研究简报示例内容',
+            metadata: {},
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }
+        }
+      }
+
+      if (method === 'PUT' && url.match(/\/api\/v1\/core\/briefs\/\d+$/)) {
+        return {
+          success: true,
+          message: '研究简报更新成功',
+          data: {
+            id: parseInt(url.match(/\/briefs\/(\d+)$/)?.[1] || '0'),
+            project_id: 1,
+            user_id: 1,
+            content: requestData?.content || '',
+            metadata: requestData?.metadata || {},
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }
+        }
+      }
+
+      if (method === 'DELETE' && url.match(/\/api\/v1\/core\/briefs\/\d+$/)) {
+        return {
+          success: true,
+          message: '研究简报删除成功',
+          deleted_count: 1
+        }
+      }
+
+      // ============= 核心服务 - 标题候选模块 Mock =============
+      if (method === 'POST' && url.match(/\/api\/v1\/core\/projects\/\d+\/title-candidates$/)) {
+        return {
+          success: true,
+          message: '标题候选创建成功',
+          data: {
+            id: Math.floor(Math.random() * 10000) + 1000,
+            project_id: parseInt(url.match(/\/projects\/(\d+)/)?.[1] || '0'),
+            user_id: 1,
+            content: requestData?.content || '',
+            status: 'generated',
+            metadata: requestData?.metadata || {},
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }
+        }
+      }
+
+      if (
+        method === 'POST' &&
+        url.match(/\/api\/v1\/core\/projects\/\d+\/title-candidates\/bulk$/)
+      ) {
+        const projectId = parseInt(url.match(/\/projects\/(\d+)/)?.[1] || '0')
+        const candidates = requestData?.candidates || []
+        return {
+          success: true,
+          message: '批量创建标题候选成功',
+          data: candidates.map((candidate: any, index: number) => ({
+            id: Math.floor(Math.random() * 10000) + 1000 + index,
+            project_id: projectId,
+            user_id: 1,
+            content: candidate.content || '',
+            status: 'generated',
+            metadata: candidate.metadata || {},
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })),
+          total_count: candidates.length
+        }
+      }
+
+      if (method === 'GET' && url.match(/\/api\/v1\/core\/projects\/\d+\/title-candidates$/)) {
+        return {
+          success: true,
+          message: '获取标题候选列表成功',
+          data: [
+            {
+              id: 1,
+              project_id: parseInt(url.match(/\/projects\/(\d+)/)?.[1] || '0'),
+              user_id: 1,
+              content: '标题候选示例',
+              status: 'generated',
+              metadata: {},
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            }
+          ],
+          total_count: 1
+        }
+      }
+
+      if (method === 'GET' && url.match(/\/api\/v1\/core\/title-candidates\/\d+$/)) {
+        return {
+          success: true,
+          message: '获取标题候选详情成功',
+          data: {
+            id: parseInt(url.match(/\/title-candidates\/(\d+)$/)?.[1] || '0'),
+            project_id: 1,
+            user_id: 1,
+            content: '标题候选示例',
+            status: 'generated',
+            metadata: {},
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }
+        }
+      }
+
+      if (method === 'PUT' && url.match(/\/api\/v1\/core\/title-candidates\/\d+$/)) {
+        return {
+          success: true,
+          message: '标题候选更新成功',
+          data: {
+            id: parseInt(url.match(/\/title-candidates\/(\d+)$/)?.[1] || '0'),
+            project_id: 1,
+            user_id: 1,
+            content: requestData?.content || '',
+            status: 'generated',
+            metadata: requestData?.metadata || {},
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }
+        }
+      }
+
+      if (method === 'DELETE' && url.match(/\/api\/v1\/core\/title-candidates\/\d+$/)) {
+        return {
+          success: true,
+          message: '标题候选删除成功',
+          deleted_count: 1
+        }
+      }
+
+      if (method === 'PUT' && url.match(/\/api\/v1\/core\/title-candidates\/\d+\/select$/)) {
+        return {
+          success: true,
+          message: '标题候选选择成功',
+          data: {
+            id: parseInt(url.match(/\/title-candidates\/(\d+)\/select$/)?.[1] || '0'),
+            project_id: 1,
+            user_id: 1,
+            content: '标题候选示例',
+            status: 'selected',
+            metadata: {},
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }
+        }
+      }
+
+      if (method === 'PUT' && url.match(/\/api\/v1\/core\/title-candidates\/\d+\/reject$/)) {
+        return {
+          success: true,
+          message: '标题候选拒绝成功',
+          data: {
+            id: parseInt(url.match(/\/title-candidates\/(\d+)\/reject$/)?.[1] || '0'),
+            project_id: 1,
+            user_id: 1,
+            content: '标题候选示例',
+            status: 'rejected',
+            metadata: {},
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }
+        }
+      }
+
+      // ============= 核心服务 - 标题版本模块 Mock =============
+      if (method === 'POST' && url.match(/\/api\/v1\/core\/projects\/\d+\/titles$/)) {
+        return {
+          success: true,
+          message: '标题创建成功',
+          data: {
+            id: Math.floor(Math.random() * 10000) + 1000,
+            project_id: parseInt(url.match(/\/projects\/(\d+)/)?.[1] || '0'),
+            user_id: 1,
+            content: requestData?.content || '',
+            version: requestData?.version || 1,
+            is_active: true,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }
+        }
+      }
+
+      if (method === 'GET' && url.match(/\/api\/v1\/core\/projects\/\d+\/titles\/active$/)) {
+        return {
+          success: true,
+          message: '获取活动标题成功',
+          data: {
+            id: 1,
+            project_id: parseInt(url.match(/\/projects\/(\d+)/)?.[1] || '0'),
+            user_id: 1,
+            content: '活动标题示例',
+            version: 1,
+            is_active: true,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }
+        }
+      }
+
+      if (method === 'GET' && url.match(/\/api\/v1\/core\/projects\/\d+\/titles\/history$/)) {
+        return {
+          success: true,
+          message: '获取标题历史成功',
+          data: [
+            {
+              id: 1,
+              project_id: parseInt(url.match(/\/projects\/(\d+)/)?.[1] || '0'),
+              user_id: 1,
+              content: '标题版本1',
+              version: 1,
+              is_active: true,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            }
+          ],
+          total_count: 1
+        }
+      }
+
+      if (method === 'GET' && url.match(/\/api\/v1\/core\/titles\/\d+$/)) {
+        return {
+          success: true,
+          message: '获取标题详情成功',
+          data: {
+            id: parseInt(url.match(/\/titles\/(\d+)$/)?.[1] || '0'),
+            project_id: 1,
+            user_id: 1,
+            content: '标题示例',
+            version: 1,
+            is_active: true,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }
+        }
+      }
+
+      if (method === 'PUT' && url.match(/\/api\/v1\/core\/titles\/\d+$/)) {
+        return {
+          success: true,
+          message: '标题更新成功',
+          data: {
+            id: parseInt(url.match(/\/titles\/(\d+)$/)?.[1] || '0'),
+            project_id: 1,
+            user_id: 1,
+            content: requestData?.content || '',
+            version: 1,
+            is_active: true,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }
+        }
+      }
+
+      if (method === 'PUT' && url.match(/\/api\/v1\/core\/titles\/\d+\/activate$/)) {
+        return {
+          success: true,
+          message: '标题激活成功',
+          data: {
+            id: parseInt(url.match(/\/titles\/(\d+)\/activate$/)?.[1] || '0'),
+            project_id: 1,
+            user_id: 1,
+            content: '标题示例',
+            version: 1,
+            is_active: true,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }
+        }
+      }
+
+      if (method === 'PUT' && url.match(/\/api\/v1\/core\/titles\/\d+\/deactivate$/)) {
+        return {
+          success: true,
+          message: '标题停用成功',
+          data: {
+            id: parseInt(url.match(/\/titles\/(\d+)\/deactivate$/)?.[1] || '0'),
+            project_id: 1,
+            user_id: 1,
+            content: '标题示例',
+            version: 1,
+            is_active: false,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }
+        }
+      }
+
+      // ============= 旧版AI服务 Mock（保持向后兼容） =============
       if (method === 'POST' && url.includes('/scope-agent/execute')) {
         return mockDataManager.getMockData('scope-agent-execute', params.user_id, params.project_id)
       }
