@@ -39,3 +39,8 @@ export * as DocumentModule from './modules/document'
 export * as MaterialModule from './modules/material'
 export * as ProjectModule from './modules/project'
 export * as SearchModule from './modules/search'
+
+// ========== AI-数据库协调服务（2025-11-08新增） ==========
+// 解决AI服务与数据库后端协调问题的中间层
+export * from './databaseSyncService'
+export * from './enhancedTaskManager'

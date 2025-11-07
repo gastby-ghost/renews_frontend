@@ -1,5 +1,5 @@
 /**
- * 选题策划组合式函数
+ * 选题策划组合式函数（优化版）
  *
  * 职责：管理选题页面的所有功能和状态
  *
@@ -10,8 +10,17 @@
  * 4. 生成和选择标题
  * 5. 步骤导航控制
  * 6. 管理搜索结果
+ * 7. 统一管理AI任务与数据库同步
  *
  * 状态来源：从 useDocumentGenerateStore 获取
+ *
+ * 优化点：
+ * - 集成数据库同步服务，确保AI任务完成后数据正确保存
+ * - 改善任务状态管理和错误处理
+ * - 简化重复逻辑，提高可维护性
+ * - 添加任务重试机制和进度追踪
+ *
+ * @since 2025-11-08 优化AI功能与数据库更新的融合
  * @since 2024-11-03 简化表单结构，移除目标受众、文档类型等字段
  * @since 2024-11-03 整合所有通用方法，独立使用不依赖其他组合式函数
  */
@@ -24,6 +33,7 @@ import { useDocumentGenerateStore } from '@/store/modules/documentGenerate'
 import { useProjectStore } from '@/store/modules/project'
 import type { Title } from '@/types/ai'
 import type { FormInstance } from 'element-plus'
+import { databaseSyncService } from '@/services/databaseSyncService'
 
 /**
  * 需求表单状态接口
@@ -207,6 +217,99 @@ export function useTopicSelection() {
         return ''
     }
   })
+
+  // ==================== 数据库同步方法 ====================
+
+  /**
+   * 处理Scope任务完成后的数据库同步
+   */
+  const handleScopeTaskCompleted = async (task: any) => {
+    try {
+      ElMessage.info('正在同步研究简报到数据库...')
+
+      const result = await databaseSyncService.syncScopeAgentResult(task, (updates) =>
+        documentStore.updateDocumentState(updates)
+      )
+
+      if (result.success) {
+        ElMessage.success('研究简报已成功保存到数据库')
+      } else {
+        const errorMsg = result.errors.join(', ')
+        ElMessage.warning(`部分数据同步失败: ${errorMsg}`)
+        console.error('Scope任务同步失败:', result.errors)
+      }
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : '同步失败'
+      ElMessage.error(`数据同步出错: ${errorMsg}`)
+      console.error('Scope任务同步错误:', error)
+    }
+  }
+
+  /**
+   * 处理Search2Title任务完成后的数据库同步
+   */
+  const handleSearch2TitleTaskCompleted = async (task: any) => {
+    try {
+      ElMessage.info('正在同步标题和搜索结果到数据库...')
+
+      const result = await databaseSyncService.syncSearch2TitleResult(task, (updates) =>
+        documentStore.updateDocumentState(updates)
+      )
+
+      if (result.success) {
+        const syncedItems = Object.entries(result.synced)
+          .filter(([, value]) => value)
+          .map(([key]) => key)
+          .join('、')
+
+        ElMessage.success(`已成功保存到数据库: ${syncedItems}`)
+      } else {
+        const errorMsg = result.errors.join(', ')
+        ElMessage.warning(`部分数据同步失败: ${errorMsg}`)
+        console.error('Search2Title任务同步失败:', result.errors)
+      }
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : '同步失败'
+      ElMessage.error(`数据同步出错: ${errorMsg}`)
+      console.error('Search2Title任务同步错误:', error)
+    }
+  }
+
+  /**
+   * 重试失败的任务
+   */
+  const retryFailedTask = async (taskType: 'scope' | 'search2title') => {
+    try {
+      const currentProject = projectStore.currentProject
+      if (!currentProject) {
+        ElMessage.error('项目信息未加载，请刷新页面重试')
+        return
+      }
+
+      switch (taskType) {
+        case 'scope':
+          if (requirementsState.form.topic) {
+            await generateAIBriefing()
+          }
+          break
+
+        case 'search2title':
+          if (documentState.value.researchBrief) {
+            const currentProject = projectStore.currentProject
+            if (currentProject) {
+              await executeSearch2Title(String(currentProject.id))
+            }
+          }
+          break
+      }
+
+      ElMessage.success('任务已重新启动')
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : '重试失败'
+      ElMessage.error(errorMsg)
+      console.error('重试任务失败:', error)
+    }
+  }
 
   // ==================== 需求定义方法 ====================
 
@@ -538,11 +641,12 @@ ${specialRequirementsSection}
 
   // ==================== 状态监听 ====================
 
-  // 监听Scope任务状态变化
+  // 监听Scope任务状态变化（优化版）
   watch(
     () => documentState.value.scopeTask,
-    (task, oldTask) => {
+    async (task, oldTask) => {
       console.log('[DEBUG] scopeTask watcher - task:', task, 'oldTask:', oldTask)
+
       if (task) {
         const shouldExecute = task.status === 'pending' || task.status === 'running'
         console.log(
@@ -553,19 +657,66 @@ ${specialRequirementsSection}
         )
         requirementsState.isExecutingScope = shouldExecute
 
-        // 任务完成时自动更新研究简报
+        // 任务完成时更新研究简报并同步到数据库
         if (task.status === 'completed' && task.result?.research_brief) {
-          console.log('[DEBUG] scopeTask watcher - updating research brief from task result')
+          console.log('[DEBUG] scopeTask watcher - task completed, updating and syncing')
+
+          // 更新前端状态
           documentStore.updateResearchBrief(task.result.research_brief)
+
+          // 同步到数据库
+          await handleScopeTaskCompleted(task)
+        }
+
+        // 任务失败时提示用户可以重试
+        if (task.status === 'failed') {
+          ElMessage.error('Scope分析任务失败，您可以点击重试按钮重新开始')
+          console.log('[DEBUG] scopeTask watcher - task failed')
         }
       } else {
         console.log('[DEBUG] scopeTask watcher - no task, setting isExecutingScope to false')
         requirementsState.isExecutingScope = false
       }
+
       console.log(
         '[DEBUG] scopeTask watcher - final isExecutingScope:',
         requirementsState.isExecutingScope
       )
+    },
+    { immediate: true, deep: true }
+  )
+
+  // 监听Search2Title任务状态（优化版）
+  watch(
+    () => documentState.value.search2titleTask,
+    async (task, oldTask) => {
+      console.log('[DEBUG] search2titleTask watcher - task:', task, 'oldTask:', oldTask)
+
+      if (task) {
+        const isRunning = task.status === 'pending' || task.status === 'running'
+        console.log(
+          '[DEBUG] search2titleTask watcher - task.status:',
+          task.status,
+          'isRunning:',
+          isRunning
+        )
+
+        // 任务完成时同步到数据库
+        if (task.status === 'completed' && task.result) {
+          console.log('[DEBUG] search2titleTask watcher - task completed, syncing to database')
+
+          // 同步到数据库
+          await handleSearch2TitleTaskCompleted(task)
+        }
+
+        // 任务失败时提示用户可以重试
+        if (task.status === 'failed') {
+          ElMessage.error('Search2Title任务失败，您可以点击重试按钮重新开始')
+          console.log('[DEBUG] search2titleTask watcher - task failed')
+        }
+      } else {
+        console.log('[DEBUG] search2titleTask watcher - no task')
+      }
     },
     { immediate: true, deep: true }
   )
@@ -642,6 +793,11 @@ ${specialRequirementsSection}
 
     // 方法 - 步骤导航
     proceedToNextStep,
-    goToPreviousStep
+    goToPreviousStep,
+
+    // 新增：数据库同步相关方法
+    handleScopeTaskCompleted,
+    handleSearch2TitleTaskCompleted,
+    retryFailedTask
   }
 }
