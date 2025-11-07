@@ -1,0 +1,1399 @@
+# Art Design Pro 组件库与设计模式分析报告
+
+## 📋 目录
+
+1. [系统概览](#系统概览)
+2. [组件分层架构](#组件分层架构)
+3. [核心组件库 (core)](#核心组件库-core)
+4. [自定义组件库 (custom)](#自定义组件库-custom)
+5. [设计系统与主题](#设计系统与主题)
+6. [开发规范与最佳实践](#开发规范与最佳实践)
+7. [组件复用指南](#组件复用指南)
+8. [新增组件指南](#新增组件指南)
+
+---
+
+## 系统概览
+
+Art Design Pro 采用 **Vue 3 + TypeScript + Element Plus** 技术栈，构建了一套完整的企业级组件库。系统遵循**分层架构**和**模块化设计**原则，确保代码的可维护性和可复用性。
+
+### 技术栈
+
+- **Vue 3.5.12**: Composition API + `<script setup>`
+- **TypeScript 5.6.3**: 类型安全
+- **Element Plus 2.10.2**: UI 组件库
+- **SCSS**: 样式预处理
+- **Vite**: 构建工具
+
+---
+
+## 组件分层架构
+
+```
+src/components/
+├── core/          # 核心组件库 (可复用的基础组件)
+│   ├── base/          # 基础组件
+│   ├── forms/         # 表单组件
+│   ├── cards/         # 卡片组件
+│   ├── layouts/       # 布局组件
+│   ├── charts/        # 图表组件
+│   ├── tables/        # 表格组件
+│   ├── text-effect/   # 文字特效
+│   ├── banners/       # 横幅组件
+│   ├── views/         # 视图组件
+│   ├── others/        # 其他组件
+│   ├── media/         # 媒体组件
+│   └── theme/         # 主题相关
+│
+├── custom/        # 自定义组件库 (业务特定组件)
+│   ├── material-search/     # 素材搜索相关
+│   ├── material-card/       # 素材卡片相关
+│   ├── search-progress/     # 搜索进度
+│   ├── comment-widget/      # 评论组件
+│   └── TitleCard.vue        # 标题卡片
+│
+└── dev/          # 开发工具组件
+    ├── MockToggle.vue       # Mock开关
+    └── ApiConfigViewer.vue  # API配置查看器
+```
+
+### 核心原则
+
+1. **单一职责**: 每个组件只负责一个特定功能
+2. **高度复用**: 基础组件可在多个场景复用
+3. **配置化驱动**: 通过 props 和配置对象实现灵活性
+4. **类型安全**: 完整的 TypeScript 类型定义
+5. **主题适配**: 支持浅色/暗黑主题无缝切换
+
+---
+
+## 核心组件库 (core)
+
+### 📦 基础组件 (base)
+
+#### 1. ArtIconSelector (图标选择器)
+
+**路径**: `src/components/core/base/art-icon-selector/index.vue`
+
+**功能**: 统一的图标选择器组件
+
+**特性**:
+
+- 支持两种图标类型：CLASS_NAME 和 UNICODE
+- 内置图标库
+- 支持自定义宽度和大小
+- 可禁用状态
+
+**使用示例**:
+
+```vue
+<template>
+  <ArtIconSelector
+    v-model="selectedIcon"
+    icon-type="className"
+    text="选择图标"
+    width="200px"
+    size="default"
+  />
+</template>
+```
+
+**设计模式**:
+
+- 组件封装模式
+- 对话框模式
+- v-model 双向绑定
+
+#### 2. ArtLogo (Logo组件)
+
+**路径**: `src/components/core/base/art-logo/index.vue`
+
+**功能**: 应用 Logo 展示组件
+
+**特性**:
+
+- 支持不同尺寸
+- 可链接跳转
+- 主题适配
+
+#### 3. ArtBackToTop (返回顶部)
+
+**路径**: `src/components/core/base/art-back-to-top/index.vue`
+
+**功能**: 返回顶部按钮
+
+**特性**:
+
+- 自动显示/隐藏
+- 平滑滚动
+- 自定义位置
+
+### 📝 表单组件 (forms)
+
+#### 1. ArtSearchBar (搜索表单)
+
+**路径**: `src/components/core/forms/art-search-bar/index.vue` ⭐
+
+**功能**: 通用搜索表单组件，支持多种表单控件
+
+**特性**:
+
+- ✅ 支持 15+ 种表单控件类型
+- ✅ 响应式布局（24 栅格系统）
+- ✅ 展开/收起功能
+- ✅ 插槽支持（自定义表单控件）
+- ✅ 表单验证
+- ✅ 国际化支持
+
+**组件映射**:
+
+```typescript
+const componentMap = {
+  input: ElInput, // 输入框
+  number: ElInputNumber, // 数字输入框
+  select: ElSelect, // 选择器
+  switch: ElSwitch, // 开关
+  checkbox: ElCheckbox, // 复选框
+  checkboxgroup: ElCheckboxGroup, // 复选框组
+  radiogroup: ElRadioGroup, // 单选框组
+  date: ElDatePicker, // 日期选择器
+  daterange: ElDatePicker, // 日期范围
+  datetime: ElDatePicker, // 日期时间
+  datetimerange: ElDatePicker, // 日期时间范围
+  rate: ElRate, // 评分
+  slider: ElSlider, // 滑块
+  cascader: ElCascader, // 级联选择器
+  timepicker: ElTimePicker, // 时间选择器
+  treeselect: ElTreeSelect // 树选择器
+}
+```
+
+**使用示例**:
+
+```vue
+<template>
+  <ArtSearchBar
+    v-model="searchForm"
+    :items="searchItems"
+    :span="6"
+    :gutter="12"
+    :label-width="80"
+    @search="handleSearch"
+    @reset="handleReset"
+  />
+</template>
+
+<script setup>
+  const searchItems = [
+    {
+      key: 'keywords',
+      label: '关键词',
+      type: 'input',
+      span: 8,
+      props: {
+        placeholder: '请输入搜索关键词',
+        clearable: true
+      }
+    },
+    {
+      key: 'dateRange',
+      label: '日期范围',
+      type: 'daterange',
+      span: 8,
+      props: {
+        startPlaceholder: '开始日期',
+        endPlaceholder: '结束日期'
+      }
+    },
+    {
+      key: 'status',
+      label: '状态',
+      type: 'select',
+      span: 6,
+      props: {
+        options: [
+          { label: '启用', value: 1 },
+          { label: '禁用', value: 0 }
+        ]
+      }
+    }
+  ]
+</script>
+```
+
+**设计模式**:
+
+- **配置驱动**: 通过数组配置生成表单
+- **组件映射**: 动态组件渲染
+- **插槽扩展**: 支持自定义表单控件
+- **响应式设计**: 适配多种屏幕尺寸
+
+#### 2. ArtExcelImport (Excel导入)
+
+**路径**: `src/components/core/forms/art-excel-import/index.vue`
+
+**功能**: Excel 文件导入组件
+
+**特性**:
+
+- 文件格式验证
+- 数据预览
+- 错误提示
+- 导入进度
+
+#### 3. ArtExcelExport (Excel导出)
+
+**路径**: `src/components/core/forms/art-excel-export/index.vue`
+
+**功能**: Excel 数据导出组件
+
+**特性**:
+
+- 自定义导出字段
+- 多Sheet支持
+- 数据格式化
+
+#### 4. ArtButtonTable (表格按钮)
+
+**路径**: `src/components/core/forms/art-button-table/index.vue`
+
+**功能**: 表格操作按钮组件
+
+**特性**:
+
+- 预设按钮类型（新增/编辑/删除/查看/更多）
+- 自定义图标和样式
+- 颜色枚举支持
+
+**使用示例**:
+
+```vue
+<ArtButtonTable type="edit" :icon-class="BgColorEnum.PRIMARY" @click="handleEdit" />
+```
+
+#### 5. ArtButtonMore (更多按钮)
+
+**路径**: `src/components/core/forms/art-button-more/index.vue`
+
+**功能**: 下拉菜单按钮
+
+#### 6. ArtDragVerify (拖拽验证)
+
+**路径**: `src/components/core/forms/art-drag-verify/index.vue`
+
+**功能**: 滑块验证组件
+
+#### 7. ArtWangEditor (富文本编辑器)
+
+**路径**: `src/components/core/forms/art-wang-editor/index.vue`
+
+**功能**: 基于 WangEditor 的富文本编辑器
+
+### 🎴 卡片组件 (cards)
+
+#### 1. ArtProjectCard (项目卡片)
+
+**路径**: `src/components/core/cards/art-project-card/index.vue`
+
+**功能**: 项目信息展示卡片
+
+**特性**:
+
+- 项目封面
+- 项目标题和描述
+- 标签展示
+- 操作按钮
+
+#### 2. ArtStatsCard (统计卡片)
+
+**路径**: `src/components/core/cards/art-stats-card/index.vue`
+
+**功能**: 数据统计卡片
+
+**特性**:
+
+- 数字展示
+- 趋势指示
+- 图标支持
+- 颜色主题
+
+#### 3. ArtBarChartCard (柱状图卡片)
+
+**路径**: `src/components/core/cards/art-bar-chart-card/index.vue`
+
+**功能**: 柱状图展示卡片
+
+#### 4. ArtLineChartCard (折线图卡片)
+
+**路径**: `src/components/core/cards/art-line-chart-card/index.vue`
+
+**功能**: 折线图展示卡片
+
+#### 5. ArtDonutChartCard (环形图卡片)
+
+**路径**: `src/components/core/cards/art-donut-chart-card/index.vue`
+
+**功能**: 环形图展示卡片
+
+#### 6. ArtProgressCard (进度卡片)
+
+**路径**: `src/components/core/cards/art-progress-card/index.vue`
+
+**功能**: 进度展示卡片
+
+### 🏗️ 布局组件 (layouts)
+
+#### 1. ArtLayouts (布局容器)
+
+**路径**: `src/components/core/layouts/art-layouts/index.vue`
+
+**功能**: 统一的页面布局容器
+
+**特性**:
+
+- 动态计算内边距
+- 菜单类型适配
+- Tab栏适配
+- 响应式布局
+
+**布局类型**:
+
+- `LEFT`: 左侧菜单
+- `TOP`: 顶部菜单
+- `TOP_LEFT`: 顶部+左侧菜单
+- `DUAL_MENU`: 双栏菜单
+
+#### 2. ArtBreadcrumb (面包屑)
+
+**路径**: `src/components/core/layouts/art-breadcrumb/index.vue`
+
+**功能**: 面包屑导航
+
+#### 3. ArtHeaderBar (头部栏)
+
+**路径**: `src/components/core/layouts/art-header-bar/index.vue`
+
+**功能**: 页面头部组件
+
+#### 4. ArtGlobalSearch (全局搜索)
+
+**路径**: `src/components/core/layouts/art-global-search/index.vue`
+
+**功能**: 全局搜索弹窗
+
+#### 5. ArtPageContent (页面内容)
+
+**路径**: `src/components/core/layouts/art-page-content/index.vue`
+
+**功能**: 页面内容容器
+
+#### 6. ArtMenus (菜单系统)
+
+**路径**: `src/components/core/layouts/art-menus/*`
+
+**功能**: 多种菜单组件
+
+### 📊 图表组件 (charts)
+
+基于 ECharts 的图表组件库：
+
+- ArtBarChart: 柱状图
+- ArtLineChart: 折线图
+- ArtPieChart: 饼图
+- ArtRadarChart: 雷达图
+- ArtScatterChart: 散点图
+- ArtGaugeChart: 仪表盘
+
+### 🎨 主题组件 (theme)
+
+#### ArtThemeSvg (主题SVG)
+
+**路径**: `src/components/core/theme/theme-svg/index.vue`
+
+**功能**: 动态主题色 SVG 组件
+
+**特性**:
+
+- 自动应用主题色
+- 颜色映射配置
+- 尺寸可配置
+
+**颜色映射**:
+
+```typescript
+const COLOR_MAPPINGS = {
+  '#C7DEFF': 'var(--el-color-primary-light-6)',
+  '#071F4D': 'var(--el-color-primary-dark-2)',
+  '#00E4E5': 'var(--el-color-primary-light-1)',
+  '#006EFF': 'var(--el-color-primary)',
+  '#fff': 'var(--art-main-bg-color)',
+  '#DEEBFC': 'var(--el-color-primary-light-7)'
+}
+```
+
+---
+
+## 自定义组件库 (custom)
+
+### 🔍 素材搜索模块 (material-search)
+
+#### 1. MaterialSearch (素材搜索)
+
+**路径**: `src/components/custom/material-search/MaterialSearch.vue`
+
+**功能**: 素材搜索主组件
+
+**特性**:
+
+- 搜索历史记录
+- 多种搜索提供商
+- 结果数量配置
+- 表单验证
+
+#### 2. AgentMaterialSearch (AI搜索)
+
+**路径**: `src/components/custom/material-search/AgentMaterialSearch.vue`
+
+**功能**: AI 驱动的智能搜索
+
+**特性**:
+
+- AI Agent 集成
+- 智能推荐
+- 搜索进度跟踪
+- 结果分析
+
+#### 3. MaterialSearchResults (搜索结果)
+
+**路径**: `src/components/custom/material-search/common/MaterialSearchResults.vue`
+
+**功能**: 搜索结果展示列表
+
+#### 4. AgentSearchProgress (AI搜索进度)
+
+**路径**: `src/components/custom/material-search/AgentSearchProgress.vue`
+
+**功能**: AI 搜索进度展示
+
+### 🎴 素材卡片模块 (material-card)
+
+#### 1. UnifiedMaterialCard (统一素材卡片)
+
+**路径**: `src/components/custom/material-card/UnifiedMaterialCard.vue`
+
+**功能**: 统一的素材展示卡片
+
+**特性**:
+
+- 多种展示模式（搜索/管理）
+- 选择状态管理
+- 匹配度评分
+- 标签展示
+- 预览功能
+
+**使用示例**:
+
+```vue
+<UnifiedMaterialCard
+  :material="materialData"
+  :selected="isSelected"
+  :show-selection="true"
+  :show-score="true"
+  context="search"
+  @click="handleClick"
+  @preview="handlePreview"
+/>
+```
+
+**设计模式**:
+
+- **状态驱动**: 通过 context 属性切换不同模式
+- **事件传递**: 清晰的事件接口
+- **响应式设计**: 适配不同屏幕尺寸
+
+#### 2. MaterialLibraryDialog (素材库弹窗)
+
+**路径**: `src/components/custom/material-card/MaterialLibraryDialog.vue`
+
+**功能**: 素材库选择弹窗
+
+#### 3. MaterialPreviewDialog (素材预览弹窗)
+
+**路径**: `src/components/custom/material-card/MaterialPreviewDialog.vue`
+
+**功能**: 素材预览弹窗
+
+### 📊 搜索进度模块 (search-progress)
+
+#### SearchProgress (搜索进度)
+
+**路径**: `src/components/custom/search-progress/SearchProgress.vue`
+
+**功能**: 搜索任务进度展示
+
+**特性**:
+
+- 实时进度更新
+- 状态管理
+- 取消操作
+
+### 💬 评论组件 (comment-widget)
+
+#### CommentWidget (评论组件)
+
+**路径**: `src/components/custom/comment-widget/index.vue`
+
+**功能**: 通用评论组件
+
+### 🎯 标题卡片 (TitleCard)
+
+#### TitleCard
+
+**路径**: `src/components/custom/TitleCard.vue`
+
+**功能**: AI 生成标题展示卡片
+
+**特性**:
+
+- 标题评分
+- 角度分析
+- 时效性分析
+- 可行性分析
+- 新闻价值标签
+- 相关素材展示
+
+**使用示例**:
+
+```vue
+<TitleCard
+  :title="titleData"
+  :is-selected="isSelected"
+  :score="4.5"
+  :suggestions="advantageList"
+  :materials="relatedMaterials"
+  @select="handleSelect"
+/>
+```
+
+**样式特点**:
+
+```scss
+.title-card {
+  padding: 20px;
+  border: 2px solid var(--el-border-color);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    border-color: var(--el-color-primary);
+    box-shadow: 0 4px 12px rgb(0 0 0 / 10%);
+  }
+
+  &.selected {
+    background: var(--el-color-success-light-9);
+    border-color: var(--el-color-success);
+  }
+}
+```
+
+---
+
+## 设计系统与主题
+
+### 🎨 主题变量系统
+
+系统使用 **CSS 变量** + **SCSS 变量** 实现主题系统，支持浅色/暗黑主题无缝切换。
+
+#### 1. 颜色系统
+
+**主题色 (RGB)**:
+
+```scss
+:root {
+  --art-primary: 93, 135, 255; // 主色
+  --art-secondary: 73, 190, 255; // 辅助色
+  --art-error: 250, 137, 107; // 错误色
+  --art-info: 107, 125, 155; // 信息色
+  --art-success: 19, 222, 185; // 成功色
+  --art-warning: 255, 174, 31; // 警告色
+  --art-danger: 255, 77, 79; // 危险色
+}
+```
+
+**灰色系统**:
+
+```scss
+:root {
+  --art-gray-100: #f9f9f9;
+  --art-gray-200: #f1f1f4;
+  --art-gray-300: #dbdfe9;
+  --art-gray-400: #c4cada;
+  --art-gray-500: #99a1b7;
+  --art-gray-600: #78829d;
+  --art-gray-700: #4b5675;
+  --art-gray-800: #252f4a;
+  --art-gray-900: #071437;
+}
+```
+
+**背景色**:
+
+```scss
+:root {
+  --art-bg-color: #fafbfc; // 页面背景
+  --art-main-bg-color: #ffffff; // 主背景
+  --art-card-bg-color: #ffffff; // 卡片背景
+}
+```
+
+#### 2. 暗黑主题
+
+```scss
+html.dark {
+  --art-primary: 93, 135, 255;
+  --art-bg-color: #070707;
+  --art-main-bg-color: #161618;
+  --art-gray-100: #1b1c22;
+  --art-gray-200: #26272f;
+  --art-gray-900: #f5f5f5;
+}
+```
+
+#### 3. 阴影系统
+
+```scss
+:root {
+  --art-box-shadow-xs: 0 0.1rem 0.75rem 0.25rem rgba(0, 0, 0, 0.05);
+  --art-box-shadow-sm: 0 0.1rem 1rem 0.25rem rgba(0, 0, 0, 0.05);
+  --art-box-shadow: 0 0.5rem 1.5rem 0.5rem rgba(0, 0, 0, 0.075);
+  --art-box-shadow-lg: 0 1rem 2rem 1rem rgba(0, 0, 0, 0.1);
+}
+```
+
+#### 4. 边框系统
+
+```scss
+:root {
+  --art-border-color: #eaebf1; // 主边框色
+  --art-border-dashed-color: #dbdfe9; // 虚线边框色
+  --art-root-card-border-color: #f1f1f4; // 卡片边框色
+}
+```
+
+### 📱 响应式设计
+
+#### 设备断点
+
+```scss
+$device-notebook: 1600px; // 笔记本
+$device-ipad-pro: 1180px; // iPad Pro
+$device-ipad: 800px; // iPad
+$device-ipad-vertical: 900px; // iPad 竖屏
+$device-phone: 500px; // 手机
+```
+
+#### 栅格系统
+
+系统基于 **Element Plus 的 24 栅格系统**：
+
+```vue
+<el-row :gutter="12">
+  <el-col :xs="24" :sm="12" :md="8" :lg="6" :xl="6">
+    <!-- 内容 -->
+  </el-col>
+</el-row>
+```
+
+### 🎯 组件样式规范
+
+#### 1. 类名前缀
+
+- 核心组件: `art-` 前缀
+- 自定义组件: `material-`, `title-` 等语义前缀
+- 私有类: BEM 命名方式 `block__element--modifier`
+
+#### 2. 样式作用域
+
+所有组件样式使用 `scoped` 属性，确保样式隔离：
+
+```vue
+<style lang="scss" scoped>
+  .art-component {
+    // 组件样式
+  }
+</style>
+```
+
+#### 3. CSS 变量使用
+
+优先使用 CSS 变量而非硬编码颜色：
+
+```scss
+// ✅ 推荐
+background-color: var(--art-main-bg-color);
+color: var(--el-text-color-primary);
+
+// ❌ 不推荐
+background-color: #ffffff;
+color: #303133;
+```
+
+---
+
+## 开发规范与最佳实践
+
+### 📝 组件开发规范
+
+#### 1. 文件命名
+
+- **组件文件**: PascalCase (如 `ArtSearchBar.vue`)
+- **目录名**: kebab-case (如 `art-search-bar`)
+- **入口文件**: `index.vue`
+
+#### 2. 组件结构
+
+```vue
+<!-- 模板 -->
+<template>
+  <div class="component-name">
+    <!-- 内容 -->
+  </div>
+</template>
+
+<!-- 脚本 -->
+<script setup lang="ts">
+  // 1. 导入依赖
+  import { ref, computed } from 'vue'
+  import { ElButton } from 'element-plus'
+
+  // 2. 组件选项
+  defineOptions({ name: 'ComponentName' })
+
+  // 3. Props 定义
+  interface Props {
+    title?: string
+    size?: 'large' | 'default' | 'small'
+  }
+  const props = withDefaults(defineProps<Props>(), {
+    title: '默认标题',
+    size: 'default'
+  })
+
+  // 4. Emits 定义
+  const emit = defineEmits<{
+    click: [event: MouseEvent]
+    change: [value: string]
+  }>()
+
+  // 5. 响应式数据
+  const count = ref(0)
+
+  // 6. 计算属性
+  const displayTitle = computed(() => props.title)
+
+  // 7. 方法
+  const handleClick = () => {
+    emit('click')
+  }
+
+  // 8. 暴露方法给父组件
+  defineExpose({
+    reset: () => {
+      count.value = 0
+    }
+  })
+</script>
+
+<!-- 样式 -->
+<style lang="scss" scoped>
+  .component-name {
+    // 样式
+  }
+</style>
+```
+
+#### 3. TypeScript 支持
+
+**完整的类型定义**:
+
+```typescript
+// Props 接口
+interface Props {
+  // 基础类型
+  title?: string
+  visible?: boolean
+  // 复杂类型
+  data?: Record<string, any>
+  // 函数类型
+  onSave?: (data: any) => void
+}
+
+// Emits 类型
+interface Emits {
+  (e: 'update:visible', visible: boolean): void
+  (e: 'save', data: any): void
+  (e: 'cancel'): void
+}
+
+// 组件实例方法
+interface ComponentExpose {
+  reset: () => void
+  refresh: () => void
+}
+```
+
+### 🎨 样式开发规范
+
+#### 1. SCSS 结构
+
+```scss
+.component {
+  // 1. 布局
+  display: flex;
+  align-items: center;
+
+  // 2. 尺寸
+  padding: 20px;
+  margin: 10px;
+
+  // 3. 颜色
+  background: var(--art-main-bg-color);
+  color: var(--el-text-color-primary);
+
+  // 4. 文字
+  font-size: 14px;
+  font-weight: 500;
+
+  // 5. 边框
+  border: 1px solid var(--art-border-color);
+  border-radius: 8px;
+
+  // 6. 阴影
+  box-shadow: var(--art-box-shadow-sm);
+
+  // 7. 过渡
+  transition: all 0.3s ease;
+
+  // 子元素
+  .element {
+    color: var(--el-color-primary);
+  }
+
+  // 状态
+  &:hover {
+    border-color: var(--el-color-primary);
+  }
+
+  &.is-active {
+    background: var(--el-color-primary-light-9);
+  }
+
+  // 响应式
+  @media (max-width: $device-phone) {
+    padding: 10px;
+  }
+}
+```
+
+#### 2. 响应式 mixin
+
+```scss
+// 移动端
+@mixin mobile {
+  @media (max-width: $device-phone) {
+    @content;
+  }
+}
+
+// 平板
+@mixin tablet {
+  @media (max-width: $device-ipad) {
+    @content;
+  }
+}
+
+// 使用
+.component {
+  padding: 20px;
+
+  @include mobile {
+    padding: 10px;
+  }
+}
+```
+
+### 🔧 状态管理
+
+#### Pinia Store 规范
+
+```typescript
+export const useExampleStore = defineStore('example', () => {
+  // 1. 状态
+  const data = ref([])
+  const loading = ref(false)
+
+  // 2. 计算属性
+  const processedData = computed(() => {
+    return data.value.map((item) => ({ ...item, processed: true }))
+  })
+
+  // 3. 操作方法
+  const fetchData = async () => {
+    loading.value = true
+    try {
+      const result = await api.getData()
+      data.value = result
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // 4. 暴露
+  return {
+    data: readonly(data),
+    loading: readonly(loading),
+    processedData,
+    fetchData
+  }
+})
+```
+
+---
+
+## 组件复用指南
+
+### 📦 何时使用核心组件
+
+**场景 1: 通用业务组件**
+
+- 表单搜索 → 使用 `ArtSearchBar`
+- 数据展示 → 使用 各种 `ArtXXXCard`
+- 文件导入导出 → 使用 `ArtExcelImport/Export`
+- 图标选择 → 使用 `ArtIconSelector`
+
+**场景 2: 布局需求**
+
+- 页面布局 → 使用 `ArtLayouts`
+- 导航菜单 → 使用 `ArtMenus`
+- 面包屑 → 使用 `ArtBreadcrumb`
+
+**场景 3: 基础功能**
+
+- 富文本编辑 → 使用 `ArtWangEditor`
+- 滑块验证 → 使用 `ArtDragVerify`
+- 返回顶部 → 使用 `ArtBackToTop`
+
+### 🔧 如何使用核心组件
+
+#### 1. 直接使用
+
+大多数核心组件可以直接通过 props 配置：
+
+```vue
+<template>
+  <ArtSearchBar v-model="searchForm" :items="searchItems" @search="handleSearch" />
+</template>
+```
+
+#### 2. 插槽扩展
+
+当需要自定义内容时，使用插槽：
+
+```vue
+<ArtSearchBar :items="searchItems">
+  <!-- 自定义表单项 -->
+  <template #customField="{ item }">
+    <el-input v-model="searchForm.customField" placeholder="自定义字段" />
+  </template>
+
+  <!-- 自定义操作按钮 -->
+  <template #actions>
+    <el-button type="success" @click="handleCustomAction">
+      自定义操作
+    </el-button>
+  </template>
+</ArtSearchBar>
+```
+
+#### 3. 组件组合
+
+多个组件组合形成复杂功能：
+
+```vue
+<template>
+  <div class="page-container">
+    <!-- 搜索区域 -->
+    <ArtSearchBar v-model="searchForm" :items="searchItems" @search="handleSearch" />
+
+    <!-- 统计卡片 -->
+    <el-row :gutter="12" class="stats-row">
+      <el-col :span="6">
+        <ArtStatsCard :data="statsData" />
+      </el-col>
+    </el-row>
+
+    <!-- 数据表格 -->
+    <ArtTable :data="tableData" :columns="columns" />
+  </div>
+</template>
+```
+
+### 🎨 样式复用
+
+#### 1. 使用 CSS 变量
+
+```scss
+.custom-component {
+  background: var(--art-main-bg-color);
+  border: 1px solid var(--art-border-color);
+  border-radius: var(--custom-radius, 8px);
+  box-shadow: var(--art-box-shadow-sm);
+}
+```
+
+#### 2. 使用工具类
+
+```scss
+// 系统提供了丰富的工具类
+<div class="text-primary bg-success p-4 rounded-lg">
+  使用工具类快速样式
+</div>
+```
+
+#### 3. 使用 BEM 命名
+
+```scss
+.component {
+  &__element {
+    // 元素样式
+  }
+
+  &--modifier {
+    // 修饰符样式
+  }
+}
+```
+
+### 📊 组件选择矩阵
+
+| 需求场景   | 推荐组件          | 备注                     |
+| ---------- | ----------------- | ------------------------ |
+| 搜索表单   | `ArtSearchBar`    | 支持多种控件，响应式布局 |
+| 数据统计   | `ArtStatsCard`    | 数字展示，趋势指示       |
+| 文件导入   | `ArtExcelImport`  | 格式验证，预览功能       |
+| 图表展示   | `ArtXXXChart`     | 基于 ECharts             |
+| 图标选择   | `ArtIconSelector` | 内置图标库               |
+| 页面布局   | `ArtLayouts`      | 动态计算边距             |
+| 富文本编辑 | `ArtWangEditor`   | 基于 WangEditor          |
+
+---
+
+## 新增组件指南
+
+### 🚀 创建新组件的步骤
+
+#### 1. 确定组件分类
+
+- **基础组件** → 放在 `core/base/`
+- **表单组件** → 放在 `core/forms/`
+- **业务组件** → 放在 `custom/`
+
+#### 2. 创建目录结构
+
+```
+src/components/core/forms/art-new-component/
+├── index.vue          # 组件入口
+├── README.md          # 可选，组件说明
+└── types.ts           # 可选，类型定义
+```
+
+#### 3. 编写组件代码
+
+**模板部分**:
+
+```vue
+<template>
+  <div class="art-new-component">
+    <!-- 组件内容 -->
+  </div>
+</template>
+```
+
+**脚本部分**:
+
+```vue
+<script setup lang="ts">
+  // 1. 导入
+  import { ref, computed } from 'vue'
+  import { ElButton } from 'element-plus'
+
+  // 2. 组件标识
+  defineOptions({ name: 'ArtNewComponent' })
+
+  // 3. Props
+  interface Props {
+    title?: string
+    value?: string
+  }
+  const props = withDefaults(defineProps<Props>(), {
+    title: '默认标题'
+  })
+
+  // 4. Emits
+  const emit = defineEmits<{
+    (e: 'update:value', value: string): void
+    (e: 'change', value: string): void
+  }>()
+
+  // 5. 响应式数据
+  const localValue = ref(props.value)
+
+  // 6. 计算属性
+  const displayTitle = computed(() => props.title)
+
+  // 7. 方法
+  const handleChange = () => {
+    emit('update:value', localValue.value)
+    emit('change', localValue.value)
+  }
+
+  // 8. 暴露
+  defineExpose({
+    reset: () => {
+      localValue.value = ''
+    }
+  })
+</script>
+```
+
+**样式部分**:
+
+```vue
+<style lang="scss" scoped>
+  .art-new-component {
+    padding: 20px;
+    background: var(--art-main-bg-color);
+    border: 1px solid var(--art-border-color);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+
+    &:hover {
+      border-color: var(--el-color-primary);
+    }
+  }
+</style>
+```
+
+#### 4. 添加类型定义（可选）
+
+**types.ts**:
+
+```typescript
+export interface NewComponentProps {
+  title?: string
+  value?: string
+  size?: 'large' | 'default' | 'small'
+}
+
+export interface NewComponentEmits {
+  'update:value': [value: string]
+  change: [value: string]
+}
+
+export interface NewComponentExpose {
+  reset: () => void
+}
+```
+
+#### 5. 添加文档说明（可选）
+
+**README.md**:
+
+````markdown
+# ArtNewComponent
+
+## 功能
+
+新组件的功能说明
+
+## Props
+
+| 名称  | 类型   | 默认值     | 说明     |
+| ----- | ------ | ---------- | -------- |
+| title | string | '默认标题' | 组件标题 |
+| value | string | -          | 组件值   |
+
+## Events
+
+| 名称         | 参数          | 说明           |
+| ------------ | ------------- | -------------- |
+| update:value | value: string | 值变化时触发   |
+| change       | value: string | 组件变化时触发 |
+
+## 使用示例
+
+```vue
+<ArtNewComponent v-model:value="componentValue" title="自定义标题" @change="handleChange" />
+```
+````
+
+````
+
+### ✅ 质量检查清单
+
+创建新组件后，请检查：
+
+- [ ] 是否使用了 TypeScript 类型定义
+- [ ] 是否添加了 `defineOptions({ name: '...' })`
+- [ ] 是否支持 v-model
+- [ ] 是否暴露了必要的方法（`defineExpose`）
+- [ ] 是否使用了 CSS 变量而非硬编码颜色
+- [ ] 是否支持响应式设计
+- [ ] 是否遵循命名规范
+- [ ] 是否添加了必要的注释和文档
+
+### 🎯 最佳实践
+
+1. **保持简单**: 一个组件只做一件事
+2. **高度复用**: 设计成可复用的基础组件
+3. **配置驱动**: 通过 props 配置而非硬编码
+4. **类型安全**: 完整的 TypeScript 类型
+5. **主题适配**: 使用 CSS 变量支持主题切换
+6. **文档完善**: 添加清晰的使用说明
+
+---
+
+## 📚 附录
+
+### A. 组件清单总览
+
+#### Core 组件列表
+
+**基础组件 (base)**:
+- `ArtIconSelector` - 图标选择器
+- `ArtLogo` - Logo组件
+- `ArtBackToTop` - 返回顶部
+- `ArtMarkdownRender` - Markdown渲染
+
+**表单组件 (forms)**:
+- `ArtSearchBar` - 搜索表单 ⭐
+- `ArtExcelImport` - Excel导入
+- `ArtExcelExport` - Excel导出
+- `ArtButtonTable` - 表格按钮
+- `ArtButtonMore` - 更多按钮
+- `ArtDragVerify` - 拖拽验证
+- `ArtWangEditor` - 富文本编辑器
+
+**卡片组件 (cards)**:
+- `ArtProjectCard` - 项目卡片
+- `ArtStatsCard` - 统计卡片
+- `ArtBarChartCard` - 柱状图卡片
+- `ArtLineChartCard` - 折线图卡片
+- `ArtDonutChartCard` - 环形图卡片
+- `ArtProgressCard` - 进度卡片
+- `ArtImageCard` - 图片卡片
+- `ArtDataListCard` - 数据列表卡片
+- `ArtTimelineListCard` - 时间线列表卡片
+
+**布局组件 (layouts)**:
+- `ArtLayouts` - 布局容器
+- `ArtBreadcrumb` - 面包屑
+- `ArtHeaderBar` - 头部栏
+- `ArtGlobalSearch` - 全局搜索
+- `ArtPageContent` - 页面内容
+- `ArtMenus` - 菜单系统
+- `ArtNotification` - 通知组件
+- `ArtSettingsPanel` - 设置面板
+- `ArtWorkTab` - 工作标签
+- `ArtScreenLock` - 锁屏
+- `ArtFastEnter` - 快速入口
+- `ArtChatWindow` - 聊天窗口
+- `ArtFireworksEffect` - 烟花特效
+- `ArtStepIndicator` - 步骤指示器
+- `ArtDocumentPage` - 文档页面
+
+**其他组件**:
+- 图表组件 (charts) - 基于 ECharts
+- 表格组件 (tables) - 表格相关
+- 文字特效 (text-effect) - 文字动画
+- 横幅组件 (banners) - 横幅展示
+- 媒体组件 (media) - 媒体播放
+- 其他组件 (others) - 杂项组件
+
+#### Custom 组件列表
+
+- `MaterialSearch` - 素材搜索
+- `AgentMaterialSearch` - AI素材搜索
+- `MaterialSearchResults` - 搜索结果
+- `AgentSearchProgress` - AI搜索进度
+- `UnifiedMaterialCard` - 统一素材卡片
+- `MaterialLibraryDialog` - 素材库弹窗
+- `MaterialPreviewDialog` - 素材预览弹窗
+- `MaterialSelectionForTitle` - 标题素材选择
+- `SearchProgress` - 搜索进度
+- `TitleCard` - 标题卡片
+- `CommentWidget` - 评论组件
+
+### B. 常用工具类
+
+#### BgColorEnum (背景色枚举)
+```typescript
+export enum BgColorEnum {
+  PRIMARY = 'bg-primary',
+  SECONDARY = 'bg-secondary',
+  WARNING = 'bg-warning',
+  ERROR = 'bg-error',
+  SUCCESS = 'bg-success',
+  DANGER = 'bg-danger',
+  INFO = 'bg-info'
+}
+````
+
+#### 系统主题枚举
+
+```typescript
+export enum SystemThemeEnum {
+  DARK = 'dark',
+  LIGHT = 'light',
+  AUTO = 'auto'
+}
+
+export enum MenuThemeEnum {
+  DARK = 'dark',
+  LIGHT = 'light',
+  DESIGN = 'design'
+}
+```
+
+### C. CSS 变量速查
+
+| 变量名                     | 说明     | 示例值        |
+| -------------------------- | -------- | ------------- |
+| `--art-primary`            | 主色调   | 93, 135, 255  |
+| `--art-secondary`          | 辅助色   | 73, 190, 255  |
+| `--art-success`            | 成功色   | 19, 222, 185  |
+| `--art-warning`            | 警告色   | 255, 174, 31  |
+| `--art-error`              | 错误色   | 250, 137, 107 |
+| `--art-bg-color`           | 页面背景 | #fafbfc       |
+| `--art-main-bg-color`      | 主背景   | #ffffff       |
+| `--art-border-color`       | 边框色   | #eaebf1       |
+| `--art-text-color-primary` | 主文字色 | #303133       |
+
+---
+
+## 总结
+
+Art Design Pro 组件库是一套**完整、专业、可复用**的企业级前端组件系统。通过**分层架构**、**配置驱动**和**主题系统**，实现了：
+
+✅ **高度复用**: 核心组件可在多个场景使用 ✅ **类型安全**: 完整的 TypeScript 支持 ✅ **主题适配**: 浅色/暗黑主题无缝切换✅ **响应式设计**: 适配多种设备 ✅ **开发效率**: 标准化组件，快速开发 ✅ **维护性强**: 清晰的代码结构和完善的文档
+
+在后续开发中，建议：
+
+1. **优先复用** 现有的 core 和 custom 组件
+2. **遵循规范** 使用 TypeScript、CSS 变量、响应式设计
+3. **保持一致** 遵循组件设计模式和命名规范
+4. **完善文档** 为新增组件编写清晰的文档
+
+---
+
+**文档版本**: v1.0.0 **最后更新**: 2025-11-02 **维护者**: Art Design Pro 开发团队
