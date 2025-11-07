@@ -70,6 +70,15 @@ export * from './data/auth'
 // 项目相关Mock数据
 export * from './data/project'
 
+// 大纲相关Mock数据
+export * from './data/outline'
+
+// 大纲章节相关Mock数据
+export * from './data/outline-section'
+
+// 素材关系相关Mock数据
+export * from './data/material-relation'
+
 // 导出 MockTaskTracker 类
 export { MockTaskTracker }
 
