@@ -386,7 +386,7 @@
   import { ref, computed, onMounted } from 'vue'
   import { useRouter, useRoute } from 'vue-router'
   import { ElMessage } from 'element-plus'
-  import { useOutlineGeneration } from '@/composables/useOutlineGeneration'
+  import { useOutlineGeneration } from '@/composables/document/useOutlineGeneration'
   import { useDocumentGenerateStore } from '@/store/modules/documentGenerate'
   import { useProjectStore } from '@/store/modules/project'
   import type { Material } from '@/types/material'

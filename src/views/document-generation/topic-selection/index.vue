@@ -392,7 +392,7 @@
   import type { FormInstance, FormRules } from 'element-plus'
 
   // 组合式函数和状态管理
-  import { useTopicSelection } from '@/composables/useTopicSelection'
+  import { useTopicSelection } from '@/composables/document/useTopicSelection'
   import { useProjectStore } from '@/store/modules/project'
   import { useDocumentGenerateStore } from '@/store/modules/documentGenerate'
 

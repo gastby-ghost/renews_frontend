@@ -353,7 +353,7 @@
     ArrowLeft,
     Loading
   } from '@element-plus/icons-vue'
-  import { useContent } from '@/composables/useContent'
+  import { useContent } from '@/composables/document/useContent'
   import { useProjectStore } from '@/store/modules/project'
   import StepIndicator from '@/components/custom/StepIndicator.vue'
 

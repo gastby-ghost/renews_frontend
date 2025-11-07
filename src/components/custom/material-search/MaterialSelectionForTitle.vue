@@ -361,7 +361,7 @@
   import type { Material } from '@/types/material'
   import { useMaterialStore } from '@/store/material'
   import { useDocumentGenerateStore } from '@/store/documentGenerate'
-  import { useMaterialSearch } from '@/composables/useMaterialSearch'
+  import { useMaterialSearch } from '@/composables/material/useMaterialSearch'
 
   // Props
   interface Props {

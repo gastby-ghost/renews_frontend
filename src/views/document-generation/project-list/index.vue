@@ -138,7 +138,7 @@
 <script setup lang="ts">
   import { onMounted } from 'vue'
   import { ElMessage } from 'element-plus'
-  import { useProjectList } from '@/composables/useProjectList'
+  import { useProjectList } from '@/composables/project/useProjectList'
   import StepIndicator from '@/components/custom/StepIndicator.vue'
 
   // 使用项目列表组合式函数

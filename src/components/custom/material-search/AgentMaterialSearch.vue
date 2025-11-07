@@ -175,7 +175,7 @@
   import AgentSearchProgress from './AgentSearchProgress.vue'
   import MaterialSearchResults from './common/MaterialSearchResults.vue'
   import AddToLibraryDialog from './common/AddToLibraryDialog.vue'
-  import { useMaterialSearch } from '@/composables/useMaterialSearch'
+  import { useMaterialSearch } from '@/composables/material/useMaterialSearch'
   import { MdPreview } from 'md-editor-v3'
   import 'md-editor-v3/lib/preview.css'
 

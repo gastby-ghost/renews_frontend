@@ -173,7 +173,7 @@
   import MaterialPreviewDialog from '@/components/custom/material-card/MaterialPreviewDialog.vue'
   import MaterialSearchResults from './common/MaterialSearchResults.vue'
   import AddToLibraryDialog from './common/AddToLibraryDialog.vue'
-  import { useMaterialSearch } from '@/composables/useMaterialSearch'
+  import { useMaterialSearch } from '@/composables/material/useMaterialSearch'
 
   interface SearchForm {
     keywords: string

@@ -24,3 +24,18 @@ export * from './searchService'
 
 // 系统偏好设置服务 - 基于OpenAPI配置
 export * from './systemPreferencesService'
+
+// ========== 文档生成服务 ==========
+// 统一导出文档生成相关服务
+export * from './documentGenerateService'
+export * from './outlineService'
+export * from './outlineSectionService'
+export * from './bodyService'
+export * from './materialRelationService'
+
+// ========== 模块化服务导出 ==========
+// 按业务域组织的新结构
+export * as DocumentModule from './modules/document'
+export * as MaterialModule from './modules/material'
+export * as ProjectModule from './modules/project'
+export * as SearchModule from './modules/search'

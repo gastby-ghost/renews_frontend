@@ -6,3 +6,6 @@ export * from './store'
 export * from './router'
 export * from './config'
 export * from './ai'
+
+// 业务域类型
+export * as Business from './business'
