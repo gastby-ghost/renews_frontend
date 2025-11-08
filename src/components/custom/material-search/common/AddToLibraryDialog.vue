@@ -170,6 +170,12 @@
    * 完成添加
    */
   const completeAdd = (success: boolean, message: string) => {
+    console.log('[AddToLibraryDialog] completeAdd 被调用', {
+      success,
+      message,
+      progressVisible: progressVisible.value
+    })
+
     if (success) {
       progress.percentage = 100
       progress.status = 'success'
@@ -181,7 +187,9 @@
 
     // 延迟关闭进度对话框
     setTimeout(() => {
+      console.log('[AddToLibraryDialog] 准备关闭进度对话框，当前状态:', progressVisible.value)
       progressVisible.value = false
+      console.log('[AddToLibraryDialog] 进度对话框关闭状态已设置:', progressVisible.value)
     }, 1500)
   }
 

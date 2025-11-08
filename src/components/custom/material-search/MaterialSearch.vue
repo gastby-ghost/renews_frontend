@@ -144,6 +144,7 @@
 
     <!-- 添加到素材库对话框 -->
     <AddToLibraryDialog
+      ref="addToLibraryDialogRef"
       v-model:visible="addToLibraryDialogVisible"
       :selected-materials="selectedMaterials"
       :materials="searchResults"
@@ -211,6 +212,7 @@
 
   // 响应式数据
   const searchFormRef = ref<FormInstance>()
+  const addToLibraryDialogRef = ref()
   const materialStore = useMaterialStore()
 
   // 搜索表单数据
@@ -287,6 +289,8 @@
     autoClear: boolean
     goToLibrary: boolean
   }) => {
+    console.log('[MaterialSearch] handleAddToLibraryConfirm 被调用', { options })
+
     try {
       // 更新选项
       addToLibraryOptions.value.autoClear = options.autoClear
@@ -297,8 +301,15 @@
         .map((id) => searchResults.value.find((material) => material.id === id))
         .filter(Boolean) as Material[]
 
+      console.log('[MaterialSearch] 准备添加素材到数据库', {
+        materialsCount: materialsToAdd.length,
+        materials: materialsToAdd.map((m) => ({ id: m.id, title: m.title }))
+      })
+
       // 使用Store方法将搜索结果添加到数据库
       const result = await materialStore.addSearchResultsToDatabase(materialsToAdd)
+
+      console.log('[MaterialSearch] 添加到数据库完成', { result })
 
       // 根据选项执行后续操作
       if (options.autoClear) {
@@ -310,9 +321,29 @@
       } else {
         ElMessage.success(`已添加 ${result.addedCount} 个素材到数据库`)
       }
+
+      console.log(
+        '[MaterialSearch] handleAddToLibraryConfirm 完成，准备调用子组件的 completeAdd 方法'
+      )
+
+      // 调用子组件的 completeAdd 方法来关闭进度对话框
+      if (addToLibraryDialogRef.value && addToLibraryDialogRef.value.completeAdd) {
+        console.log('[MaterialSearch] 调用子组件 completeAdd 方法')
+        addToLibraryDialogRef.value.completeAdd(
+          true,
+          `成功添加 ${result.addedCount} 个素材到数据库`
+        )
+      } else {
+        console.log('[MaterialSearch] 无法获取子组件引用或 completeAdd 方法')
+      }
     } catch (error) {
       console.error('添加到数据库失败:', error)
       ElMessage.error('添加到数据库失败')
+
+      // 即使出错也要调用 completeAdd 来关闭进度对话框
+      if (addToLibraryDialogRef.value && addToLibraryDialogRef.value.completeAdd) {
+        addToLibraryDialogRef.value.completeAdd(false, '添加到数据库失败')
+      }
     }
   }
 
