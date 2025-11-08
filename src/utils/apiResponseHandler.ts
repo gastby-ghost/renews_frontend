@@ -137,8 +137,7 @@ export class ApiResponseValidator {
       'status',
       'current_component',
       'created_at',
-      'updated_at',
-      'last_modified'
+      'updated_at'
     ]
     for (const field of requiredFields) {
       if (projectData[field] === undefined || projectData[field] === null) {
@@ -155,7 +154,9 @@ export class ApiResponseValidator {
       current_component: String(projectData.current_component || ''),
       created_at: String(projectData.created_at),
       updated_at: String(projectData.updated_at),
-      last_modified: String(projectData.last_modified),
+      last_modified: String(
+        projectData.last_modified || projectData.updated_at || new Date().toISOString()
+      ), // 如果没有last_modified，使用updated_at或当前时间作为默认值
       folder_id:
         projectData.folder_id !== undefined && projectData.folder_id !== null
           ? Number(projectData.folder_id)

@@ -3,7 +3,7 @@
     "browsermcp": {
       "command": "npx",
       "args": ["@browsermcp/mcp@latest"],
-      "alwaysAllow": ["browser_snapshot"]
+      "alwaysAllow": ["browser_get_console_logs"]
     }
   }
 }
