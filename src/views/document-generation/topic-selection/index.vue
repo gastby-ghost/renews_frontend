@@ -384,7 +384,7 @@
    * @since 2024-11-03 优化UI结构，移除el-tabs，使用单页布局
    */
 
-  import { ref, computed, reactive, onMounted } from 'vue'
+  import { ref, computed, reactive, onMounted, onUnmounted } from 'vue'
   import { useRouter, useRoute } from 'vue-router'
   import { ElMessage } from 'element-plus'
   import { marked } from 'marked'
@@ -579,8 +579,27 @@
 
   /** 渲染研究简报内容（Markdown转HTML） */
   const renderedBriefing = computed(() => {
-    if (!documentState.value.researchBrief) return ''
-    return marked(documentState.value.researchBrief)
+    console.log(
+      `[DEBUG] renderedBriefing computed - researchBrief:`,
+      documentState.value.researchBrief
+    )
+    console.log(
+      `[DEBUG] renderedBriefing computed - researchBrief type:`,
+      typeof documentState.value.researchBrief
+    )
+    console.log(
+      `[DEBUG] renderedBriefing computed - researchBrief length:`,
+      documentState.value.researchBrief?.length || 'N/A'
+    )
+
+    if (!documentState.value.researchBrief) {
+      console.log(`[DEBUG] renderedBriefing computed - no researchBrief, returning empty string`)
+      return ''
+    }
+
+    const rendered = marked(documentState.value.researchBrief)
+    console.log(`[DEBUG] renderedBriefing computed - rendered HTML length:`, rendered.length)
+    return rendered
   })
 
   /** 渲染可编辑简报内容（Markdown转HTML） */
@@ -723,9 +742,74 @@
 
   /** 页面初始化
    * @description 加载项目信息并初始化Search2Title loading状态
+   * @since 2025-11-08 添加项目切换时的状态重置逻辑
    */
   onMounted(async () => {
-    // 添加按钮状态调试日志
+    // 加载项目信息
+    const projectId = route.params.projectId as string
+    if (projectId) {
+      try {
+        const numericProjectId = Number(projectId)
+
+        // 检查当前项目是否已加载且匹配
+        if (
+          !projectStore.currentProject ||
+          Number(projectStore.currentProject.id) !== numericProjectId
+        ) {
+          // 先从已加载的项目列表中查找
+          if (projectStore.projects.length === 0) {
+            await projectStore.fetchProjects()
+          }
+
+          const project = projectStore.projects.find((p) => Number(p.id) === numericProjectId)
+          if (project) {
+            projectStore.setCurrentProject(project)
+          } else {
+            // 如果未找到，通过API获取项目详情
+            const { projectService } = await import('@/services/projectService')
+            const response = await projectService.getProjectDetail(numericProjectId)
+            if (response.project) {
+              projectStore.setCurrentProject(response.project)
+            }
+          }
+        }
+
+        // ========== 新增：项目切换时的状态重置逻辑 ==========
+        // 检查是否为新项目或项目已切换
+        const currentPersistedProjectId = sessionStorage.getItem('current-topic-selection-project')
+        if (currentPersistedProjectId !== projectId) {
+          console.log(`[DEBUG] 检测到项目切换: ${currentPersistedProjectId} -> ${projectId}`)
+          console.log('[DEBUG] 重置文档生成状态，确保新项目从空状态开始')
+
+          // 1. 清理之前项目的持久化状态
+          if (currentPersistedProjectId) {
+            try {
+              const oldStorageKey = `document-generate-store-${currentPersistedProjectId}`
+              localStorage.removeItem(oldStorageKey)
+              console.log(`[DEBUG] 已清理项目 ${currentPersistedProjectId} 的持久化状态`)
+            } catch (error) {
+              console.error('清理项目持久化状态失败:', error)
+            }
+          }
+
+          // 2. 重置当前项目的内存状态
+          documentStore.resetStateForProject(projectId)
+
+          // 3. 更新当前项目ID记录
+          sessionStorage.setItem('current-topic-selection-project', projectId)
+
+          console.log('[DEBUG] 项目状态已重置，新项目将从头开始')
+        } else {
+          console.log('[DEBUG] 同一项目，无需重置状态')
+        }
+        // ========== 项目切换检查结束 ==========
+      } catch (error) {
+        console.error('加载项目失败:', error)
+        ElMessage.error('加载项目信息失败，请刷新页面重试')
+      }
+    }
+
+    // 添加按钮状态调试日志（延迟执行，确保状态重置完成）
     setTimeout(() => {
       console.log('[DEBUG] Button state after mount:')
       console.log('  - isGeneratingBriefing:', requirementsState.isGeneratingBriefing)
@@ -735,6 +819,8 @@
       console.log('  - scopeTask:', documentState.value.scopeTask)
       console.log('  - search2titleTask:', documentState.value.search2titleTask)
       console.log('  - search2titleLoading:', search2titleLoading.value)
+      console.log('  - researchBrief:', documentState.value.researchBrief)
+      console.log('  - generatedTitles:', documentState.value.generatedTitles)
 
       // 检查并清理无效的任务状态
       const scopeTask = documentState.value.scopeTask
@@ -783,59 +869,24 @@
           documentStore.updateDocumentState({ search2titleTask: null })
         }
       }
-
-      // 检查localStorage中是否有持久化的任务状态
-      const persistedStore = localStorage.getItem('document-generate-store')
-      if (persistedStore) {
-        try {
-          const parsed = JSON.parse(persistedStore)
-          console.log('[DEBUG] Persisted store data:', parsed)
-          console.log('[DEBUG] Has scopeTask in persisted data:', !!parsed.documentState?.scopeTask)
-          console.log(
-            '[DEBUG] Has search2titleTask in persisted data:',
-            !!parsed.documentState?.search2titleTask
-          )
-        } catch (e) {
-          console.error('[DEBUG] Failed to parse persisted store:', e)
-        }
-      }
     }, 1000)
-    // 加载项目信息
-    const projectId = route.params.projectId as string
-    if (projectId) {
-      try {
-        const numericProjectId = Number(projectId)
-
-        // 检查当前项目是否已加载且匹配
-        if (
-          !projectStore.currentProject ||
-          Number(projectStore.currentProject.id) !== numericProjectId
-        ) {
-          // 先从已加载的项目列表中查找
-          if (projectStore.projects.length === 0) {
-            await projectStore.fetchProjects()
-          }
-
-          const project = projectStore.projects.find((p) => Number(p.id) === numericProjectId)
-          if (project) {
-            projectStore.setCurrentProject(project)
-          } else {
-            // 如果未找到，通过API获取项目详情
-            const { projectService } = await import('@/services/projectService')
-            const response = await projectService.getProjectDetail(numericProjectId)
-            if (response.project) {
-              projectStore.setCurrentProject(response.project)
-            }
-          }
-        }
-      } catch (error) {
-        console.error('加载项目失败:', error)
-        ElMessage.error('加载项目信息失败，请刷新页面重试')
-      }
-    }
 
     // 初始化Search2Title loading状态
     updateSearch2TitleLoading()
+  })
+
+  /**
+   * 页面卸载时清理sessionStorage
+   * @description 确保用户关闭页面或离开后，重新进入时会重新检查项目状态
+   */
+  onUnmounted(() => {
+    try {
+      // 清理当前项目的sessionStorage记录，让下次进入时重新检查
+      sessionStorage.removeItem('current-topic-selection-project')
+      console.log('[DEBUG] 已清理项目ID记录')
+    } catch (error) {
+      console.error('清理sessionStorage失败:', error)
+    }
   })
 </script>
 

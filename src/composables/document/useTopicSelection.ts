@@ -658,14 +658,23 @@ ${specialRequirementsSection}
         requirementsState.isExecutingScope = shouldExecute
 
         // 任务完成时更新研究简报并同步到数据库
-        if (task.status === 'completed' && task.result?.research_brief) {
-          console.log('[DEBUG] scopeTask watcher - task completed, updating and syncing')
+        if (task.status === 'completed') {
+          console.log('[DEBUG] scopeTask watcher - task completed')
+          console.log('[DEBUG] scopeTask watcher - task.result:', task.result)
+          console.log('[DEBUG] scopeTask watcher - task.result?.brief:', task.result?.brief)
 
-          // 更新前端状态
-          documentStore.updateResearchBrief(task.result.research_brief)
+          // 修复：后端返回的字段是 brief 而不是 research_brief
+          if (task.result?.brief) {
+            console.log('[DEBUG] scopeTask watcher - found brief, updating and syncing')
+            // 更新前端状态
+            documentStore.updateResearchBrief(task.result.brief)
 
-          // 同步到数据库
-          await handleScopeTaskCompleted(task)
+            // 同步到数据库
+            await handleScopeTaskCompleted(task)
+          } else {
+            console.log('[DEBUG] scopeTask watcher - task completed but NO brief found!')
+            console.log('[DEBUG] scopeTask watcher - result keys:', Object.keys(task.result || {}))
+          }
         }
 
         // 任务失败时提示用户可以重试
