@@ -302,6 +302,7 @@
     "documentGeneration": {
       "title": "AI创作",
       "projectList": "项目列表",
+      "topicSelection": "选题页面",
       "requirements": "需求分析",
       "outline": "文档大纲",
       "content": "文档内容"

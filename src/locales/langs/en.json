@@ -222,6 +222,7 @@
     "documentGeneration": {
       "title": "AI Generation",
       "projectList": "Project List",
+      "topicSelection": "Topic Selection",
       "requirements": "Requirements Analysis",
       "outline": "Document Outline",
       "content": "Document Content"
