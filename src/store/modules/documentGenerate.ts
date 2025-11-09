@@ -344,17 +344,20 @@ export const useDocumentGenerateStore = defineStore('documentGenerateStore', () 
   /**
    * 重置文档生成状态
    * @param projectId - 可选的项目ID，如果提供则重置该项目的状态
+   * @param clearStorage - 是否同时清理存储（默认true）
    */
-  const resetDocumentState = (projectId?: string | number) => {
-    // 如果提供了项目ID，且当前有持久化数据，需要清理该项目的持久化状态
-    if (projectId) {
-      const storageKey = `document-generate-store-${projectId}`
-      try {
-        localStorage.removeItem(storageKey)
-        console.log(`[DEBUG] 已清理项目 ${projectId} 的持久化状态`)
-      } catch (error) {
-        console.error('清理项目持久化状态失败:', error)
-      }
+  const resetDocumentState = (projectId?: string | number, clearStorage: boolean = true) => {
+    console.log(`\n=== [DEBUG] resetDocumentState 被调用 ===`)
+    console.log(`[DEBUG] 参数: projectId=${projectId}, clearStorage=${clearStorage}`)
+    console.log(`[DEBUG] 调用堆栈:`, new Error().stack?.split('\n').slice(0, 5).join('\n'))
+    // 如果提供了项目ID且需要清理，则清理该项目的特定存储
+    if (projectId && clearStorage) {
+      console.log(`[DEBUG] resetDocumentState: 准备清理项目 ${projectId} 的持久化状态`)
+      clearProjectStorage(String(projectId))
+    } else if (projectId && !clearStorage) {
+      console.log(`[DEBUG] resetDocumentState: 保留项目 ${projectId} 的持久化状态，只重置内存状态`)
+    } else {
+      console.log(`[DEBUG] resetDocumentState: 无项目ID，仅重置内存状态`)
     }
 
     // 重置内存中的状态
@@ -385,16 +388,44 @@ export const useDocumentGenerateStore = defineStore('documentGenerateStore', () 
   /**
    * 为指定项目重置状态
    * @param projectId - 项目ID
+   * @param forceReset - 是否强制重置（默认false，会先尝试恢复）
    */
-  const resetStateForProject = (projectId: string | number) => {
-    resetDocumentState(projectId)
+  const resetStateForProject = (projectId: string | number, forceReset: boolean = false) => {
+    console.log(`[DEBUG] resetStateForProject: ${projectId}, forceReset: ${forceReset}`)
+
+    // 设置当前项目ID
+    setCurrentProject(String(projectId))
+
+    // 如果强制重置，则清理状态
+    if (forceReset) {
+      console.log(`[DEBUG] 强制重置项目 ${projectId} 的状态`)
+      resetDocumentState(projectId, true)
+      return
+    }
+
+    // 尝试从存储加载状态
+    const hasSavedState = loadFromProjectStorage(String(projectId))
+    console.log(`[DEBUG] 尝试恢复项目 ${projectId} 状态:`, hasSavedState ? '成功' : '无数据')
+
+    if (hasSavedState) {
+      console.log(`[DEBUG] 项目 ${projectId} 状态已恢复`)
+    } else {
+      console.log(`[DEBUG] 项目 ${projectId} 无保存状态，重置为空状态（保留存储）`)
+      // 只重置内存状态，保留存储（以便恢复表单状态等）
+      resetDocumentState(projectId, false)
+    }
   }
 
   /**
    * 更新文档状态
+   * @param updates 要更新的状态
+   * @param projectId 可选的项目ID，用于保存状态
    */
-  const updateDocumentState = (updates: Partial<DocumentState>) => {
-    console.log(`[DEBUG] updateDocumentState called with:`, updates)
+  const updateDocumentState = (updates: Partial<DocumentState>, projectId?: string) => {
+    console.log(`\n🔄 [UPDATE] updateDocumentState 被调用`)
+    console.log(`[UPDATE] 参数 updates:`, updates)
+    console.log(`[UPDATE] 参数 projectId:`, projectId)
+    console.log(`[UPDATE] 当前 currentProjectId:`, currentProjectId.value)
 
     // 确保 titleSearchResults 始终是数组
     if (updates.titleSearchResults !== undefined) {
@@ -411,15 +442,21 @@ export const useDocumentGenerateStore = defineStore('documentGenerateStore', () 
 
     // 特别关注 researchBrief 的更新
     if (updates.researchBrief !== undefined) {
-      console.log(`[DEBUG] updateDocumentState - researchBrief updated:`)
-      console.log(`  - old value:`, oldResearchBrief)
-      console.log(`  - new value:`, updates.researchBrief)
+      console.log(`[UPDATE] researchBrief 更新:`)
+      console.log(`  - old value:`, oldResearchBrief?.substring(0, 50) || '(空)')
+      console.log(`  - new value:`, updates.researchBrief?.substring(0, 50) || '(空)')
       console.log(`  - new value type:`, typeof updates.researchBrief)
       console.log(`  - new value length:`, updates.researchBrief?.length || 'N/A')
-      console.log(
-        `  - documentState.researchBrief after update:`,
-        documentState.value.researchBrief
-      )
+    }
+
+    // 自动保存到项目级存储
+    const pid = projectId || currentProjectId.value
+    if (pid) {
+      console.log(`[UPDATE] 开始保存状态到项目 ${pid}...`)
+      saveToProjectStorage(pid)
+      console.log(`[UPDATE] 保存完成\n`)
+    } else {
+      console.log('[UPDATE] ⚠️ 无项目ID，暂不保存\n')
     }
   }
 
@@ -862,9 +899,14 @@ export const useDocumentGenerateStore = defineStore('documentGenerateStore', () 
 
   /**
    * 更新研究简报
+   * @param brief 简报内容
+   * @param projectId 可选的项目ID
    */
-  const updateResearchBrief = (brief: string) => {
-    updateDocumentState({ researchBrief: brief })
+  const updateResearchBrief = (brief: string, projectId?: string) => {
+    console.log(
+      `[DEBUG] updateResearchBrief called with brief length: ${brief?.length || 0}, projectId: ${projectId}`
+    )
+    updateDocumentState({ researchBrief: brief }, projectId)
   }
 
   /**
@@ -1151,12 +1193,159 @@ export const useDocumentGenerateStore = defineStore('documentGenerateStore', () 
     }
   }
 
+  // ==================== 项目级状态管理 ====================
+
+  /**
+   * 当前活跃项目ID
+   * 用于生成项目特定的存储键
+   */
+  const currentProjectId = ref<string | null>(null)
+
+  /**
+   * 设置当前项目ID并重新加载该项目的状态
+   */
+  const setCurrentProject = (projectId: string) => {
+    console.log(`[DEBUG] DocumentStore 设置当前项目: ${currentProjectId.value} -> ${projectId}`)
+    console.log(`[DEBUG] setCurrentProject: 不执行清理操作，仅设置项目ID`)
+    currentProjectId.value = projectId
+    // 注意：状态会在页面组件中通过 resetStateForProject 加载
+  }
+
+  /**
+   * 获取项目特定的存储键
+   */
+  const getProjectStorageKey = (projectId?: string): string => {
+    const pid = projectId || currentProjectId.value
+    if (!pid) {
+      console.warn('[DEBUG] getProjectStorageKey: 未提供项目ID，使用默认键')
+      return 'document-generate-store-default'
+    }
+    return `document-generate-store-${pid}`
+  }
+
+  /**
+   * 保存当前状态到项目特定的存储
+   * @param projectId 可选的项目ID，如果不提供则使用当前项目ID
+   */
+  const saveToProjectStorage = (projectId?: string) => {
+    const pid = projectId || currentProjectId.value
+    if (!pid) {
+      console.log('[DEBUG] saveToProjectStorage: 当前无项目，跳过保存')
+      return
+    }
+
+    const key = getProjectStorageKey(pid)
+    const data = {
+      documentState: documentState.value,
+      activeTasks: activeTasks.value,
+      timestamp: Date.now()
+    }
+
+    try {
+      localStorage.setItem(key, JSON.stringify(data))
+      console.log(`\n💾 [SAVE] 已保存项目 ${pid} 的状态到 localStorage，键: ${key}`)
+      console.log(`💾 [SAVE] 保存时间: ${new Date().toLocaleString()}`)
+      console.log(`💾 [SAVE] 保存的数据:`, {
+        hasDocumentState: !!data.documentState,
+        researchBriefLength: data.documentState.researchBrief?.length || 0,
+        generatedTitlesCount: data.documentState.generatedTitles?.length || 0,
+        activeTasksCount: data.activeTasks?.length || 0
+      })
+      console.log(`💾 [SAVE] 保存完成\n`)
+    } catch (error) {
+      console.error(`[DEBUG] 保存项目 ${pid} 状态失败:`, error)
+    }
+  }
+
+  /**
+   * 从项目特定的存储加载状态
+   */
+  const loadFromProjectStorage = (projectId: string): boolean => {
+    const key = getProjectStorageKey(projectId)
+    console.log(`\n🔄 [LOAD] 尝试从 localStorage 加载项目 ${projectId} 的状态，键: ${key}`)
+    console.log(`🔄 [LOAD] 加载时间: ${new Date().toLocaleString()}`)
+
+    try {
+      const data = localStorage.getItem(key)
+      if (data) {
+        const parsed = JSON.parse(data)
+
+        // 检查数据是否过期（7天）
+        const isExpired = Date.now() - (parsed.timestamp || 0) > 7 * 24 * 60 * 60 * 1000
+
+        if (isExpired) {
+          console.log(`⚠️ [LOAD] 项目 ${projectId} 的状态已过期，清理并重新开始`)
+          localStorage.removeItem(key)
+          return false
+        }
+
+        // 恢复状态
+        if (parsed.documentState) {
+          console.log(`🔄 [LOAD] 正在恢复 documentState...`)
+          documentState.value = {
+            ...parsed.documentState,
+            // 确保时间戳是当前的
+            updatedAt: Date.now()
+          }
+        }
+
+        if (parsed.activeTasks) {
+          console.log(`🔄 [LOAD] 正在恢复 activeTasks...`)
+          activeTasks.value = parsed.activeTasks
+        }
+
+        console.log(`✅ [LOAD] 已从 localStorage 恢复项目 ${projectId} 的状态`)
+        console.log(`🔄 [LOAD] 恢复的数据:`, {
+          hasDocumentState: !!parsed.documentState,
+          researchBriefLength: parsed.documentState?.researchBrief?.length || 0,
+          generatedTitlesCount: parsed.documentState?.generatedTitles?.length || 0,
+          activeTasksCount: parsed.activeTasks?.length || 0
+        })
+        console.log(`🔄 [LOAD] 恢复完成\n`)
+        return true
+      } else {
+        console.log(`⚠️ [LOAD] localStorage 中无项目 ${projectId} 的数据`)
+      }
+    } catch (error) {
+      console.error(`[DEBUG] 加载项目 ${projectId} 状态失败:`, error)
+    }
+
+    console.log(`🔄 [LOAD] 项目 ${projectId} 无保存的状态，返回 false\n`)
+    return false
+  }
+
+  /**
+   * 清理项目特定的存储
+   */
+  const clearProjectStorage = (projectId?: string) => {
+    const pid = projectId || currentProjectId.value
+    if (!pid) {
+      console.log(`[DEBUG] clearProjectStorage: 未提供项目ID，跳过清理`)
+      return
+    }
+
+    const key = getProjectStorageKey(pid)
+    console.log(`\n⚠️⚠️⚠️ [CRITICAL] clearProjectStorage 被调用 ⚠️⚠️⚠️`)
+    console.log(`[CRITICAL] 调用堆栈:`, new Error().stack?.split('\n').slice(0, 5).join('\n'))
+    console.log(`[CRITICAL] 项目ID: ${pid}`)
+    console.log(`[CRITICAL] 存储键: ${key}`)
+    console.log(`[CRITICAL] 当前时间: ${new Date().toLocaleString()}`)
+    try {
+      localStorage.removeItem(key)
+      console.log(`[CRITICAL] 已清理项目 ${pid} 的持久化状态`)
+      console.log(`⚠️⚠️⚠️ 清理完成 ⚠️⚠️⚠️\n`)
+    } catch (error) {
+      console.error(`[CRITICAL] 清理项目 ${pid} 状态失败:`, error)
+    }
+  }
+
   return {
     // 状态
     documentState,
     loading,
     error,
     activeTasks,
+    currentProjectId,
 
     // 计算属性
     hasActiveTasks,
@@ -1184,6 +1373,13 @@ export const useDocumentGenerateStore = defineStore('documentGenerateStore', () 
     checkServiceStatus,
     cleanupCompletedTasks,
     cleanupExpiredTasks,
+
+    // 项目级状态管理
+    setCurrentProject,
+    saveToProjectStorage,
+    loadFromProjectStorage,
+    clearProjectStorage,
+    getProjectStorageKey,
 
     // 核心服务API方法
     createResearchBrief,

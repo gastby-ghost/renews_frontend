@@ -88,11 +88,15 @@ export interface TitleGenerationState {
  */
 export function useTopicSelection() {
   const router = useRouter()
+  const route = useRoute()
 
   // 获取 Store 状态
   const documentStore = useDocumentGenerateStore()
   const projectStore = useProjectStore()
   const { documentState, loading } = storeToRefs(documentStore)
+
+  // 获取当前项目ID
+  const projectId = computed(() => route.params.projectId as string)
 
   // ==================== 需求定义状态 ====================
   const requirementsState = reactive<RequirementsState>({
@@ -408,7 +412,7 @@ ${specialRequirementsSection}
   // 保存简报
   const saveBriefing = () => {
     if (requirementsState.editableBriefing.trim()) {
-      documentStore.updateResearchBrief(requirementsState.editableBriefing)
+      documentStore.updateResearchBrief(requirementsState.editableBriefing, projectId.value)
       ElMessage.success('简报已更新')
     }
     requirementsState.briefingDialogVisible = false
@@ -667,7 +671,7 @@ ${specialRequirementsSection}
           if (task.result?.brief) {
             console.log('[DEBUG] scopeTask watcher - found brief, updating and syncing')
             // 更新前端状态
-            documentStore.updateResearchBrief(task.result.brief)
+            documentStore.updateResearchBrief(task.result.brief, projectId.value)
 
             // 同步到数据库
             await handleScopeTaskCompleted(task)

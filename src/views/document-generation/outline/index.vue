@@ -463,6 +463,26 @@
     // 加载项目信息
     await loadProject()
 
+    // ========== 新增：项目级状态管理 ==========
+    // 如果有项目ID，尝试恢复项目状态
+    if (projectId) {
+      console.log(`[DEBUG] 大纲页面：检查项目 ${projectId} 的状态`)
+
+      // 检查是否需要设置当前项目
+      if (!documentStore.currentProjectId) {
+        documentStore.setCurrentProject(projectId)
+      }
+
+      // 尝试加载已保存的状态
+      const hasSavedState = documentStore.loadFromProjectStorage(projectId)
+      if (hasSavedState) {
+        console.log('[DEBUG] 大纲页面：已恢复项目状态')
+      } else {
+        console.log('[DEBUG] 大纲页面：无已保存状态')
+      }
+    }
+    // ========== 状态管理结束 ==========
+
     // 加载现有数据
     await loadExistingData()
   })
