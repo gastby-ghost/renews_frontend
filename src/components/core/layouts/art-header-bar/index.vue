@@ -25,7 +25,7 @@
         </div>
 
         <!-- 快速入口 -->
-        <ArtFastEnter v-if="shouldShowFastEnter && width >= headerBarFastEnterMinWidth" />
+        <ArtFastEnter v-if="false && shouldShowFastEnter && width >= headerBarFastEnterMinWidth" />
 
         <!-- 面包屑 -->
         <ArtBreadcrumb
