@@ -9,8 +9,9 @@
  * - 主题庆典
  */
 
-export { useNewOutline } from './useNewOutline'
-export { useOutlineGeneration } from './useOutlineGeneration'
+// 统一的大纲页面管理组合式函数
+export { useOutlinePage } from './useOutlinePage'
+
 export { useContent } from './useContent'
 export { useTopicSelection } from './useTopicSelection'
 export { useCeremony } from '../useCeremony'
