@@ -46,7 +46,7 @@
             @keyup="handleTextSelection"
           ></textarea>
 
-          <!-- 简化的AI工具栏 -->
+          <!-- AI 工具栏 -->
           <div
             v-if="showSelectionToolbar"
             class="ai-toolbar"
@@ -60,18 +60,33 @@
               <span>AI 助手</span>
             </div>
             <div class="ai-actions">
-              <el-button @click="polishSelection" size="small" text>
-                <el-icon><Brush /></el-icon>
-                润色
-              </el-button>
-              <el-button @click="expandSelection" size="small" text>
-                <el-icon><Expand /></el-icon>
-                扩写
-              </el-button>
-              <el-button @click="summarizeSelection" size="small" text>
-                <el-icon><ZoomOut /></el-icon>
-                总结
-              </el-button>
+              <div class="ai-action-group">
+                <div class="ai-group-title">文本优化</div>
+                <el-button @click="polishSelection" class="ai-action-btn" text>
+                  <el-icon><Brush /></el-icon>
+                  <span class="btn-text">润色</span>
+                </el-button>
+                <el-button @click="summarizeSelection" class="ai-action-btn" text>
+                  <el-icon><ZoomOut /></el-icon>
+                  <span class="btn-text">总结</span>
+                </el-button>
+              </div>
+              <div class="ai-divider"></div>
+              <div class="ai-action-group">
+                <div class="ai-group-title">内容扩展</div>
+                <el-button @click="expandSelection" class="ai-action-btn" text>
+                  <el-icon><Expand /></el-icon>
+                  <span class="btn-text">扩写</span>
+                </el-button>
+                <el-button @click="translateSelection" class="ai-action-btn" text>
+                  <el-icon><Translate /></el-icon>
+                  <span class="btn-text">翻译</span>
+                </el-button>
+                <el-button @click="rewriteSelection" class="ai-action-btn" text>
+                  <el-icon><Refresh /></el-icon>
+                  <span class="btn-text">改写</span>
+                </el-button>
+              </div>
             </div>
           </div>
         </div>
@@ -84,7 +99,16 @@
 </template>
 
 <script setup lang="ts">
-  import { Brush, Expand, ZoomOut, Edit, View, MagicStick } from '@element-plus/icons-vue'
+  import {
+    Brush,
+    Expand,
+    ZoomOut,
+    Edit,
+    View,
+    MagicStick,
+    Translate,
+    Refresh
+  } from '@element-plus/icons-vue'
 
   interface ToolbarPosition {
     top: number
@@ -313,11 +337,12 @@
   .ai-toolbar {
     position: absolute;
     z-index: 100;
-    min-width: 180px;
+    min-width: 200px;
+    overflow: hidden;
     background: var(--art-main-bg-color);
     border: 1px solid var(--el-border-color-light);
-    border-radius: 8px;
-    box-shadow: 0 4px 20px rgb(0 0 0 / 15%);
+    border-radius: 10px;
+    box-shadow: 0 8px 32px rgb(0 0 0 / 20%);
     animation: slideIn 0.2s ease;
 
     .ai-toolbar-header {
@@ -328,41 +353,83 @@
       font-size: 13px;
       font-weight: 600;
       color: var(--el-color-primary);
-      background: var(--el-fill-color-lighter);
+      background: linear-gradient(
+        135deg,
+        var(--el-color-primary-light-9) 0%,
+        var(--el-color-primary-light-8) 100%
+      );
       border-bottom: 1px solid var(--el-border-color-lighter);
-      border-radius: 8px 8px 0 0;
 
       .ai-icon {
-        font-size: 14px;
+        font-size: 15px;
+      }
+
+      .el-tag {
+        margin-left: auto;
+        font-size: 11px;
+        font-weight: 500;
       }
     }
 
     .ai-actions {
       display: flex;
       flex-direction: column;
-      padding: 4px;
+      padding: 8px 6px;
 
-      .el-button {
+      .ai-action-group {
         display: flex;
-        align-items: center;
-        justify-content: flex-start;
-        width: 100%;
-        padding: 8px 12px;
-        font-size: 13px;
-        color: var(--el-text-color-regular);
-        text-align: left;
-        border-radius: 4px;
-        transition: all 0.2s ease;
+        flex-direction: column;
+        gap: 6px;
 
-        &:hover {
-          color: var(--el-color-primary);
-          background: var(--el-fill-color-light);
+        .ai-group-title {
+          padding: 0 8px;
+          font-size: 11px;
+          font-weight: 500;
+          color: var(--el-text-color-secondary);
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
         }
 
-        .el-icon {
-          margin-right: 8px;
-          font-size: 14px;
+        .ai-action-btn {
+          display: flex;
+          align-items: center;
+          justify-content: flex-start;
+          width: 100%;
+          padding: 8px 10px;
+          font-size: 13px;
+          color: var(--el-text-color-regular);
+          text-align: left;
+          border-radius: 6px;
+          transition: all 0.15s ease;
+
+          &:hover {
+            color: var(--el-color-primary);
+            background: var(--el-fill-color-light);
+            transform: translateX(2px);
+          }
+
+          .el-icon {
+            flex-shrink: 0;
+            margin-right: 8px;
+            font-size: 15px;
+            color: var(--el-color-primary);
+          }
+
+          .btn-text {
+            font-weight: 500;
+          }
         }
+      }
+
+      .ai-divider {
+        height: 1px;
+        margin: 6px 4px;
+        background: linear-gradient(
+          90deg,
+          transparent 0%,
+          var(--el-border-color-lighter) 50%,
+          transparent 100%
+        );
       }
     }
   }
