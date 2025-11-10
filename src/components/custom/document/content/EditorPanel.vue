@@ -61,30 +61,13 @@
             </div>
             <div class="ai-actions">
               <div class="ai-action-group">
-                <div class="ai-group-title">文本优化</div>
                 <el-button @click="polishSelection" class="ai-action-btn" text>
                   <el-icon><Brush /></el-icon>
                   <span class="btn-text">润色</span>
                 </el-button>
-                <el-button @click="summarizeSelection" class="ai-action-btn" text>
-                  <el-icon><ZoomOut /></el-icon>
-                  <span class="btn-text">总结</span>
-                </el-button>
-              </div>
-              <div class="ai-divider"></div>
-              <div class="ai-action-group">
-                <div class="ai-group-title">内容扩展</div>
                 <el-button @click="expandSelection" class="ai-action-btn" text>
                   <el-icon><Expand /></el-icon>
                   <span class="btn-text">扩写</span>
-                </el-button>
-                <el-button @click="translateSelection" class="ai-action-btn" text>
-                  <el-icon><DocumentCopy /></el-icon>
-                  <span class="btn-text">翻译</span>
-                </el-button>
-                <el-button @click="rewriteSelection" class="ai-action-btn" text>
-                  <el-icon><Refresh /></el-icon>
-                  <span class="btn-text">改写</span>
                 </el-button>
               </div>
             </div>
@@ -99,16 +82,7 @@
 </template>
 
 <script setup lang="ts">
-  import {
-    Brush,
-    Expand,
-    ZoomOut,
-    Edit,
-    View,
-    MagicStick,
-    DocumentCopy,
-    Refresh
-  } from '@element-plus/icons-vue'
+  import { Brush, Edit, View, MagicStick, Expand } from '@element-plus/icons-vue'
 
   interface ToolbarPosition {
     top: number
@@ -162,18 +136,6 @@
 
   const expandSelection = () => {
     emit('expand-selection')
-  }
-
-  const summarizeSelection = () => {
-    emit('summarize-selection')
-  }
-
-  const translateSelection = () => {
-    emit('translate-selection')
-  }
-
-  const rewriteSelection = () => {
-    emit('rewrite-selection')
   }
 
   const switchToEdit = () => {

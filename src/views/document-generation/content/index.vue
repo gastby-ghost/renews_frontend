@@ -281,8 +281,15 @@
 
       // 滚动到对应位置
       const textarea = markdownTextarea.value
-      const lineHeight = 24
-      const targetScrollTop = index * lineHeight
+      const computedStyle = window.getComputedStyle(textarea)
+      const lineHeight = parseFloat(computedStyle.lineHeight) || 24
+
+      // 计算目标行号
+      const linesBeforeTarget = state.content.substring(0, charPosition).split('\n')
+      const targetLineNumber = linesBeforeTarget.length - 1
+
+      // 计算目标滚动位置
+      const targetScrollTop = targetLineNumber * lineHeight
       textarea.scrollTop = targetScrollTop
     }
   }
@@ -299,19 +306,72 @@
     if (selected.trim().length > 0) {
       state.selectedText = selected
 
-      // 计算工具栏位置
-      const scrollTop = textarea.scrollTop
-      const scrollLeft = textarea.scrollLeft
+      // 工具栏尺寸（估算）
+      const TOOLBAR_HEIGHT = 120
+      const TOOLBAR_WIDTH = 200
+      const TOOLBAR_MARGIN = 10
 
-      // 简单计算光标位置
-      const lines = state.content.substring(0, start).split('\n')
-      const lineHeight = 24
-      const top = (lines.length - 1) * lineHeight - scrollTop + 60
-      const left = 100 - scrollLeft
+      // 获取textarea的可见区域
+      const visibleWidth = textarea.clientWidth
+      const paddingLeft = 24 // 与textarea的padding保持一致
+      const paddingTop = 24
+
+      // 计算选区的行号和列号
+      const textBeforeSelection = state.content.substring(0, start)
+      const lines = textBeforeSelection.split('\n')
+      const currentLine = lines.length
+      const currentColumn = lines[lines.length - 1].length
+
+      // 获取textarea的样式
+      const computedStyle = window.getComputedStyle(textarea)
+      const lineHeight = parseFloat(computedStyle.lineHeight) || 24
+      const fontSize = parseFloat(computedStyle.fontSize) || 15
+
+      // 计算光标的近似位置
+      // 估算每个字符的宽度（基于字体大小）
+      const charWidth = fontSize * 0.6 // monospace字体大约60%的宽度
+
+      // 工具栏的理想位置（基于光标位置）
+      let idealTop = paddingTop + (currentLine - 1) * lineHeight + textarea.scrollTop
+      let idealLeft = paddingLeft + currentColumn * charWidth + textarea.scrollLeft
+
+      // 垂直方向：默认显示在选区上方
+      let toolbarTop = idealTop - TOOLBAR_HEIGHT - TOOLBAR_MARGIN
+      const minTop = 20 // 顶部最小距离
+
+      if (toolbarTop < minTop) {
+        // 上方空间不够，显示在选区下方
+        const selectionEndLines = state.content.substring(0, end).split('\n')
+        const endLine = selectionEndLines.length
+        const selectionEndTop = paddingTop + (endLine - 1) * lineHeight + textarea.scrollTop
+
+        toolbarTop = selectionEndTop + lineHeight + TOOLBAR_MARGIN
+
+        // 检查是否超出底部
+        const maxTop = textarea.scrollHeight - TOOLBAR_HEIGHT - 10
+        if (toolbarTop > maxTop) {
+          // 都不行，就固定在顶部
+          toolbarTop = minTop
+        }
+      }
+
+      // 水平方向：尝试左对齐
+      let toolbarLeft = idealLeft
+      const maxLeft = visibleWidth - TOOLBAR_WIDTH - 10
+
+      // 检查是否超出右边界
+      if (toolbarLeft > maxLeft) {
+        toolbarLeft = maxLeft
+      }
+
+      // 检查是否超出左边界
+      if (toolbarLeft < 10) {
+        toolbarLeft = 10
+      }
 
       state.toolbarPosition = {
-        top: Math.max(top, 60),
-        left: Math.max(left, 20)
+        top: toolbarTop,
+        left: toolbarLeft
       }
 
       state.showSelectionToolbar = true

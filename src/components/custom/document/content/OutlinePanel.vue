@@ -14,7 +14,7 @@
           :key="section.id"
           class="outline-item"
           :class="{ active: currentSection === index }"
-          @click="navigateToSection(index)"
+          @click="$emit('navigate-to-section', index)"
           :style="{ paddingLeft: section.level * 20 + 'px' }"
         >
           <span class="outline-number">{{ index + 1 }}</span>
