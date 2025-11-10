@@ -2,17 +2,42 @@
   <div class="art-card title-section">
     <div class="title-header" @click="titleCollapsed = !titleCollapsed">
       <div class="title-info">
-        <h3>
-          <el-icon><Document /></el-icon>
-          当前标题
-        </h3>
-        <p class="title-subtitle">查看选中标题的详细信息和研究角度</p>
+        <div class="section-indicator">
+          <div class="step-number">1</div>
+          <div class="step-title">
+            <h3>
+              <el-icon><Document /></el-icon>
+              标题与研究简报
+            </h3>
+            <div class="status-badges">
+              <el-tag v-if="selectedTitle" type="success" size="small" effect="light">
+                <el-icon><Check /></el-icon>
+                已确认
+              </el-tag>
+              <el-tag v-else type="warning" size="small" effect="light">
+                <el-icon><Warning /></el-icon>
+                待选择
+              </el-tag>
+            </div>
+          </div>
+        </div>
+        <p class="title-subtitle">
+          <el-icon><InfoFilled /></el-icon>
+          核心研究主题和方向，将作为AI生成大纲的基础
+        </p>
       </div>
       <div class="title-controls">
-        <el-tag v-if="selectedTitle" type="primary" size="large"> 已选择标题 </el-tag>
-        <el-tag v-else type="info" size="large"> 未选择标题 </el-tag>
+        <div class="completion-indicator">
+          <el-progress
+            :percentage="selectedTitle ? 100 : 0"
+            :stroke-width="6"
+            :show-text="false"
+            status="success"
+          />
+          <span class="progress-text">{{ selectedTitle ? '完成' : '待完成' }}</span>
+        </div>
         <el-button :icon="titleCollapsed ? ArrowDown : ArrowUp" link>
-          {{ titleCollapsed ? '展开' : '收起' }}
+          {{ titleCollapsed ? '展开详情' : '收起详情' }}
         </el-button>
       </div>
     </div>
@@ -22,32 +47,46 @@
         <div v-if="selectedTitle" class="title-details">
           <!-- 标题主体信息 -->
           <div class="title-main">
+            <div class="title-highlight-badge">
+              <el-icon><Star /></el-icon>
+              当前选定标题
+            </div>
             <div class="title-text">
               <h4>{{ selectedTitle }}</h4>
               <div class="title-meta">
-                <el-tag type="success" size="small">选题阶段已确认</el-tag>
-                <span class="generation-date">
-                  生成时间：{{ new Date().toLocaleDateString() }}
-                </span>
+                <div class="meta-item">
+                  <el-icon><CircleCheck /></el-icon>
+                  <span>选题阶段已确认</span>
+                </div>
+                <div class="meta-item">
+                  <el-icon><Clock /></el-icon>
+                  <span>{{ new Date().toLocaleDateString() }}</span>
+                </div>
               </div>
             </div>
 
-            <div v-if="titleDescription" class="title-description-inline">
-              <div class="description-icon">
+            <div v-if="titleDescription" class="title-description-card">
+              <div class="card-header">
                 <el-icon><ChatDotSquare /></el-icon>
+                <span class="card-title">研究角度</span>
+                <el-tag type="primary" size="small" effect="light">核心指导</el-tag>
               </div>
-              <div class="description-content">
-                <span class="description-label">研究角度：</span>
-                <span class="description-text">{{ titleDescription }}</span>
+              <div class="card-content">
+                {{ titleDescription }}
               </div>
             </div>
           </div>
 
-          <div v-if="researchBrief" class="research-brief">
-            <h5>
-              <el-icon><Reading /></el-icon>
-              研究简报
-            </h5>
+          <div v-if="researchBrief" class="research-brief-card">
+            <div class="brief-header">
+              <div class="brief-title">
+                <el-icon><Reading /></el-icon>
+                <span>研究简报</span>
+              </div>
+              <el-tooltip content="研究简报为AI生成大纲提供重要背景信息" placement="top">
+                <el-icon class="help-icon"><QuestionFilled /></el-icon>
+              </el-tooltip>
+            </div>
             <div class="brief-content">
               {{ researchBrief }}
             </div>
@@ -72,18 +111,21 @@
         </div>
 
         <div v-else class="empty-title">
-          <el-empty description="暂未选择标题">
-            <template #image>
-              <el-icon :size="60"><DocumentAdd /></el-icon>
-            </template>
-            <div class="empty-title-actions">
-              <p>请先返回选题页面选择标题</p>
-              <el-button type="primary" @click="goBackToTitleSelection">
+          <div class="empty-content">
+            <div class="empty-icon">
+              <el-icon><DocumentAdd /></el-icon>
+            </div>
+            <div class="empty-text">
+              <h4>尚未选择研究标题</h4>
+              <p>选择一个标题作为您的研究主题，这是生成高质量大纲的第一步</p>
+            </div>
+            <div class="empty-actions">
+              <el-button type="primary" @click="goBackToTitleSelection" size="large">
                 <el-icon><ArrowLeft /></el-icon>
-                返回选题
+                返回选题页面
               </el-button>
             </div>
-          </el-empty>
+          </div>
         </div>
       </div>
     </el-collapse-transition>
@@ -103,7 +145,14 @@
     Reading,
     ArrowLeft,
     ArrowDown,
-    ArrowUp
+    ArrowUp,
+    Check,
+    Warning,
+    InfoFilled,
+    Star,
+    CircleCheck,
+    Clock,
+    QuestionFilled
   } from '@element-plus/icons-vue'
 
   const router = useRouter()
@@ -152,43 +201,113 @@
     justify-content: space-between;
     padding: var(--art-padding-lg, 24px) var(--art-padding-xl, 32px);
     cursor: pointer;
-    background: var(--art-fill-color-light);
+    background: linear-gradient(135deg, var(--art-fill-color-light) 0%, var(--art-fill-color) 100%);
     border-bottom: 1px solid var(--art-border-color);
     transition: all 0.3s ease;
 
     &:hover {
-      background: var(--art-fill-color);
+      background: linear-gradient(
+        135deg,
+        var(--art-fill-color) 0%,
+        var(--art-fill-color-dark) 100%
+      );
+      box-shadow: 0 4px 12px rgb(0 0 0 / 5%);
+      transform: translateY(-1px);
     }
 
     .title-info {
       flex: 1;
 
-      h3 {
+      .section-indicator {
         display: flex;
-        gap: var(--art-spacing-sm, 8px);
-        align-items: center;
-        margin: 0 0 var(--art-spacing-xs, 4px);
-        font-size: var(--art-font-size-base-lg, 18px);
-        font-weight: var(--art-font-weight-medium, 500);
-        color: var(--art-text-color-primary);
+        gap: var(--art-spacing-md, 12px);
+        align-items: flex-start;
+        margin-bottom: var(--art-spacing-sm, 8px);
 
-        .el-icon {
-          color: var(--el-color-primary);
+        .step-number {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 32px;
+          height: 32px;
+          font-size: var(--art-font-size-sm, 14px);
+          font-weight: var(--art-font-weight-bold, 700);
+          color: white;
+          background: var(--el-color-primary);
+          border-radius: var(--art-border-radius, 8px);
+          box-shadow: 0 2px 8px rgba(var(--el-color-primary-rgb), 0.3);
+        }
+
+        .step-title {
+          flex: 1;
+
+          h3 {
+            display: flex;
+            gap: var(--art-spacing-sm, 8px);
+            align-items: center;
+            margin: 0 0 var(--art-spacing-xs, 4px);
+            font-size: var(--art-font-size-base-lg, 18px);
+            font-weight: var(--art-font-weight-semibold, 600);
+            color: var(--art-text-color-primary);
+
+            .el-icon {
+              color: var(--el-color-primary);
+            }
+          }
+
+          .status-badges {
+            display: flex;
+            gap: var(--art-spacing-xs, 4px);
+            align-items: center;
+
+            .el-tag {
+              display: flex;
+              gap: var(--art-spacing-xs, 4px);
+              align-items: center;
+            }
+          }
         }
       }
 
       .title-subtitle {
+        display: flex;
+        gap: var(--art-spacing-xs, 4px);
+        align-items: center;
         margin: 0;
-        font-size: var(--art-font-size-xs, 13px);
+        font-size: var(--art-font-size-sm, 14px);
         line-height: var(--art-line-height-normal, 1.4);
         color: var(--art-text-color-secondary);
+
+        .el-icon {
+          font-size: 14px;
+          color: var(--el-color-primary);
+        }
       }
     }
 
     .title-controls {
       display: flex;
-      gap: var(--art-spacing-lg, 16px);
-      align-items: center;
+      flex-direction: column;
+      gap: var(--art-spacing-sm, 8px);
+      align-items: flex-end;
+
+      .completion-indicator {
+        display: flex;
+        flex-direction: column;
+        gap: var(--art-spacing-xs, 4px);
+        align-items: center;
+        min-width: 80px;
+
+        .el-progress {
+          width: 60px;
+        }
+
+        .progress-text {
+          font-size: var(--art-font-size-xs, 12px);
+          font-weight: var(--art-font-weight-medium, 500);
+          color: var(--art-text-color-secondary);
+        }
+      }
     }
   }
 
@@ -200,100 +319,151 @@
   .title-details {
     .title-main {
       margin-bottom: var(--art-spacing-xl, 32px);
-    }
 
-    .title-text {
-      h4 {
-        margin: 0 0 var(--art-spacing-md, 16px);
-        font-size: var(--art-font-size-xl, 24px);
-        font-weight: var(--art-font-weight-semibold, 600);
-        line-height: var(--art-line-height-relaxed, 1.6);
-        color: var(--art-text-color-primary);
-      }
-
-      .title-meta {
-        display: flex;
-        flex-wrap: wrap;
-        gap: var(--art-spacing-lg, 20px);
+      .title-highlight-badge {
+        display: inline-flex;
+        gap: var(--art-spacing-xs, 4px);
         align-items: center;
-
-        .generation-date {
-          font-size: var(--art-font-size-sm, 14px);
-          color: var(--art-text-color-secondary);
-        }
-      }
-    }
-
-    .title-description-inline {
-      display: flex;
-      gap: var(--art-spacing-sm, 8px);
-      align-items: flex-start;
-      padding: var(--art-spacing-md, 12px);
-      margin-top: var(--art-spacing-md, 16px);
-      background: var(--art-fill-color-blank);
-      border: 1px solid var(--art-border-color);
-      border-left: 3px solid var(--el-color-primary);
-      border-radius: var(--art-border-radius-sm, 6px);
-
-      .description-icon {
-        flex-shrink: 0;
-        margin-top: 2px;
+        padding: var(--art-spacing-xs, 4px) var(--art-spacing-sm, 8px);
+        margin-bottom: var(--art-spacing-md, 16px);
+        font-size: var(--art-font-size-xs, 12px);
+        font-weight: var(--art-font-weight-medium, 500);
         color: var(--el-color-primary);
+        background: var(--el-color-primary-light-9);
+        border: 1px solid var(--el-color-primary-light-7);
+        border-radius: var(--art-border-radius, 16px);
 
         .el-icon {
-          font-size: var(--art-font-size-base, 16px);
+          font-size: 12px;
         }
       }
 
-      .description-content {
-        display: flex;
-        flex: 1;
-        gap: var(--art-spacing-xs, 4px);
-        align-items: flex-start;
-
-        .description-label {
-          flex-shrink: 0;
-          font-size: var(--art-font-size-sm, 14px);
-          font-weight: var(--art-font-weight-medium, 500);
-          color: var(--art-text-color-secondary);
-        }
-
-        .description-text {
-          flex: 1;
-          font-size: var(--art-font-size-sm, 14px);
+      .title-text {
+        h4 {
+          margin: 0 0 var(--art-spacing-md, 16px);
+          font-size: var(--art-font-size-xl, 24px);
+          font-weight: var(--art-font-weight-semibold, 600);
           line-height: var(--art-line-height-relaxed, 1.6);
           color: var(--art-text-color-primary);
         }
+
+        .title-meta {
+          display: flex;
+          flex-wrap: wrap;
+          gap: var(--art-spacing-lg, 20px);
+          align-items: center;
+
+          .meta-item {
+            display: flex;
+            gap: var(--art-spacing-xs, 4px);
+            align-items: center;
+            font-size: var(--art-font-size-sm, 14px);
+            color: var(--art-text-color-secondary);
+
+            .el-icon {
+              font-size: 14px;
+              color: var(--el-color-success);
+            }
+          }
+        }
+      }
+
+      .title-description-card {
+        padding: var(--art-padding-lg, 16px);
+        margin-top: var(--art-spacing-lg, 20px);
+        background: var(--art-fill-color-blank);
+        border: 1px solid var(--art-border-color);
+        border-left: 4px solid var(--el-color-primary);
+        border-radius: var(--art-border-radius, 8px);
+        transition: all 0.3s ease;
+
+        &:hover {
+          border-color: var(--el-color-primary-light-6);
+          box-shadow: var(--art-box-shadow-sm);
+        }
+
+        .card-header {
+          display: flex;
+          gap: var(--art-spacing-sm, 8px);
+          align-items: center;
+          margin-bottom: var(--art-spacing-sm, 8px);
+
+          .el-icon {
+            font-size: 16px;
+            color: var(--el-color-primary);
+          }
+
+          .card-title {
+            font-size: var(--art-font-size-base, 16px);
+            font-weight: var(--art-font-weight-medium, 500);
+            color: var(--art-text-color-primary);
+          }
+        }
+
+        .card-content {
+          font-size: var(--art-font-size-sm, 14px);
+          line-height: var(--art-line-height-relaxed, 1.6);
+          color: var(--art-text-color-regular);
+        }
       }
     }
 
-    .research-brief {
+    .research-brief-card {
+      padding: var(--art-padding-lg, 20px);
       margin-bottom: var(--art-spacing-xl, 32px);
+      background: linear-gradient(
+        135deg,
+        var(--art-fill-color-light) 0%,
+        var(--art-fill-color) 100%
+      );
+      border: 1px solid var(--art-border-color);
+      border-radius: var(--art-border-radius, 8px);
+      transition: all 0.3s ease;
 
-      h5 {
+      &:hover {
+        border-color: var(--el-color-primary-light-6);
+        box-shadow: var(--art-box-shadow-sm);
+      }
+
+      .brief-header {
         display: flex;
         gap: var(--art-spacing-sm, 8px);
         align-items: center;
-        margin: 0 0 var(--art-spacing-md, 16px);
-        font-size: var(--art-font-size-base, 16px);
-        font-weight: var(--art-font-weight-medium, 500);
-        color: var(--art-text-color-primary);
+        justify-content: space-between;
+        margin-bottom: var(--art-spacing-md, 12px);
 
-        .el-icon {
-          color: var(--el-color-primary);
+        .brief-title {
+          display: flex;
+          gap: var(--art-spacing-sm, 8px);
+          align-items: center;
+          font-size: var(--art-font-size-base, 16px);
+          font-weight: var(--art-font-weight-medium, 500);
+          color: var(--art-text-color-primary);
+
+          .el-icon {
+            color: var(--el-color-primary);
+          }
+        }
+
+        .help-icon {
+          color: var(--art-text-color-placeholder);
+          cursor: help;
+          transition: color 0.3s ease;
+
+          &:hover {
+            color: var(--el-color-primary);
+          }
         }
       }
 
       .brief-content {
-        padding: var(--art-spacing-lg, 20px);
-        margin: 0;
+        padding: var(--art-spacing-md, 12px);
         font-size: var(--art-font-size-sm, 14px);
         line-height: var(--art-line-height-relaxed, 1.6);
         color: var(--art-text-color-regular);
-        background: var(--art-fill-color-light);
-        border: 1px solid var(--art-border-color);
-        border-left: 4px solid var(--el-color-primary);
-        border-radius: var(--art-border-radius, 8px);
+        background: var(--art-main-bg-color);
+        border: 1px solid var(--art-border-color-lighter);
+        border-radius: var(--art-border-radius-sm, 6px);
       }
     }
 
@@ -308,15 +478,58 @@
     padding: var(--art-padding-2xl, 60px) var(--art-padding-lg, 24px);
     text-align: center;
 
-    p {
-      margin: var(--art-spacing-md, 12px) 0;
-      font-size: var(--art-font-size-sm, 14px);
-      line-height: var(--art-line-height-relaxed, 1.6);
-      color: var(--art-text-color-secondary);
-    }
+    .empty-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      max-width: 400px;
+      margin: 0 auto;
 
-    .el-button {
-      margin-top: var(--art-spacing-md, 12px);
+      .empty-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 80px;
+        height: 80px;
+        margin-bottom: var(--art-spacing-lg, 20px);
+        font-size: 40px;
+        color: var(--art-text-color-placeholder);
+        background: var(--art-fill-color-light);
+        border: 2px dashed var(--art-border-dashed-color);
+        border-radius: var(--art-border-radius-lg, 12px);
+        transition: all 0.3s ease;
+
+        &:hover {
+          color: var(--el-color-primary);
+          background: var(--el-color-primary-light-9);
+          border-color: var(--el-color-primary-light-6);
+        }
+      }
+
+      .empty-text {
+        margin-bottom: var(--art-spacing-xl, 32px);
+
+        h4 {
+          margin: 0 0 var(--art-spacing-sm, 8px);
+          font-size: var(--art-font-size-lg, 20px);
+          font-weight: var(--art-font-weight-medium, 500);
+          color: var(--art-text-color-primary);
+        }
+
+        p {
+          margin: 0;
+          font-size: var(--art-font-size-sm, 14px);
+          line-height: var(--art-line-height-relaxed, 1.6);
+          color: var(--art-text-color-secondary);
+        }
+      }
+
+      .empty-actions {
+        .el-button {
+          min-width: 160px;
+          font-weight: var(--art-font-weight-medium, 500);
+        }
+      }
     }
   }
 
