@@ -168,6 +168,14 @@
     emit('summarize-selection')
   }
 
+  const translateSelection = () => {
+    emit('translate-selection')
+  }
+
+  const rewriteSelection = () => {
+    emit('rewrite-selection')
+  }
+
   const switchToEdit = () => {
     if (props.showPreview) {
       emit('toggle-preview')
