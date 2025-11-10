@@ -79,7 +79,7 @@
                   <span class="btn-text">扩写</span>
                 </el-button>
                 <el-button @click="translateSelection" class="ai-action-btn" text>
-                  <el-icon><Translate /></el-icon>
+                  <el-icon><DocumentCopy /></el-icon>
                   <span class="btn-text">翻译</span>
                 </el-button>
                 <el-button @click="rewriteSelection" class="ai-action-btn" text>
@@ -106,7 +106,7 @@
     Edit,
     View,
     MagicStick,
-    Translate,
+    DocumentCopy,
     Refresh
   } from '@element-plus/icons-vue'
 
