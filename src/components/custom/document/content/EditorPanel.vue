@@ -9,7 +9,7 @@
       </div>
     </div>
 
-    <div v-else class="markdown-container">
+    <div v-else class="editor-wrapper">
       <!-- 模式切换标签 -->
       <div class="editor-tabs">
         <div class="tab-item" :class="{ active: !showPreview }" @click="switchToEdit">
@@ -162,6 +162,8 @@
     display: flex;
     flex: 1;
     flex-direction: column;
+    height: 100%;
+    min-height: 0;
     overflow: hidden;
   }
 
@@ -171,6 +173,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    min-height: 400px;
     text-align: center;
 
     .empty-icon {
@@ -194,10 +197,11 @@
     }
   }
 
-  .markdown-container {
+  .editor-wrapper {
     display: flex;
     flex: 1;
     flex-direction: column;
+    min-height: 0;
     overflow: hidden;
     background: var(--art-main-bg-color);
     border: 1px solid var(--el-border-color-lighter);
@@ -243,6 +247,7 @@
   }
 
   .editor-content {
+    display: flex;
     flex: 1;
     min-height: 0;
     overflow: hidden;
@@ -250,16 +255,18 @@
 
   .markdown-editor {
     position: relative;
+    display: block;
     flex: 1;
     min-height: 0;
     overflow: hidden;
   }
 
   .markdown-input {
+    display: block;
     width: 100%;
     height: 100%;
     padding: 24px;
-    overflow: hidden auto;
+    overflow: auto;
     font-family: 'JetBrains Mono', 'Fira Code', Monaco, Menlo, 'Ubuntu Mono', monospace;
     font-size: 15px;
     line-height: 1.7;
