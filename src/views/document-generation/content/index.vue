@@ -427,6 +427,7 @@
     display: flex;
     flex: 1;
     gap: 0;
+    min-height: 0;
     overflow: hidden;
   }
 
@@ -438,7 +439,7 @@
     gap: 16px;
     align-items: center;
     justify-content: flex-start;
-    padding: 0 12px;
+    padding: 16px 12px;
     background: linear-gradient(
       180deg,
       var(--el-fill-color-lighter) 0%,
@@ -462,12 +463,6 @@
       );
       opacity: 0.3;
     }
-  }
-
-  // 创建一个占位空间来推动第一个按钮到正确位置
-  .sidebar-toolbar::before {
-    height: 110px;
-    content: '';
   }
 
   .toolbar-item {
@@ -571,6 +566,7 @@
     position: relative;
     display: flex;
     flex: 1;
+    min-height: 0;
     overflow: hidden;
   }
 
