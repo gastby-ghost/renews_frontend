@@ -69,6 +69,7 @@
 
 <script setup lang="ts">
   import { computed } from 'vue'
+  import { useRouter } from 'vue-router'
   import { ElMessage } from 'element-plus'
   import { useOutlinePage } from '@/composables/document/useOutlinePage'
   import { useDocumentGenerateStore } from '@/store/modules/documentGenerate'
@@ -103,6 +104,7 @@
 
   const documentStore = useDocumentGenerateStore()
   const projectStore = useProjectStore()
+  const router = useRouter()
 
   // 步骤指示器数据
   const stepList: Step[] = [
@@ -246,7 +248,7 @@
     ElMessage.success('大纲已清空')
   }
 
-  const confirmOutline = () => {
+  const confirmOutline = async () => {
     if (outline.state.generatedOutline.length === 0 && outline.state.sections.length === 0) {
       ElMessage.warning('请创建大纲')
       return
@@ -262,12 +264,12 @@
       generatedOutline: outline.state.generatedOutline
     })
 
-    ElMessage.success('大纲已确认，即将进入正文阶段')
+    ElMessage.success('大纲已确认，正在跳转到正文章节...')
 
     // Navigate to content
     setTimeout(() => {
-      // router.push(`/document-generation/content/${projectId}`)
-    }, 1500)
+      router.push(`/document-generation/content/${projectId}`)
+    }, 800)
   }
 
   const handleEditSection = (title: string, data: any) => {
