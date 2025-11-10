@@ -198,7 +198,6 @@
     display: flex;
     flex: 1;
     flex-direction: column;
-    min-height: 0;
     overflow: hidden;
     background: var(--art-main-bg-color);
     border: 1px solid var(--el-border-color-lighter);
@@ -245,21 +244,20 @@
 
   .editor-content {
     flex: 1;
+    min-height: 0;
     overflow: hidden;
   }
 
   .markdown-editor {
     position: relative;
-    display: flex;
     flex: 1;
-    flex-direction: column;
+    min-height: 0;
     overflow: hidden;
   }
 
   .markdown-input {
-    flex: 1;
     width: 100%;
-    min-height: 0;
+    height: 100%;
     padding: 24px;
     overflow: hidden auto;
     font-family: 'JetBrains Mono', 'Fira Code', Monaco, Menlo, 'Ubuntu Mono', monospace;
