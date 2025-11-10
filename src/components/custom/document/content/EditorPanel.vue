@@ -343,11 +343,14 @@
       padding: 4px;
 
       .el-button {
+        display: flex;
+        align-items: center;
         justify-content: flex-start;
         width: 100%;
         padding: 8px 12px;
         font-size: 13px;
         color: var(--el-text-color-regular);
+        text-align: left;
         border-radius: 4px;
         transition: all 0.2s ease;
 
