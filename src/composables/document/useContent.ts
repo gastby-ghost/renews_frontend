@@ -48,7 +48,7 @@ export interface ContentState {
   // AI 对话框
   aiDialogVisible: boolean
   aiDialogTitle: string
-  aiDialogType: string
+  aiDialogType: 'polish' | 'expand' | 'summarize' | 'translate' | 'rewrite' | null
   aiLoading: boolean
 
   // 选择和工具栏
@@ -112,7 +112,7 @@ export function useContent() {
     generatingContent: false,
     aiDialogVisible: false,
     aiDialogTitle: '',
-    aiDialogType: '',
+    aiDialogType: null,
     aiLoading: false,
     selectedText: '',
     showSelectionToolbar: false,
@@ -404,7 +404,10 @@ export function useContent() {
   // ==================== AI 功能 ====================
 
   // 打开 AI 对话框
-  const openAiDialog = (type: string, title: string) => {
+  const openAiDialog = (
+    type: 'polish' | 'expand' | 'summarize' | 'translate' | 'rewrite',
+    title: string
+  ) => {
     state.aiDialogType = type
     state.aiDialogTitle = title
     state.aiDialogVisible = true

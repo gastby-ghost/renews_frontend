@@ -17,61 +17,101 @@
         <!-- 头部区域 -->
         <HeaderSection
           :document-title="documentTitle"
-          :show-preview="state.showPreview"
           :generating-content="state.generatingContent"
           :has-content="hasContent"
           :stats="stats"
           :last-saved="lastSaved"
-          @toggle-preview="togglePreview"
           @generate-ai-content="generateAIContent"
           @save-content="saveContent"
           @export-content="exportContent"
         />
 
-        <div
-          class="editor-layout"
-          :class="{
-            'layout-collapsed-outline': !state.showOutline,
-            'layout-collapsed-stats': !state.showStats
-          }"
-        >
-          <!-- 大纲面板 -->
-          <OutlinePanel
-            :show-outline="state.showOutline"
-            :outline="state.outline"
-            :current-section="state.currentSection"
-            @toggle-outline="state.showOutline = !state.showOutline"
-            @navigate-to-section="navigateToSection"
-          />
+        <!-- 简化的编辑器布局 -->
+        <div class="editor-layout">
+          <!-- 侧边工具栏 -->
+          <div class="sidebar-toolbar">
+            <!-- 大纲切换 -->
+            <div
+              class="toolbar-item"
+              :class="{ active: state.showOutline }"
+              @click="state.showOutline = !state.showOutline"
+            >
+              <el-tooltip content="文档大纲" placement="right" :show-after="800">
+                <div class="toolbar-button">
+                  <el-icon class="toolbar-icon"><Menu /></el-icon>
+                  <span class="toolbar-label">大纲</span>
+                </div>
+              </el-tooltip>
+            </div>
 
-          <!-- 编辑器面板 -->
-          <EditorPanel
-            v-model:editor-container="editorContainer"
-            v-model:markdown-textarea="markdownTextarea"
-            :content="state.content"
-            :show-preview="state.showPreview"
-            :has-content="hasContent"
-            :rendered-content="renderedContent"
-            :show-selection-toolbar="state.showSelectionToolbar"
-            :toolbar-position="state.toolbarPosition"
-            @update:content="(value) => (state.content = value)"
-            @generate-ai-content="generateAIContent"
-            @content-change="handleContentChange"
-            @text-selection="handleTextSelection"
-            @polish-selection="polishSelection"
-            @expand-selection="expandSelection"
-            @summarize-selection="summarizeSelection"
-            @translate-selection="translateSelection"
-            @rewrite-selection="rewriteSelection"
-          />
+            <!-- 统计信息切换 -->
+            <div
+              class="toolbar-item"
+              :class="{ active: state.showStats }"
+              @click="state.showStats = !state.showStats"
+            >
+              <el-tooltip content="文档统计" placement="right" :show-after="800">
+                <div class="toolbar-button">
+                  <el-icon class="toolbar-icon"><DataAnalysis /></el-icon>
+                  <span class="toolbar-label">统计</span>
+                </div>
+              </el-tooltip>
+            </div>
+          </div>
 
-          <!-- 统计面板 -->
-          <StatsPanel
-            :show-stats="state.showStats"
-            :stats="stats"
-            :ai-suggestions="aiSuggestions"
-            @toggle-stats="state.showStats = !state.showStats"
-          />
+          <!-- 主要内容区域 -->
+          <div class="main-content-area">
+            <!-- 大纲面板 -->
+            <div
+              v-show="state.showOutline"
+              class="outline-panel-wrapper"
+              :class="{ 'panel-collapsed': !state.showOutline }"
+            >
+              <OutlinePanel
+                :show-outline="state.showOutline"
+                :outline="state.outline"
+                :current-section="state.currentSection"
+                @toggle-outline="state.showOutline = !state.showOutline"
+                @navigate-to-section="navigateToSection"
+              />
+            </div>
+
+            <!-- 编辑器面板 -->
+            <EditorPanel
+              v-model:editor-container="editorContainer"
+              v-model:markdown-textarea="markdownTextarea"
+              :content="state.content"
+              :show-preview="state.showPreview"
+              :has-content="hasContent"
+              :rendered-content="renderedContent"
+              :show-selection-toolbar="state.showSelectionToolbar"
+              :toolbar-position="state.toolbarPosition"
+              @update:content="(value) => (state.content = value)"
+              @generate-ai-content="generateAIContent"
+              @content-change="handleContentChange"
+              @text-selection="handleTextSelection"
+              @polish-selection="polishSelection"
+              @expand-selection="expandSelection"
+              @summarize-selection="summarizeSelection"
+              @translate-selection="translateSelection"
+              @rewrite-selection="rewriteSelection"
+              @toggle-preview="togglePreview"
+            />
+
+            <!-- 统计面板 -->
+            <div
+              v-show="state.showStats"
+              class="stats-panel-wrapper"
+              :class="{ 'panel-collapsed': !state.showStats }"
+            >
+              <StatsPanel
+                :show-stats="state.showStats"
+                :stats="stats"
+                :ai-suggestions="aiSuggestions"
+                @toggle-stats="state.showStats = !state.showStats"
+              />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -106,7 +146,7 @@
   import { ref } from 'vue'
   import { useRouter, useRoute } from 'vue-router'
   import { ElMessage } from 'element-plus'
-  import { ArrowLeft, Check } from '@element-plus/icons-vue'
+  import { ArrowLeft, Check, Menu, DataAnalysis } from '@element-plus/icons-vue'
   import { useContent } from '@/composables/document/useContent'
   import { useProjectStore } from '@/store/modules/project'
   import StepIndicator from '@/components/custom/StepIndicator.vue'
@@ -384,37 +424,186 @@
   }
 
   .editor-layout {
-    display: grid;
+    display: flex;
     flex: 1;
-    grid-template-columns: 50px 1fr 50px;
-    gap: 16px;
+    gap: 0;
     overflow: hidden;
-    transition: grid-template-columns 0.3s ease;
+  }
 
-    &.layout-collapsed-outline {
-      grid-template-columns: 50px 1fr 50px;
+  .sidebar-toolbar {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    gap: 16px;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 0 12px;
+    background: linear-gradient(
+      180deg,
+      var(--el-fill-color-lighter) 0%,
+      var(--el-fill-color-light) 100%
+    );
+    border-right: 1px solid var(--el-border-color-lighter);
+
+    // 添加微妙的背景装饰
+    &::after {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 1px;
+      height: 100%;
+      content: '';
+      background: linear-gradient(
+        180deg,
+        transparent 0%,
+        var(--el-color-primary-light-8) 50%,
+        transparent 100%
+      );
+      opacity: 0.3;
+    }
+  }
+
+  // 创建一个占位空间来推动第一个按钮到正确位置
+  .sidebar-toolbar::before {
+    height: 110px;
+    content: '';
+  }
+
+  .toolbar-item {
+    position: relative;
+    width: 100%;
+    max-width: 48px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &::before {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      z-index: 0;
+      width: 40px;
+      height: 40px;
+      content: '';
+      background: var(--el-color-primary-light-9);
+      border-radius: 12px;
+      opacity: 0;
+      transition: all 0.3s ease;
+      transform: translate(-50%, -50%);
     }
 
-    &.layout-collapsed-stats {
-      grid-template-columns: 50px 1fr 50px;
+    &:hover {
+      transform: translateX(2px);
+
+      &::before {
+        width: 48px;
+        height: 48px;
+        background: var(--el-color-primary-light-8);
+        opacity: 1;
+      }
+
+      .toolbar-button {
+        transform: scale(1.05);
+      }
+
+      .toolbar-label {
+        opacity: 1;
+        transform: translateX(4px);
+      }
     }
 
-    &.layout-collapsed-outline.layout-collapsed-stats {
-      grid-template-columns: 50px 1fr 50px;
+    &.active {
+      &::before {
+        width: 48px;
+        height: 48px;
+        background: var(--el-color-primary-light-7);
+        opacity: 1;
+      }
+
+      .toolbar-button {
+        .toolbar-icon {
+          color: var(--el-color-primary);
+          transform: scale(1.1);
+        }
+
+        .toolbar-label {
+          font-weight: 600;
+          color: var(--el-color-primary);
+        }
+      }
+    }
+  }
+
+  .toolbar-button {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: center;
+    width: 100%;
+    padding: 8px 4px;
+    background: transparent;
+    border: none;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+
+    .toolbar-icon {
+      font-size: 18px;
+      line-height: 1;
+      color: var(--el-text-color-regular);
+      transition: all 0.3s ease;
     }
 
-    // 展开状态下的布局
-    &:not(.layout-collapsed-outline, .layout-collapsed-stats) {
-      grid-template-columns: 180px 1fr 220px;
+    .toolbar-label {
+      font-size: 11px;
+      font-weight: 500;
+      line-height: 1;
+      color: var(--el-text-color-secondary);
+      text-align: center;
+      white-space: nowrap;
+      opacity: 0.8;
+      transition: all 0.3s ease;
+    }
+  }
+
+  .main-content-area {
+    position: relative;
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .outline-panel-wrapper,
+  .stats-panel-wrapper {
+    flex-shrink: 0;
+    width: 0;
+    overflow: hidden;
+    transition: all 0.3s ease;
+
+    &:not(.panel-collapsed) {
+      width: 280px;
+      border-right: 1px solid var(--el-border-color-lighter);
+      border-left: 1px solid var(--el-border-color-lighter);
     }
 
-    &.layout-collapsed-outline:not(.layout-collapsed-stats) {
-      grid-template-columns: 50px 1fr 220px;
+    &:first-child:not(.panel-collapsed) {
+      border-left: none;
     }
+  }
 
-    &.layout-collapsed-stats:not(.layout-collapsed-outline) {
-      grid-template-columns: 180px 1fr 50px;
-    }
+  .outline-panel-wrapper:not(.panel-collapsed) {
+    background: var(--el-fill-color-lighter);
+  }
+
+  .stats-panel-wrapper:not(.panel-collapsed) {
+    background: var(--el-fill-color-lighter);
+  }
+
+  // 编辑器始终占据主要空间
+  .main-content-area > :nth-child(2) {
+    flex: 1;
+    min-width: 0;
   }
 
   .content-actions {
@@ -435,21 +624,9 @@
       padding: 16px;
     }
 
-    .editor-layout {
-      grid-template-columns: 160px 1fr 200px;
-      gap: 12px;
-
-      &:not(.layout-collapsed-outline, .layout-collapsed-stats) {
-        grid-template-columns: 160px 1fr 200px;
-      }
-
-      &.layout-collapsed-outline:not(.layout-collapsed-stats) {
-        grid-template-columns: 50px 1fr 200px;
-      }
-
-      &.layout-collapsed-stats:not(.layout-collapsed-outline) {
-        grid-template-columns: 160px 1fr 50px;
-      }
+    .outline-panel-wrapper:not(.panel-collapsed),
+    .stats-panel-wrapper:not(.panel-collapsed) {
+      width: 240px;
     }
   }
 
@@ -458,19 +635,35 @@
       padding: 12px;
     }
 
-    .editor-layout {
-      grid-template-columns: 1fr;
+    .sidebar-toolbar {
       gap: 12px;
+      padding: 0 8px;
 
-      &.layout-collapsed-outline,
-      &.layout-collapsed-stats,
-      &.layout-collapsed-outline.layout-collapsed-stats {
-        grid-template-columns: 1fr;
+      &::before {
+        height: 90px;
+      }
+
+      .toolbar-item {
+        max-width: 44px;
+
+        .toolbar-button {
+          gap: 3px;
+          padding: 6px 3px;
+
+          .toolbar-icon {
+            font-size: 16px;
+          }
+
+          .toolbar-label {
+            font-size: 10px;
+          }
+        }
       }
     }
 
-    .editor-panel {
-      min-height: 400px;
+    .outline-panel-wrapper:not(.panel-collapsed),
+    .stats-panel-wrapper:not(.panel-collapsed) {
+      width: 260px;
     }
 
     .content-actions {
@@ -481,15 +674,95 @@
     }
 
     .content-actions .el-button {
-      padding: 6px 12px;
-      font-size: 12px;
+      padding: 8px 16px;
+      font-size: 14px;
     }
   }
 
-  @media (width <= 600px) {
+  @media (width <= 768px) {
+    .content-container {
+      padding: 8px;
+    }
+
+    .editor-layout {
+      flex-direction: column;
+    }
+
+    .sidebar-toolbar {
+      flex-direction: row;
+      gap: 16px;
+      justify-content: center;
+      padding: 8px 12px;
+      background: var(--el-fill-color-light);
+      border-right: none;
+      border-bottom: 1px solid var(--el-border-color-lighter);
+
+      &::before {
+        display: none; // 移动端隐藏占位空间
+      }
+
+      &::after {
+        display: none; // 移动端隐藏装饰线
+      }
+
+      .toolbar-item {
+        flex-direction: row;
+        max-width: 60px;
+
+        .toolbar-button {
+          flex-direction: row;
+          gap: 6px;
+          padding: 8px 12px;
+
+          .toolbar-icon {
+            font-size: 16px;
+          }
+
+          .toolbar-label {
+            font-size: 12px;
+            opacity: 1;
+          }
+        }
+
+        &:hover {
+          transform: translateY(-2px);
+
+          .toolbar-label {
+            transform: translateX(0);
+          }
+        }
+      }
+    }
+
+    .main-content-area {
+      flex-direction: column;
+    }
+
+    .outline-panel-wrapper:not(.panel-collapsed),
+    .stats-panel-wrapper:not(.panel-collapsed) {
+      width: 100%;
+      height: 200px;
+      border-right: none;
+      border-bottom: 1px solid var(--el-border-color-lighter);
+      border-left: none;
+    }
+
+    .content-actions {
+      gap: 8px;
+      padding: 8px 0;
+      margin-top: 8px;
+    }
+
+    .content-actions .el-button {
+      padding: 6px 12px;
+      font-size: 13px;
+    }
+  }
+
+  @media (width <= 480px) {
     .content-container {
       height: auto;
-      padding: 8px;
+      padding: 6px;
     }
 
     .main-content {
@@ -497,17 +770,55 @@
     }
 
     .content-editor {
-      padding: 12px;
+      padding: 8px;
     }
 
-    .editor-layout {
-      gap: 8px;
+    .sidebar-toolbar {
+      gap: 12px;
+      padding: 6px 8px;
+
+      &::before {
+        display: none; // 小屏幕隐藏占位空间
+      }
+
+      &::after {
+        display: none; // 小屏幕隐藏装饰线
+      }
+
+      .toolbar-item {
+        max-width: 50px;
+
+        .toolbar-button {
+          gap: 4px;
+          padding: 6px 8px;
+
+          .toolbar-icon {
+            font-size: 14px;
+          }
+
+          .toolbar-label {
+            font-size: 10px;
+          }
+        }
+
+        &:hover {
+          transform: translateY(-1px);
+
+          .toolbar-label {
+            transform: translateX(0);
+          }
+        }
+      }
     }
 
-    .content-actions {
-      gap: 8px;
-      padding: 8px 0;
-      margin-top: 8px;
+    .outline-panel-wrapper:not(.panel-collapsed),
+    .stats-panel-wrapper:not(.panel-collapsed) {
+      height: 180px;
+    }
+
+    .content-actions .el-button {
+      padding: 5px 10px;
+      font-size: 12px;
     }
   }
 </style>
