@@ -163,7 +163,13 @@
                     type="primary"
                     :loading="isBindingMaterials"
                     :disabled="isBindingMaterials || selectedMaterials.length === 0"
-                    @click="$emit('handleAIBindMaterials')"
+                    @click="() => {
+                      console.log('[UI] 用户点击 AI智能绑定 按钮');
+                      console.log('[UI] selectedMaterials:', selectedMaterials);
+                      console.log('[UI] isBindingMaterials:', isBindingMaterials);
+                      $emit('ai-bind');
+                      console.log('[UI] 事件 ai-bind 已触发');
+                    }"
                     class="ai-binding-button"
                     size="large"
                   >
@@ -188,11 +194,25 @@
               <div class="binding-stats">
                 <div class="stat-item">
                   <span class="stat-label">匹配度</span>
-                  <span class="stat-value">95%+</span>
+                  <span class="stat-value">
+                    {{
+                      bindingResult
+                        ? `${(bindingResult.total_materials_bound > 0 ? (bindingResult.material_section_bindings.reduce((sum, b) => sum + b.match_scores.reduce((a, c) => a + c, 0) / b.match_scores.length, 0) / bindingResult.total_sections) * 100 : 0).toFixed(0)}%`
+                        : '95%+'
+                    }}
+                  </span>
                 </div>
                 <div class="stat-item">
-                  <span class="stat-label">速度</span>
-                  <span class="stat-value">快速</span>
+                  <span class="stat-label">章节</span>
+                  <span class="stat-value">{{
+                    bindingResult ? bindingResult.total_sections : '-'
+                  }}</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-label">素材</span>
+                  <span class="stat-value">{{
+                    bindingResult ? bindingResult.total_materials_bound : '-'
+                  }}</span>
                 </div>
               </div>
             </div>
@@ -210,16 +230,49 @@
               </div>
 
               <div class="bound-materials">
+                <!-- AI绑定结果展示 -->
+                <template v-if="bindingResult && getSectionBindings(sectionIndex)">
+                  <el-tooltip
+                    v-for="(material, materialIndex) in getSectionBindings(sectionIndex)!.materials"
+                    :key="material.id"
+                    :content="material.relevance_explanation"
+                    placement="top"
+                  >
+                    <el-tag
+                      closable
+                      @close="
+                        () => $emit('unbindMaterialFromSection', sectionIndex, material.title)
+                      "
+                      type="success"
+                    >
+                      <div class="tag-content">
+                        <span class="material-title">{{ material.title }}</span>
+                        <el-tag size="small" type="info" effect="plain" class="match-score">
+                          {{ getSectionBindings(sectionIndex)!.match_scores[materialIndex] }}
+                        </el-tag>
+                      </div>
+                    </el-tag>
+                  </el-tooltip>
+                </template>
+
+                <!-- 手动绑定的素材 -->
+                <template v-else>
+                  <el-tag
+                    v-for="materialTitle in section.data_requirements"
+                    :key="materialTitle"
+                    closable
+                    @close="() => $emit('unbindMaterialFromSection', sectionIndex, materialTitle)"
+                    type="primary"
+                  >
+                    {{ materialTitle }}
+                  </el-tag>
+                </template>
+
                 <el-tag
-                  v-for="materialTitle in section.data_requirements"
-                  :key="materialTitle"
-                  closable
-                  @close="() => $emit('unbindMaterialFromSection', sectionIndex, materialTitle)"
-                  type="primary"
+                  v-if="section.data_requirements.length === 0 && !bindingResult"
+                  type="info"
+                  plain
                 >
-                  {{ materialTitle }}
-                </el-tag>
-                <el-tag v-if="section.data_requirements.length === 0" type="info" plain>
                   未绑定素材
                 </el-tag>
               </div>
@@ -254,6 +307,49 @@
               </el-dropdown>
             </div>
           </div>
+
+          <!-- 绑定结果摘要 -->
+          <div v-if="bindingResult" class="binding-summary">
+            <el-alert
+              :title="bindingResult.final_report"
+              type="success"
+              :closable="false"
+              show-icon
+            >
+              <div class="summary-content">
+                <p>{{ bindingResult.binding_summary }}</p>
+                <div class="summary-stats">
+                  <div class="stat-item">
+                    <el-icon><Document /></el-icon>
+                    <span>章节: {{ bindingResult.total_sections }}</span>
+                  </div>
+                  <div class="stat-item">
+                    <el-icon><Collection /></el-icon>
+                    <span>素材: {{ bindingResult.total_materials_bound }}</span>
+                  </div>
+                  <div class="stat-item">
+                    <el-icon><InfoFilled /></el-icon>
+                    <span
+                      >平均匹配度:
+                      {{
+                        (bindingResult.total_materials_bound > 0
+                          ? (bindingResult.material_section_bindings.reduce(
+                              (sum, b) =>
+                                sum +
+                                b.match_scores.reduce((a, c) => a + c, 0) / b.match_scores.length,
+                              0
+                            ) /
+                              bindingResult.total_sections) *
+                            100
+                          : 0
+                        ).toFixed(1)
+                      }}%</span
+                    >
+                  </div>
+                </div>
+              </div>
+            </el-alert>
+          </div>
         </div>
       </div>
     </el-collapse-transition>
@@ -261,8 +357,9 @@
 </template>
 
 <script setup lang="ts">
-  import { ref } from 'vue'
+  import { ref, computed } from 'vue'
   import type { Material } from '@/types/material'
+  import { useMaterialBindStore } from '@/store/modules/materialBind'
   import UnifiedMaterialCard from '@/components/custom/material-card/UnifiedMaterialCard.vue'
   import {
     FolderOpened,
@@ -278,7 +375,8 @@
     Cpu,
     DocumentCopy,
     Loading,
-    WarningFilled
+    WarningFilled,
+    InfoFilled
   } from '@element-plus/icons-vue'
 
   // Props
@@ -295,10 +393,13 @@
     (e: 'clearSelection'): void
     (e: 'toggleMaterialSelection', id: string): void
     (e: 'previewMaterial', material: Material): void
-    (e: 'handleAIBindMaterials'): void
+    (e: 'ai-bind'): void
     (e: 'bindMaterialToSection', sectionIndex: number, material: Material): void
     (e: 'unbindMaterialFromSection', sectionIndex: number, materialTitle: string): void
   }>()
+
+  // Store
+  const materialBindStore = useMaterialBindStore()
 
   // 素材相关状态
   const materialsCollapsed = ref(false)
@@ -319,6 +420,28 @@
 
   const handleClearSelection = () => {
     emit('clearSelection')
+  }
+
+  // 计算属性：显示真实的绑定结果
+  const bindingResult = computed(() => materialBindStore.bindingResult)
+
+  // 获取章节的绑定素材
+  const getSectionBindings = (sectionIndex: number) => {
+    if (!bindingResult.value) return []
+    return bindingResult.value.material_section_bindings.find(
+      (binding) => binding.section_id === sectionIndex + 1
+    )
+  }
+
+  // 获取素材的匹配分数
+  const getMaterialMatchScore = (sectionIndex: number, materialTitle: string) => {
+    const binding = getSectionBindings(sectionIndex)
+    if (!binding) return null
+
+    const materialIndex = binding.materials.findIndex((m) => m.title === materialTitle)
+    if (materialIndex === -1) return null
+
+    return binding.match_scores[materialIndex]
   }
 </script>
 
@@ -831,6 +954,56 @@
 
         .el-tag {
           margin: 0;
+
+          .tag-content {
+            display: flex;
+            align-items: center;
+            gap: var(--art-spacing-xs, 4px);
+
+            .material-title {
+              max-width: 200px;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+            }
+
+            .match-score {
+              margin-left: var(--art-spacing-xs, 4px);
+              font-weight: var(--art-font-weight-bold, 700);
+            }
+          }
+        }
+      }
+
+      .binding-summary {
+        margin-top: var(--art-spacing-xl, 32px);
+
+        .summary-content {
+          p {
+            margin: 0 0 var(--art-spacing-md, 12px);
+            font-size: var(--art-font-size-sm, 14px);
+            line-height: var(--art-line-height-relaxed, 1.6);
+            color: var(--art-text-color-secondary);
+          }
+
+          .summary-stats {
+            display: flex;
+            gap: var(--art-spacing-lg, 20px);
+            margin-top: var(--art-spacing-md, 12px);
+
+            .stat-item {
+              display: flex;
+              align-items: center;
+              gap: var(--art-spacing-xs, 4px);
+              font-size: var(--art-font-size-sm, 14px);
+              color: var(--art-text-color-secondary);
+
+              .el-icon {
+                font-size: 14px;
+                color: var(--el-color-success);
+              }
+            }
+          }
         }
       }
     }

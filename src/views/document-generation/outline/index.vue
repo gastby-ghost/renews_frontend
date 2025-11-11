@@ -52,7 +52,12 @@
         @clear-selection="() => (selectedMaterials = [])"
         @toggle-material-selection="toggleMaterialSelection"
         @preview-material="(m) => console.log('预览素材:', m)"
-        @handle-ai-bind-materials="handleAIBindMaterials"
+        @ai-bind="() => {
+          console.log('[INDEX] 接收到 ai-bind 事件');
+          console.log('[INDEX] 调用 handleAIBindMaterials 方法');
+          handleAIBindMaterials();
+          console.log('[INDEX] handleAIBindMaterials 调用完成');
+        }"
         @bind-material-to-section="bindMaterialToSection"
         @unbind-material-from-section="unbindMaterialFromSection"
       />

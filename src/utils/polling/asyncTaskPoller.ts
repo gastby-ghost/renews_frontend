@@ -55,6 +55,9 @@ export interface PollingTask {
   isCompleted: boolean
   cancel: () => void
   reset: () => void
+  on: (event: string, handler: Function) => void
+  off: (event: string, handler: Function) => void
+  promise: Promise<PollingTaskResult>
 }
 
 // 任务状态检查器函数类型
@@ -78,6 +81,9 @@ export class AsyncTaskPoller {
   private enableLogging: boolean
   private logLevel: LogLevel
   private logger: (level: LogLevel, message: string, meta?: any) => void
+  private eventHandlers: Map<string, Function[]> = new Map()
+  private resolvePromise: ((value: PollingTaskResult) => void) | null = null
+  private rejectPromise: ((reason?: any) => void) | null = null
 
   constructor(statusChecker: StatusChecker, config: PollingConfig = {}) {
     this.statusChecker = statusChecker
@@ -155,6 +161,12 @@ export class AsyncTaskPoller {
     this.startTime = Date.now()
     const id = taskId || this.generateTaskId()
 
+    // 创建 promise
+    const promise = new Promise<PollingTaskResult>((resolve, reject) => {
+      this.resolvePromise = resolve
+      this.rejectPromise = reject
+    })
+
     this.task = {
       id,
       isPolling: false,
@@ -166,7 +178,23 @@ export class AsyncTaskPoller {
         startTime: this.startTime
       },
       cancel: () => this.stop(),
-      reset: () => this.reset()
+      reset: () => this.reset(),
+      on: (event: string, handler: Function) => {
+        if (!this.eventHandlers.has(event)) {
+          this.eventHandlers.set(event, [])
+        }
+        this.eventHandlers.get(event)!.push(handler)
+      },
+      off: (event: string, handler: Function) => {
+        if (this.eventHandlers.has(event)) {
+          const handlers = this.eventHandlers.get(event)!
+          const index = handlers.indexOf(handler)
+          if (index > -1) {
+            handlers.splice(index, 1)
+          }
+        }
+      },
+      promise
     }
 
     this.log(LogLevel.INFO, '开始轮询任务', {
@@ -191,6 +219,21 @@ export class AsyncTaskPoller {
 
     this.task.isPolling = true
     return this.task
+  }
+
+  /**
+   * 触发事件
+   */
+  private emit(event: string, ...args: any[]): void {
+    if (this.eventHandlers.has(event)) {
+      this.eventHandlers.get(event)!.forEach(handler => {
+        try {
+          handler(...args)
+        } catch (error) {
+          this.log(LogLevel.ERROR, `事件处理程序错误: ${event}`, { error, args })
+        }
+      })
+    }
   }
 
   stop(): void {
@@ -363,6 +406,19 @@ export class AsyncTaskPoller {
 
     this.config.onStatusUpdate(status, data)
 
+    // 触发事件
+    if (status === TaskStatus.RUNNING && previousStatus !== TaskStatus.RUNNING) {
+      this.emit('progress', {...this.task.result, data})
+    } else if (status === TaskStatus.COMPLETED) {
+      this.emit('completed', {...this.task.result, data})
+    } else if (status === TaskStatus.FAILED) {
+      this.emit('failed', new Error(error || '任务失败'))
+    } else if (status === TaskStatus.TIMEOUT) {
+      this.emit('timeout')
+    } else if (status === TaskStatus.CANCELLED) {
+      this.emit('cancelled')
+    }
+
     // 任务结束
     if (
       status === TaskStatus.COMPLETED ||
@@ -391,6 +447,15 @@ export class AsyncTaskPoller {
         error: error || null,
         hasData: !!data
       })
+
+      // Resolve or reject promise
+      if (this.resolvePromise && this.rejectPromise) {
+        if (status === TaskStatus.COMPLETED) {
+          this.resolvePromise(this.task.result)
+        } else {
+          this.rejectPromise(new Error(error || message))
+        }
+      }
 
       this.stop()
     }

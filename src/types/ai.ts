@@ -309,3 +309,105 @@ export interface ProviderInfo {
 export interface ProvidersResponse {
   [providerName: string]: ProviderInfo
 }
+
+// ============= 素材绑定相关类型 =============
+
+/**
+ * 素材绑定请求 - 大纲章节
+ */
+export interface MaterialBindOutlineSection {
+  id: number
+  outline_id: number
+  section_title: string
+  content_direction: string
+  data_requirements: string[]
+  sources: string[]
+  section_order: number
+  estimated_words: number
+}
+
+/**
+ * 素材绑定请求 - 素材详情
+ */
+export interface MaterialBindMaterial {
+  id: number
+  title: string
+  summary: string
+  content: string
+  score: number
+  key_excerpts: string[]
+  published_date: string
+  source_url: string
+  source_type: string
+  author: string
+}
+
+/**
+ * 素材绑定请求
+ */
+export interface MaterialBindRequest {
+  user_id: string
+  project_id: string
+  title: string
+  outline_sections: MaterialBindOutlineSection[]
+  materials: MaterialBindMaterial[]
+}
+
+/**
+ * 素材绑定响应 - 绑定的素材详情
+ */
+export interface MaterialBindBoundMaterial {
+  id: number
+  title: string
+  summary: string
+  score: number
+  published_date: string
+  url: string
+  relevance_explanation: string
+}
+
+/**
+ * 素材绑定响应 - 章节绑定结果
+ */
+export interface MaterialBindSectionBinding {
+  section_id: number
+  section_title: string
+  materials: MaterialBindBoundMaterial[]
+  binding_type: string
+  binding_reason: string
+  match_scores: number[]
+  material_usage_justification: string
+  section_level: number
+}
+
+/**
+ * 素材绑定结果详情
+ */
+export interface MaterialBindResult {
+  title: string
+  material_section_bindings: MaterialBindSectionBinding[]
+  binding_summary: string
+  final_report: string
+  total_sections: number
+  total_materials_bound: number
+}
+
+/**
+ * 素材绑定任务状态响应
+ */
+export interface MaterialBindStatusResponse extends BaseAIResponse {
+  task_id: string
+  status: 'pending' | 'running' | 'completed' | 'failed'
+  progress: number
+  result?: MaterialBindResult | null
+  error: string | null
+  created_at: string
+  updated_at: string
+}
+
+/**
+ * 素材绑定任务创建响应
+ */
+export interface MaterialBindExecuteResponse extends BaseAIResponse {
+  task_id?: string
+}

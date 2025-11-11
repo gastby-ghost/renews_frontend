@@ -239,6 +239,39 @@ export const documentGenerateService: ApiEndpointConfig = {
       response: {
         dataType: 'object'
       }
+    },
+
+    // ========== Material Bind 服务 ==========
+    '/material-bind/execute': {
+      description: 'Execute material binding task to automatically match materials to outline sections',
+      methods: ['POST'],
+      request: {
+        bodyType: 'json',
+        requireAuth: true,
+        params: {
+          user_id: 'string',
+          project_id: 'string',
+          title: 'string',
+          outline_sections: 'MaterialBindOutlineSection[]',
+          materials: 'MaterialBindMaterial[]'
+        }
+      },
+      response: {
+        dataType: 'MaterialBindExecuteResponse'
+      }
+    },
+    '/material-bind/status/{task_id}': {
+      description: 'Get the status of a material binding task',
+      methods: ['GET'],
+      request: {
+        requireAuth: true,
+        params: {
+          task_id: 'string'
+        }
+      },
+      response: {
+        dataType: 'MaterialBindStatusResponse'
+      }
     }
   }
 }

@@ -224,10 +224,164 @@ class DocumentGenerateService extends BaseApiService {
   // ============= AI素材绑定服务 =============
 
   /**
-   * AI智能绑定素材到章节
+   * AI智能绑定素材到章节（新版异步任务API）
+   * @param userId - 用户ID
+   * @param projectId - 项目ID
    * @param request - AI素材绑定请求参数
    * @param options - 请求配置选项
-   * @returns AI素材绑定响应
+   * @returns AI素材绑定任务创建响应
+   */
+  async executeMaterialBind(
+    userId: string,
+    projectId: string,
+    request: {
+      title: string
+      outline_sections: any[]
+      materials: any[]
+    },
+    options?: ApiRequestConfig
+  ): Promise<{
+    success: boolean
+    message: string
+    task_id?: string
+    error?: string
+  }> {
+    console.log('========================================');
+    console.log('[SERVICE] executeMaterialBind 开始执行');
+    console.log('[SERVICE] userId:', userId);
+    console.log('[SERVICE] projectId:', projectId);
+    console.log('[SERVICE] request.title:', request.title);
+    console.log('[SERVICE] request.outline_sections 数量:', request.outline_sections.length);
+    console.log('[SERVICE] request.materials 数量:', request.materials.length);
+    console.log('[SERVICE] API端点: POST /material-bind/execute');
+    console.log('========================================');
+
+    const result = await this.post('/material-bind/execute', request, {
+      params: { user_id: userId, project_id: projectId },
+      ...options
+    })
+
+    console.log('[SERVICE] this.post 返回结果:', result);
+    console.log('[SERVICE] executeMaterialBind 执行完成');
+    return result
+  }
+
+  /**
+   * 获取素材绑定任务状态
+   * @param taskId - 任务ID
+   * @param options - 请求配置选项
+   * @returns 素材绑定任务状态响应
+   */
+  async getMaterialBindStatus(
+    taskId: string,
+    options?: ApiRequestConfig
+  ): Promise<{
+    success: boolean
+    task_id: string
+    status: 'pending' | 'running' | 'completed' | 'failed'
+    progress: number
+    result?: {
+      title: string
+      material_section_bindings: Array<{
+        section_id: number
+        section_title: string
+        materials: Array<{
+          id: number
+          title: string
+          summary: string
+          score: number
+          published_date: string
+          url: string
+          relevance_explanation: string
+        }>
+        binding_type: string
+        binding_reason: string
+        match_scores: number[]
+        material_usage_justification: string
+        section_level: number
+      }>
+      binding_summary: string
+      final_report: string
+      total_sections: number
+      total_materials_bound: number
+    }
+    error: string | null
+    created_at: string
+    updated_at: string
+  }> {
+    return this.get(`/material-bind/status/${taskId}`, undefined, options)
+  }
+
+  /**
+   * 启动素材绑定任务并轮询完成
+   * @param userId 用户ID
+   * @param projectId 项目ID
+   * @param request 素材绑定请求参数
+   * @param pollingConfig 轮询配置
+   * @returns 轮询任务实例
+   */
+  async executeMaterialBindWithPolling(
+    userId: string,
+    projectId: string,
+    request: {
+      title: string
+      outline_sections: any[]
+      materials: any[]
+    },
+    pollingConfig?: PollingConfig
+  ): Promise<PollingTask> {
+    console.log('========================================');
+    console.log('[SERVICE] executeMaterialBindWithPolling 开始执行');
+    console.log('[SERVICE] userId:', userId);
+    console.log('[SERVICE] projectId:', projectId);
+    console.log('[SERVICE] request.title:', request.title);
+    console.log('[SERVICE] pollingConfig:', pollingConfig);
+    console.log('========================================');
+
+    console.log('[SERVICE] 第一步：调用 executeMaterialBind 创建任务');
+    const response = await this.executeMaterialBind(userId, projectId, request)
+    console.log('[SERVICE] executeMaterialBind 返回:', response);
+
+    if (!response.success || !response.task_id) {
+      console.error('[SERVICE] 错误：任务创建失败，response:', response);
+      throw new Error(`素材绑定任务启动失败: ${response.message || '未知错误'}`)
+    }
+
+    const taskId = response.task_id
+    console.log('[SERVICE] 任务创建成功，taskId:', taskId);
+
+    console.log('[SERVICE] 第二步：创建 AsyncTaskPoller');
+    const poller = new AsyncTaskPoller(
+      () => {
+        console.log('[SERVICE POLLER] 执行状态检查...');
+        return this.getMaterialBindStatus(taskId).then((result) => {
+          console.log('[SERVICE POLLER] 状态检查结果:', result);
+          return {
+            status: result.status || TaskStatus.RUNNING,
+            data: result,
+            isCompleted: result.status === TaskStatus.COMPLETED || result.status === 'completed',
+            isFailed: result.status === TaskStatus.FAILED || result.status === 'failed'
+          }
+        })
+      },
+      {
+        interval: 2000,
+        timeout: 180000, // 3分钟超时
+        maxAttempts: 90,
+        ...pollingConfig
+      }
+    )
+
+    console.log('[SERVICE] 第三步：启动 poller.start()');
+    const task = poller.start(`material-bind-${taskId}`)
+    console.log('[SERVICE] poller.start() 返回:', task);
+    console.log('[SERVICE] executeMaterialBindWithPolling 执行完成');
+    return task
+  }
+
+  /**
+   * @deprecated 已废弃，请使用 executeMaterialBind 替代
+   * AI智能绑定素材到章节（旧版同步API）
    */
   async bindMaterialsWithAI(
     request: {
@@ -258,6 +412,7 @@ class DocumentGenerateService extends BaseApiService {
       }
     }
   }> {
+    console.warn('bindMaterialsWithAI 已废弃，请使用 executeMaterialBind 替代')
     return this.post('/ai/bind-materials', request, options)
   }
 
@@ -1328,6 +1483,119 @@ class DocumentGenerateService extends BaseApiService {
           params.user_id,
           params.project_id
         )
+      }
+
+      // ============= 素材绑定服务 Mock =============
+      if (method === 'POST' && url.includes('/material-bind/execute')) {
+        console.log('[MOCK] ========================================');
+        console.log('[MOCK] 收到 POST /material-bind/execute 请求');
+        console.log('[MOCK] user_id:', params.user_id);
+        console.log('[MOCK] project_id:', params.project_id);
+        console.log('[MOCK] requestData:', requestData);
+        console.log('[MOCK] ========================================');
+        
+        // 生成任务ID
+        const taskId = `material_bind_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+        
+        console.log('[MOCK] 生成的 taskId:', taskId);
+        console.log('[MOCK] 准备返回响应');
+        
+        // 模拟异步任务创建
+        setTimeout(() => {
+          // 模拟任务处理完成
+          console.log('[MOCK] 模拟任务处理完成:', taskId);
+        }, 3000)
+        
+        const response = {
+          success: true,
+          message: '素材绑定任务已创建',
+          task_id: taskId
+        };
+        
+        console.log('[MOCK] 返回响应:', response);
+        return response;
+      }
+
+      if (method === 'GET' && url.includes('/material-bind/status/')) {
+        const parts = url.split('/')
+        const statusIndex = parts.indexOf('status')
+        const taskId = statusIndex > -1 ? parts[statusIndex + 1] : ''
+        
+        console.log('[MOCK] ========================================');
+        console.log('[MOCK] 收到 GET /material-bind/status/', taskId);
+        console.log('[MOCK] taskId:', taskId);
+        
+        // 模拟进度变化
+        const elapsed = Date.now() - parseInt(taskId.split('_')[2] || '0')
+        const progress = Math.min(100, Math.floor(elapsed / 30)) // 每30ms增加1%
+        
+        console.log('[MOCK] elapsed:', elapsed, 'ms');
+        console.log('[MOCK] progress:', progress, '%');
+        
+        if (progress < 100) {
+          // 任务进行中
+          console.log('[MOCK] 任务进行中，返回 running 状态');
+          const response = {
+            success: true,
+            task_id: taskId,
+            status: 'running',
+            progress: progress,
+            result: null,
+            error: null,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+          console.log('[MOCK] 返回响应:', response);
+          console.log('[MOCK] ========================================');
+          return response;
+        } else {
+          // 任务完成 - 返回模拟的绑定结果
+          console.log('[MOCK] 任务完成，返回 completed 状态');
+          const mockResult = {
+            title: requestData?.title || 'AI技术在2024年的最新发展',
+            material_section_bindings: [
+              {
+                section_id: 1,
+                section_title: 'AI技术概述',
+                materials: [
+                  {
+                    id: 1001,
+                    title: 'AI技术发展简史',
+                    summary: '从1950年代开始的人工智能发展历程',
+                    score: 0.95,
+                    published_date: '2024-01-15 10:00:00',
+                    url: 'https://example.com/ai-history',
+                    relevance_explanation: '直接提供AI发展历程的核心内容，完美匹配章节需求'
+                  }
+                ],
+                binding_type: 'required',
+                binding_reason: '该章节需要介绍AI技术的基本概念和发展历程',
+                match_scores: [0.95],
+                material_usage_justification: '素材1001作为核心素材，为章节提供AI发展历程的完整框架',
+                section_level: 1
+              }
+            ],
+            binding_summary: '本次绑定成功为1个章节分配了1个素材，匹配度较高',
+            final_report: '成功绑定 1 个章节的素材',
+            total_sections: 1,
+            total_materials_bound: 1
+          };
+          
+          const response = {
+            success: true,
+            task_id: taskId,
+            status: 'completed',
+            progress: 100,
+            result: mockResult,
+            error: null,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+          
+          console.log('[MOCK] 返回响应:', response);
+          console.log('[MOCK] ========================================');
+          return response;
+        }
       }
 
       // 默认Mock响应
