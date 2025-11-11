@@ -19,7 +19,7 @@ import type {
 } from '@/types/ai'
 
 import { MockTaskTracker } from '@/utils/mockTaskTracker'
-import documentGenerateTitle from '../../json/document-generate-title.json'
+import documentGenerateTitle from '../../json/ document_generate-title.json'
 import searchData from '../../json/search.json'
 // 任务跟踪器实例
 const scopeTaskTracker = new MockTaskTracker()

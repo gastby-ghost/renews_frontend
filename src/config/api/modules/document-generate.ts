@@ -8,10 +8,10 @@ import type { ApiEndpointConfig } from '../types'
 
 export const documentGenerateService: ApiEndpointConfig = {
   name: '文档生成服务',
-  baseUrl: '/api/v1/ai/document-generate',
+  baseUrl: '/api/v1/ai/ document_generate',
   methods: ['GET', 'POST'],
   enableMock: true,
-  mockPath: '/mock/data/document-generate',
+  mockPath: '/mock/data/ document_generate',
   defaults: {
     timeout: 120000, // AI服务可能需要更长时间，设置为120秒
     headers: {
@@ -243,7 +243,8 @@ export const documentGenerateService: ApiEndpointConfig = {
 
     // ========== Material Bind 服务 ==========
     '/material-bind/execute': {
-      description: 'Execute material binding task to automatically match materials to outline sections',
+      description:
+        'Execute material binding task to automatically match materials to outline sections',
       methods: ['POST'],
       request: {
         bodyType: 'json',

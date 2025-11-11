@@ -173,13 +173,13 @@ interface OutlineSection {
 ### 统一 API 配置
 
 ```typescript
-// src/config/api/modules/document-generate.ts
+// src/config/api/modules/ document_generate.ts
 export const documentGenerateService: ApiEndpointConfig = {
   name: '文档生成服务',
-  baseUrl: '/api/v1/ai/document-generate',
+  baseUrl: '/api/v1/ai/ document_generate',
   methods: ['GET', 'POST'],
   enableMock: true,
-  mockPath: '/mock/data/document-generate',
+  mockPath: '/mock/data/ document_generate',
   defaults: {
     timeout: 120000,  // AI服务需要更长超时
     retryCount: 2,
@@ -240,8 +240,8 @@ src/
 │   ├── outline/                    # 大纲编辑
 │   └── content/                    # 正文编辑
 ├── config/api/modules/
-│   └── document-generate.ts        # API配置
-└── mock/data/document-generate/    # Mock数据
+│   └──  document_generate.ts        # API配置
+└── mock/data/ document_generate/    # Mock数据
     └── index.ts
 ```
 

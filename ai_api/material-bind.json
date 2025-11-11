@@ -6,7 +6,7 @@
     "version": "1.0.0"
   },
   "paths": {
-    "/api/v1/ai/document-generate/material-bind/execute": {
+    "/api/v1/ai/ document_generate/material-bind/execute": {
       "post": {
         "tags": ["Document Generate"],
         "summary": "Execute Material Bind",
@@ -40,7 +40,7 @@
         }
       }
     },
-    "/api/v1/ai/document-generate/material-bind/status/{task_id}": {
+    "/api/v1/ai/ document_generate/material-bind/status/{task_id}": {
       "get": {
         "tags": ["Document Generate"],
         "summary": "Get Material Bind Status",
@@ -72,7 +72,7 @@
         }
       }
     },
-    "/api/v1/ai/document-generate/material-bind/cancel/{task_id}": {
+    "/api/v1/ai/ document_generate/material-bind/cancel/{task_id}": {
       "post": {
         "tags": ["Document Generate"],
         "summary": "Cancel Material Bind Task",
