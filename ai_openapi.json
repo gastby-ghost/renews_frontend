@@ -316,7 +316,7 @@
         }
       }
     },
-    "/api/v1/ai/ document_generate/scope-agent/execute": {
+    "/api/v1/ai/document_generate/scope-agent/execute": {
       "post": {
         "tags": ["Document Generate"],
         "summary": "Execute Scope Agent",
@@ -362,7 +362,7 @@
         }
       }
     },
-    "/api/v1/ai/ document_generate/scope-agent/status/{task_id}": {
+    "/api/v1/ai/document_generate/scope-agent/status/{task_id}": {
       "get": {
         "tags": ["Document Generate"],
         "summary": "Get Scope Agent Status",
@@ -396,7 +396,7 @@
         }
       }
     },
-    "/api/v1/ai/ document_generate/scope-agent/tasks": {
+    "/api/v1/ai/document_generate/scope-agent/tasks": {
       "get": {
         "tags": ["Document Generate"],
         "summary": "List Scope Agent Tasks",
@@ -448,7 +448,7 @@
         }
       }
     },
-    "/api/v1/ai/ document_generate/scope-agent/cancel/{task_id}": {
+    "/api/v1/ai/document_generate/scope-agent/cancel/{task_id}": {
       "post": {
         "tags": ["Document Generate"],
         "summary": "Cancel Scope Agent Task",
@@ -768,7 +768,7 @@
         }
       }
     },
-    "/api/v1/ai/ document_generate/search2title-agent/execute": {
+    "/api/v1/ai/document_generate/search2title-agent/execute": {
       "post": {
         "tags": ["Document Generate"],
         "summary": "Execute Search2Title Agent",
@@ -816,7 +816,7 @@
         }
       }
     },
-    "/api/v1/ai/ document_generate/search2title-agent/status/{task_id}": {
+    "/api/v1/ai/document_generate/search2title-agent/status/{task_id}": {
       "get": {
         "tags": ["Document Generate"],
         "summary": "Get Search2Title Agent Status",
@@ -862,7 +862,7 @@
         }
       }
     },
-    "/api/v1/ai/ document_generate/search2title-agent/tasks": {
+    "/api/v1/ai/document_generate/search2title-agent/tasks": {
       "get": {
         "tags": ["Document Generate"],
         "summary": "List Search2Title Agent Tasks",
@@ -902,7 +902,7 @@
         }
       }
     },
-    "/api/v1/ai/ document_generate/search2title-agent/cancel/{task_id}": {
+    "/api/v1/ai/document_generate/search2title-agent/cancel/{task_id}": {
       "post": {
         "tags": ["Document Generate"],
         "summary": "Cancel Search2Title Agent Task",
@@ -944,7 +944,7 @@
         }
       }
     },
-    "/api/v1/ai/ document_generate/search2title-agent/state/{task_id}": {
+    "/api/v1/ai/document_generate/search2title-agent/state/{task_id}": {
       "get": {
         "tags": ["Document Generate"],
         "summary": "Get Search2Title Agent Graph State",
@@ -986,7 +986,7 @@
         }
       }
     },
-    "/api/v1/ai/ document_generate/title-agent/generate": {
+    "/api/v1/ai/document_generate/title-agent/generate": {
       "post": {
         "tags": ["Document Generate"],
         "summary": "Generate Titles Endpoint",
@@ -1020,7 +1020,7 @@
         }
       }
     },
-    "/api/v1/ai/ document_generate/title-agent/status": {
+    "/api/v1/ai/document_generate/title-agent/status": {
       "get": {
         "tags": ["Document Generate"],
         "summary": "Get Title Tools Status",
@@ -1038,7 +1038,7 @@
         }
       }
     },
-    "/api/v1/ai/ document_generate/title-agent/validate": {
+    "/api/v1/ai/document_generate/title-agent/validate": {
       "post": {
         "tags": ["Document Generate"],
         "summary": "Validate Title Generation Request",
@@ -1076,7 +1076,7 @@
         }
       }
     },
-    "/api/v1/ai/ document_generate/outline-agent/generate": {
+    "/api/v1/ai/document_generate/outline-agent/generate": {
       "post": {
         "tags": ["Document Generate"],
         "summary": "Generate Outline Endpoint",
@@ -1110,7 +1110,7 @@
         }
       }
     },
-    "/api/v1/ai/ document_generate/outline-agent/status": {
+    "/api/v1/ai/document_generate/outline-agent/status": {
       "get": {
         "tags": ["Document Generate"],
         "summary": "Get Outline Tools Status",
@@ -1128,7 +1128,7 @@
         }
       }
     },
-    "/api/v1/ai/ document_generate/outline-validate": {
+    "/api/v1/ai/document_generate/outline-validate": {
       "post": {
         "tags": ["Document Generate"],
         "summary": "Validate Outline Generation Request",

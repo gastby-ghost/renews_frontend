@@ -1,0 +1,354 @@
+{
+  "task_id": "agent_e0eace61-0a68-475b-8ade-b5fd8e1ff307",
+  "status": "completed",
+  "data": {
+    "title": "人工智能在医疗领域的革命性突破",
+    "outline": [
+      {
+        "level": 1,
+        "title": "导语：AI医疗革命性突破重塑就医体验",
+        "content_direction": "采用倒金字塔结构，开篇点明AI在医疗领域的革命性影响，突出95%癌症诊断准确率、40%并发症降低等核心数据，强调对普通患者就医体验的直接影响。体现新闻时效性，引用最新研究数据，保持客观报道风格，避免过度渲染。",
+        "data_requirements": [
+          "AI诊断准确率对比数据",
+          "手术并发症发生率统计",
+          "患者就医体验改善案例"
+        ],
+        "estimated_word_count": 150,
+        "priority": "high",
+        "sources": ["1", "2"],
+        "multimedia_elements": ["AI医疗应用场景概念图", "诊断准确率对比图表"],
+        "audience_consideration": "用通俗语言解释专业术语，重点突出对普通人看病就医的实际好处，如更准的诊断、更快的康复、更低的费用",
+        "style_guidance": "开门见山，用具体数据说话，避免专业术语堆砌，保持新闻客观性"
+      },
+      {
+        "level": 1,
+        "title": "AI诊断：精准识别微小病灶，癌症筛查准确率达95%",
+        "content_direction": "详细展开AI在诊断领域的突破，重点介绍深度学习系统识别微小肿瘤的能力，对比传统方法70%准确率与AI的95%准确率，强调早期发现对治疗时机的关键意义。引用具体研究案例，保持数据支撑的客观性。",
+        "data_requirements": [
+          "深度学习系统技术原理简化说明",
+          "不同癌症类型诊断准确率细分",
+          "早期发现治疗成功率对比"
+        ],
+        "estimated_word_count": 250,
+        "priority": "high",
+        "sources": ["1"],
+        "multimedia_elements": ["AI识别肿瘤病灶示意图", "传统方法与AI诊断准确率对比柱状图"],
+        "audience_consideration": "用'火眼金睛'等比喻帮助理解AI识别能力，强调'早发现早治疗'对普通人的生命健康价值",
+        "style_guidance": "数据说话，案例支撑，避免技术细节堆砌，突出实际应用价值"
+      },
+      {
+        "level": 1,
+        "title": "机器人手术：并发症降低40%，住院时间缩短30%",
+        "content_direction": "介绍机器人辅助手术系统的临床应用成效，重点说明在心脏手术、神经外科等复杂手术中的表现，用具体数据展示患者获益。分析技术如何提高手术精度，减少人为误差。",
+        "data_requirements": [
+          "机器人手术系统操作原理简化说明",
+          "不同手术类型并发症降低数据",
+          "患者康复时间具体案例"
+        ],
+        "estimated_word_count": 200,
+        "priority": "high",
+        "sources": ["2"],
+        "multimedia_elements": ["机器人手术操作场景配图", "并发症发生率下降趋势图"],
+        "audience_consideration": "重点说明'少受罪、快出院'对患者的意义，用具体康复案例增强说服力",
+        "style_guidance": "客观描述技术成效，用患者获益案例增强报道亲和力"
+      },
+      {
+        "level": 1,
+        "title": "药物研发：AI助力新药开发周期缩短近半",
+        "content_direction": "阐述AI在药物研发中的革命性作用，对比传统10-15年开发周期与AI辅助后的6-8年，说明机器学习预测分子活性的技术原理。强调这对降低药价、加速新药上市的意义。",
+        "data_requirements": [
+          "药物研发各阶段时间对比",
+          "AI预测分子活性成功率",
+          "研发成本降低具体数据"
+        ],
+        "estimated_word_count": 180,
+        "priority": "medium",
+        "sources": ["3"],
+        "multimedia_elements": ["药物研发流程简化图", "研发周期对比信息图"],
+        "audience_consideration": "用'从10年缩短到6年'等直观对比帮助理解，强调最终对药价和用药可及性的影响",
+        "style_guidance": "简化技术原理，突出时间效益和成本效益，保持客观数据支撑"
+      },
+      {
+        "level": 1,
+        "title": "远程医疗：AI让优质医疗资源触手可及",
+        "content_direction": "介绍AI远程医疗平台在服务偏远地区患者方面的突破，说明智能问诊、影像分析、健康监测等功能的集成应用。体现技术对医疗资源均衡分布的社会价值。",
+        "data_requirements": [
+          "远程医疗平台用户覆盖数据",
+          "偏远地区患者受益案例",
+          "服务效率提升具体指标"
+        ],
+        "estimated_word_count": 150,
+        "priority": "medium",
+        "sources": ["4"],
+        "multimedia_elements": ["远程医疗操作界面示意图", "服务覆盖区域地图"],
+        "audience_consideration": "强调'在家就能看名医'的便利性，特别对农村和偏远地区读者的实际价值",
+        "style_guidance": "突出普惠性价值，用具体服务案例说明技术对普通人生活的改变"
+      },
+      {
+        "level": 1,
+        "title": "展望与挑战：AI医疗的未来之路",
+        "content_direction": "客观分析AI医疗发展面临的挑战，如数据隐私、技术可靠性、医生接受度等。同时展望未来发展趋势，保持平衡报道，既不过度乐观也不消极悲观。",
+        "data_requirements": ["行业专家观点引用", "技术可靠性验证数据", "隐私保护措施现状"],
+        "estimated_word_count": 120,
+        "priority": "low",
+        "sources": [],
+        "multimedia_elements": ["AI医疗发展路线图"],
+        "audience_consideration": "用通俗语言说明技术挑战，让读者理性看待AI医疗，既看到机遇也了解局限",
+        "style_guidance": "保持客观中立，平衡报道机遇与挑战，体现新闻报道的全面性"
+      },
+      {
+        "level": 1,
+        "title": "导语：AI医疗革命性突破重塑就医体验",
+        "content_direction": "采用倒金字塔结构，开篇点明AI在医疗领域的革命性影响，突出95%癌症诊断准确率、40%并发症降低等核心数据，强调对普通患者就医体验的直接影响。体现新闻时效性，引用最新研究数据，保持客观报道风格，避免过度渲染。",
+        "data_requirements": [
+          "AI诊断准确率对比数据",
+          "手术并发症发生率统计",
+          "患者就医体验改善案例"
+        ],
+        "estimated_word_count": 150,
+        "priority": "high",
+        "sources": ["1", "2"],
+        "multimedia_elements": ["AI医疗应用场景概念图", "诊断准确率对比图表"],
+        "audience_consideration": "用通俗语言解释专业术语，重点突出对普通人看病就医的实际好处，如更准的诊断、更快的康复、更低的费用",
+        "style_guidance": "开门见山，用具体数据说话，避免专业术语堆砌，保持新闻客观性"
+      },
+      {
+        "level": 1,
+        "title": "AI诊断：精准识别微小病灶，癌症筛查准确率达95%",
+        "content_direction": "详细展开AI在诊断领域的突破，重点介绍深度学习系统识别微小肿瘤的能力，对比传统方法70%准确率与AI的95%准确率，强调早期发现对治疗时机的关键意义。引用具体研究案例，保持数据支撑的客观性。",
+        "data_requirements": [
+          "深度学习系统技术原理简化说明",
+          "不同癌症类型诊断准确率细分",
+          "早期发现治疗成功率对比"
+        ],
+        "estimated_word_count": 250,
+        "priority": "high",
+        "sources": ["1"],
+        "multimedia_elements": ["AI识别肿瘤病灶示意图", "传统方法与AI诊断准确率对比柱状图"],
+        "audience_consideration": "用'火眼金睛'等比喻帮助理解AI识别能力，强调'早发现早治疗'对普通人的生命健康价值",
+        "style_guidance": "数据说话，案例支撑，避免技术细节堆砌，突出实际应用价值"
+      },
+      {
+        "level": 1,
+        "title": "机器人手术：并发症降低40%，住院时间缩短30%",
+        "content_direction": "介绍机器人辅助手术系统的临床应用成效，重点说明在心脏手术、神经外科等复杂手术中的表现，用具体数据展示患者获益。分析技术如何提高手术精度，减少人为误差。",
+        "data_requirements": [
+          "机器人手术系统操作原理简化说明",
+          "不同手术类型并发症降低数据",
+          "患者康复时间具体案例"
+        ],
+        "estimated_word_count": 200,
+        "priority": "high",
+        "sources": ["2"],
+        "multimedia_elements": ["机器人手术操作场景配图", "并发症发生率下降趋势图"],
+        "audience_consideration": "重点说明'少受罪、快出院'对患者的意义，用具体康复案例增强说服力",
+        "style_guidance": "客观描述技术成效，用患者获益案例增强报道亲和力"
+      },
+      {
+        "level": 1,
+        "title": "药物研发：AI助力新药开发周期缩短近半",
+        "content_direction": "阐述AI在药物研发中的革命性作用，对比传统10-15年开发周期与AI辅助后的6-8年，说明机器学习预测分子活性的技术原理。强调这对降低药价、加速新药上市的意义。",
+        "data_requirements": [
+          "药物研发各阶段时间对比",
+          "AI预测分子活性成功率",
+          "研发成本降低具体数据"
+        ],
+        "estimated_word_count": 180,
+        "priority": "medium",
+        "sources": ["3"],
+        "multimedia_elements": ["药物研发流程简化图", "研发周期对比信息图"],
+        "audience_consideration": "用'从10年缩短到6年'等直观对比帮助理解，强调最终对药价和用药可及性的影响",
+        "style_guidance": "简化技术原理，突出时间效益和成本效益，保持客观数据支撑"
+      },
+      {
+        "level": 1,
+        "title": "远程医疗：AI让优质医疗资源触手可及",
+        "content_direction": "介绍AI远程医疗平台在服务偏远地区患者方面的突破，说明智能问诊、影像分析、健康监测等功能的集成应用。体现技术对医疗资源均衡分布的社会价值。",
+        "data_requirements": [
+          "远程医疗平台用户覆盖数据",
+          "偏远地区患者受益案例",
+          "服务效率提升具体指标"
+        ],
+        "estimated_word_count": 150,
+        "priority": "medium",
+        "sources": ["4"],
+        "multimedia_elements": ["远程医疗操作界面示意图", "服务覆盖区域地图"],
+        "audience_consideration": "强调'在家就能看名医'的便利性，特别对农村和偏远地区读者的实际价值",
+        "style_guidance": "突出普惠性价值，用具体服务案例说明技术对普通人生活的改变"
+      },
+      {
+        "level": 1,
+        "title": "展望与挑战：AI医疗的未来之路",
+        "content_direction": "客观分析AI医疗发展面临的挑战，如数据隐私、技术可靠性、医生接受度等。同时展望未来发展趋势，保持平衡报道，既不过度乐观也不消极悲观。",
+        "data_requirements": ["行业专家观点引用", "技术可靠性验证数据", "隐私保护措施现状"],
+        "estimated_word_count": 120,
+        "priority": "low",
+        "sources": [],
+        "multimedia_elements": ["AI医疗发展路线图"],
+        "audience_consideration": "用通俗语言说明技术挑战，让读者理性看待AI医疗，既看到机遇也了解局限",
+        "style_guidance": "保持客观中立，平衡报道机遇与挑战，体现新闻报道的全面性"
+      }
+    ],
+    "material_bindings": [
+      {
+        "section_id": 1,
+        "section_title": "导语：AI医疗革命性突破重塑就医体验",
+        "materials": [
+          {
+            "id": "1",
+            "title": "AI诊断系统在癌症早期筛查中的准确性突破",
+            "summary": "最新研究显示，基于深度学习的AI诊断系统在癌症早期筛查中达到95%的准确率，显著高于传统方法的70%。该系统能够识别微小的肿瘤病灶，为患者争取最佳治疗时机。",
+            "content": "基于深度学习的AI诊断系统在癌症早期筛查中达到95%的准确率，显著高于传统方法的70%。该系统能够识别微小的肿瘤病灶，为患者争取最佳治疗时机。该研究发表于权威学术期刊，数据可靠。",
+            "score": 0.95,
+            "published_date": "2024-11-01",
+            "url": "https://example.com/ai-cancer-diagnosis",
+            "source": "学术论文",
+            "relevance_explanation": "直接提供章节所需的AI诊断准确率对比数据（95% vs 70%），完美匹配导语对核心数据的强调要求"
+          },
+          {
+            "id": "2",
+            "title": "机器人辅助手术系统降低并发症风险",
+            "summary": "采用机器人辅助手术系统的患者，术后并发症发生率降低40%，住院时间缩短30%。该技术在心脏手术、神经外科等领域表现突出。",
+            "content": "采用机器人辅助手术系统的患者，术后并发症发生率降低40%，住院时间缩短30%。该技术在心脏手术、神经外科等领域表现突出。基于实际临床案例研究，数据可信。",
+            "score": 0.88,
+            "published_date": "2024-10-15",
+            "url": "https://example.com/robot-surgery",
+            "source": "案例研究",
+            "relevance_explanation": "提供并发症降低40%的关键数据，直接支撑章节对手术并发症发生率统计的需求"
+          },
+          {
+            "id": "4",
+            "title": "远程医疗平台缩小城乡医疗差距",
+            "summary": "基于AI的远程医疗平台让偏远地区患者也能享受到三甲医院的医疗服务。平台集成智能问诊、影像分析和健康监测等功能。",
+            "content": "基于AI的远程医疗平台让偏远地区患者也能享受到三甲医院的医疗服务。平台集成智能问诊、影像分析和健康监测等功能。体现技术对医疗资源均衡分布的价值。",
+            "score": 0.85,
+            "published_date": "2024-09-20",
+            "source": null,
+            "relevance_explanation": "体现AI对就医体验的改善，特别是对普通患者就医便利性的提升，符合章节受众考虑"
+          }
+        ],
+        "binding_type": "required",
+        "binding_reason": "素材1提供核心数据支撑：95%癌症诊断准确率直接对应章节数据需求，素材2提供并发症降低40%数据，素材4体现远程医疗对就医体验的改善。三者协同构建完整的AI医疗革命性影响图景，满足导语章节对核心数据和实际影响的全面需求。",
+        "match_scores": [0.95, 0.88, 0.85],
+        "material_usage_justification": "素材1作为核心数据支撑，提供95%诊断准确率的关键数据；素材2补充并发症降低数据，完善医疗质量提升维度；素材4体现就医便利性改善，三者协同全面展示AI医疗革命性突破对患者就医体验的重塑作用",
+        "section_level": 1
+      },
+      {
+        "section_id": 2,
+        "section_title": "AI诊断：精准识别微小病灶，癌症筛查准确率达95%",
+        "materials": [
+          {
+            "id": "1",
+            "title": "AI诊断系统在癌症早期筛查中的准确性突破",
+            "summary": "最新研究显示，基于深度学习的AI诊断系统在癌症早期筛查中达到95%的准确率，显著高于传统方法的70%。该系统能够识别微小的肿瘤病灶，为患者争取最佳治疗时机。",
+            "content": "基于深度学习的AI诊断系统在癌症早期筛查中达到95%的准确率，显著高于传统方法的70%。该系统能够识别微小的肿瘤病灶，为患者争取最佳治疗时机。该研究发表于权威学术期刊，数据可靠。",
+            "score": 0.95,
+            "published_date": "2024-11-01",
+            "url": "https://example.com/ai-cancer-diagnosis",
+            "source": "学术论文",
+            "relevance_explanation": "与章节标题和内容方向完全一致，提供95%准确率核心数据和识别微小病灶的技术能力说明"
+          }
+        ],
+        "binding_type": "required",
+        "binding_reason": "素材1与本章节主题高度契合，不仅提供95%准确率的核心数据，还详细说明识别微小病灶的能力，完美匹配章节对深度学习系统技术原理和诊断准确率的需求。",
+        "match_scores": [0.95],
+        "material_usage_justification": "素材1完美匹配本章节所有核心需求：提供95%准确率数据、识别微小病灶能力说明、与传统方法70%对比数据，是本章节最核心的支撑素材",
+        "section_level": 1
+      },
+      {
+        "section_id": 3,
+        "section_title": "机器人手术：并发症降低40%，住院时间缩短30%",
+        "materials": [
+          {
+            "id": "2",
+            "title": "机器人辅助手术系统降低并发症风险",
+            "summary": "采用机器人辅助手术系统的患者，术后并发症发生率降低40%，住院时间缩短30%。该技术在心脏手术、神经外科等领域表现突出。",
+            "content": "采用机器人辅助手术系统的患者，术后并发症发生率降低40%，住院时间缩短30%。该技术在心脏手术、神经外科等领域表现突出。基于实际临床案例研究，数据可信。",
+            "score": 0.88,
+            "published_date": "2024-10-15",
+            "url": "https://example.com/robot-surgery",
+            "source": "案例研究",
+            "relevance_explanation": "完全匹配章节标题中的核心数据（并发症降低40%，住院时间缩短30%），并在复杂手术领域的表现说明符合内容方向"
+          }
+        ],
+        "binding_type": "required",
+        "binding_reason": "素材2直接提供并发症降低40%和住院时间缩短30%的核心数据，完全匹配章节标题和数据需求，且在心脏手术、神经外科等领域的表现说明符合章节内容方向。",
+        "match_scores": [0.88],
+        "material_usage_justification": "素材2是本章节最核心的支撑素材，直接提供标题中强调的两个关键数据指标，且来源可靠，能够充分支撑机器人手术成效的论述",
+        "section_level": 1
+      },
+      {
+        "section_id": 4,
+        "section_title": "药物研发：AI助力新药开发周期缩短近半",
+        "materials": [
+          {
+            "id": "3",
+            "title": "AI药物研发加速新药上市进程",
+            "summary": "AI技术在新药研发中的应用使药物开发周期从10-15年缩短至6-8年，大幅降低研发成本。机器学习模型能够预测分子活性和副作用，提高研发成功率。",
+            "content": "AI技术在新药研发中的应用使药物开发周期从10-15年缩短至6-8年，大幅降低研发成本。机器学习模型能够预测分子活性和副作用，提高研发成功率。",
+            "score": 0.92,
+            "published_date": null,
+            "source": null,
+            "relevance_explanation": "完美匹配章节核心数据需求：提供10-15年缩短至6-8年的开发周期对比数据，并说明机器学习预测分子活性的技术原理"
+          }
+        ],
+        "binding_type": "required",
+        "binding_reason": "素材3直接提供新药开发周期从10-15年缩短至6-8年的核心数据，完美匹配章节对药物研发时间对比的需求，同时涵盖机器学习预测分子活性的技术原理说明。",
+        "match_scores": [0.92],
+        "material_usage_justification": "素材3是本章节最合适的支撑素材，不仅提供开发周期缩短的核心数据，还涵盖技术原理说明，能够完整支撑AI在药物研发中革命性作用的论述",
+        "section_level": 1
+      },
+      {
+        "section_id": 5,
+        "section_title": "远程医疗：AI让优质医疗资源触手可及",
+        "materials": [
+          {
+            "id": "4",
+            "title": "远程医疗平台缩小城乡医疗差距",
+            "summary": "基于AI的远程医疗平台让偏远地区患者也能享受到三甲医院的医疗服务。平台集成智能问诊、影像分析和健康监测等功能。",
+            "content": "基于AI的远程医疗平台让偏远地区患者也能享受到三甲医院的医疗服务。平台集成智能问诊、影像分析和健康监测等功能。体现技术对医疗资源均衡分布的价值。",
+            "score": 0.85,
+            "published_date": "2024-09-20",
+            "source": null,
+            "relevance_explanation": "完全匹配远程医疗主题，说明平台功能集成和服务偏远地区患者的作用，符合章节对医疗资源均衡分布社会价值的体现"
+          }
+        ],
+        "binding_type": "required",
+        "binding_reason": "素材4直接对应远程医疗主题，说明AI远程医疗平台在服务偏远地区患者方面的作用，集成智能问诊、影像分析等功能，完美匹配章节内容方向和数据需求。",
+        "match_scores": [0.85],
+        "material_usage_justification": "素材4是本章节最核心的支撑素材，直接对应远程医疗主题，说明平台功能和普惠价值，能够完整支撑AI让优质医疗资源触手可及的论述",
+        "section_level": 1
+      },
+      {
+        "section_id": 6,
+        "section_title": "展望与挑战：AI医疗的未来之路",
+        "materials": [
+          {
+            "id": "1",
+            "title": "AI诊断系统在癌症早期筛查中的准确性突破",
+            "summary": "最新研究显示，基于深度学习的AI诊断系统在癌症早期筛查中达到95%的准确率，显著高于传统方法的70%。该系统能够识别微小的肿瘤病灶，为患者争取最佳治疗时机。",
+            "content": "基于深度学习的AI诊断系统在癌症早期筛查中达到95%的准确率，显著高于传统方法的70%。该系统能够识别微小的肿瘤病灶，为患者争取最佳治疗时机。该研究发表于权威学术期刊，数据可靠。",
+            "score": 0.95,
+            "published_date": "2024-11-01",
+            "url": "https://example.com/ai-cancer-diagnosis",
+            "source": "学术论文",
+            "relevance_explanation": "作为技术可靠性的正面案例参考，但需要平衡报道技术局限性"
+          }
+        ],
+        "binding_type": "reference",
+        "binding_reason": "虽然现有素材主要聚焦技术成效，但可以引用素材1、2、3、4中涉及的技术可靠性、数据隐私等隐含信息作为背景参考，同时需要指出素材在挑战分析方面的局限性。",
+        "match_scores": [0.6],
+        "material_usage_justification": "素材1提供技术可靠性参考，但现有素材在挑战分析方面存在明显缺口，建议补充专门讨论AI医疗挑战的素材",
+        "section_level": 1
+      }
+    ],
+    "generation_summary": "",
+    "final_report": "成功绑定 6 个章节的素材",
+    "used_research_agent": false,
+    "total_sections": 12,
+    "total_word_estimate": 2100,
+    "total_materials_bound": 8
+  },
+  "created_at": "2025-11-12T12:24:58.206585Z",
+  "updated_at": "2025-11-12T12:27:37.996502Z"
+}

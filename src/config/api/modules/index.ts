@@ -14,7 +14,7 @@ import { retrievalService } from './retrieval'
 import { tasksService } from './tasks'
 import { searchAgentService } from './search-agent'
 import { searchToolsService } from './search-tools'
-import { documentGenerateService } from './ document_generate'
+import { documentGenerateService } from './document_generate'
 import { healthService } from './health'
 
 export const API_MODULES = {

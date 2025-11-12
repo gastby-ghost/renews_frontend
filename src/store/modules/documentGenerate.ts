@@ -1218,9 +1218,9 @@ export const useDocumentGenerateStore = defineStore('documentGenerateStore', () 
     const pid = projectId || currentProjectId.value
     if (!pid) {
       console.warn('[DEBUG] getProjectStorageKey: 未提供项目ID，使用默认键')
-      return ' document_generate-store-default'
+      return 'document_generate-store-default'
     }
-    return ` document_generate-store-${pid}`
+    return `document_generate-store-${pid}`
   }
 
   /**

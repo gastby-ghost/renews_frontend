@@ -28,7 +28,7 @@ import {
   generateTitleToolsStatusResponse,
   generateOutlineGenerationResponse,
   generateOutlineToolsStatusResponse
-} from './data/ document_generate'
+} from './data/document-generate'
 import {
   generateHealthCheckResponse,
   generateMetricsResponse,
@@ -62,7 +62,7 @@ export * from './data/material/list'
 export * from './data/search/results'
 
 // 文档生成相关Mock数据
-export * from './data/ document_generate'
+export * from './data/document-generate'
 
 // 认证相关Mock数据
 export * from './data/auth'
