@@ -5,13 +5,9 @@
 
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type {
-  MaterialBindRequest,
-  MaterialBindStatusResponse,
-  MaterialBindResult
-} from '@/types/ai'
+import type { MaterialBindRequest, MaterialBindStatusResponse } from '@/types/ai'
 import { documentGenerateService } from '@/services/documentGenerateService'
-import { AsyncTaskPoller, type PollingTask, TaskStatus } from '@/utils/polling/asyncTaskPoller'
+import type { PollingTask } from '@/utils/polling/asyncTaskPoller'
 import { ElMessage } from 'element-plus'
 
 export const useMaterialBindStore = defineStore(
@@ -86,31 +82,31 @@ export const useMaterialBindStore = defineStore(
       projectId: string,
       request: MaterialBindRequest
     ): Promise<PollingTask> => {
-      console.log('========================================');
-      console.log('[STORE] executeMaterialBind 开始执行');
-      console.log('[STORE] userId:', userId);
-      console.log('[STORE] projectId:', projectId);
-      console.log('[STORE] request.title:', request.title);
-      console.log('[STORE] request.outline_sections 数量:', request.outline_sections.length);
-      console.log('[STORE] request.materials 数量:', request.materials.length);
-      console.log('========================================');
+      console.log('========================================')
+      console.log('[STORE] executeMaterialBind 开始执行')
+      console.log('[STORE] userId:', userId)
+      console.log('[STORE] projectId:', projectId)
+      console.log('[STORE] request.title:', request.title)
+      console.log('[STORE] request.outline_sections 数量:', request.outline_sections.length)
+      console.log('[STORE] request.materials 数量:', request.materials.length)
+      console.log('========================================')
 
       try {
-        console.log('[STORE] 设置 loading = true');
+        console.log('[STORE] 设置 loading = true')
         loading.value = true
         error.value = null
 
         // 清空之前的任务状态
         if (currentTask.value) {
-          console.log('[STORE] 发现已有任务，先取消');
+          console.log('[STORE] 发现已有任务，先取消')
           await cancelCurrentTask()
         }
 
         // 启动新任务
-        console.log('[STORE] 调用 documentGenerateService.executeMaterialBindWithPolling');
-        console.log('[STORE] 参数 userId:', userId);
-        console.log('[STORE] 参数 projectId:', projectId);
-        console.log('[STORE] 参数 request.title:', request.title);
+        console.log('[STORE] 调用 documentGenerateService.executeMaterialBindWithPolling')
+        console.log('[STORE] 参数 userId:', userId)
+        console.log('[STORE] 参数 projectId:', projectId)
+        console.log('[STORE] 参数 request.title:', request.title)
 
         const poller = await documentGenerateService.executeMaterialBindWithPolling(
           userId,
@@ -122,21 +118,21 @@ export const useMaterialBindStore = defineStore(
           }
         )
 
-        console.log('[STORE] documentGenerateService.executeMaterialBindWithPolling 返回:', poller);
-        console.log('[STORE] poller.id:', poller.id);
-        console.log('[STORE] poller.isPolling:', poller.isPolling);
+        console.log('[STORE] documentGenerateService.executeMaterialBindWithPolling 返回:', poller)
+        console.log('[STORE] poller.id:', poller.id)
+        console.log('[STORE] poller.isPolling:', poller.isPolling)
 
         // 监听轮询事件
-        console.log('[STORE] 设置事件监听器');
+        console.log('[STORE] 设置事件监听器')
         poller.on('progress', (result: any) => {
-          console.log('[STORE] 收到 progress 事件:', result);
+          console.log('[STORE] 收到 progress 事件:', result)
           if (result.data) {
             taskStatus.value = result.data
           }
         })
 
         poller.on('completed', (result: any) => {
-          console.log('[STORE] 收到 completed 事件:', result);
+          console.log('[STORE] 收到 completed 事件:', result)
           if (result.data) {
             taskStatus.value = result.data
           }
@@ -150,25 +146,25 @@ export const useMaterialBindStore = defineStore(
         })
 
         poller.on('failed', (error: any) => {
-          console.error('[STORE] 收到 failed 事件:', error);
+          console.error('[STORE] 收到 failed 事件:', error)
           loading.value = false
           error.value = error.message || '素材绑定失败'
           ElMessage.error(error.value)
         })
 
         poller.on('timeout', () => {
-          console.warn('[STORE] 收到 timeout 事件');
+          console.warn('[STORE] 收到 timeout 事件')
           loading.value = false
           error.value = '素材绑定超时'
           ElMessage.error(error.value)
         })
 
         currentTask.value = poller
-        console.log('[STORE] 设置 currentTask = poller');
-        console.log('[STORE] executeMaterialBind 执行完成，返回 poller');
+        console.log('[STORE] 设置 currentTask = poller')
+        console.log('[STORE] executeMaterialBind 执行完成，返回 poller')
         return poller
       } catch (err) {
-        console.error('[STORE] 捕获到异常:', err);
+        console.error('[STORE] 捕获到异常:', err)
         loading.value = false
         error.value = err instanceof Error ? err.message : '启动素材绑定任务失败'
         ElMessage.error(error.value)
@@ -273,6 +269,25 @@ export const useMaterialBindStore = defineStore(
       return material?.relevance_explanation || ''
     }
 
+    /**
+     * 更新绑定结果（用于外部调用）
+     * @param result 绑定结果数据
+     */
+    const updateBindingResult = (result: any) => {
+      console.log('[STORE] updateBindingResult 被调用:', result)
+      taskStatus.value = {
+        task_id: `manual_${Date.now()}`,
+        status: 'completed',
+        progress: 100,
+        result: result,
+        error: null,
+        success: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }
+      console.log('[STORE] taskStatus 已更新:', taskStatus.value)
+    }
+
     // ========== 状态重置 ==========
 
     /**
@@ -314,14 +329,14 @@ export const useMaterialBindStore = defineStore(
 
       // 工具方法
       clearHistory,
+      updateBindingResult,
       reset
     }
   },
   {
     persist: {
       key: 'material-bind',
-      storage: localStorage,
-      paths: ['taskHistory']
+      storage: localStorage
     }
   }
 )

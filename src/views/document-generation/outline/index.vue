@@ -52,12 +52,14 @@
         @clear-selection="() => (selectedMaterials = [])"
         @toggle-material-selection="toggleMaterialSelection"
         @preview-material="(m) => console.log('预览素材:', m)"
-        @ai-bind="() => {
-          console.log('[INDEX] 接收到 ai-bind 事件');
-          console.log('[INDEX] 调用 handleAIBindMaterials 方法');
-          handleAIBindMaterials();
-          console.log('[INDEX] handleAIBindMaterials 调用完成');
-        }"
+        @ai-bind="
+          () => {
+            console.log('[INDEX] 接收到 ai-bind 事件')
+            console.log('[INDEX] 调用 handleAIBindMaterials 方法')
+            handleAIBindMaterials()
+            console.log('[INDEX] handleAIBindMaterials 调用完成')
+          }
+        "
         @bind-material-to-section="bindMaterialToSection"
         @unbind-material-from-section="unbindMaterialFromSection"
       />
@@ -179,39 +181,11 @@
 
     generatingOutline.value = true
     try {
-      // 第一步：生成大纲
-      const response = await outline.generateOutline(
-        documentStore.documentState.selectedTitle,
-        documentStore.documentState.researchBrief,
-        documentStore.documentState.searchResults
-      )
-
-      if (response && response.outline) {
-        // 保存大纲到本地状态
-        outline.state.generatedOutline = response.outline
-        // 同时保存到store
-        documentStore.updateDocumentState({
-          generatedOutline: response.outline
-        })
-
-        // 第二步：AI智能绑定素材
-        try {
-          const bindingResult = await outline.bindMaterialsWithAI(
-            selectedMaterials.value,
-            selectedTitle.value,
-            documentStore.documentState.researchBrief || ''
-          )
-
-          if (bindingResult.success) {
-            ElMessage.success(`AI完整生成成功！${bindingResult.message}`)
-          }
-        } catch (bindingError) {
-          console.warn('素材绑定失败，但大纲已生成:', bindingError)
-          ElMessage.warning('大纲生成成功，但素材绑定失败，请手动进行素材绑定')
-        }
-      }
-    } catch {
-      ElMessage.error('AI完整生成失败')
+      // 调用新的API：同时生成大纲并绑定素材
+      await outline.generateAICompleteOutline()
+    } catch (error) {
+      console.error('AI完整生成失败:', error)
+      ElMessage.error('AI完整生成失败，请重试')
     } finally {
       generatingOutline.value = false
     }

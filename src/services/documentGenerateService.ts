@@ -246,23 +246,23 @@ class DocumentGenerateService extends BaseApiService {
     task_id?: string
     error?: string
   }> {
-    console.log('========================================');
-    console.log('[SERVICE] executeMaterialBind 开始执行');
-    console.log('[SERVICE] userId:', userId);
-    console.log('[SERVICE] projectId:', projectId);
-    console.log('[SERVICE] request.title:', request.title);
-    console.log('[SERVICE] request.outline_sections 数量:', request.outline_sections.length);
-    console.log('[SERVICE] request.materials 数量:', request.materials.length);
-    console.log('[SERVICE] API端点: POST /material-bind/execute');
-    console.log('========================================');
+    console.log('========================================')
+    console.log('[SERVICE] executeMaterialBind 开始执行')
+    console.log('[SERVICE] userId:', userId)
+    console.log('[SERVICE] projectId:', projectId)
+    console.log('[SERVICE] request.title:', request.title)
+    console.log('[SERVICE] request.outline_sections 数量:', request.outline_sections.length)
+    console.log('[SERVICE] request.materials 数量:', request.materials.length)
+    console.log('[SERVICE] API端点: POST /material-bind/execute')
+    console.log('========================================')
 
     const result = await this.post('/material-bind/execute', request, {
       params: { user_id: userId, project_id: projectId },
       ...options
     })
 
-    console.log('[SERVICE] this.post 返回结果:', result);
-    console.log('[SERVICE] executeMaterialBind 执行完成');
+    console.log('[SERVICE] this.post 返回结果:', result)
+    console.log('[SERVICE] executeMaterialBind 执行完成')
     return result
   }
 
@@ -330,37 +330,45 @@ class DocumentGenerateService extends BaseApiService {
     },
     pollingConfig?: PollingConfig
   ): Promise<PollingTask> {
-    console.log('========================================');
-    console.log('[SERVICE] executeMaterialBindWithPolling 开始执行');
-    console.log('[SERVICE] userId:', userId);
-    console.log('[SERVICE] projectId:', projectId);
-    console.log('[SERVICE] request.title:', request.title);
-    console.log('[SERVICE] pollingConfig:', pollingConfig);
-    console.log('========================================');
+    console.log('========================================')
+    console.log('[SERVICE] executeMaterialBindWithPolling 开始执行')
+    console.log('[SERVICE] userId:', userId)
+    console.log('[SERVICE] projectId:', projectId)
+    console.log('[SERVICE] request.title:', request.title)
+    console.log('[SERVICE] pollingConfig:', pollingConfig)
+    console.log('========================================')
 
-    console.log('[SERVICE] 第一步：调用 executeMaterialBind 创建任务');
+    console.log('[SERVICE] 第一步：调用 executeMaterialBind 创建任务')
     const response = await this.executeMaterialBind(userId, projectId, request)
-    console.log('[SERVICE] executeMaterialBind 返回:', response);
+    console.log('[SERVICE] executeMaterialBind 返回:', response)
 
     if (!response.success || !response.task_id) {
-      console.error('[SERVICE] 错误：任务创建失败，response:', response);
+      console.error('[SERVICE] 错误：任务创建失败，response:', response)
       throw new Error(`素材绑定任务启动失败: ${response.message || '未知错误'}`)
     }
 
     const taskId = response.task_id
-    console.log('[SERVICE] 任务创建成功，taskId:', taskId);
+    console.log('[SERVICE] 任务创建成功，taskId:', taskId)
 
-    console.log('[SERVICE] 第二步：创建 AsyncTaskPoller');
+    console.log('[SERVICE] 第二步：创建 AsyncTaskPoller')
     const poller = new AsyncTaskPoller(
       () => {
-        console.log('[SERVICE POLLER] 执行状态检查...');
-        return this.getMaterialBindStatus(taskId).then((result) => {
-          console.log('[SERVICE POLLER] 状态检查结果:', result);
+        console.log('[SERVICE POLLER] 执行状态检查...')
+        return this.getMaterialBindStatus(taskId).then((result: any) => {
+          console.log('[SERVICE POLLER] 状态检查结果:', result)
+          const statusMap: Record<string, TaskStatus> = {
+            pending: TaskStatus.PENDING,
+            running: TaskStatus.RUNNING,
+            completed: TaskStatus.COMPLETED,
+            failed: TaskStatus.FAILED
+          }
+          const mappedStatus = statusMap[result.status] || TaskStatus.RUNNING
+
           return {
-            status: result.status || TaskStatus.RUNNING,
+            status: mappedStatus,
             data: result,
-            isCompleted: result.status === TaskStatus.COMPLETED || result.status === 'completed',
-            isFailed: result.status === TaskStatus.FAILED || result.status === 'failed'
+            isCompleted: result.status === 'completed',
+            isFailed: result.status === 'failed'
           }
         })
       },
@@ -372,10 +380,10 @@ class DocumentGenerateService extends BaseApiService {
       }
     )
 
-    console.log('[SERVICE] 第三步：启动 poller.start()');
+    console.log('[SERVICE] 第三步：启动 poller.start()')
     const task = poller.start(`material-bind-${taskId}`)
-    console.log('[SERVICE] poller.start() 返回:', task);
-    console.log('[SERVICE] executeMaterialBindWithPolling 执行完成');
+    console.log('[SERVICE] poller.start() 返回:', task)
+    console.log('[SERVICE] executeMaterialBindWithPolling 执行完成')
     return task
   }
 
@@ -414,6 +422,185 @@ class DocumentGenerateService extends BaseApiService {
   }> {
     console.warn('bindMaterialsWithAI 已废弃，请使用 executeMaterialBind 替代')
     return this.post('/ai/bind-materials', request, options)
+  }
+
+  // ============= Outline With Material 服务 =============
+
+  /**
+   * 执行大纲与素材生成
+   * @param userId - 用户ID
+   * @param projectId - 项目ID
+   * @param request - 大纲与素材生成请求参数
+   * @param options - 请求配置选项
+   * @returns 大纲与素材生成响应
+   */
+  async executeOutlineWithMaterial(
+    userId: string,
+    projectId: string,
+    request: {
+      title: string
+      materials: any[]
+      research_brief?: string
+      force_research?: boolean
+    },
+    options?: ApiRequestConfig
+  ): Promise<{
+    task_id: string
+    status: 'started' | 'pending'
+    message: string
+  }> {
+    return this.post('/outline-with-material/execute', request, {
+      params: { user_id: userId, project_id: projectId },
+      ...options
+    })
+  }
+
+  /**
+   * 获取大纲与素材生成任务状态
+   * @param taskId - 任务ID
+   * @param userId - 用户ID
+   * @param projectId - 项目ID（可选）
+   * @param options - 请求配置选项
+   * @returns 任务状态响应
+   */
+  async getOutlineWithMaterialTask(
+    taskId: string,
+    userId: string,
+    projectId?: string,
+    options?: ApiRequestConfig
+  ): Promise<{
+    task_id: string
+    status: 'pending' | 'running' | 'completed' | 'failed'
+    data?: {
+      title: string
+      outline: Array<{
+        level: number
+        title: string
+        content_direction: string
+        data_requirements: string[]
+        estimated_word_count: number
+        priority: 'high' | 'medium' | 'low'
+        sources: string[]
+        multimedia_elements?: string[]
+        audience_consideration?: string
+        style_guidance?: string
+      }>
+      material_bindings: Array<{
+        section_id: number
+        section_title: string
+        materials: Array<{
+          id: string
+          title: string
+          summary: string
+          content: string
+          score: number
+          published_date: string
+          url: string
+          source: string
+          relevance_explanation: string
+        }>
+        binding_type: string
+        binding_reason: string
+        match_scores: number[]
+        material_usage_justification: string
+        section_level: number
+      }>
+      generation_summary: string
+      final_report: string
+      used_research_agent: boolean
+      total_sections: number
+      total_word_estimate: number
+      total_materials_bound: number
+    }
+    created_at: string
+    updated_at: string
+  }> {
+    const params: any = { user_id: userId }
+    if (projectId) params.project_id = projectId
+
+    return this.get(`/outline-with-material/task/${taskId}`, params, options)
+  }
+
+  /**
+   * 启动大纲与素材生成任务并轮询完成
+   * @param userId 用户ID
+   * @param projectId 项目ID
+   * @param request 大纲与素材生成请求参数
+   * @param pollingConfig 轮询配置
+   * @returns 轮询任务实例
+   */
+  async executeOutlineWithMaterialWithPolling(
+    userId: string,
+    projectId: string,
+    request: {
+      title: string
+      materials: any[]
+      research_brief?: string
+      force_research?: boolean
+    },
+    pollingConfig?: PollingConfig
+  ): Promise<PollingTask> {
+    const response = await this.executeOutlineWithMaterial(userId, projectId, request)
+    const taskId = (response as any).task_id
+
+    if (!taskId) {
+      throw new Error('大纲与素材生成任务启动失败：未获取到任务ID')
+    }
+
+    const poller = new AsyncTaskPoller(
+      () =>
+        this.getOutlineWithMaterialTask(taskId, userId, projectId).then((result: any) => {
+          const statusMap: Record<string, TaskStatus> = {
+            pending: TaskStatus.PENDING,
+            running: TaskStatus.RUNNING,
+            completed: TaskStatus.COMPLETED,
+            failed: TaskStatus.FAILED
+          }
+          const mappedStatus = statusMap[result.status] || TaskStatus.RUNNING
+
+          return {
+            status: mappedStatus,
+            data: result,
+            isCompleted: result.status === 'completed',
+            isFailed: result.status === 'failed'
+          }
+        }),
+      {
+        interval: 2000,
+        timeout: 180000,
+        maxAttempts: 90,
+        ...pollingConfig
+      }
+    )
+
+    return poller.start(`outline-with-material-${taskId}`)
+  }
+
+  /**
+   * 取消大纲与素材生成任务
+   * @param taskId - 任务ID
+   * @param userId - 用户ID
+   * @param projectId - 项目ID（可选）
+   * @param options - 请求配置选项
+   * @returns 取消响应
+   */
+  async cancelOutlineWithMaterialTask(
+    taskId: string,
+    userId: string,
+    projectId?: string,
+    options?: ApiRequestConfig
+  ): Promise<{
+    task_id: string
+    status: string
+    message: string
+  }> {
+    const params: any = { user_id: userId }
+    if (projectId) params.project_id = projectId
+
+    return this.post(`/outline-with-material/cancel/${taskId}`, undefined, {
+      ...params,
+      ...options
+    })
   }
 
   // ============= Search2Title Agent 服务 =============
@@ -1461,6 +1648,198 @@ class DocumentGenerateService extends BaseApiService {
         }
       }
 
+      if (method === 'POST' && url.includes('/outline-with-material/execute')) {
+        const taskId = `outline_material_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+
+        console.log('[MOCK] 大纲与素材生成任务已创建:', taskId)
+        console.log('[MOCK] 请求参数:', requestData)
+
+        return {
+          task_id: taskId,
+          status: 'started',
+          message: '大纲与素材生成任务已启动'
+        }
+      }
+
+      if (method === 'GET' && url.includes('/outline-with-material/task/')) {
+        const parts = url.split('/')
+        const taskIndex = parts.indexOf('task')
+        const taskId = taskIndex > -1 ? parts[taskIndex + 1] : ''
+
+        console.log('[MOCK] 检查大纲与素材生成任务状态:', taskId)
+
+        // 模拟进度变化
+        const elapsed = Date.now() - parseInt(taskId.split('_')[2] || '0')
+        const progress = Math.min(100, Math.floor(elapsed / 100))
+
+        if (progress < 100) {
+          return {
+            task_id: taskId,
+            status: 'running',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }
+        } else {
+          // 返回完整的模拟数据（基于responsedata.json）
+          const mockResult = {
+            title: requestData?.title || '人工智能在医疗领域的革命性突破',
+            outline: [
+              {
+                level: 1,
+                title: '导语：AI医疗革命性突破重塑就医体验',
+                content_direction:
+                  '采用倒金字塔结构，开篇点明AI在医疗领域的革命性影响，突出95%癌症诊断准确率、40%并发症降低等核心数据，强调对普通患者就医体验的直接影响。体现新闻时效性，引用最新研究数据，保持客观报道风格，避免过度渲染。',
+                data_requirements: [
+                  'AI诊断准确率对比数据',
+                  '手术并发症发生率统计',
+                  '患者就医体验改善案例'
+                ],
+                estimated_word_count: 150,
+                priority: 'high',
+                sources: ['1', '2'],
+                multimedia_elements: ['AI医疗应用场景概念图', '诊断准确率对比图表'],
+                audience_consideration:
+                  '用通俗语言解释专业术语，重点突出对普通人看病就医的实际好处，如更准的诊断、更快的康复、更低的费用',
+                style_guidance: '开门见山，用具体数据说话，避免专业术语堆砌，保持新闻客观性'
+              },
+              {
+                level: 1,
+                title: 'AI诊断：精准识别微小病灶，癌症筛查准确率达95%',
+                content_direction:
+                  '详细展开AI在诊断领域的突破，重点介绍深度学习系统识别微小肿瘤的能力，对比传统方法70%准确率与AI的95%准确率，强调早期发现对治疗时机的关键意义。引用具体研究案例，保持数据支撑的客观性。',
+                data_requirements: [
+                  '深度学习系统技术原理简化说明',
+                  '不同癌症类型诊断准确率细分',
+                  '早期发现治疗成功率对比'
+                ],
+                estimated_word_count: 250,
+                priority: 'high',
+                sources: ['1'],
+                multimedia_elements: ['AI识别肿瘤病灶示意图', '传统方法与AI诊断准确率对比柱状图'],
+                audience_consideration:
+                  "用'火眼金睛'等比喻帮助理解AI识别能力，强调'早发现早治疗'对普通人的生命健康价值",
+                style_guidance: '数据说话，案例支撑，避免技术细节堆砌，突出实际应用价值'
+              },
+              {
+                level: 1,
+                title: '机器人手术：并发症降低40%，住院时间缩短30%',
+                content_direction:
+                  '介绍机器人辅助手术系统的临床应用成效，重点说明在心脏手术、神经外科等复杂手术中的表现，用具体数据展示患者获益。分析技术如何提高手术精度，减少人为误差。',
+                data_requirements: [
+                  '机器人手术系统操作原理简化说明',
+                  '不同手术类型并发症降低数据',
+                  '患者康复时间具体案例'
+                ],
+                estimated_word_count: 200,
+                priority: 'high',
+                sources: ['2'],
+                multimedia_elements: ['机器人手术操作场景配图', '并发症发生率下降趋势图'],
+                audience_consideration:
+                  "重点说明'少受罪、快出院'对患者的意义，用具体康复案例增强说服力",
+                style_guidance: '客观描述技术成效，用患者获益案例增强报道亲和力'
+              }
+            ],
+            material_bindings: [
+              {
+                section_id: 1,
+                section_title: '导语：AI医疗革命性突破重塑就医体验',
+                materials: [
+                  {
+                    id: '1',
+                    title: 'AI诊断系统在癌症早期筛查中的准确性突破',
+                    summary:
+                      '最新研究显示，基于深度学习的AI诊断系统在癌症早期筛查中达到95%的准确率，显著高于传统方法的70%。该系统能够识别微小的肿瘤病灶，为患者争取最佳治疗时机。',
+                    content:
+                      '基于深度学习的AI诊断系统在癌症早期筛查中达到95%的准确率，显著高于传统方法的70%。该系统能够识别微小的肿瘤病灶，为患者争取最佳治疗时机。',
+                    score: 0.95,
+                    published_date: '2024-11-01',
+                    url: 'https://example.com/ai-cancer-diagnosis',
+                    source: '学术论文',
+                    relevance_explanation:
+                      '直接提供章节所需的AI诊断准确率对比数据（95% vs 70%），完美匹配导语对核心数据的强调要求'
+                  }
+                ],
+                binding_type: 'required',
+                binding_reason:
+                  '素材1提供核心数据支撑：95%癌症诊断准确率直接对应章节数据需求，素材2提供并发症降低40%数据，素材4体现远程医疗对就医体验的改善。',
+                match_scores: [0.95],
+                material_usage_justification:
+                  '素材1作为核心数据支撑，提供95%诊断准确率的关键数据，完美匹配导语章节需求',
+                section_level: 1
+              },
+              {
+                section_id: 2,
+                section_title: 'AI诊断：精准识别微小病灶，癌症筛查准确率达95%',
+                materials: [
+                  {
+                    id: '1',
+                    title: 'AI诊断系统在癌症早期筛查中的准确性突破',
+                    summary:
+                      '最新研究显示，基于深度学习的AI诊断系统在癌症早期筛查中达到95%的准确率，显著高于传统方法的70%。该系统能够识别微小的肿瘤病灶，为患者争取最佳治疗时机。',
+                    content:
+                      '基于深度学习的AI诊断系统在癌症早期筛查中达到95%的准确率，显著高于传统方法的70%。该系统能够识别微小的肿瘤病灶，为患者争取最佳治疗时机。',
+                    score: 0.95,
+                    published_date: '2024-11-01',
+                    url: 'https://example.com/ai-cancer-diagnosis',
+                    source: '学术论文',
+                    relevance_explanation:
+                      '与章节标题和内容方向完全一致，提供95%准确率核心数据和识别微小病灶的能力说明'
+                  }
+                ],
+                binding_type: 'required',
+                binding_reason:
+                  '素材1与本章节主题高度契合，不仅提供95%准确率的核心数据，还详细说明识别微小病灶的能力，完美匹配章节需求。',
+                match_scores: [0.95],
+                material_usage_justification:
+                  '素材1完美匹配本章节所有核心需求，提供95%准确率数据和识别微小病灶能力说明',
+                section_level: 1
+              },
+              {
+                section_id: 3,
+                section_title: '机器人手术：并发症降低40%，住院时间缩短30%',
+                materials: [
+                  {
+                    id: '2',
+                    title: '机器人辅助手术系统降低并发症风险',
+                    summary:
+                      '采用机器人辅助手术系统的患者，术后并发症发生率降低40%，住院时间缩短30%。该技术在心脏手术、神经外科等领域表现突出。',
+                    content:
+                      '采用机器人辅助手术系统的患者，术后并发症发生率降低40%，住院时间缩短30%。该技术在心脏手术、神经外科等领域表现突出。',
+                    score: 0.88,
+                    published_date: '2024-10-15',
+                    url: 'https://example.com/robot-surgery',
+                    source: '案例研究',
+                    relevance_explanation:
+                      '完全匹配章节标题中的核心数据（并发症降低40%，住院时间缩短30%），并在复杂手术领域的表现说明符合内容方向'
+                  }
+                ],
+                binding_type: 'required',
+                binding_reason:
+                  '素材2直接提供并发症降低40%和住院时间缩短30%的核心数据，完全匹配章节标题和数据需求。',
+                match_scores: [0.88],
+                material_usage_justification:
+                  '素材2是本章节最核心的支撑素材，直接提供标题中强调的两个关键数据指标',
+                section_level: 1
+              }
+            ],
+            generation_summary: '',
+            final_report: '成功绑定 3 个章节的素材',
+            used_research_agent: false,
+            total_sections: 3,
+            total_word_estimate: 600,
+            total_materials_bound: 3
+          }
+
+          return {
+            task_id: taskId,
+            status: 'completed',
+            data: mockResult,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }
+        }
+      }
+
       if (method === 'POST' && url.includes('/search2title-agent/execute')) {
         return mockDataManager.getMockData(
           'search2title-agent-execute',
@@ -1487,54 +1866,54 @@ class DocumentGenerateService extends BaseApiService {
 
       // ============= 素材绑定服务 Mock =============
       if (method === 'POST' && url.includes('/material-bind/execute')) {
-        console.log('[MOCK] ========================================');
-        console.log('[MOCK] 收到 POST /material-bind/execute 请求');
-        console.log('[MOCK] user_id:', params.user_id);
-        console.log('[MOCK] project_id:', params.project_id);
-        console.log('[MOCK] requestData:', requestData);
-        console.log('[MOCK] ========================================');
-        
+        console.log('[MOCK] ========================================')
+        console.log('[MOCK] 收到 POST /material-bind/execute 请求')
+        console.log('[MOCK] user_id:', params.user_id)
+        console.log('[MOCK] project_id:', params.project_id)
+        console.log('[MOCK] requestData:', requestData)
+        console.log('[MOCK] ========================================')
+
         // 生成任务ID
         const taskId = `material_bind_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-        
-        console.log('[MOCK] 生成的 taskId:', taskId);
-        console.log('[MOCK] 准备返回响应');
-        
+
+        console.log('[MOCK] 生成的 taskId:', taskId)
+        console.log('[MOCK] 准备返回响应')
+
         // 模拟异步任务创建
         setTimeout(() => {
           // 模拟任务处理完成
-          console.log('[MOCK] 模拟任务处理完成:', taskId);
+          console.log('[MOCK] 模拟任务处理完成:', taskId)
         }, 3000)
-        
+
         const response = {
           success: true,
           message: '素材绑定任务已创建',
           task_id: taskId
-        };
-        
-        console.log('[MOCK] 返回响应:', response);
-        return response;
+        }
+
+        console.log('[MOCK] 返回响应:', response)
+        return response
       }
 
       if (method === 'GET' && url.includes('/material-bind/status/')) {
         const parts = url.split('/')
         const statusIndex = parts.indexOf('status')
         const taskId = statusIndex > -1 ? parts[statusIndex + 1] : ''
-        
-        console.log('[MOCK] ========================================');
-        console.log('[MOCK] 收到 GET /material-bind/status/', taskId);
-        console.log('[MOCK] taskId:', taskId);
-        
+
+        console.log('[MOCK] ========================================')
+        console.log('[MOCK] 收到 GET /material-bind/status/', taskId)
+        console.log('[MOCK] taskId:', taskId)
+
         // 模拟进度变化
         const elapsed = Date.now() - parseInt(taskId.split('_')[2] || '0')
         const progress = Math.min(100, Math.floor(elapsed / 30)) // 每30ms增加1%
-        
-        console.log('[MOCK] elapsed:', elapsed, 'ms');
-        console.log('[MOCK] progress:', progress, '%');
-        
+
+        console.log('[MOCK] elapsed:', elapsed, 'ms')
+        console.log('[MOCK] progress:', progress, '%')
+
         if (progress < 100) {
           // 任务进行中
-          console.log('[MOCK] 任务进行中，返回 running 状态');
+          console.log('[MOCK] 任务进行中，返回 running 状态')
           const response = {
             success: true,
             task_id: taskId,
@@ -1544,13 +1923,13 @@ class DocumentGenerateService extends BaseApiService {
             error: null,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
-          };
-          console.log('[MOCK] 返回响应:', response);
-          console.log('[MOCK] ========================================');
-          return response;
+          }
+          console.log('[MOCK] 返回响应:', response)
+          console.log('[MOCK] ========================================')
+          return response
         } else {
           // 任务完成 - 返回模拟的绑定结果
-          console.log('[MOCK] 任务完成，返回 completed 状态');
+          console.log('[MOCK] 任务完成，返回 completed 状态')
           const mockResult = {
             title: requestData?.title || 'AI技术在2024年的最新发展',
             material_section_bindings: [
@@ -1571,7 +1950,8 @@ class DocumentGenerateService extends BaseApiService {
                 binding_type: 'required',
                 binding_reason: '该章节需要介绍AI技术的基本概念和发展历程',
                 match_scores: [0.95],
-                material_usage_justification: '素材1001作为核心素材，为章节提供AI发展历程的完整框架',
+                material_usage_justification:
+                  '素材1001作为核心素材，为章节提供AI发展历程的完整框架',
                 section_level: 1
               }
             ],
@@ -1579,8 +1959,8 @@ class DocumentGenerateService extends BaseApiService {
             final_report: '成功绑定 1 个章节的素材',
             total_sections: 1,
             total_materials_bound: 1
-          };
-          
+          }
+
           const response = {
             success: true,
             task_id: taskId,
@@ -1590,11 +1970,11 @@ class DocumentGenerateService extends BaseApiService {
             error: null,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
-          };
-          
-          console.log('[MOCK] 返回响应:', response);
-          console.log('[MOCK] ========================================');
-          return response;
+          }
+
+          console.log('[MOCK] 返回响应:', response)
+          console.log('[MOCK] ========================================')
+          return response
         }
       }
 

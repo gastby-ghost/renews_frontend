@@ -508,6 +508,155 @@ export function useOutlinePage() {
   }
 
   /**
+   * AI完整生成：生成大纲并绑定素材
+   */
+  const generateAICompleteOutline = async () => {
+    console.log('========================================')
+    console.log('[OUTLINE] generateAICompleteOutline 开始执行')
+    console.log('[OUTLINE] selectedTitle:', selectedTitle.value)
+    console.log('[OUTLINE] researchBrief:', documentStore.documentState.researchBrief)
+    console.log('[OUTLINE] selectedMaterials 数量:', selectedMaterials.value.length)
+    console.log('[OUTLINE] projectId:', projectId)
+    console.log('========================================')
+
+    if (!selectedTitle.value) {
+      ElMessage.warning('请先选择标题')
+      return
+    }
+
+    if (selectedMaterials.value.length === 0) {
+      ElMessage.warning('请先选择素材')
+      return
+    }
+
+    try {
+      state.isGenerating = true
+      state.progress = 0
+      state.error = null
+
+      // 准备请求数据
+      const requestData = {
+        title: selectedTitle.value,
+        materials: selectedMaterials.value.map((m) => ({
+          id: m.id,
+          title: m.title,
+          summary: m.summary || '',
+          content: (m as any).content || '',
+          score: m.score || 0.8,
+          key_excerpts: (m as any).key_excerpts || [],
+          published_date: (m as any).published_date || new Date().toISOString(),
+          source_url: (m as any).source_url || '',
+          source_type: (m as any).source_type || 'article',
+          author: (m as any).author || '未知'
+        })),
+        research_brief: documentStore.documentState.researchBrief || '',
+        force_research: false
+      }
+
+      console.log('[OUTLINE] 准备调用 API')
+      console.log('[OUTLINE] requestData:', requestData)
+
+      // 调用新的API - outline-with-material
+      const poller = await documentGenerateService.executeOutlineWithMaterialWithPolling(
+        'user123', // TODO: 从用户store获取真实userId
+        projectId,
+        requestData
+      )
+
+      console.log('[OUTLINE] API调用成功，poller:', poller)
+
+      // 监听进度
+      poller.on('progress', (result: any) => {
+        console.log('[OUTLINE] 收到进度更新:', result)
+        if (result.data?.progress) {
+          state.progress = result.data.progress
+        }
+      })
+
+      // 等待任务完成
+      console.log('[OUTLINE] 等待任务完成...')
+      const finalStatus = await poller.promise
+      console.log('[OUTLINE] 任务完成:', finalStatus)
+
+      if (finalStatus.data?.status === 'completed' && finalStatus.data?.data) {
+        const resultData = finalStatus.data.data
+
+        console.log('[OUTLINE] 处理生成结果:', resultData)
+
+        // 更新大纲
+        state.generatedOutline = resultData.outline || []
+
+        console.log('[OUTLINE] 大纲已更新，数量:', state.generatedOutline.length)
+
+        // 更新素材绑定信息到章节
+        if (resultData.material_bindings && resultData.material_bindings.length > 0) {
+          console.log('[OUTLINE] 处理素材绑定信息')
+          resultData.material_bindings.forEach((binding: any) => {
+            const sectionIndex = binding.section_id - 1
+            if (sectionIndex >= 0 && sectionIndex < state.generatedOutline.length) {
+              const section = state.generatedOutline[sectionIndex]
+              // 将绑定的素材标题添加到data_requirements
+              const materialTitles = binding.materials.map((m: any) => m.title)
+              section.data_requirements = Array.from(
+                new Set([...(section.data_requirements || []), ...materialTitles])
+              )
+              console.log(`[OUTLINE] 章节 ${sectionIndex} 已绑定素材:`, materialTitles)
+            }
+          })
+
+          // 将绑定结果保存到materialBindStore，以便UI显示
+          const bindingResultForStore = {
+            title: resultData.title,
+            material_section_bindings: resultData.material_bindings.map((binding: any) => ({
+              section_id: binding.section_id,
+              section_title: binding.section_title,
+              materials: binding.materials.map((m: any) => ({
+                id: m.id,
+                title: m.title,
+                summary: m.summary,
+                score: m.score,
+                published_date: m.published_date,
+                url: m.url,
+                relevance_explanation: m.relevance_explanation
+              })),
+              binding_type: binding.binding_type,
+              binding_reason: binding.binding_reason,
+              match_scores: binding.match_scores,
+              material_usage_justification: binding.material_usage_justification,
+              section_level: binding.section_level
+            })),
+            binding_summary: resultData.generation_summary || '',
+            final_report: resultData.final_report,
+            total_sections: resultData.total_sections,
+            total_materials_bound: resultData.total_materials_bound
+          }
+
+          // 更新materialBindStore的bindingResult
+          materialBindStore.updateBindingResult(bindingResultForStore)
+          console.log('[OUTLINE] 绑定结果已保存到materialBindStore')
+        }
+
+        // 显示成功消息
+        const successMessage =
+          resultData.final_report ||
+          `AI完整生成完成！共生成 ${resultData.total_sections} 个章节，绑定 ${resultData.total_materials_bound} 个素材，预计 ${resultData.total_word_estimate} 字`
+        ElMessage.success(successMessage)
+        console.log('[OUTLINE] generateAICompleteOutline 执行完成')
+      } else {
+        throw new Error(finalStatus.data?.error || 'AI完整生成失败')
+      }
+    } catch (error) {
+      console.error('[OUTLINE] 捕获到异常:', error)
+      state.error = error instanceof Error ? error.message : 'AI完整生成时发生未知错误'
+      ElMessage.error(state.error)
+      throw error
+    } finally {
+      state.isGenerating = false
+      state.progress = 0
+    }
+  }
+
+  /**
    * 基于素材生成大纲
    */
   const generateOutlineFromMaterials = async (materials: Material[]) => {
@@ -552,35 +701,35 @@ export function useOutlinePage() {
     taskId?: string
     result?: any
   }> => {
-    console.log('========================================');
-    console.log('[BIND FUNCTION] bindMaterialsWithAI 开始执行');
-    console.log('[BIND FUNCTION] 参数 materials 数量:', materials.length);
-    console.log('[BIND FUNCTION] 参数 title:', title);
-    console.log('[BIND FUNCTION] 参数 researchBrief:', researchBrief);
-    console.log('[BIND FUNCTION] state.generatedOutline 长度:', state.generatedOutline.length);
-    console.log('[BIND FUNCTION] state.sections 长度:', state.sections.length);
+    console.log('========================================')
+    console.log('[BIND FUNCTION] bindMaterialsWithAI 开始执行')
+    console.log('[BIND FUNCTION] 参数 materials 数量:', materials.length)
+    console.log('[BIND FUNCTION] 参数 title:', title)
+    console.log('[BIND FUNCTION] 参数 researchBrief:', researchBrief)
+    console.log('[BIND FUNCTION] state.generatedOutline 长度:', state.generatedOutline.length)
+    console.log('[BIND FUNCTION] state.sections 长度:', state.sections.length)
 
     if (state.generatedOutline.length === 0 && state.sections.length === 0) {
-      console.error('[BIND FUNCTION] 错误：未生成大纲');
+      console.error('[BIND FUNCTION] 错误：未生成大纲')
       throw new Error('请先生成或创建大纲')
     }
 
     if (materials.length === 0) {
-      console.error('[BIND FUNCTION] 错误：未选择素材');
+      console.error('[BIND FUNCTION] 错误：未选择素材')
       throw new Error('请先选择素材')
     }
 
     try {
-      console.log('[BIND FUNCTION] 设置状态 isBindingMaterials = true');
+      console.log('[BIND FUNCTION] 设置状态 isBindingMaterials = true')
       state.isBindingMaterials = true
       state.bindingError = null
 
       // 准备请求数据
-      console.log('[BIND FUNCTION] 准备 outlineSections');
+      console.log('[BIND FUNCTION] 准备 outlineSections')
       const outlineSections =
         state.generatedOutline.length > 0
           ? state.generatedOutline.map((section, index) => {
-              console.log(`[BIND FUNCTION] 处理大纲章节 ${index}:`, section.title);
+              console.log(`[BIND FUNCTION] 处理大纲章节 ${index}:`, section.title)
               return {
                 id: index + 1,
                 outline_id: 1,
@@ -590,10 +739,10 @@ export function useOutlinePage() {
                 sources: section.sources || [],
                 section_order: index + 1,
                 estimated_words: section.estimated_word_count || 500
-              };
+              }
             })
           : state.sections.map((section, index) => {
-              console.log(`[BIND FUNCTION] 处理数据库章节 ${index}:`, section.title);
+              console.log(`[BIND FUNCTION] 处理数据库章节 ${index}:`, section.title)
               return {
                 id: section.id || index + 1,
                 outline_id: section.outline_id || 1,
@@ -603,15 +752,15 @@ export function useOutlinePage() {
                 sources: section.sources || [],
                 section_order: section.order_index || index + 1,
                 estimated_words: section.estimated_word_count || 500
-              };
-            });
+              }
+            })
 
-      console.log('[BIND FUNCTION] outlineSections 准备完成:', outlineSections);
+      console.log('[BIND FUNCTION] outlineSections 准备完成:', outlineSections)
 
       // 准备 materials 数据
-      console.log('[BIND FUNCTION] 准备 materials');
+      console.log('[BIND FUNCTION] 准备 materials')
       const preparedMaterials = materials.map((material, index) => {
-        console.log(`[BIND FUNCTION] 处理素材 ${index}:`, material.title);
+        console.log(`[BIND FUNCTION] 处理素材 ${index}:`, material.title)
         return {
           id: Number(material.id),
           title: material.title,
@@ -623,79 +772,83 @@ export function useOutlinePage() {
           source_url: (material as any).source_url || '',
           source_type: (material as any).source_type || 'article',
           author: (material as any).author || '未知'
-        };
-      });
+        }
+      })
 
-      console.log('[BIND FUNCTION] materials 准备完成:', preparedMaterials);
+      console.log('[BIND FUNCTION] materials 准备完成:', preparedMaterials)
 
       // 使用新的素材绑定store
-      console.log('[BIND FUNCTION] 调用 materialBindStore.executeMaterialBind');
-      console.log('[BIND FUNCTION] userId:', 'user123');
-      console.log('[BIND FUNCTION] projectId:', projectId);
-      console.log('[BIND FUNCTION] request.title:', title);
-      console.log('[BIND FUNCTION] request.outline_sections 数量:', outlineSections.length);
-      console.log('[BIND FUNCTION] request.materials 数量:', preparedMaterials.length);
+      console.log('[BIND FUNCTION] 调用 materialBindStore.executeMaterialBind')
+      console.log('[BIND FUNCTION] userId:', 'user123')
+      console.log('[BIND FUNCTION] projectId:', projectId)
+      console.log('[BIND FUNCTION] request.title:', title)
+      console.log('[BIND FUNCTION] request.outline_sections 数量:', outlineSections.length)
+      console.log('[BIND FUNCTION] request.materials 数量:', preparedMaterials.length)
 
       const poller = await materialBindStore.executeMaterialBind(
         'user123', // TODO: 从用户store获取真实userId
         projectId,
         {
+          user_id: 'user123',
+          project_id: projectId,
           title,
           outline_sections: outlineSections,
           materials: preparedMaterials
         }
       )
 
-      console.log('[BIND FUNCTION] materialBindStore.executeMaterialBind 返回:', poller);
-      console.log('[BIND FUNCTION] poller.id:', poller.id);
-      console.log('[BIND FUNCTION] poller.isPolling:', poller.isPolling);
+      console.log('[BIND FUNCTION] materialBindStore.executeMaterialBind 返回:', poller)
+      console.log('[BIND FUNCTION] poller.id:', poller.id)
+      console.log('[BIND FUNCTION] poller.isPolling:', poller.isPolling)
 
       // 同步进度到本地状态
-      console.log('[BIND FUNCTION] 设置 poller.on(progress) 监听器');
+      console.log('[BIND FUNCTION] 设置 poller.on(progress) 监听器')
       poller.on('progress', (result: any) => {
-        console.log('[BIND FUNCTION] 收到 progress 事件:', result);
+        console.log('[BIND FUNCTION] 收到 progress 事件:', result)
         if (result.data?.progress) {
           state.bindingProgress = result.data.progress
         }
       })
 
       // 等待任务完成
-      console.log('[BIND FUNCTION] 等待 poller.promise 完成...');
+      console.log('[BIND FUNCTION] 等待 poller.promise 完成...')
       const finalStatus = await poller.promise
-      console.log('[BIND FUNCTION] poller.promise 已完成:', finalStatus);
+      console.log('[BIND FUNCTION] poller.promise 已完成:', finalStatus)
 
       if (finalStatus.data?.status === 'completed' && finalStatus.data?.result) {
-        console.log('[BIND FUNCTION] 任务完成，处理结果');
+        console.log('[BIND FUNCTION] 任务完成，处理结果')
         // 更新大纲章节的data_requirements
         const bindings = finalStatus.data.result.material_section_bindings
 
-        console.log('[BIND FUNCTION] 绑定结果数量:', bindings.length);
+        console.log('[BIND FUNCTION] 绑定结果数量:', bindings.length)
 
         bindings.forEach((binding: any, index: number) => {
-          console.log(`[BIND FUNCTION] 处理绑定结果 ${index}:`, binding);
+          console.log(`[BIND FUNCTION] 处理绑定结果 ${index}:`, binding)
           const sectionIndex = binding.section_id - 1
           const outline =
             state.generatedOutline.length > 0 ? state.generatedOutline : state.sections
 
-          console.log(`[BIND FUNCTION] sectionIndex: ${sectionIndex}, outline长度: ${outline.length}`);
+          console.log(
+            `[BIND FUNCTION] sectionIndex: ${sectionIndex}, outline长度: ${outline.length}`
+          )
 
           if (sectionIndex >= 0 && sectionIndex < outline.length) {
             const section = outline[sectionIndex]
             const boundMaterialTitles = binding.materials.map((m: any) => m.title)
 
-            console.log(`[BIND FUNCTION] 章节: ${section.title}`);
-            console.log(`[BIND FUNCTION] 绑定的素材标题:`, boundMaterialTitles);
+            console.log(`[BIND FUNCTION] 章节: ${section.title}`)
+            console.log(`[BIND FUNCTION] 绑定的素材标题:`, boundMaterialTitles)
 
             if ('data_requirements' in section) {
               section.data_requirements = Array.from(
                 new Set([...(section.data_requirements || []), ...boundMaterialTitles])
               )
-              console.log(`[BIND FUNCTION] 更新后的 data_requirements:`, section.data_requirements);
+              console.log(`[BIND FUNCTION] 更新后的 data_requirements:`, section.data_requirements)
             }
           }
         })
 
-        console.log('[BIND FUNCTION] 所有绑定处理完成');
+        console.log('[BIND FUNCTION] 所有绑定处理完成')
 
         return {
           success: true,
@@ -704,15 +857,15 @@ export function useOutlinePage() {
           result: finalStatus.data.result
         }
       } else {
-        console.error('[BIND FUNCTION] 任务失败或没有结果:', finalStatus);
+        console.error('[BIND FUNCTION] 任务失败或没有结果:', finalStatus)
         throw new Error(finalStatus.data?.error || 'AI绑定失败')
       }
     } catch (error) {
-      console.error('[BIND FUNCTION] 捕获到异常:', error);
+      console.error('[BIND FUNCTION] 捕获到异常:', error)
       state.bindingError = error instanceof Error ? error.message : 'AI绑定素材时发生未知错误'
       throw error
     } finally {
-      console.log('[BIND FUNCTION] finally 块执行');
+      console.log('[BIND FUNCTION] finally 块执行')
       state.isBindingMaterials = false
       setTimeout(() => {
         state.bindingProgress = 0
@@ -851,23 +1004,23 @@ export function useOutlinePage() {
 
   // ========== 素材绑定事件处理 ==========
   const handleAIBindMaterials = async () => {
-    console.log('========================================');
-    console.log('[COMPOSABLE] handleAIBindMaterials 开始执行');
-    console.log('[COMPOSABLE] selectedMaterials:', selectedMaterials.value);
-    console.log('[COMPOSABLE] projectId:', projectId);
-    console.log('[COMPOSABLE] generatedOutline 长度:', state.generatedOutline.length);
-    console.log('[COMPOSABLE] sections 长度:', state.sections.length);
-    console.log('[COMPOSABLE] selectedTitle:', selectedTitle.value);
-    console.log('========================================');
+    console.log('========================================')
+    console.log('[COMPOSABLE] handleAIBindMaterials 开始执行')
+    console.log('[COMPOSABLE] selectedMaterials:', selectedMaterials.value)
+    console.log('[COMPOSABLE] projectId:', projectId)
+    console.log('[COMPOSABLE] generatedOutline 长度:', state.generatedOutline.length)
+    console.log('[COMPOSABLE] sections 长度:', state.sections.length)
+    console.log('[COMPOSABLE] selectedTitle:', selectedTitle.value)
+    console.log('========================================')
 
     if (selectedMaterials.value.length === 0) {
-      console.warn('[COMPOSABLE] 错误：未选择素材');
+      console.warn('[COMPOSABLE] 错误：未选择素材')
       ElMessage.warning('请先选择素材')
       return
     }
 
     if (state.generatedOutline.length === 0 && state.sections.length === 0) {
-      console.warn('[COMPOSABLE] 错误：未生成大纲');
+      console.warn('[COMPOSABLE] 错误：未生成大纲')
       ElMessage.warning('请先生成或创建大纲')
       return
     }
@@ -876,30 +1029,26 @@ export function useOutlinePage() {
       const title = selectedTitle.value || '未命名文档'
       const researchBrief = documentStore.documentState.researchBrief || ''
 
-      console.log('[COMPOSABLE] 准备调用 bindMaterialsWithAI');
-      console.log('[COMPOSABLE] 参数 title:', title);
-      console.log('[COMPOSABLE] 参数 researchBrief:', researchBrief);
+      console.log('[COMPOSABLE] 准备调用 bindMaterialsWithAI')
+      console.log('[COMPOSABLE] 参数 title:', title)
+      console.log('[COMPOSABLE] 参数 researchBrief:', researchBrief)
 
-      const result = await bindMaterialsWithAI(
-        selectedMaterials.value,
-        title,
-        researchBrief
-      )
+      const result = await bindMaterialsWithAI(selectedMaterials.value, title, researchBrief)
 
-      console.log('[COMPOSABLE] bindMaterialsWithAI 返回结果:', result);
+      console.log('[COMPOSABLE] bindMaterialsWithAI 返回结果:', result)
 
       if (result.success) {
-        console.log('[COMPOSABLE] 素材绑定成功');
+        console.log('[COMPOSABLE] 素材绑定成功')
         ElMessage.success(result.message)
       } else {
-        console.warn('[COMPOSABLE] 素材绑定失败:', result);
+        console.warn('[COMPOSABLE] 素材绑定失败:', result)
       }
     } catch (error) {
-      console.error('[COMPOSABLE] 捕获到异常:', error);
+      console.error('[COMPOSABLE] 捕获到异常:', error)
       ElMessage.error(error instanceof Error ? error.message : '素材绑定失败')
     }
 
-    console.log('[COMPOSABLE] handleAIBindMaterials 执行完成');
+    console.log('[COMPOSABLE] handleAIBindMaterials 执行完成')
   }
 
   // ========== 返回值 ==========
@@ -950,6 +1099,7 @@ export function useOutlinePage() {
     // AI层方法
     generateOutline,
     generateOutlineFromMaterials,
+    generateAICompleteOutline,
     getOutlineToolsStatus,
     bindMaterialsWithAI,
 
@@ -1007,6 +1157,7 @@ export function useOutlinePage() {
       // AI层方法
       generateOutline,
       generateOutlineFromMaterials,
+      generateAICompleteOutline,
       getOutlineToolsStatus,
       bindMaterialsWithAI,
 
