@@ -163,13 +163,15 @@
                     type="primary"
                     :loading="isBindingMaterials"
                     :disabled="isBindingMaterials || selectedMaterials.length === 0"
-                    @click="() => {
-                      console.log('[UI] 用户点击 AI智能绑定 按钮');
-                      console.log('[UI] selectedMaterials:', selectedMaterials);
-                      console.log('[UI] isBindingMaterials:', isBindingMaterials);
-                      $emit('ai-bind');
-                      console.log('[UI] 事件 ai-bind 已触发');
-                    }"
+                    @click="
+                      () => {
+                        console.log('[UI] 用户点击 AI智能绑定 按钮')
+                        console.log('[UI] selectedMaterials:', selectedMaterials)
+                        console.log('[UI] isBindingMaterials:', isBindingMaterials)
+                        $emit('ai-bind')
+                        console.log('[UI] 事件 ai-bind 已触发')
+                      }
+                    "
                     class="ai-binding-button"
                     size="large"
                   >
@@ -427,21 +429,10 @@
 
   // 获取章节的绑定素材
   const getSectionBindings = (sectionIndex: number) => {
-    if (!bindingResult.value) return []
+    if (!bindingResult.value) return undefined
     return bindingResult.value.material_section_bindings.find(
       (binding) => binding.section_id === sectionIndex + 1
     )
-  }
-
-  // 获取素材的匹配分数
-  const getMaterialMatchScore = (sectionIndex: number, materialTitle: string) => {
-    const binding = getSectionBindings(sectionIndex)
-    if (!binding) return null
-
-    const materialIndex = binding.materials.findIndex((m) => m.title === materialTitle)
-    if (materialIndex === -1) return null
-
-    return binding.match_scores[materialIndex]
   }
 </script>
 
@@ -957,8 +948,8 @@
 
           .tag-content {
             display: flex;
-            align-items: center;
             gap: var(--art-spacing-xs, 4px);
+            align-items: center;
 
             .material-title {
               max-width: 200px;
@@ -993,8 +984,8 @@
 
             .stat-item {
               display: flex;
-              align-items: center;
               gap: var(--art-spacing-xs, 4px);
+              align-items: center;
               font-size: var(--art-font-size-sm, 14px);
               color: var(--art-text-color-secondary);
 
