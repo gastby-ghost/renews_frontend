@@ -15,12 +15,10 @@
 
       <!-- 标题信息分区 -->
       <TitleSection
-        :selected-title="selectedTitle"
-        :title-description="titleDescription"
-        :research-brief="documentStore.documentState.researchBrief"
         :project-id="projectId"
         @edit-title="editTitle"
         @view-search-results="viewSearchResults"
+        @material-preview="handleMaterialPreview"
       />
 
       <!-- 大纲编辑分区 -->
@@ -95,8 +93,6 @@
     generatingOutline,
     selectedMaterials,
     showMaterialLibraryDialog,
-    selectedTitle,
-    titleDescription,
     canAddSection,
     canGenerateFromTitle,
     editTitle,
@@ -253,6 +249,12 @@
 
   const handleEditSection = (title: string, data: any) => {
     outline.editLocalSection(title, data)
+  }
+
+  const handleMaterialPreview = (material: Material) => {
+    // TODO: 实现素材预览功能
+    console.log('Preview material:', material)
+    ElMessage.info(`预览素材: ${material.title}`)
   }
 
   const bindMaterialToSection = (sectionIndex: number, material: Material) => {
