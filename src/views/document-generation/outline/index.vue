@@ -21,6 +21,7 @@
         @view-search-results="viewSearchResults"
         @material-preview="handleMaterialPreview"
         @add-material="openMaterialLibrary"
+        @update:allMaterials="handleAllMaterialsUpdate"
       />
 
       <!-- 大纲编辑分区 -->
@@ -29,7 +30,10 @@
         :can-generate-from-title="canGenerateFromTitle"
         :can-add-section="canAddSection"
         :generating-outline="generatingOutline"
-        :selected-materials-count="selectedMaterials.length"
+        :selected-materials-count="allTitleMaterials.length"
+        :selected-materials="allTitleMaterials"
+        :is-binding-materials="outline.state.isBindingMaterials"
+        :binding-progress="outline.state.bindingProgress"
         @generate-ai-outline="generateAIOutline"
         @generate-ai-complete-outline="generateAICompleteOutline"
         @add-section="addSection"
@@ -40,15 +44,7 @@
         @confirm-outline="confirmOutline"
         @edit-section="handleEditSection"
         @go-back="goBack"
-      />
-
-      <!-- 素材分区 -->
-      <MaterialsSection
-        :selected-materials="selectedMaterials"
-        :generated-outline="outline.state.generatedOutline"
-        :is-binding-materials="outline.state.isBindingMaterials"
-        :binding-progress="outline.state.bindingProgress"
-        @ai-bind="handleAIBindMaterials"
+        @ai-bind-materials="handleAIBindMaterials"
         @bind-material-to-section="bindMaterialToSection"
         @unbind-material-from-section="unbindMaterialFromSection"
       />
@@ -75,7 +71,6 @@
   import StepIndicator, { type Step } from '@/components/custom/StepIndicator.vue'
   import TitleSection from './TitleSection.vue'
   import OutlineEditorSection from './OutlineEditorSection.vue'
-  import MaterialsSection from './MaterialsSection.vue'
 
   // 使用composable
   const {
@@ -94,6 +89,14 @@
     handleMaterialLibraryConfirm,
     outline
   } = useOutlinePage()
+
+  // 存储标题区域的完整素材列表（包括标题相关素材和用户选择的素材）
+  const allTitleMaterials = ref<Material[]>([])
+
+  // 处理标题区域素材更新
+  const handleAllMaterialsUpdate = (materials: Material[]) => {
+    allTitleMaterials.value = materials
+  }
 
   const documentStore = useDocumentGenerateStore()
   const projectStore = useProjectStore()

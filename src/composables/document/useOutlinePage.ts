@@ -1051,6 +1051,64 @@ export function useOutlinePage() {
     console.log('[COMPOSABLE] handleAIBindMaterials 执行完成')
   }
 
+  // ========== 业务逻辑方法 (从组件提取) ==========
+
+  /**
+   * 获取章节的绑定素材
+   */
+  const getSectionBindings = (sectionIndex: number, bindingResult: any): any | undefined => {
+    if (!bindingResult) return undefined
+    return bindingResult.material_section_bindings.find(
+      (binding: any) => binding.section_id === sectionIndex + 1
+    )
+  }
+
+  /**
+   * 获取章节的平均匹配分数
+   */
+  const getAverageMatchScore = (sectionIndex: number, bindingResult: any): number => {
+    const bindings = getSectionBindings(sectionIndex, bindingResult)
+    if (!bindings || bindings.match_scores.length === 0) return 0
+    const average =
+      bindings.match_scores.reduce((sum: number, score: number) => sum + score, 0) /
+      bindings.match_scores.length
+    return Math.round(average)
+  }
+
+  /**
+   * 获取可用于当前章节的素材（排除已绑定的）
+   */
+  const getAvailableMaterialsForSection = (
+    sectionIndex: number,
+    allMaterials: Material[],
+    outline: any[]
+  ): Material[] => {
+    const section = outline[sectionIndex]
+    if (!section) return []
+
+    // 获取已绑定的素材标题
+    const boundMaterials = new Set(section.data_requirements || [])
+
+    // 如果有AI绑定结果，也排除那些
+    const bindingResult = materialBindStore.bindingResult
+    const aiBindings = getSectionBindings(sectionIndex, bindingResult)
+    if (aiBindings) {
+      aiBindings.materials.forEach((material: Material) => {
+        boundMaterials.add(material.title)
+      })
+    }
+
+    // 返回所有素材中未绑定的部分
+    return allMaterials.filter((material) => !boundMaterials.has(material.title))
+  }
+
+  /**
+   * 更新大纲中的章节数据
+   */
+  const updateGeneratedOutline = (newOutline: any[]) => {
+    state.generatedOutline = newOutline
+  }
+
   // ========== 返回值 ==========
   return {
     // 状态
@@ -1102,6 +1160,12 @@ export function useOutlinePage() {
     generateAICompleteOutline,
     getOutlineToolsStatus,
     bindMaterialsWithAI,
+
+    // 业务逻辑方法 (从组件提取)
+    getSectionBindings,
+    getAverageMatchScore,
+    getAvailableMaterialsForSection,
+    updateGeneratedOutline,
 
     // 原有页面方法
     loadProject,

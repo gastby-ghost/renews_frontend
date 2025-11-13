@@ -235,6 +235,7 @@
     (e: 'viewSearchResults'): void
     (e: 'materialPreview', material: Material): void
     (e: 'addMaterial'): void
+    (e: 'update:allMaterials', materials: Material[]): void
   }>()
 
   // 标题分区状态
@@ -313,6 +314,17 @@
     }
     return allMaterials.value.slice(0, displayLimit)
   })
+
+  // ====== 监听器 ======
+
+  // 监听allMaterials变化，通知父组件
+  watch(
+    allMaterials,
+    (newMaterials) => {
+      emit('update:allMaterials', newMaterials)
+    },
+    { immediate: true }
+  )
 
   // ====== 方法 ======
 

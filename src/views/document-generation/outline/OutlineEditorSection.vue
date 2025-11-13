@@ -6,9 +6,9 @@
         <div class="step-content">
           <h3>
             <el-icon><EditPen /></el-icon>
-            大纲编辑
+            大纲编辑与素材绑定
           </h3>
-          <p class="step-description">创建或编辑文档大纲，确定内容结构</p>
+          <p class="step-description">创建文档大纲，智能匹配素材，确定内容结构</p>
         </div>
         <div class="status-indicator">
           <el-tag v-if="generatedOutline.length > 0" type="success" effect="light">
@@ -22,81 +22,111 @@
         </div>
       </div>
 
-      <div class="outline-actions">
-        <!-- AI生成区域 -->
-        <div class="ai-generation-section">
-          <div class="section-title">
-            <el-icon><MagicStick /></el-icon>
-            <span>AI 智能生成</span>
-            <el-tooltip
-              content="基于选定的标题和研究简报，AI将为您生成专业的大纲结构"
-              placement="top"
-            >
-              <el-icon class="help-icon"><QuestionFilled /></el-icon>
-            </el-tooltip>
-          </div>
-          <div class="action-grid">
+      <!-- AI功能按钮组 -->
+      <div class="ai-function-section">
+        <div class="ai-buttons-container">
+          <el-tooltip
+            content="基于您的标题和素材，AI将生成结构化的大纲（保留现有内容）"
+            placement="top"
+            :disabled="!canGenerateFromTitle"
+          >
             <el-button
               @click="handleGenerateAIOutline"
               :loading="generatingOutline"
               :disabled="!canGenerateFromTitle"
               type="primary"
               size="large"
-              class="art-button ai-button"
+              class="ai-function-button outline-button"
             >
-              <el-icon><MagicStick /></el-icon>
-              <span class="button-content">
-                <strong>AI生成大纲</strong>
-                <small>基于标题智能创建</small>
-              </span>
+              <el-icon class="button-icon"><MagicStick /></el-icon>
+              <span class="button-text">智能大纲生成</span>
             </el-button>
+          </el-tooltip>
+
+          <el-tooltip
+            content="AI将分析章节内容，自动匹配最相关的素材到对应章节"
+            placement="top"
+            :disabled="getAllMaterials.length > 0 && generatedOutline.length > 0"
+          >
+            <el-button
+              @click="handleAIBindMaterials"
+              :loading="isBindingMaterials"
+              :disabled="
+                isBindingMaterials || getAllMaterials.length === 0 || generatedOutline.length === 0
+              "
+              type="success"
+              size="large"
+              class="ai-function-button binding-button"
+            >
+              <el-icon class="button-icon"><Link /></el-icon>
+              <span class="button-text">智能素材绑定</span>
+            </el-button>
+          </el-tooltip>
+
+          <el-tooltip
+            content="一键完成大纲生成、素材检索和智能绑定（将清空当前大纲）"
+            placement="top"
+            :disabled="canGenerateFromTitle && getAllMaterials.length > 0"
+          >
             <el-button
               @click="handleGenerateAICompleteOutline"
               :loading="generatingOutline"
-              :disabled="!canGenerateFromTitle || selectedMaterialsCount === 0"
-              type="success"
+              :disabled="!canGenerateFromTitle || getAllMaterials.length === 0"
+              type="warning"
               size="large"
-              class="art-button ai-button"
+              class="ai-function-button complete-button"
             >
-              <el-icon><MagicStick /></el-icon>
-              <span class="button-content">
-                <strong>AI完整生成</strong>
-                <small>生成大纲并绑定素材</small>
-              </span>
+              <el-icon class="button-icon"><Cpu /></el-icon>
+              <span class="button-text">完整智能生成</span>
             </el-button>
-          </div>
-          <div v-if="!canGenerateFromTitle" class="requirement-hint">
-            <el-icon><WarningFilled /></el-icon>
-            <span>请先在上方选择标题并完善研究简报</span>
-          </div>
-          <div v-else-if="selectedMaterialsCount === 0" class="requirement-hint info">
-            <el-icon><InfoFilled /></el-icon>
-            <span>选择素材后可使用"AI完整生成"功能</span>
-          </div>
+          </el-tooltip>
         </div>
 
-        <!-- 手动编辑区域 -->
-        <div class="manual-edit-section">
-          <div class="section-title">
-            <el-icon><Operation /></el-icon>
-            <span>手动编辑</span>
+        <!-- 状态提示区域 -->
+        <div class="status-section">
+          <div v-if="!canGenerateFromTitle && getAllMaterials.length === 0" class="status-hint">
+            <el-icon><WarningFilled /></el-icon>
+            <span>请先选择标题并完善研究简报，然后选择素材</span>
           </div>
-          <div class="action-grid">
-            <el-button @click="handleAddSection" :disabled="!canAddSection" class="art-button">
-              <el-icon><Plus /></el-icon>
-              添加章节
-            </el-button>
-            <el-button
-              @click="handleClearOutline"
-              :disabled="generatedOutline.length === 0"
-              type="danger"
-              plain
-              class="art-button"
+          <div v-else-if="!canGenerateFromTitle" class="status-hint">
+            <el-icon><WarningFilled /></el-icon>
+            <span>请先选择标题并完善研究简报</span>
+          </div>
+          <div v-else-if="getAllMaterials.length === 0" class="status-hint">
+            <el-icon><WarningFilled /></el-icon>
+            <span>请先在标题区域选择素材</span>
+          </div>
+          <div v-else-if="bindingResult" class="status-success">
+            <el-icon><Check /></el-icon>
+            <span
+              >已绑定 {{ bindingResult.total_materials_bound }} 个素材到
+              {{ bindingResult.total_sections }} 个章节</span
             >
-              <el-icon><Delete /></el-icon>
-              清空大纲
-            </el-button>
           </div>
+        </div>
+      </div>
+
+      <!-- 手动编辑区域 -->
+      <div class="manual-edit-section">
+        <div class="section-title">
+          <el-icon><Operation /></el-icon>
+          <span>手动编辑</span>
+        </div>
+        <div class="action-grid">
+          <el-button @click="handleAddSection" :disabled="!canAddSection" class="art-button">
+            <el-icon><Plus /></el-icon>
+            添加章节
+          </el-button>
+          <el-button
+            @click="handleClearOutline"
+            :disabled="generatedOutline.length === 0"
+            type="danger"
+            plain
+            class="art-button"
+          >
+            <el-icon><Delete /></el-icon>
+            清空大纲
+          </el-button>
         </div>
       </div>
     </div>
@@ -266,22 +296,103 @@
                   <el-icon><Document /></el-icon>
                   素材需求
                 </label>
-                <div v-if="section.data_requirements.length > 0" class="requirements-list">
-                  <el-tag
-                    v-for="req in section.data_requirements"
-                    :key="req"
-                    closable
-                    @close="() => $emit('unbindMaterial', sectionIndex, req)"
-                    class="requirement-tag"
-                  >
-                    <el-icon><Document /></el-icon>
-                    {{ req }}
-                  </el-tag>
+
+                <!-- AI绑定结果展示 -->
+                <div
+                  v-if="bindingResult && getSectionBindings(sectionIndex)"
+                  class="ai-bindings-section"
+                >
+                  <div class="bindings-header">
+                    <el-icon><MagicStick /></el-icon>
+                    <span>AI智能绑定结果</span>
+                    <el-tag type="success" size="small" effect="light">
+                      匹配度: {{ getAverageMatchScore(sectionIndex) }}%
+                    </el-tag>
+                  </div>
+                  <div class="bound-materials-list">
+                    <el-tooltip
+                      v-for="(material, materialIndex) in getSectionBindings(sectionIndex)!
+                        .materials"
+                      :key="material.id"
+                      :content="material.relevance_explanation"
+                      placement="top"
+                    >
+                      <el-tag
+                        closable
+                        @close="() => handleUnbindMaterial(sectionIndex, material.title)"
+                        type="success"
+                        class="bound-material-tag"
+                      >
+                        <div class="tag-content">
+                          <span class="material-title">{{ material.title }}</span>
+                          <el-tag size="small" type="info" effect="plain" class="match-score">
+                            {{ getSectionBindings(sectionIndex)!.match_scores[materialIndex] }}
+                          </el-tag>
+                        </div>
+                      </el-tag>
+                    </el-tooltip>
+                  </div>
                 </div>
+
+                <!-- 手动绑定的素材 -->
+                <div
+                  v-else-if="section.data_requirements && section.data_requirements.length > 0"
+                  class="manual-bindings-section"
+                >
+                  <div class="bindings-header">
+                    <el-icon><Document /></el-icon>
+                    <span>手动绑定素材</span>
+                  </div>
+                  <div class="requirements-list">
+                    <el-tag
+                      v-for="materialTitle in section.data_requirements"
+                      :key="materialTitle"
+                      closable
+                      @close="() => handleUnbindMaterial(sectionIndex, materialTitle)"
+                      type="primary"
+                      class="requirement-tag"
+                    >
+                      {{ materialTitle }}
+                    </el-tag>
+                  </div>
+                </div>
+
+                <!-- 空状态 -->
                 <div v-else class="empty-requirements">
                   <el-icon><FolderOpened /></el-icon>
-                  <span>暂无绑定的素材需求</span>
-                  <small>请在下方素材区域进行绑定</small>
+                  <span>暂无绑定的素材</span>
+                  <small v-if="getAllMaterials.length > 0">
+                    使用"智能素材绑定"功能或手动添加素材
+                  </small>
+                  <small v-else> 请先在标题区域选择素材，然后使用智能绑定功能 </small>
+                </div>
+
+                <!-- 手动添加素材按钮 -->
+                <div v-if="getAllMaterials.length > 0" class="manual-add-section">
+                  <el-dropdown trigger="click">
+                    <el-button size="small" type="primary" plain>
+                      <el-icon><Plus /></el-icon>
+                      手动添加素材
+                    </el-button>
+                    <template #dropdown>
+                      <el-dropdown-menu>
+                        <el-dropdown-item
+                          v-for="material in getAvailableMaterialsForSection(sectionIndex)"
+                          :key="material.id"
+                          @click="handleBindMaterial(sectionIndex, material)"
+                        >
+                          <el-icon><Document /></el-icon>
+                          {{ material.title }}
+                        </el-dropdown-item>
+                        <el-dropdown-item
+                          v-if="getAvailableMaterialsForSection(sectionIndex).length === 0"
+                          disabled
+                        >
+                          所有素材已绑定
+                        </el-dropdown-item>
+                      </el-dropdown-menu>
+                    </template>
+                  </el-dropdown>
                 </div>
               </div>
             </div>
@@ -308,7 +419,9 @@
 </template>
 
 <script setup lang="ts">
-  import { ref } from 'vue'
+  import { ref, computed } from 'vue'
+
+  // UI图标导入
   import {
     Plus,
     MagicStick,
@@ -316,10 +429,8 @@
     EditPen,
     Check,
     Edit,
-    QuestionFilled,
     Operation,
     WarningFilled,
-    InfoFilled,
     Document,
     List,
     Rank,
@@ -328,70 +439,226 @@
     ArrowDown,
     Link,
     Guide,
-    FolderOpened
+    FolderOpened,
+    Cpu
   } from '@element-plus/icons-vue'
 
-  // 响应式数据
+  // 类型定义
+  interface Material {
+    id: string
+    user_id: string
+    summary: string
+    score: number
+    title: string
+    key_excerpts: string[]
+    tags: string[]
+    url?: string
+    createdAt: Date
+    updatedAt?: Date
+    selected?: boolean
+  }
+
+  interface OutlineSection {
+    title: string
+    content_direction: string
+    data_requirements: string[]
+    level: number
+    estimated_word_count: number
+    priority: 'high' | 'medium' | 'low'
+    sources: string[]
+  }
+
+  // 扩展 Material 类型，包含绑定相关属性
+  interface MaterialWithBinding extends Material {
+    relevance_explanation?: string
+    match_score?: number
+    binding_type?: string
+  }
+
+  interface MaterialBindResult {
+    title: string
+    material_section_bindings: Array<{
+      section_id: number
+      section_title: string
+      materials: MaterialWithBinding[]
+      match_scores: number[]
+      relevance_explanation: string
+      binding_type?: string
+      binding_reason?: string
+      material_usage_justification?: string
+      section_level?: number
+    }>
+    binding_summary?: string
+    final_report?: string
+    total_sections: number
+    total_materials_bound: number
+  }
+
+  // ========== Props 定义 ==========
+  const props = defineProps<{
+    /** 生成的大纲章节列表 */
+    generatedOutline: OutlineSection[]
+    /** 是否可以从标题生成大纲 */
+    canGenerateFromTitle: boolean
+    /** 是否可以添加章节 */
+    canAddSection: boolean
+    /** 是否正在生成大纲 */
+    generatingOutline: boolean
+    /** 已选择的素材列表 */
+    selectedMaterials: Material[]
+    /** 是否正在绑定素材 */
+    isBindingMaterials: boolean
+    /** 素材绑定进度 */
+    bindingProgress: number
+    /** 素材绑定结果 */
+    bindingResult: MaterialBindResult | null
+  }>()
+
+  // ========== Emits 定义 ==========
+  const emit = defineEmits<{
+    /** 生成AI大纲 */
+    (e: 'generateAIOutline'): void
+    /** 生成AI完整大纲 */
+    (e: 'generateAICompleteOutline'): void
+    /** 添加章节 */
+    (e: 'addSection'): void
+    /** 删除章节 */
+    (e: 'deleteSection', index: number): void
+    /** 上移章节 */
+    (e: 'moveSectionUp', index: number): void
+    /** 下移章节 */
+    (e: 'moveSectionDown', index: number): void
+    /** 清空大纲 */
+    (e: 'clearOutline'): void
+    /** 确认大纲 */
+    (e: 'confirmOutline'): void
+    /** 编辑章节 */
+    (e: 'editSection', title: string, data: any): void
+    /** 返回 */
+    (e: 'goBack'): void
+    /** 绑定素材到章节 */
+    (e: 'bindMaterial', sectionIndex: number, material: Material): void
+    /** 解绑素材 */
+    (e: 'unbindMaterial', sectionIndex: number, materialTitle: string): void
+    /** AI绑定素材 */
+    (e: 'aiBindMaterials'): void
+  }>()
+
+  // ========== 本地状态 ==========
+  /** 当前激活的详情标签页 */
   const activeDetailTab = ref('')
 
-  // Props
-  defineProps<{
-    generatedOutline: any[]
-    canGenerateFromTitle: boolean
-    canAddSection: boolean
-    generatingOutline: boolean
-    selectedMaterialsCount: number
-  }>()
+  // ========== 计算属性 ==========
 
-  // Emits
-  const emit = defineEmits<{
-    (e: 'generateAIOutline'): void
-    (e: 'generateAICompleteOutline'): void
-    (e: 'addSection'): void
-    (e: 'deleteSection', index: number): void
-    (e: 'moveSectionUp', index: number): void
-    (e: 'moveSectionDown', index: number): void
-    (e: 'clearOutline'): void
-    (e: 'confirmOutline'): void
-    (e: 'editSection', title: string, data: any): void
-    (e: 'goBack'): void
-    (e: 'unbindMaterial', sectionIndex: number, materialTitle: string): void
-  }>()
+  /** 获取所有素材（从props） */
+  const getAllMaterials = computed(() => props.selectedMaterials || [])
 
+  // ========== 事件处理方法 ==========
+
+  /** 处理生成AI大纲 */
   const handleGenerateAIOutline = () => {
     emit('generateAIOutline')
   }
 
+  /** 处理生成AI完整大纲 */
   const handleGenerateAICompleteOutline = () => {
     emit('generateAICompleteOutline')
   }
 
+  /** 处理AI绑定素材 */
+  const handleAIBindMaterials = () => {
+    emit('aiBindMaterials')
+  }
+
+  /** 处理添加章节 */
   const handleAddSection = () => {
     emit('addSection')
   }
 
+  /** 处理删除章节 */
   const handleDeleteSection = (index: number) => {
     emit('deleteSection', index)
   }
 
+  /** 处理上移章节 */
   const handleMoveSectionUp = (index: number) => {
     emit('moveSectionUp', index)
   }
 
+  /** 处理下移章节 */
   const handleMoveSectionDown = (index: number) => {
     emit('moveSectionDown', index)
   }
 
+  /** 处理清空大纲 */
   const handleClearOutline = () => {
     emit('clearOutline')
   }
 
+  /** 处理确认大纲 */
   const handleConfirmOutline = () => {
     emit('confirmOutline')
   }
 
+  /** 处理编辑章节 */
   const handleEditSection = (title: string, data: any) => {
     emit('editSection', title, data)
+  }
+
+  /** 处理绑定素材 */
+  const handleBindMaterial = (sectionIndex: number, material: Material) => {
+    emit('bindMaterial', sectionIndex, material)
+  }
+
+  /** 处理解绑素材 */
+  const handleUnbindMaterial = (sectionIndex: number, materialTitle: string) => {
+    emit('unbindMaterial', sectionIndex, materialTitle)
+  }
+
+  // ========== 业务逻辑方法 ==========
+  // 这些方法接收 props 和 emits 作为参数，保持纯函数特性
+
+  /**
+   * 获取章节的绑定素材
+   */
+  const getSectionBindings = (sectionIndex: number) => {
+    if (!props.bindingResult) return undefined
+    return props.bindingResult.material_section_bindings.find(
+      (binding) => binding.section_id === sectionIndex + 1
+    )
+  }
+
+  /**
+   * 获取章节的平均匹配分数
+   */
+  const getAverageMatchScore = (sectionIndex: number): number => {
+    const bindings = getSectionBindings(sectionIndex)
+    if (!bindings || bindings.match_scores.length === 0) return 0
+    const average =
+      bindings.match_scores.reduce((sum, score) => sum + score, 0) / bindings.match_scores.length
+    return Math.round(average)
+  }
+
+  /**
+   * 获取可用于当前章节的素材（排除已绑定的）
+   */
+  const getAvailableMaterialsForSection = (sectionIndex: number): Material[] => {
+    const section = props.generatedOutline[sectionIndex]
+    if (!section) return []
+
+    // 获取已绑定的素材标题
+    const boundMaterials = new Set(section.data_requirements || [])
+
+    // 如果有AI绑定结果，也排除那些
+    const aiBindings = getSectionBindings(sectionIndex)
+    if (aiBindings) {
+      aiBindings.materials.forEach((material) => {
+        boundMaterials.add(material.title)
+      })
+    }
+
+    // 返回所有素材中未绑定的部分
+    return getAllMaterials.value.filter((material) => !boundMaterials.has(material.title))
   }
 </script>
 
@@ -465,10 +732,121 @@
     }
   }
 
-  .outline-actions {
-    display: flex;
-    flex-direction: column;
-    gap: var(--art-spacing-xl, 32px);
+  .ai-function-section {
+    padding: var(--art-spacing-lg, 24px);
+    margin-bottom: var(--art-spacing-lg, 24px);
+    background: var(--art-main-bg-color);
+    border: 1px solid var(--art-border-color);
+    border-radius: var(--art-border-radius-lg, 12px);
+    box-shadow: 0 2px 8px rgb(0 0 0 / 4%);
+
+    .ai-buttons-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--art-spacing-md, 16px);
+      justify-content: center;
+      margin-bottom: var(--art-spacing-md, 16px);
+
+      .ai-function-button {
+        display: flex;
+        flex: 1;
+        gap: var(--art-spacing-sm, 8px);
+        align-items: center;
+        justify-content: center;
+        min-width: 200px;
+        max-width: 280px;
+        height: 56px;
+        font-size: var(--art-font-size-base, 16px);
+        font-weight: var(--art-font-weight-medium, 500);
+        border: none;
+        border-radius: var(--art-border-radius-lg, 12px);
+        transition: all 0.3s ease;
+
+        .button-icon {
+          margin-right: var(--art-spacing-xs, 4px);
+          font-size: 20px;
+        }
+
+        .button-text {
+          font-size: var(--art-font-size-base, 16px);
+        }
+
+        &.outline-button {
+          background: linear-gradient(
+            135deg,
+            var(--el-color-primary) 0%,
+            var(--el-color-primary-light-3) 100%
+          );
+          box-shadow: 0 4px 12px rgba(var(--el-color-primary-rgb), 0.25);
+
+          &:hover:not(:disabled) {
+            box-shadow: 0 6px 20px rgba(var(--el-color-primary-rgb), 0.35);
+            transform: translateY(-2px);
+          }
+        }
+
+        &.binding-button {
+          background: linear-gradient(
+            135deg,
+            var(--el-color-success) 0%,
+            var(--el-color-success-light-3) 100%
+          );
+          box-shadow: 0 4px 12px rgba(var(--el-color-success-rgb), 0.25);
+
+          &:hover:not(:disabled) {
+            box-shadow: 0 6px 20px rgba(var(--el-color-success-rgb), 0.35);
+            transform: translateY(-2px);
+          }
+        }
+
+        &.complete-button {
+          background: linear-gradient(
+            135deg,
+            var(--el-color-warning) 0%,
+            var(--el-color-warning-light-3) 100%
+          );
+          box-shadow: 0 4px 12px rgba(var(--el-color-warning-rgb), 0.25);
+
+          &:hover:not(:disabled) {
+            box-shadow: 0 6px 20px rgba(var(--el-color-warning-rgb), 0.35);
+            transform: translateY(-2px);
+          }
+        }
+      }
+    }
+
+    .status-section {
+      .status-hint,
+      .status-success {
+        display: flex;
+        gap: var(--art-spacing-sm, 8px);
+        align-items: center;
+        justify-content: center;
+        padding: var(--art-spacing-sm, 12px) var(--art-spacing-lg, 20px);
+        font-size: var(--art-font-size-sm, 14px);
+        border-radius: var(--art-border-radius, 8px);
+
+        .el-icon {
+          font-size: 16px;
+        }
+      }
+
+      .status-hint {
+        color: var(--el-color-warning);
+        background: var(--el-color-warning-light-9);
+        border: 1px solid var(--el-color-warning-light-7);
+      }
+
+      .status-success {
+        color: var(--el-color-success);
+        background: var(--el-color-success-light-9);
+        border: 1px solid var(--el-color-success-light-7);
+      }
+    }
+  }
+
+  .manual-edit-section {
+    margin-bottom: var(--art-spacing-lg, 24px);
 
     .section-title {
       display: flex;
@@ -482,16 +860,6 @@
       .el-icon {
         color: var(--el-color-primary);
       }
-
-      .help-icon {
-        color: var(--art-text-color-placeholder);
-        cursor: help;
-        transition: color 0.3s ease;
-
-        &:hover {
-          color: var(--el-color-primary);
-        }
-      }
     }
 
     .action-grid {
@@ -501,64 +869,8 @@
 
       .el-button {
         width: 100%;
-        min-height: 80px;
+        min-height: 48px;
         text-align: center;
-
-        &.ai-button {
-          background: linear-gradient(
-            135deg,
-            var(--el-color-primary) 0%,
-            var(--el-color-primary-light-3) 100%
-          );
-          border: none;
-          box-shadow: 0 4px 12px rgba(var(--el-color-primary-rgb), 0.3);
-          transition: all 0.3s ease;
-
-          &:hover:not(:disabled) {
-            box-shadow: 0 6px 16px rgba(var(--el-color-primary-rgb), 0.4);
-            transform: translateY(-2px);
-          }
-
-          .button-content {
-            display: flex;
-            flex-direction: column;
-            gap: var(--art-spacing-xs, 4px);
-            align-items: center;
-
-            strong {
-              font-size: var(--art-font-size-base, 16px);
-              font-weight: var(--art-font-weight-semibold, 600);
-            }
-
-            small {
-              font-size: var(--art-font-size-xs, 12px);
-              opacity: 0.9;
-            }
-          }
-        }
-      }
-    }
-
-    .requirement-hint {
-      display: flex;
-      gap: var(--art-spacing-xs, 4px);
-      align-items: center;
-      padding: var(--art-spacing-sm, 8px) var(--art-spacing-md, 12px);
-      margin-top: var(--art-spacing-md, 12px);
-      font-size: var(--art-font-size-sm, 14px);
-      color: var(--el-color-warning);
-      background: var(--el-color-warning-light-9);
-      border: 1px solid var(--el-color-warning-light-7);
-      border-radius: var(--art-border-radius, 6px);
-
-      &.info {
-        color: var(--el-color-info);
-        background: var(--el-color-info-light-9);
-        border-color: var(--el-color-info-light-7);
-      }
-
-      .el-icon {
-        font-size: 14px;
       }
     }
   }
@@ -913,7 +1225,7 @@
             display: flex;
             gap: var(--art-spacing-xs, 4px);
             align-items: center;
-            margin-bottom: var(--art-spacing-sm, 8px);
+            margin-bottom: var(--art-spacing-md, 12px);
             font-size: var(--art-font-size-sm, 14px);
             font-weight: var(--art-font-weight-medium, 500);
             color: var(--art-text-color-primary);
@@ -923,16 +1235,70 @@
             }
           }
 
+          .ai-bindings-section,
+          .manual-bindings-section {
+            margin-bottom: var(--art-spacing-md, 12px);
+
+            .bindings-header {
+              display: flex;
+              gap: var(--art-spacing-sm, 8px);
+              align-items: center;
+              margin-bottom: var(--art-spacing-sm, 8px);
+              font-size: var(--art-font-size-sm, 14px);
+              font-weight: var(--art-font-weight-medium, 500);
+              color: var(--art-text-color-primary);
+
+              .el-icon {
+                color: var(--el-color-primary);
+              }
+
+              .el-tag {
+                margin-left: auto;
+              }
+            }
+
+            .bound-materials-list {
+              display: flex;
+              flex-wrap: wrap;
+              gap: var(--art-spacing-sm, 8px);
+
+              .bound-material-tag {
+                .tag-content {
+                  display: flex;
+                  gap: var(--art-spacing-xs, 4px);
+                  align-items: center;
+
+                  .material-title {
+                    max-width: 200px;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                  }
+
+                  .match-score {
+                    font-weight: var(--art-font-weight-bold, 700);
+                  }
+                }
+              }
+            }
+          }
+
           .requirements-list {
             display: flex;
             flex-wrap: wrap;
             gap: var(--art-spacing-sm, 8px);
+            margin-bottom: var(--art-spacing-md, 12px);
 
             .requirement-tag {
               display: flex;
               gap: var(--art-spacing-xs, 4px);
               align-items: center;
             }
+          }
+
+          .manual-add-section {
+            padding-top: var(--art-spacing-md, 12px);
+            border-top: 1px solid var(--art-border-color-lighter);
           }
 
           .empty-requirements {
@@ -963,118 +1329,6 @@
           }
         }
       }
-    }
-  }
-
-  .section-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: var(--art-spacing-md, 12px);
-  }
-
-  .section-info {
-    display: flex;
-    flex: 1;
-    gap: var(--art-spacing-md, 12px);
-    align-items: center;
-  }
-
-  .section-number {
-    min-width: 32px;
-    font-size: var(--art-font-size-lg, 16px);
-    font-weight: var(--art-font-weight-bold, 700);
-    color: var(--el-color-primary);
-  }
-
-  .section-title-input {
-    flex: 1;
-    padding: var(--art-spacing-sm, 8px) var(--art-spacing-md, 12px);
-    font-size: var(--art-font-size-base, 16px);
-    font-weight: var(--art-font-weight-medium, 500);
-    background: var(--art-main-bg-color);
-    border: 1px solid var(--art-border-color);
-    border-radius: var(--art-border-radius-sm, 6px);
-    transition: all 0.3s ease;
-
-    &:focus {
-      background: var(--art-main-bg-color);
-      border-color: var(--el-color-primary);
-      outline: none;
-      box-shadow: 0 0 0 2px var(--el-color-primary-light-8);
-    }
-
-    &:hover {
-      border-color: var(--el-color-primary-light-6);
-    }
-  }
-
-  .section-controls {
-    display: flex;
-    gap: var(--art-spacing-xs, 6px);
-  }
-
-  .section-content {
-    box-sizing: border-box;
-    padding: var(--art-padding-lg, 16px);
-    margin-top: var(--art-spacing-lg, 16px);
-    overflow: hidden;
-    background: var(--art-fill-color-blank);
-    border: 1px solid var(--art-border-color);
-    border-radius: var(--art-border-radius-sm, 6px);
-  }
-
-  .content-direction {
-    margin-bottom: var(--art-spacing-lg, 16px);
-
-    label {
-      display: block;
-      margin-bottom: var(--art-spacing-sm, 8px);
-      font-size: var(--art-font-size-sm, 14px);
-      font-weight: var(--art-font-weight-medium, 500);
-      color: var(--art-text-color-primary);
-    }
-  }
-
-  .content-direction-textarea {
-    box-sizing: border-box;
-    width: 100%;
-    max-width: 100%;
-    min-height: 96px;
-    padding: var(--art-spacing-md, 12px);
-    font-family: inherit;
-    font-size: var(--art-font-size-sm, 14px);
-    line-height: var(--art-line-height-relaxed, 1.6);
-    resize: vertical;
-    background: var(--art-main-bg-color);
-    border: 1px solid var(--art-border-color);
-    border-radius: var(--art-border-radius-sm, 6px);
-    transition: all 0.3s ease;
-
-    &:focus {
-      background: var(--art-main-bg-color);
-      border-color: var(--el-color-primary);
-      outline: none;
-      box-shadow: 0 0 0 2px var(--el-color-primary-light-8);
-    }
-
-    &:hover {
-      border-color: var(--el-color-primary-light-6);
-    }
-  }
-
-  .data-requirements {
-    label {
-      display: block;
-      margin-bottom: var(--art-spacing-sm, 8px);
-      font-size: var(--art-font-size-sm, 14px);
-      font-weight: var(--art-font-weight-medium, 500);
-      color: var(--art-text-color-primary);
-    }
-
-    .el-tag {
-      margin-right: var(--art-spacing-sm, 8px);
-      margin-bottom: var(--art-spacing-sm, 8px);
     }
   }
 
@@ -1116,33 +1370,59 @@
   // 移动端适配
   @media (max-width: $device-phone) {
     .outline-content {
-      padding: var(--art-padding-lg, 20px);
+      padding: var(--art-padding-lg, 16px);
     }
 
-    .outline-header {
-      flex-direction: column;
-      gap: var(--art-spacing-lg, 20px);
-      align-items: stretch;
-    }
+    .ai-function-section {
+      padding: var(--art-spacing-md, 16px);
 
-    .outline-actions {
-      .actions-group {
-        .action-grid {
-          grid-template-columns: 1fr;
-          gap: var(--art-spacing-sm, 8px);
+      .ai-buttons-container {
+        flex-direction: column;
+        gap: var(--art-spacing-md, 12px);
+
+        .ai-function-button {
+          width: 100%;
+          min-width: auto;
+          max-width: none;
+          height: 48px;
+          font-size: var(--art-font-size-sm, 14px);
+
+          .button-icon {
+            font-size: 18px;
+          }
+
+          .button-text {
+            font-size: var(--art-font-size-sm, 14px);
+          }
+        }
+      }
+
+      .status-section {
+        .status-hint,
+        .status-success {
+          padding: var(--art-spacing-sm, 8px) var(--art-spacing-md, 12px);
+          font-size: var(--art-font-size-xs, 12px);
+          text-align: center;
+
+          .el-icon {
+            font-size: 14px;
+          }
         }
       }
     }
 
-    .section-header {
-      flex-direction: column;
-      gap: var(--art-spacing-md, 12px);
-      align-items: flex-start;
+    .manual-edit-section {
+      .action-grid {
+        grid-template-columns: 1fr;
+        gap: var(--art-spacing-sm, 8px);
+      }
     }
 
-    .section-controls {
-      flex-wrap: wrap;
-      justify-content: flex-start;
+    .empty-outline {
+      .quick-actions {
+        grid-template-columns: 1fr;
+        gap: var(--art-spacing-md, 16px);
+      }
     }
 
     .outline-actions-bottom {
@@ -1155,28 +1435,34 @@
         max-width: 200px;
       }
     }
-
-    .outline-section {
-      padding: var(--art-padding-md, 12px);
-    }
-
-    .section-content {
-      padding: var(--art-padding-md, 12px);
-    }
-
-    .content-direction-textarea {
-      min-height: 80px;
-    }
   }
 
   // 平板设备适配
   @media (max-width: $device-ipad) {
-    .outline-actions {
-      .actions-group {
-        .action-grid {
-          grid-template-columns: 1fr;
-          gap: var(--art-spacing-sm, 8px);
+    .ai-function-section {
+      .ai-buttons-container {
+        gap: var(--art-spacing-md, 12px);
+
+        .ai-function-button {
+          min-width: 180px;
+          height: 52px;
+          font-size: var(--art-font-size-sm, 15px);
+
+          .button-icon {
+            font-size: 19px;
+          }
+
+          .button-text {
+            font-size: var(--art-font-size-sm, 15px);
+          }
         }
+      }
+    }
+
+    .manual-edit-section {
+      .action-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--art-spacing-md, 10px);
       }
     }
   }
