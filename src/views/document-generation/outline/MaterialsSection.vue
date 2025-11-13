@@ -5,10 +5,10 @@
         <div class="step-number">3</div>
         <div class="step-content">
           <h3>
-            <el-icon><FolderOpened /></el-icon>
-            素材管理与绑定
+            <el-icon><Link /></el-icon>
+            智能素材绑定
           </h3>
-          <p class="step-description">选择并管理素材，智能绑定到对应章节</p>
+          <p class="step-description">将素材智能匹配到对应章节，提升内容质量</p>
         </div>
         <div class="status-indicator">
           <el-tag v-if="selectedMaterials.length > 0" type="success" effect="light">
@@ -41,98 +41,37 @@
 
     <el-collapse-transition>
       <div v-show="!materialsCollapsed" class="materials-content">
-        <!-- 素材选择区域 -->
-        <div class="materials-selection">
-          <div class="section-header">
-            <div class="header-content">
-              <h4>
-                <el-icon><Collection /></el-icon>
-                素材选择与管理
-              </h4>
-              <p>选择相关素材，AI将智能匹配到最合适的章节</p>
+        <!-- 素材绑定概览 -->
+        <div v-if="selectedMaterials.length > 0" class="materials-overview">
+          <div class="overview-header">
+            <h4>
+              <el-icon><Collection /></el-icon>
+              素材绑定概览
+            </h4>
+            <p>已选择 {{ selectedMaterials.length }} 个素材，可以进行AI智能绑定</p>
+          </div>
+          <div class="overview-stats">
+            <div class="stat-item">
+              <span class="stat-value">{{ selectedMaterials.length }}</span>
+              <span class="stat-label">已选素材</span>
             </div>
-            <div class="header-actions">
-              <el-button
-                v-if="selectedMaterials.length > 0"
-                @click="handleClearSelection"
-                size="small"
-                type="danger"
-                plain
-              >
-                <el-icon><Delete /></el-icon>
-                清空选择
-              </el-button>
-              <el-button type="primary" @click="$emit('openMaterialLibrary')" size="small">
-                <el-icon><Plus /></el-icon>
-                添加素材
-              </el-button>
+            <div class="stat-item">
+              <span class="stat-value">{{ generatedOutline.length }}</span>
+              <span class="stat-label">可绑章节</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">{{ getBindingProgress() }}%</span>
+              <span class="stat-label">绑定进度</span>
             </div>
           </div>
+        </div>
 
-          <div v-if="selectedMaterials.length === 0" class="empty-materials">
-            <div class="empty-content">
-              <div class="empty-visual">
-                <el-icon><FolderOpened /></el-icon>
-                <div class="empty-pulse"></div>
-              </div>
-              <div class="empty-text">
-                <h4>还没有选择任何素材</h4>
-                <p>从素材库中选择相关资料，AI将智能匹配到最合适的章节</p>
-                <div class="benefits-list">
-                  <div class="benefit-item">
-                    <el-icon><Cpu /></el-icon>
-                    <span>AI智能匹配章节</span>
-                  </div>
-                  <div class="benefit-item">
-                    <el-icon><Link /></el-icon>
-                    <span>自动关联相关内容</span>
-                  </div>
-                  <div class="benefit-item">
-                    <el-icon><DocumentCopy /></el-icon>
-                    <span>提升内容质量</span>
-                  </div>
-                </div>
-              </div>
-              <div class="empty-actions">
-                <el-button type="primary" @click="$emit('openMaterialLibrary')" size="large">
-                  <el-icon><FolderOpened /></el-icon>
-                  浏览素材库
-                </el-button>
-              </div>
-            </div>
-          </div>
-
-          <div v-else class="materials-grid">
-            <div class="materials-overview">
-              <div class="overview-stats">
-                <div class="stat-item">
-                  <span class="stat-value">{{ selectedMaterials.length }}</span>
-                  <span class="stat-label">已选素材</span>
-                </div>
-                <div class="stat-item">
-                  <span class="stat-value">{{ generatedOutline.length }}</span>
-                  <span class="stat-label">可绑章节</span>
-                </div>
-                <div class="stat-item">
-                  <span class="stat-value">{{ getBindingProgress() }}%</span>
-                  <span class="stat-label">绑定进度</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="materials-list">
-              <UnifiedMaterialCard
-                v-for="material in selectedMaterials"
-                :key="material.id"
-                :material="material"
-                :selected="true"
-                :showSelection="true"
-                :showScore="true"
-                context="management"
-                @select="(id) => $emit('toggleMaterialSelection', id)"
-                @preview="(m) => $emit('previewMaterial', m)"
-              />
-            </div>
+        <!-- 提示信息 -->
+        <div v-else class="materials-hint">
+          <div class="hint-content">
+            <el-icon><FolderOpened /></el-icon>
+            <h4>尚未添加素材</h4>
+            <p>请在标题区域的素材管理中添加素材，然后回到这里进行智能绑定</p>
           </div>
         </div>
 
@@ -168,7 +107,7 @@
                         console.log('[UI] 用户点击 AI智能绑定 按钮')
                         console.log('[UI] selectedMaterials:', selectedMaterials)
                         console.log('[UI] isBindingMaterials:', isBindingMaterials)
-                        $emit('ai-bind')
+                        emit('ai-bind')
                         console.log('[UI] 事件 ai-bind 已触发')
                       }
                     "
@@ -362,23 +301,18 @@
   import { ref, computed } from 'vue'
   import type { Material } from '@/types/material'
   import { useMaterialBindStore } from '@/store/modules/materialBind'
-  import UnifiedMaterialCard from '@/components/custom/material-card/UnifiedMaterialCard.vue'
   import {
-    FolderOpened,
     Link,
-    Plus,
     MagicStick,
     Document,
     ArrowDown,
     ArrowUp,
     Check,
-    Collection,
-    Delete,
-    Cpu,
-    DocumentCopy,
     Loading,
     WarningFilled,
-    InfoFilled
+    InfoFilled,
+    FolderOpened,
+    Collection
   } from '@element-plus/icons-vue'
 
   // Props
@@ -391,10 +325,6 @@
 
   // Emits
   const emit = defineEmits<{
-    (e: 'openMaterialLibrary'): void
-    (e: 'clearSelection'): void
-    (e: 'toggleMaterialSelection', id: string): void
-    (e: 'previewMaterial', material: Material): void
     (e: 'ai-bind'): void
     (e: 'bindMaterialToSection', sectionIndex: number, material: Material): void
     (e: 'unbindMaterialFromSection', sectionIndex: number, materialTitle: string): void
@@ -418,10 +348,6 @@
     if (totalRequirements === 0) return 0
 
     return Math.round((totalRequirements / (props.generatedOutline.length * 2)) * 100)
-  }
-
-  const handleClearSelection = () => {
-    emit('clearSelection')
   }
 
   // 计算属性：显示真实的绑定结果
@@ -544,179 +470,89 @@
     background: var(--art-main-bg-color);
   }
 
-  .materials-selection {
-    .section-header {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      padding: var(--art-padding-lg, 20px);
-      margin-bottom: var(--art-spacing-xl, 32px);
-      background: var(--art-fill-color-light);
-      border: 1px solid var(--art-border-color);
-      border-radius: var(--art-border-radius, 8px);
+  .materials-overview {
+    padding: var(--art-padding-lg, 20px);
+    margin-bottom: var(--art-spacing-xl, 32px);
+    background: linear-gradient(135deg, var(--art-fill-color-light) 0%, var(--art-fill-color) 100%);
+    border: 1px solid var(--art-border-color);
+    border-radius: var(--art-border-radius, 8px);
 
-      .header-content {
-        flex: 1;
+    .overview-header {
+      margin-bottom: var(--art-spacing-lg, 20px);
 
-        h4 {
-          display: flex;
-          gap: var(--art-spacing-sm, 8px);
-          align-items: center;
-          margin: 0 0 var(--art-spacing-xs, 4px);
-          font-size: var(--art-font-size-base-lg, 18px);
-          font-weight: var(--art-font-weight-medium, 500);
-          color: var(--art-text-color-primary);
+      h4 {
+        display: flex;
+        gap: var(--art-spacing-sm, 8px);
+        align-items: center;
+        margin: 0 0 var(--art-spacing-xs, 4px);
+        font-size: var(--art-font-size-base-lg, 18px);
+        font-weight: var(--art-font-weight-medium, 500);
+        color: var(--art-text-color-primary);
 
-          .el-icon {
-            color: var(--el-color-primary);
-          }
+        .el-icon {
+          color: var(--el-color-primary);
+        }
+      }
+
+      p {
+        margin: 0;
+        font-size: var(--art-font-size-sm, 14px);
+        color: var(--art-text-color-secondary);
+      }
+    }
+
+    .overview-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--art-spacing-lg, 20px);
+      text-align: center;
+
+      .stat-item {
+        display: flex;
+        flex-direction: column;
+        gap: var(--art-spacing-xs, 4px);
+
+        .stat-value {
+          font-size: var(--art-font-size-xl, 24px);
+          font-weight: var(--art-font-weight-bold, 700);
+          color: var(--el-color-primary);
         }
 
-        p {
-          margin: 0;
+        .stat-label {
           font-size: var(--art-font-size-sm, 14px);
           color: var(--art-text-color-secondary);
         }
       }
-
-      .header-actions {
-        display: flex;
-        flex-shrink: 0;
-        gap: var(--art-spacing-sm, 8px);
-      }
     }
+  }
 
-    .empty-materials {
-      padding: var(--art-padding-2xl, 60px) var(--art-padding-lg, 24px);
-      text-align: center;
+  .materials-hint {
+    padding: var(--art-padding-2xl, 60px) var(--art-padding-lg, 24px);
+    text-align: center;
 
-      .empty-content {
-        max-width: 500px;
-        margin: 0 auto;
+    .hint-content {
+      max-width: 400px;
+      margin: 0 auto;
 
-        .empty-visual {
-          position: relative;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 120px;
-          height: 120px;
-          margin: 0 auto var(--art-spacing-xl, 32px);
-          font-size: 48px;
-          color: var(--art-text-color-placeholder);
-          background: var(--art-fill-color-light);
-          border: 2px dashed var(--art-border-dashed-color);
-          border-radius: var(--art-border-radius-lg, 12px);
-
-          .empty-pulse {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 100px;
-            height: 100px;
-            background: var(--el-color-primary-light-9);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            animation: pulse 2s infinite;
-          }
-        }
-
-        .empty-text {
-          margin-bottom: var(--art-spacing-2xl, 40px);
-
-          h4 {
-            margin: 0 0 var(--art-spacing-sm, 8px);
-            font-size: var(--art-font-size-xl, 24px);
-            font-weight: var(--art-font-weight-semibold, 600);
-            color: var(--art-text-color-primary);
-          }
-
-          p {
-            margin: 0 0 var(--art-spacing-lg, 20px);
-            font-size: var(--art-font-size-base, 16px);
-            line-height: var(--art-line-height-relaxed, 1.6);
-            color: var(--art-text-color-secondary);
-          }
-
-          .benefits-list {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: var(--art-spacing-md, 12px);
-
-            .benefit-item {
-              display: flex;
-              flex-direction: column;
-              gap: var(--art-spacing-xs, 4px);
-              align-items: center;
-              padding: var(--art-spacing-md, 12px);
-              background: var(--art-fill-color-blank);
-              border: 1px solid var(--art-border-color);
-              border-radius: var(--art-border-radius, 6px);
-
-              .el-icon {
-                font-size: 20px;
-                color: var(--el-color-primary);
-              }
-
-              span {
-                font-size: var(--art-font-size-xs, 12px);
-                color: var(--art-text-color-secondary);
-                text-align: center;
-              }
-            }
-          }
-        }
-
-        .empty-actions {
-          .el-button {
-            min-width: 160px;
-            font-weight: var(--art-font-weight-medium, 500);
-          }
-        }
-      }
-    }
-
-    .materials-grid {
-      .materials-overview {
-        padding: var(--art-padding-lg, 20px);
-        margin-bottom: var(--art-spacing-xl, 32px);
-        background: linear-gradient(
-          135deg,
-          var(--art-fill-color-light) 0%,
-          var(--art-fill-color) 100%
-        );
-        border: 1px solid var(--art-border-color);
-        border-radius: var(--art-border-radius, 8px);
-
-        .overview-stats {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: var(--art-spacing-lg, 20px);
-          text-align: center;
-
-          .stat-item {
-            display: flex;
-            flex-direction: column;
-            gap: var(--art-spacing-xs, 4px);
-
-            .stat-value {
-              font-size: var(--art-font-size-xl, 24px);
-              font-weight: var(--art-font-weight-bold, 700);
-              color: var(--el-color-primary);
-            }
-
-            .stat-label {
-              font-size: var(--art-font-size-sm, 14px);
-              color: var(--art-text-color-secondary);
-            }
-          }
-        }
+      .el-icon {
+        display: block;
+        margin: 0 auto var(--art-spacing-lg, 20px);
+        font-size: 48px;
+        color: var(--art-text-color-placeholder);
       }
 
-      .materials-list {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-        gap: var(--art-spacing-lg, 16px);
+      h4 {
+        margin: 0 0 var(--art-spacing-sm, 8px);
+        font-size: var(--art-font-size-lg, 20px);
+        font-weight: var(--art-font-weight-medium, 500);
+        color: var(--art-text-color-primary);
+      }
+
+      p {
+        margin: 0;
+        font-size: var(--art-font-size-sm, 14px);
+        line-height: var(--art-line-height-relaxed, 1.6);
+        color: var(--art-text-color-secondary);
       }
     }
   }

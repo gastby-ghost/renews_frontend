@@ -16,9 +16,11 @@
       <!-- 标题信息分区 -->
       <TitleSection
         :project-id="projectId"
+        :selected-materials="selectedMaterials"
         @edit-title="editTitle"
         @view-search-results="viewSearchResults"
         @material-preview="handleMaterialPreview"
+        @add-material="openMaterialLibrary"
       />
 
       <!-- 大纲编辑分区 -->
@@ -46,18 +48,7 @@
         :generated-outline="outline.state.generatedOutline"
         :is-binding-materials="outline.state.isBindingMaterials"
         :binding-progress="outline.state.bindingProgress"
-        @open-material-library="openMaterialLibrary"
-        @clear-selection="() => (selectedMaterials = [])"
-        @toggle-material-selection="toggleMaterialSelection"
-        @preview-material="(m) => console.log('预览素材:', m)"
-        @ai-bind="
-          () => {
-            console.log('[INDEX] 接收到 ai-bind 事件')
-            console.log('[INDEX] 调用 handleAIBindMaterials 方法')
-            handleAIBindMaterials()
-            console.log('[INDEX] handleAIBindMaterials 调用完成')
-          }
-        "
+        @ai-bind="handleAIBindMaterials"
         @bind-material-to-section="bindMaterialToSection"
         @unbind-material-from-section="unbindMaterialFromSection"
       />
@@ -99,7 +90,6 @@
     viewSearchResults,
     goBack,
     handleAIBindMaterials,
-    toggleMaterialSelection,
     openMaterialLibrary,
     handleMaterialLibraryConfirm,
     outline

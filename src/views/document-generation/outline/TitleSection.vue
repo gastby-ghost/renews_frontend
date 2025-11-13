@@ -69,7 +69,7 @@
                 :is-selected="true"
                 :score="getTitleScore()"
                 :suggestions="getTitleSuggestions()"
-                :materials="currentTitleMaterials"
+                :materials="titleRelatedMaterials"
                 @select="handleTitleSelect"
                 @update="handleTitleUpdate"
               />
@@ -77,16 +77,20 @@
           </div>
 
           <!-- 相关素材显示区域 -->
-          <div v-if="currentTitleMaterials.length > 0" class="materials-section">
+          <div class="materials-section">
             <div class="materials-header" @click="materialsCollapsed = !materialsCollapsed">
               <div class="materials-info">
                 <h4>
                   <el-icon><FolderOpened /></el-icon>
-                  相关素材 ({{ currentTitleMaterials.length }})
+                  相关素材 ({{ allMaterials.length }})
                 </h4>
                 <p class="materials-subtitle"> 选中标题的引用素材，可作为大纲生成的重要参考 </p>
               </div>
               <div class="materials-controls">
+                <el-button type="primary" @click="handleAddMaterial" size="small">
+                  <el-icon><Plus /></el-icon>
+                  添加素材
+                </el-button>
                 <el-tag type="info" size="small" effect="light">
                   {{ materialsCollapsed ? '已收纳' : '展开中' }}
                 </el-tag>
@@ -98,7 +102,27 @@
 
             <el-collapse-transition>
               <div v-show="!materialsCollapsed" class="materials-content">
-                <div class="materials-grid">
+                <!-- 空状态显示 -->
+                <div v-if="allMaterials.length === 0" class="empty-materials">
+                  <div class="empty-content">
+                    <div class="empty-visual">
+                      <el-icon><FolderOpened /></el-icon>
+                    </div>
+                    <div class="empty-text">
+                      <h4>还没有添加相关素材</h4>
+                      <p>添加素材将为AI生成大纲提供更多参考信息</p>
+                    </div>
+                    <div class="empty-actions">
+                      <el-button type="primary" @click="handleAddMaterial" size="large">
+                        <el-icon><Plus /></el-icon>
+                        添加素材
+                      </el-button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 有素材时显示 -->
+                <div v-else class="materials-grid">
                   <UnifiedMaterialCard
                     v-for="material in displayMaterials"
                     :key="material.id"
@@ -112,13 +136,9 @@
                 </div>
 
                 <!-- 显示更多按钮 -->
-                <div v-if="currentTitleMaterials.length > displayLimit" class="show-more-section">
+                <div v-if="allMaterials.length > displayLimit" class="show-more-section">
                   <el-button @click="showAllMaterials = !showAllMaterials" link>
-                    {{
-                      showAllMaterials
-                        ? '收起部分'
-                        : `显示全部 ${currentTitleMaterials.length} 个素材`
-                    }}
+                    {{ showAllMaterials ? '收起部分' : `显示全部 ${allMaterials.length} 个素材` }}
                     <el-icon>
                       <component :is="showAllMaterials ? ArrowUp : ArrowDown" />
                     </el-icon>
@@ -185,7 +205,8 @@
     Check,
     Warning,
     InfoFilled,
-    FolderOpened
+    FolderOpened,
+    Plus
   } from '@element-plus/icons-vue'
 
   // 组合式函数和状态管理
@@ -205,6 +226,7 @@
   // Props
   const props = defineProps<{
     projectId: string
+    selectedMaterials?: Material[]
   }>()
 
   // Emits
@@ -212,6 +234,7 @@
     (e: 'editTitle'): void
     (e: 'viewSearchResults'): void
     (e: 'materialPreview', material: Material): void
+    (e: 'addMaterial'): void
   }>()
 
   // 标题分区状态
@@ -223,7 +246,7 @@
   // ====== 计算属性 ======
 
   /** 当前选中标题对应的素材列表 */
-  const currentTitleMaterials = computed(() => {
+  const titleRelatedMaterials = computed(() => {
     if (!documentStore.documentState.selectedTitle) return []
 
     const selectedSources = documentStore.documentState.selectedTitle.sources || []
@@ -261,12 +284,34 @@
     return []
   })
 
+  /** 合并的素材列表（标题相关素材 + 用户选择的素材） */
+  const allMaterials = computed(() => {
+    const titleMaterials = titleRelatedMaterials.value
+    const userSelectedMaterials = props.selectedMaterials || []
+
+    // 去重，基于标题和URL
+    const allUniqueMaterials = [...titleMaterials]
+
+    userSelectedMaterials.forEach((userMaterial) => {
+      const exists = allUniqueMaterials.some(
+        (existing) =>
+          existing.title === userMaterial.title ||
+          (existing.url && userMaterial.url && existing.url === userMaterial.url)
+      )
+      if (!exists) {
+        allUniqueMaterials.push(userMaterial)
+      }
+    })
+
+    return allUniqueMaterials
+  })
+
   /** 显示的素材列表（根据showAllMaterials状态控制） */
   const displayMaterials = computed(() => {
     if (showAllMaterials.value) {
-      return currentTitleMaterials.value
+      return allMaterials.value
     }
-    return currentTitleMaterials.value.slice(0, displayLimit)
+    return allMaterials.value.slice(0, displayLimit)
   })
 
   // ====== 方法 ======
@@ -287,7 +332,7 @@
   }
 
   /** 处理标题更新事件 */
-  const handleTitleUpdate = (oldTitle: Title, newTitle: Title) => {
+  const handleTitleUpdate = (_oldTitle: Title, newTitle: Title) => {
     documentStore.updateDocumentState({
       selectedTitle: newTitle
     })
@@ -297,6 +342,11 @@
   /** 处理素材预览 */
   const handleMaterialPreview = (material: Material) => {
     emit('materialPreview', material)
+  }
+
+  /** 处理添加素材 */
+  const handleAddMaterial = () => {
+    emit('addMaterial')
   }
 
   const editTitle = () => {
@@ -557,6 +607,62 @@
           justify-content: center;
           padding-top: var(--art-spacing-md, 12px);
           border-top: 1px solid var(--art-border-color-lighter);
+        }
+
+        .empty-materials {
+          padding: var(--art-padding-2xl, 60px) var(--art-padding-lg, 24px);
+          text-align: center;
+
+          .empty-content {
+            max-width: 400px;
+            margin: 0 auto;
+
+            .empty-visual {
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              width: 80px;
+              height: 80px;
+              margin: 0 auto var(--art-spacing-lg, 20px);
+              font-size: 32px;
+              color: var(--art-text-color-placeholder);
+              background: var(--art-fill-color-light);
+              border: 2px dashed var(--art-border-dashed-color);
+              border-radius: var(--art-border-radius-lg, 12px);
+              transition: all 0.3s ease;
+
+              &:hover {
+                color: var(--el-color-primary);
+                background: var(--el-color-primary-light-9);
+                border-color: var(--el-color-primary-light-6);
+              }
+            }
+
+            .empty-text {
+              margin-bottom: var(--art-spacing-xl, 32px);
+
+              h4 {
+                margin: 0 0 var(--art-spacing-sm, 8px);
+                font-size: var(--art-font-size-lg, 20px);
+                font-weight: var(--art-font-weight-medium, 500);
+                color: var(--art-text-color-primary);
+              }
+
+              p {
+                margin: 0;
+                font-size: var(--art-font-size-sm, 14px);
+                line-height: var(--art-line-height-relaxed, 1.6);
+                color: var(--art-text-color-secondary);
+              }
+            }
+
+            .empty-actions {
+              .el-button {
+                min-width: 140px;
+                font-weight: var(--art-font-weight-medium, 500);
+              }
+            }
+          }
         }
       }
     }
