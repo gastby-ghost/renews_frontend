@@ -12,6 +12,16 @@ import type {
 } from '@/config/api/types'
 import http from '@/utils/http'
 
+// 动态导入Mock路由（仅在需要时加载）
+let mockRoutes: typeof import('@/mock/data/document-generate/mock-routes') | null = null
+
+async function loadMockRoutes() {
+  if (!mockRoutes) {
+    mockRoutes = await import('@/mock/data/document-generate/mock-routes')
+  }
+  return mockRoutes
+}
+
 abstract class BaseApiService {
   protected serviceName: string
   private serviceConfig: ApiEndpointConfig | null = null
@@ -52,10 +62,38 @@ abstract class BaseApiService {
     // 模拟网络延迟
     await this.simulateDelay(apiConfig.mockDelay || mockConfig.defaultDelay)
 
-    // 调用Mock实现
+    // 优先尝试路由式Mock
+    const routeMockResult = await this.handleRouteMock(config)
+    if (routeMockResult !== null) {
+      return routeMockResult as T
+    }
+
+    // 回退到传统Mock实现
     const result = await this.mockImplementation?.(config)
 
     return result as T
+  }
+
+  /**
+   * 处理路由式Mock
+   */
+  private async handleRouteMock(config: ApiRequestConfig): Promise<any> {
+    try {
+      const { getMockHandler } = await loadMockRoutes()
+      const mockHandler = getMockHandler({
+        method: config.method,
+        url: config.url
+      })
+
+      if (mockHandler) {
+        return mockHandler(config)
+      }
+    } catch (error) {
+      // Mock路由加载失败，返回null使用传统Mock
+      console.warn('Mock路由加载失败，回退到传统Mock实现:', error)
+    }
+
+    return null
   }
 
   /**
@@ -99,10 +137,20 @@ abstract class BaseApiService {
 
   /**
    * Mock实现方法（子类需要重写）
+   * 现在作为路由式Mock的回退方案
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   protected async mockImplementation?(_config: ApiRequestConfig): Promise<any> {
-    throw new Error(`Mock实现未定义: ${this.serviceName}`)
+    // 默认Mock响应，不再抛出错误
+    return {
+      success: true,
+      message: `默认Mock响应 - ${_config.method} ${_config.url}`,
+      data: {
+        mock: true,
+        timestamp: Date.now(),
+        service: this.serviceName,
+        note: '使用默认Mock实现，建议配置具体Mock路由'
+      }
+    }
   }
 
   /**

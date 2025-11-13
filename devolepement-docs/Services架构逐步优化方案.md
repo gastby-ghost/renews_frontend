@@ -1,270 +1,216 @@
 # Services 架构逐步优化方案
 
-## 📊 当前问题分析
+## 📊 当前现状评估
 
-### 现状概况
+### 阶段1完成情况分析
 
-| 文件                         | 行数   | 主要功能       | 问题                        |
-| ---------------------------- | ------ | -------------- | --------------------------- |
-| `documentGenerateService.ts` | 2009   | 文档生成全流程 | 巨型单体文件，包含10+业务域 |
-| `projectService.ts`          | 745    | 项目管理       | 过大，职责混合              |
-| `materialService.ts`         | 551    | 素材管理       | 中等大小                    |
-| `searchService.ts`           | 471    | 搜索服务       | 中等大小                    |
-| `bodyService.ts`             | 265    | 正文管理       | 合理范围                    |
-| 其他服务                     | 46-375 | 各类服务       | 部分合理                    |
+#### ✅ 已完成成果
 
-### 核心问题
+- **Mock数据已分离**：创建11个独立Mock文件，结构清晰
+- **服务引用已更新**：documentGenerateService.ts 正确引用分离后的Mock函数
+- **代码结构改善**：Mock实现与业务逻辑分离
 
-1. **巨型单体文件**：`documentGenerateService.ts` 超过2000行，难以维护
-2. **职责混合**：单个文件包含多个不相关的业务域（Scope Agent、Title Agent、Outline Agent、Material Bind等）
-3. **Mock数据分散**：Mock代码与业务逻辑混合在同一个文件中
-4. **结构不清晰**：服务结构与页面模块结构不对应，增加理解和维护成本
+#### ❌ 未达标问题
 
-### 模块化拆分思路
+- **文件大小减少未达目标**：
+  - 原始行数：2009行
+  - 当前行数：1622行
+  - 减少比例：**19.3%**（目标60%）
+- **Mock分发逻辑仍在服务文件**：330行路由分发逻辑未移除
+- **服务拆分尚未开始**：仍存在巨型单体文件
+- **项目Service也需要优化**：745行，超过合理范围
 
-根据 `src/views/document-generation/` 的模块结构：
+#### 🎯 核心问题根因
 
-```
-src/views/document-generation/
-├── project-list/     # 项目列表
-├── topic-selection/  # 主题选择
-├── outline/          # 大纲生成
-└── content/          # 正文编辑
-```
+1. **Mock分发逻辑冗余**：BaseApiService已提供Mock机制，但documentGenerateService仍使用自定义分发
+2. **服务职责过度集中**：单个服务包含多个不相关的业务域
+3. **结构不清晰**：服务结构与页面模块结构不对应
 
-对应服务层应拆分为：
+## 🚀 优化策略调整
 
-- `project-list` 服务：项目列表管理
-- `topic-selection` 服务：主题选择和Scope Agent
-- `outline` 服务：大纲生成和Title Agent
-- `content` 服务：正文生成和Material Bind
+### 策略1：Mock分发逻辑完全移除（优先级：最高）
 
-每个模块内部再分为：
+**问题**：BaseApiService已提供统一Mock机制，但documentGenerateService仍有330行自定义分发逻辑
 
-- `ai/` 目录：AI Agent相关服务
-- `core/` 目录：核心业务逻辑服务
-
-Mock数据统一在 `@src/mock/` 目录下管理。
-
-## 🎯 优化目标
-
-### 短期目标（1-2周）
-
-- [ ] 大文件行数控制在300行以内
-- [ ] Mock数据完全分离到@src/mock
-- [ ] 按页面模块结构拆分服务
-- [ ] AI服务与核心服务分离
-
-### 长期目标（持续优化）
-
-- [ ] 服务懒加载优化
-- [ ] 性能监控和缓存
-- [ ] 自动化测试覆盖
-- [ ] 代码生成工具
-
-## 🚀 逐步优化方案
-
-### 阶段一：Mock数据分离（第1周）
-
-**目标**：将Mock数据从业务逻辑中完全分离，迁移到@src/mock目录
-
-#### 1.1 当前Mock数据分布分析
-
-**documentGenerateService.ts中的Mock代码**：
-
-- 研究简报Mock（约300行）
-- 标题候选Mock（约300行）
-- 标题版本Mock（约200行）
-- 旧版AI服务Mock（AI Agent，约300行）
-- 素材绑定Mock（约100行）
-
-总计约1200行Mock代码与业务逻辑混合。
-
-#### 1.2 Mock数据迁移方案
-
-**迁移到@src/mock/data/对应模块**：
-
-```
-src/mock/data/
-├── document-generate/     # 文档生成Mock
-│   ├── agents/
-│   │   ├── scope-agent.ts
-│   │   ├── title-agent.ts
-│   │   ├── outline-agent.ts
-│   │   ├── search2title-agent.ts
-│   │   └── material-bind.ts
-│   ├── core/
-│   │   ├── research-brief.ts
-│   │   ├── title-candidate.ts
-│   │   └── title-version.ts
-│   └── index.ts          # 统一导出
-├── project/              # 项目Mock（已存在）
-├── material/             # 素材Mock（已存在）
-├── search/               # 搜索Mock（已存在）
-└── outline/              # 大纲Mock（已存在）
-```
-
-#### 1.3 重构示例
-
-**Before**（Mock混合在服务中）:
+**解决方案**：采用配置驱动的Mock机制
 
 ```typescript
-class DocumentGenerateService extends BaseApiService {
-  async generateOutline(request): Promise<any> {
-    if (this.isMockMode()) {
-      // 200行Mock代码...
-      return {
-        outline: [...],
-        sources: [...]
-      }
+// 移除整个mockImplementation方法（330行）
+// 改为配置驱动的Mock路由
+const mockRoutes = {
+  'POST:/scope-agent/execute': executeScopeAgentMock,
+  'GET:/scope-agent/status/:taskId': getScopeAgentStatusMock
+  // ... 其他路由映射
+}
+```
+
+### 策略2：激进式服务拆分（优先级：高）
+
+**原则**：彻底拆分单体服务，不考虑向后兼容性
+
+**拆分目标**：
+
+```typescript
+// documentGenerateService拆分为4个独立服务：
+- ScopeAgentService（~300行）
+- TitleAgentService（~400行）
+- OutlineAgentService（~500行）
+- MaterialBindService（~400行）
+
+// projectService拆分为3个服务：
+- ProjectListService（~250行）
+- ProjectDetailService（~250行）
+- ProjectWorkflowService（~250行）
+```
+
+### 策略3：按页面模块重组（优先级：高）
+
+**目标**：服务结构与页面结构完全对应
+
+```typescript
+src/services/
+├── project-list/              # 项目列表页面服务
+├── topic-selection/           # 主题选择页面服务
+├── outline/                   # 大纲页面服务
+└── content/                   # 正文页面服务
+```
+
+## 📋 修订后实施计划
+
+### 阶段1.5：Mock分发逻辑清理（1-2天）
+
+**目标**：真正达到阶段1的文件减少目标
+
+#### 1.1 创建Mock路由配置
+
+```typescript
+// src/mock/data/document-generate/mock-routes.ts
+import { executeScopeAgentMock, getScopeAgentStatusMock /* ... */ } from './agents'
+
+export const mockRoutes = new Map([
+  ['POST:/scope-agent/execute', executeScopeAgentMock],
+  ['GET:/scope-agent/status/:taskId', getScopeAgentStatusMock],
+  ['POST:/title-agent/generate', generateTitlesMock],
+  ['GET:/title-agent/status', getTitleToolsStatusMock],
+  ['POST:/outline-agent/generate', generateOutlineMock],
+  ['GET:/outline-agent/status', getOutlineToolsStatusMock],
+  ['POST:/ai/bind-materials', bindMaterialsWithAIMock],
+  // ... 核心服务路由
+  ['POST:/api/v1/core/projects/:projectId/briefs', createResearchBriefMock],
+  ['GET:/api/v1/core/projects/:projectId/briefs', getProjectBriefsMock]
+  // ... 其他路由
+])
+```
+
+#### 1.2 扩展BaseApiService支持路由式Mock
+
+```typescript
+// src/services/base/apiService.ts 扩展
+import { mockRoutes } from '@/mock/data/document-generate/mock-routes'
+
+export abstract class BaseApiService {
+  // 新增：统一Mock路由处理
+  protected async mockImplementation(config: ApiRequestConfig): Promise<any> {
+    const apiConfig = this.getCurrentConfig()
+
+    // 模拟网络延迟
+    await new Promise((resolve) => setTimeout(resolve, apiConfig.mockDelay || 1000))
+
+    // 尝试路由匹配
+    const routeKey = this.buildRouteKey(config)
+    const mockHandler = mockRoutes.get(routeKey)
+
+    if (mockHandler) {
+      return mockHandler(config)
     }
-    return this.post('/outline-agent/generate', request)
+
+    // 默认Mock响应
+    return {
+      success: true,
+      message: `Mock响应 - ${config.method} ${config.url}`,
+      data: { mock: true, timestamp: Date.now() }
+    }
+  }
+
+  private buildRouteKey(config: ApiRequestConfig): string {
+    // 简化路由匹配逻辑，支持参数化路径
+    let routeKey = `${config.method}:${config.url}`
+
+    // 参数化路径匹配（示例）
+    routeKey = routeKey.replace(/\/\d+/g, '/:id')
+    routeKey = routeKey.replace(/\/tasks\/[^\/]+/g, '/tasks/:taskId')
+
+    return routeKey
   }
 }
 ```
 
-**After**（Mock数据在@src/mock中）:
+#### 1.3 移除documentGenerateService的Mock逻辑
 
 ```typescript
-// src/mock/data/document-generate/agents/outline-agent.ts
-export const generateOutlineMock = (request) => {
-  return {
-    outline: [...],
-    sources: [...]
-  }
-}
-
-// src/services/outline/ai/OutlineAgentService.ts
-class OutlineAgentService extends BaseApiService {
-  async generate(request): Promise<any> {
-    return this.post('/outline-agent/generate', request)
+// src/services/documentGenerateService.ts 清理
+export class DocumentGenerateService extends BaseApiService {
+  constructor() {
+    super('documentGenerate')
   }
 
-  protected async mockImplementation(config) {
-    const { data } = config
-    return generateOutlineMock(data)
+  // 移除整个mockImplementation方法（330行）
+  // 保留纯业务方法
+
+  async executeScopeAgent(userId: string, projectId: string, request: any) {
+    return this.post('/scope-agent/execute', request, {
+      params: { user_id: userId, project_id: projectId }
+    })
   }
+
+  // ... 其他业务方法
 }
 ```
 
-#### 1.4 实施步骤
+**预期收益**：
+
+- documentGenerateService: 1622行 → 1292行
+- 总体减少：35.7%（接近阶段1目标）
+
+### 阶段2：激进式服务拆分（3-4天）
+
+**2.1 documentGenerateService拆分**
+
+#### 创建目录结构
 
 ```bash
-# 步骤1：创建Agent Mock文件
-touch src/mock/data/document-generate/agents/{scope-agent,title-agent,outline-agent,search2title-agent,material-bind}.ts
-
-# 步骤2：创建Core Mock文件
-touch src/mock/data/document-generate/core/{research-brief,title-candidate,title-version}.ts
-
-# 步骤3：提取documentGenerateService.ts中的Mock代码
-# 按模块分布到对应文件
-
-# 步骤4：创建统一导出
-# src/mock/data/document-generate/index.ts
-
-# 步骤5：更新服务类引用Mock
-# 在各服务中引用@src/mock中的Mock数据
+mkdir -p src/services/{topic-selection,outline,content}/{ai,core}
 ```
 
-#### 1.5 预期收益
-
-- 业务逻辑文件减少60%（2009行 → 800行）
-- Mock数据可复用性提升
-- 测试更方便
-- 符合架构分层原则
-
----
-
-### 阶段二：按模块拆分服务（第2周）
-
-**目标**：按照document-generation模块结构拆分服务
-
-#### 2.1 拆分策略
-
-**基于页面模块的服务拆分**：
-
-```
-src/services/
-├── project-list/         # 项目列表服务
-│   ├── index.ts
-│   ├── ProjectListService.ts
-│   └── types.ts
-├── topic-selection/      # 主题选择服务
-│   ├── index.ts
-│   ├── ai/
-│   │   ├── ScopeAgentService.ts
-│   │   └── SearchAgentService.ts
-│   ├── core/
-│   │   └── TopicSelectionService.ts
-│   └── types.ts
-├── outline/              # 大纲服务
-│   ├── index.ts
-│   ├── ai/
-│   │   ├── TitleAgentService.ts
-│   │   ├── OutlineAgentService.ts
-│   │   └── Search2TitleAgentService.ts
-│   ├── core/
-│   │   ├── OutlineGenerationService.ts
-│   │   └── OutlineValidationService.ts
-│   └── types.ts
-└── content/              # 正文服务
-    ├── index.ts
-    ├── ai/
-    │   ├── MaterialBindService.ts
-    │   ├── BodyAgentService.ts
-    │   └── AITextService.ts
-    ├── core/
-    │   ├── ContentGenerationService.ts
-    │   └── MaterialService.ts
-    └── types.ts
-```
-
-#### 2.2 拆分示例：TopicSelection模块
-
-**topic-selection/ai/ScopeAgentService.ts**：
+#### 拆分ScopeAgentService
 
 ```typescript
+// src/services/topic-selection/ai/ScopeAgentService.ts
 import BaseApiService from '@/services/base/apiService'
-import type { ScopeAgentRequest, ScopeAgentResponse } from '@/types/ai'
+import { AsyncTaskPoller } from '@/utils/polling/asyncTaskPoller'
 
 export class ScopeAgentService extends BaseApiService {
   constructor() {
     super('documentGenerate')
   }
 
-  /**
-   * 执行Scope Agent
-   */
-  async execute(
-    userId: string,
-    projectId: string,
-    request: ScopeAgentRequest
-  ): Promise<ScopeAgentResponse> {
+  async execute(userId: string, projectId: string, request: any) {
     return this.post('/scope-agent/execute', request, {
       params: { user_id: userId, project_id: projectId }
     })
   }
 
-  /**
-   * 获取任务状态
-   */
   async getStatus(taskId: string) {
     return this.get(`/scope-agent/status/${taskId}`)
   }
 
-  /**
-   * 获取任务列表
-   */
   async getTasks(userId: string, projectId?: string) {
     const params: any = { user_id: userId }
     if (projectId) params.project_id = projectId
     return this.get('/scope-agent/tasks', params)
   }
 
-  /**
-   * 执行并轮询
-   */
-  async executeWithPolling(userId, projectId, request, pollingConfig) {
+  async executeWithPolling(userId: string, projectId: string, request: any, pollingConfig?: any) {
     const response = await this.execute(userId, projectId, request)
     const taskId = response.task_id
 
@@ -288,219 +234,260 @@ export class ScopeAgentService extends BaseApiService {
 }
 ```
 
-**topic-selection/core/TopicSelectionService.ts**：
+#### 拆分TitleAgentService
 
 ```typescript
-import { ScopeAgentService } from './ai/ScopeAgentService'
-import { SearchAgentService } from './ai/SearchAgentService'
-import type { ApiRequestConfig } from '@/config/api/types'
-
-export class TopicSelectionService {
-  private scopeAgent: ScopeAgentService
-  private searchAgent: SearchAgentService
-
-  constructor() {
-    this.scopeAgent = new ScopeAgentService()
-    this.searchAgent = new SearchAgentService()
-  }
-
-  /**
-   * 完整的主题选择流程
-   */
-  async executeTopicSelection(
-    userId: string,
-    projectId: string,
-    brief: string,
-    options?: ApiRequestConfig
-  ) {
-    // 1. 执行Scope Agent
-    const scopeResult = await this.scopeAgent.execute(userId, projectId, { query: brief })
-
-    // 2. 启动搜索（可选）
-    const searchResult = await this.searchAgent.execute(userId, projectId, { brief })
-
-    return {
-      scope: scopeResult,
-      search: searchResult
-    }
-  }
-
-  /**
-   * 只执行Scope Agent
-   */
-  async executeScopeOnly(userId: string, projectId: string, brief: string) {
-    return this.scopeAgent.execute(userId, projectId, { query: brief })
-  }
-}
-```
-
-**topic-selection/index.ts**：
-
-```typescript
-export { ScopeAgentService } from './ai/ScopeAgentService'
-export { SearchAgentService } from './ai/SearchAgentService'
-export { TopicSelectionService } from './core/TopicSelectionService'
-
-// 组合服务导出
-import { TopicSelectionService } from './core/TopicSelectionService'
-
-export const topicSelectionService = new TopicSelectionService()
-export default topicSelectionService
-```
-
-#### 2.3 拆分示例：Outline模块
-
-**outline/ai/TitleAgentService.ts**：
-
-```typescript
+// src/services/outline/ai/TitleAgentService.ts
 import BaseApiService from '@/services/base/apiService'
-import type { TitleGenerationRequest, TitleGenerationResponse } from '@/types/ai'
 
 export class TitleAgentService extends BaseApiService {
   constructor() {
     super('documentGenerate')
   }
 
-  /**
-   * 生成标题
-   */
-  async generate(request: TitleGenerationRequest): Promise<TitleGenerationResponse> {
+  async generate(request: any) {
     return this.post('/title-agent/generate', request)
   }
 
-  /**
-   * 获取工具状态
-   */
   async getToolsStatus() {
     return this.get('/title-agent/status')
   }
 
-  /**
-   * 验证请求
-   */
-  async validate(request: TitleGenerationRequest) {
+  async validate(request: any) {
     return this.post('/title-agent/validate', request)
   }
 }
 ```
 
-**outline/core/OutlineGenerationService.ts**：
+#### 拆分OutlineAgentService
 
 ```typescript
-import { TitleAgentService } from '../ai/TitleAgentService'
-import { OutlineAgentService } from '../ai/OutlineAgentService'
-import { Search2TitleAgentService } from '../ai/Search2TitleAgentService'
+// src/services/outline/ai/OutlineAgentService.ts
+import BaseApiService from '@/services/base/apiService'
 
-export class OutlineGenerationService {
-  private titleAgent: TitleAgentService
-  private outlineAgent: OutlineAgentService
-  private search2TitleAgent: Search2TitleAgentService
-
+export class OutlineAgentService extends BaseApiService {
   constructor() {
-    this.titleAgent = new TitleAgentService()
-    this.outlineAgent = new OutlineAgentService()
-    this.search2TitleAgent = new Search2TitleAgentService()
+    super('documentGenerate')
   }
 
-  /**
-   * 生成标题
-   */
-  async generateTitles(params: { researchBrief: string; webSearchData: any[] }) {
-    return this.titleAgent.generate({
-      research_brief: params.researchBrief,
-      web_search_data: params.webSearchData
-    })
+  async generate(request: any) {
+    return this.post('/outline-agent/generate', request)
   }
 
-  /**
-   * 生成大纲
-   */
-  async generateOutline(params: { title: any; researchBrief: string; webSearchData: any[] }) {
-    return this.outlineAgent.generate({
-      title: params.title,
-      research_brief: params.researchBrief,
-      web_search_data: params.webSearchData
-    })
-  }
-
-  /**
-   * Search2Title完整流程
-   */
-  async executeSearch2Title(userId: string, projectId: string, brief: string) {
-    return this.search2TitleAgent.executeWithPolling(userId, projectId, { brief })
+  async getToolsStatus() {
+    return this.get('/outline-agent/status')
   }
 }
 ```
 
-#### 2.4 实施步骤
+#### 拆分MaterialBindService
 
-```bash
-# 步骤1：创建四大模块目录
-mkdir -p src/services/{project-list,topic-selection,outline,content}
+```typescript
+// src/services/content/ai/MaterialBindService.ts
+import BaseApiService from '@/services/base/apiService'
+import { AsyncTaskPoller } from '@/utils/polling/asyncTaskPoller'
 
-# 步骤2：创建TopicSelection模块
-mkdir -p src/services/topic-selection/{ai,core}
-# 创建 ai/ScopeAgentService.ts, ai/SearchAgentService.ts
-# 创建 core/TopicSelectionService.ts
-# 创建 index.ts
+export class MaterialBindService extends BaseApiService {
+  constructor() {
+    super('documentGenerate')
+  }
 
-# 步骤3：创建Outline模块
-mkdir -p src/services/outline/{ai,core}
-# 创建 ai/TitleAgentService.ts, ai/OutlineAgentService.ts, ai/Search2TitleAgentService.ts
-# 创建 core/OutlineGenerationService.ts, core/OutlineValidationService.ts
-# 创建 index.ts
+  async execute(request: any) {
+    return this.post('/ai/bind-materials', request)
+  }
 
-# 步骤4：创建Content模块
-mkdir -p src/services/content/{ai,core}
-# 创建 ai/MaterialBindService.ts, ai/BodyAgentService.ts, ai/AITextService.ts
-# 创建 core/ContentGenerationService.ts, core/MaterialService.ts
-# 创建 index.ts
+  async getStatus(taskId: string) {
+    return this.get(`/material-bind/status/${taskId}`)
+  }
 
-# 步骤5：更新主导出
-# 修改 src/services/index.ts
+  async bindWithAI(materials: any[], chapters: any[]) {
+    return this.execute({
+      materials,
+      chapters,
+      binding_strategy: 'ai_smart_match'
+    })
+  }
+
+  async bindWithPolling(materials: any[], chapters: any[], pollingConfig?: any) {
+    const response = await this.bindWithAI(materials, chapters)
+    const taskId = response.task_id
+
+    const poller = new AsyncTaskPoller(
+      () =>
+        this.getStatus(taskId).then((result) => ({
+          status: result.status,
+          data: result,
+          isCompleted: result.status === 'completed'
+        })),
+      {
+        interval: 2000,
+        timeout: 120000,
+        maxAttempts: 60,
+        ...pollingConfig
+      }
+    )
+
+    return poller.start(`material-bind-${taskId}`)
+  }
+}
 ```
 
-#### 2.5 预期收益
+#### 创建模块导出文件
 
-- 单个文件行数控制在200-300行
-- 服务结构与页面模块结构一致，易于理解
-- AI服务与核心服务分离，职责清晰
-- 按需引入，降低初始加载成本
+```typescript
+// src/services/topic-selection/index.ts
+export { ScopeAgentService } from './ai/ScopeAgentService'
+export const scopeAgentService = new ScopeAgentService()
 
----
+// src/services/outline/index.ts
+export { TitleAgentService } from './ai/TitleAgentService'
+export { OutlineAgentService } from './ai/OutlineAgentService'
+export const titleAgentService = new TitleAgentService()
+export const outlineAgentService = new OutlineAgentService()
 
-### 阶段五：性能优化（持续进行）
+// src/services/content/index.ts
+export { MaterialBindService } from './ai/MaterialBindService'
+export const materialBindService = new MaterialBindService()
+```
 
-**目标**：优化加载性能、运行性能、内存占用
+**2.2 projectService拆分**
 
-#### 5.1 懒加载服务
+#### 拆分ProjectListService
+
+```typescript
+// src/services/project-list/ProjectListService.ts
+import BaseApiService from '@/services/base/apiService'
+
+export class ProjectListService extends BaseApiService {
+  constructor() {
+    super('project')
+  }
+
+  async getProjects(params?: any) {
+    return this.get('/projects', params)
+  }
+
+  async createProject(projectData: any) {
+    return this.post('/projects', projectData)
+  }
+
+  async deleteProject(projectId: string) {
+    return this.delete(`/projects/${projectId}`)
+  }
+
+  async duplicateProject(projectId: string, newName: string) {
+    return this.post(`/projects/${projectId}/duplicate`, { name: newName })
+  }
+}
+```
+
+#### 拆分ProjectDetailService
+
+```typescript
+// src/services/project-list/ProjectDetailService.ts
+import BaseApiService from '@/services/base/apiService'
+
+export class ProjectDetailService extends BaseApiService {
+  constructor() {
+    super('project')
+  }
+
+  async getProject(projectId: string) {
+    return this.get(`/projects/${projectId}`)
+  }
+
+  async updateProject(projectId: string, projectData: any) {
+    return this.put(`/projects/${projectId}`, projectData)
+  }
+
+  async getProjectStats(projectId: string) {
+    return this.get(`/projects/${projectId}/stats`)
+  }
+
+  async getProjectHistory(projectId: string) {
+    return this.get(`/projects/${projectId}/history`)
+  }
+}
+```
+
+### 阶段2.5：按页面模块重组（1-2天）
+
+**目标**：服务目录结构与页面模块完全对应
+
+#### 重组目录结构
+
+```typescript
+src/services/
+├── project-list/              # 项目列表页面服务
+│   ├── index.ts
+│   ├── ProjectListService.ts
+│   └── ProjectDetailService.ts
+├── topic-selection/           # 主题选择页面服务
+│   ├── index.ts
+│   ├── ai/
+│   │   ├── ScopeAgentService.ts
+│   │   └── SearchAgentService.ts
+│   └── core/
+│       └── TopicSelectionService.ts
+├── outline/                   # 大纲页面服务
+│   ├── index.ts
+│   ├── ai/
+│   │   ├── TitleAgentService.ts
+│   │   ├── OutlineAgentService.ts
+│   │   └── Search2TitleAgentService.ts
+│   └── core/
+│       ├── OutlineGenerationService.ts
+│       └── OutlineValidationService.ts
+└── content/                   # 正文页面服务
+    ├── index.ts
+    ├── ai/
+    │   ├── MaterialBindService.ts
+    │   └── BodyAgentService.ts
+    └── core/
+        ├── ContentGenerationService.ts
+        └── MaterialService.ts
+```
+
+#### 更新组件导入
+
+```typescript
+// 更新所有Vue组件中的服务导入
+// 从：
+import documentGenerateService from '@/services/documentGenerateService'
+
+// 改为：
+import { scopeAgentService } from '@/services/topic-selection'
+import { titleAgentService } from '@/services/outline'
+import { materialBindService } from '@/services/content'
+```
+
+#### 删除旧服务文件
+
+```bash
+# 删除拆分完成后的旧文件
+rm src/services/documentGenerateService.ts
+rm src/services/projectService.ts
+```
+
+### 阶段3：性能优化（持续进行）
+
+**3.1 服务懒加载**
 
 ```typescript
 // src/services/lazy/index.ts
 export const lazyServices = {
   topicSelection: () => import('../topic-selection/index.ts'),
   outline: () => import('../outline/index.ts'),
-  content: () => import('../content/index.ts'),
-  documentGenerationWorkflow: () => import('../workflows/DocumentGenerationWorkflow.ts')
+  content: () => import('../content/index.ts')
 }
 
 export async function getTopicSelectionService() {
   const module = await lazyServices.topicSelection()
-  return module.topicSelectionService
-}
-
-export async function getOutlineService() {
-  const module = await lazyServices.outline()
-  return module.outlineService
-}
-
-export async function getDocumentGenerationWorkflow() {
-  const module = await lazyServices.documentGenerationWorkflow()
-  return new module.DocumentGenerationWorkflow()
+  return module.scopeAgentService
 }
 ```
 
-#### 5.2 服务缓存
+**3.2 API缓存机制**
 
 ```typescript
 // src/services/core/ServiceCache.ts
@@ -509,10 +496,7 @@ export class ServiceCache {
   private ttl = 5 * 60 * 1000 // 5分钟
 
   set(key: string, data: any): void {
-    this.cache.set(key, {
-      data,
-      timestamp: Date.now()
-    })
+    this.cache.set(key, { data, timestamp: Date.now() })
   }
 
   get<T>(key: string): T | null {
@@ -526,75 +510,119 @@ export class ServiceCache {
 
     return item.data
   }
-
-  clear(): void {
-    this.cache.clear()
-  }
 }
-
-export const serviceCache = new ServiceCache()
 ```
 
-#### 5.3 性能监控
+**3.3 批量API优化**
 
 ```typescript
-// src/services/core/PerformanceMonitor.ts
-export class PerformanceMonitor {
-  static measure<T>(name: string, fn: () => T): T {
-    const start = performance.now()
-    const result = fn()
-    const end = performance.now()
-    console.log(`[Service] ${name} took ${end - start}ms`)
-    return result
+// src/services/core/BatchApiService.ts
+export class BatchApiService extends BaseApiService {
+  async batchRequests(requests: ApiRequestConfig[]) {
+    return Promise.allSettled(requests.map((config) => this.request(config)))
   }
 
-  static measureAsync<T>(name: string, fn: () => Promise<T>): Promise<T> {
-    return (async () => {
-      const start = performance.now()
-      const result = await fn()
-      const end = performance.now()
-      console.log(`[Service] ${name} took ${end - start}ms`)
-      return result
-    })()
+  async parallelRequests(requests: ApiRequestConfig[]) {
+    return Promise.all(requests.map((config) => this.request(config)))
   }
 }
 ```
 
----
+## 🎯 修订后目标与验收标准
 
-## 📋 实施计划
+### 新目标设定
 
-### 时间线
+| 阶段 | 新目标             | 原目标   | 调整说明             |
+| ---- | ------------------ | -------- | -------------------- |
+| 1.5  | 文件减少35%+       | 60%      | Mock分发逻辑完全移除 |
+| 2.0  | 最大文件<500行     | 300行    | 更实际的拆分目标     |
+| 2.5  | 服务结构与页面对应 | 保持不变 | 提升可维护性         |
+| 3.0  | 首屏加载优化20%    | 保持不变 | 性能优化             |
 
-| 周次  | 任务         | 交付物                  | 验收标准      |
-| ----- | ------------ | ----------------------- | ------------- |
-| 第1周 | Mock数据分离 | Mock数据迁移到@src/mock | 大文件减少60% |
-| 第2周 | 按模块拆分   | 四大模块服务拆分完成    | 单文件<300行  |
-| 持续  | 性能优化     | 懒加载和缓存            | 首屏加载优化  |
+### 详细验收标准
 
-### 里程碑
+#### 阶段1.5验收标准
 
-- [ ] **M1**：Mock数据完全分离（1周后）
-- [ ] **M2**：四大模块拆分完成（2周后）
-- [ ] **M3**：性能优化完成（持续）
+- [ ] documentGenerateService行数<1300行
+- [ ] Mock路由配置文件创建完成
+- [ ] 所有Mock逻辑移至Mock路由
+- [ ] 所有功能测试通过
 
-### 风险与应对
+#### 阶段2.0验收标准
 
-| 风险     | 影响 | 应对策略                      |
-| -------- | ---- | ----------------------------- |
-| 拆分粒度 | 中   | 按页面模块对齐，粒度适中      |
-| Mock迁移 | 低   | 统一在@src/mock管理，自动生成 |
-| 性能回退 | 中   | 懒加载和缓存，性能监控        |
-| 学习成本 | 低   | 提供文档和迁移指南            |
+- [ ] 最大服务文件行数<500行
+- [ ] documentGenerateService完全拆分
+- [ ] projectService完全拆分
+- [ ] 新服务结构正常运行
+
+#### 阶段2.5验收标准
+
+- [ ] 服务目录与页面目录对应
+- [ ] 所有组件导入更新完成
+- [ ] 旧服务文件完全删除
+- [ ] 代码review通过
+
+#### 阶段3.0验收标准
+
+- [ ] 懒加载机制实施
+- [ ] 缓存机制运行
+- [ ] 性能监控到位
+- [ ] 首屏加载提升20%+
+
+### 时间线调整
+
+| 阶段 | 时间  | 主要工作         | 关键里程碑     |
+| ---- | ----- | ---------------- | -------------- |
+| 1.5  | 1-2天 | Mock分发逻辑清理 | 文件减少35%+   |
+| 2.0  | 3-4天 | 激进式服务拆分   | 最大文件<500行 |
+| 2.5  | 1-2天 | 按页面模块重组   | 目录结构对齐   |
+| 3.0  | 持续  | 性能优化         | 加载提升20%+   |
+
+## ⚠️ 风险控制
+
+### 技术风险
+
+1. **功能中断**：每个拆分步骤都要确保功能正常
+2. **依赖管理**：理清服务间依赖关系
+3. **类型定义**：TypeScript类型要及时更新
+
+### 执行风险
+
+1. **进度控制**：严格按照时间节点执行
+2. **质量保证**：每个阶段都要有完整的测试
+3. **团队协作**：及时同步进展和问题
+
+## 📈 预期收益
+
+### 短期收益（1周内）
+
+- **代码可维护性提升70%+**：文件大小显著减少，职责更清晰
+- **开发效率提升40%+**：服务拆分后，并行开发更容易
+- **Mock管理规范化**：统一的Mock路由机制
+
+### 中期收益（2-4周）
+
+- **新功能开发效率提升50%+**：模块化结构，快速定位
+- **代码review效率提升60%+**：文件小，逻辑清晰
+- **系统稳定性增强**：模块隔离，问题影响范围小
+
+### 长期收益（持续）
+
+- **技术债务大幅降低**：架构清晰，易于扩展
+- **团队协作效率提升**：模块化开发，冲突减少
+- **系统可扩展性显著增强**：新功能易于集成
 
 ---
 
 ## 📝 更新日志
 
-| 日期       | 版本 | 内容                                            | 作者     |
-| ---------- | ---- | ----------------------------------------------- | -------- |
+| 日期 | 版本 | 内容 | 作者 |
+| --- | --- | --- | --- |
+| 2025-11-13 | v2.0 | **重大修订**：基于阶段1完成情况，调整优化策略，移除向后兼容考虑，采用激进式拆分 | 开发团队 |
 | 2025-11-13 | v1.0 | 初始版本：基于模块化拆分（简化版：移除阶段3-4） | 开发团队 |
 
 ---
 
 **维护者**: 开发团队 **最后更新**: 2025-11-13
+
+**核心理念**: 彻底的模块化重构，不考虑向后兼容，追求最佳架构实践

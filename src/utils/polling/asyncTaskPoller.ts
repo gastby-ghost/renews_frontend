@@ -55,8 +55,8 @@ export interface PollingTask {
   isCompleted: boolean
   cancel: () => void
   reset: () => void
-  on: (event: string, handler: Function) => void
-  off: (event: string, handler: Function) => void
+  on: (event: string, handler: (...args: any[]) => void) => void
+  off: (event: string, handler: (...args: any[]) => void) => void
   promise: Promise<PollingTaskResult>
 }
 
@@ -81,7 +81,7 @@ export class AsyncTaskPoller {
   private enableLogging: boolean
   private logLevel: LogLevel
   private logger: (level: LogLevel, message: string, meta?: any) => void
-  private eventHandlers: Map<string, Function[]> = new Map()
+  private eventHandlers: Map<string, ((...args: any[]) => void)[]> = new Map()
   private resolvePromise: ((value: PollingTaskResult) => void) | null = null
   private rejectPromise: ((reason?: any) => void) | null = null
 
@@ -179,13 +179,13 @@ export class AsyncTaskPoller {
       },
       cancel: () => this.stop(),
       reset: () => this.reset(),
-      on: (event: string, handler: Function) => {
+      on: (event: string, handler: (...args: any[]) => void) => {
         if (!this.eventHandlers.has(event)) {
           this.eventHandlers.set(event, [])
         }
         this.eventHandlers.get(event)!.push(handler)
       },
-      off: (event: string, handler: Function) => {
+      off: (event: string, handler: (...args: any[]) => void) => {
         if (this.eventHandlers.has(event)) {
           const handlers = this.eventHandlers.get(event)!
           const index = handlers.indexOf(handler)
@@ -226,7 +226,7 @@ export class AsyncTaskPoller {
    */
   private emit(event: string, ...args: any[]): void {
     if (this.eventHandlers.has(event)) {
-      this.eventHandlers.get(event)!.forEach(handler => {
+      this.eventHandlers.get(event)!.forEach((handler) => {
         try {
           handler(...args)
         } catch (error) {
@@ -408,9 +408,9 @@ export class AsyncTaskPoller {
 
     // 触发事件
     if (status === TaskStatus.RUNNING && previousStatus !== TaskStatus.RUNNING) {
-      this.emit('progress', {...this.task.result, data})
+      this.emit('progress', { ...this.task.result, data })
     } else if (status === TaskStatus.COMPLETED) {
-      this.emit('completed', {...this.task.result, data})
+      this.emit('completed', { ...this.task.result, data })
     } else if (status === TaskStatus.FAILED) {
       this.emit('failed', new Error(error || '任务失败'))
     } else if (status === TaskStatus.TIMEOUT) {

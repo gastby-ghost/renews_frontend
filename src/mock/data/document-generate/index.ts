@@ -1,7 +1,10 @@
 /**
- * 文档生成服务Mock数据
- * 包含scope-agent, title-agent, outline-agent, search2title-agent的模拟数据
+ * 文档生成服务Mock数据统一导出
+ * 包含所有AI Agent和核心业务的模拟数据
  */
+
+export * from './agents'
+export * from './core'
 
 import type {
   ScopeAgentResponse,
@@ -21,9 +24,11 @@ import type {
 import { MockTaskTracker } from '@/utils/mockTaskTracker'
 import documentGenerateTitle from '../../json/document-generate-title.json'
 import searchData from '../../json/search.json'
+
 // 任务跟踪器实例
 const scopeTaskTracker = new MockTaskTracker()
 const search2TitleTaskTracker = new MockTaskTracker()
+
 /**
  * 生成Scope Agent执行响应
  */
