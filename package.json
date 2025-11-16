@@ -13,7 +13,8 @@
     "lint:lint-staged": "lint-staged",
     "prepare": "husky",
     "commit": "git-cz",
-    "clean:dev": "tsx scripts/clean-dev.ts"
+    "clean:dev": "tsx scripts/clean-dev.ts",
+    "generate:api:core": "node scripts/openapi-to-ts-converter.cjs"
   },
   "config": {
     "commitizen": {

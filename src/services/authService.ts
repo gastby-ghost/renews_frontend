@@ -38,7 +38,7 @@ class AuthService extends BaseApiService {
     },
     options?: ApiRequestConfig
   ) {
-    return this.post<PendingRegistrationResponse>('/register', params, options)
+    return this.post<PendingRegistrationResponse>('/api/v1/core/register', params, options)
   }
 
   /**
@@ -52,14 +52,14 @@ class AuthService extends BaseApiService {
     },
     options?: ApiRequestConfig
   ) {
-    return this.post<AuthResponse>('/login', params, options)
+    return this.post<AuthResponse>('/api/v1/core/login', params, options)
   }
 
   /**
    * 刷新访问令牌
    */
   async refreshToken(refreshToken: string, options?: ApiRequestConfig) {
-    return this.post<RefreshTokenResponse>('/refresh-token', undefined, {
+    return this.post<RefreshTokenResponse>('/api/v1/core/refresh-token', undefined, {
       params: { refresh_token: refreshToken },
       ...options
     })
@@ -69,7 +69,7 @@ class AuthService extends BaseApiService {
    * 用户登出
    */
   async logout(options?: ApiRequestConfig) {
-    return this.post<AuthResponse>('/logout', undefined, options)
+    return this.post<AuthResponse>('/api/v1/core/logout', undefined, options)
   }
 
   /**
@@ -81,14 +81,14 @@ class AuthService extends BaseApiService {
     },
     options?: ApiRequestConfig
   ) {
-    return this.post<ForgotPasswordResponse>('/forgot-password', params, options)
+    return this.post<ForgotPasswordResponse>('/api/v1/core/forgot-password', params, options)
   }
 
   /**
    * 验证邮箱
    */
   async verifyEmail(token: string, options?: ApiRequestConfig) {
-    return this.get<VerificationResponse>(`/verify/${token}`, undefined, options)
+    return this.get<VerificationResponse>(`/api/v1/core/verify/${token}`, undefined, options)
   }
 
   /**
@@ -115,14 +115,14 @@ class AuthService extends BaseApiService {
     }
 
     // 真实API模式下的正常请求
-    return this.get<AccountSettingsResponse>('/account', undefined, options)
+    return this.get<AccountSettingsResponse>('/api/v1/core/account', undefined, options)
   }
 
   /**
    * 更新账户信息
    */
   async updateAccount(data: Partial<UserResponse>, options?: ApiRequestConfig) {
-    return this.put<AccountSettingsResponse>('/account', data, options)
+    return this.put<AccountSettingsResponse>('/api/v1/core/account', data, options)
   }
 
   /**
@@ -135,56 +135,56 @@ class AuthService extends BaseApiService {
     },
     options?: ApiRequestConfig
   ) {
-    return this.delete<null>('/account', params, options)
+    return this.delete<null>('/api/v1/core/account', params, options)
   }
 
   /**
    * 清理过期令牌
    */
   async cleanupExpiredTokens(options?: ApiRequestConfig) {
-    return this.post<CleanupResponse>('/cleanup-expired-tokens', undefined, options)
+    return this.post<CleanupResponse>('/api/v1/core/cleanup-expired-tokens', undefined, options)
   }
 
   /**
    * 基础健康检查
    */
   async healthCheck(options?: ApiRequestConfig) {
-    return this.get<HealthCheckResponse>('/health', undefined, options)
+    return this.get<HealthCheckResponse>('/api/v1/core/health', undefined, options)
   }
 
   /**
    * 详细健康检查
    */
   async detailedHealthCheck(options?: ApiRequestConfig) {
-    return this.get<HealthCheckResponse>('/health/detailed', undefined, options)
+    return this.get<HealthCheckResponse>('/api/v1/core/health/detailed', undefined, options)
   }
 
   /**
    * 就绪性检查
    */
   async readinessCheck(options?: ApiRequestConfig) {
-    return this.get<HealthCheckResponse>('/health/ready', undefined, options)
+    return this.get<HealthCheckResponse>('/api/v1/core/health/ready', undefined, options)
   }
 
   /**
    * 存活检查
    */
   async livenessCheck(options?: ApiRequestConfig) {
-    return this.get<HealthCheckResponse>('/health/live', undefined, options)
+    return this.get<HealthCheckResponse>('/api/v1/core/health/live', undefined, options)
   }
 
   /**
    * 获取服务指标
    */
   async getMetrics(options?: ApiRequestConfig) {
-    return this.get<MetricsResponse>('/metrics', undefined, options)
+    return this.get<MetricsResponse>('/api/v1/core/metrics', undefined, options)
   }
 
   /**
    * 获取用户偏好设置
    */
   async getUserPreferences(options?: ApiRequestConfig) {
-    return this.get<UserPreferenceResponse>('/preferences', undefined, options)
+    return this.get<UserPreferenceResponse>('/api/v1/core/preferences', undefined, options)
   }
 
   /**
@@ -194,14 +194,18 @@ class AuthService extends BaseApiService {
     data: Partial<UpdateUserPreferenceRequest>,
     options?: ApiRequestConfig
   ) {
-    return this.put<UserPreferenceResponse>('/preferences', data, options)
+    return this.put<UserPreferenceResponse>('/api/v1/core/preferences', data, options)
   }
 
   /**
    * 获取默认偏好设置
    */
   async getDefaultPreferences(options?: ApiRequestConfig) {
-    return this.get<DefaultPreferencesResponse>('/preferences/default', undefined, options)
+    return this.get<DefaultPreferencesResponse>(
+      '/api/v1/core/preferences/default',
+      undefined,
+      options
+    )
   }
 
   /**

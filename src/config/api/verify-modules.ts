@@ -3,7 +3,7 @@
  * 用于验证模块配置是否正确
  */
 
-import { API_MODULES } from './modules'
+import { API_MODULES } from './modules/core'
 
 console.log('🚀 开始验证OpenAPI模块...')
 

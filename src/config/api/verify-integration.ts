@@ -3,7 +3,7 @@
  * 用于验证core_openapi.json集成是否正确
  */
 
-import { API_MODULES } from './modules'
+import { API_MODULES } from './modules/core'
 
 console.log('🚀 开始验证OpenAPI集成...')
 

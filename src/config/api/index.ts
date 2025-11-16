@@ -13,7 +13,8 @@ import type {
   MockDataConfig,
   ApiRequestConfig
 } from './types'
-import { API_MODULES } from './modules'
+import { API_MODULES } from './modules/core/index'
+import { AI_API_MODULES } from './modules/ai/index'
 import { useUserStore } from '@/store/modules/user'
 
 const STORAGE_KEY = 'api-config'
@@ -24,7 +25,9 @@ const STORAGE_KEY = 'api-config'
 const API_REGISTRY: ApiRegistry = {
   services: {
     // 基于OpenAPI的模块化服务配置
-    ...API_MODULES
+    ...API_MODULES,
+    // AI服务模块配置
+    ...AI_API_MODULES
   },
   globalDefaults: {
     timeout: 10000,
@@ -626,4 +629,5 @@ export type {
 }
 export { ApiConfigManager }
 export { API_REGISTRY }
-export { API_MODULES } from './modules'
+export { API_MODULES } from './modules/core'
+export { AI_API_MODULES } from './modules/ai'
