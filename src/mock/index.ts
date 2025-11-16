@@ -444,6 +444,35 @@ export class MockDataManager {
       keys: Array.from(this.dataCache.keys())
     }
   }
+
+  /**
+   * 获取缓存数据（带TTL支持）
+   */
+  getData(key: string): any {
+    const cached = this.dataCache.get(key)
+    if (cached && cached.expireTime && Date.now() > cached.expireTime) {
+      this.dataCache.delete(key)
+      return null
+    }
+    return cached ? cached.data : null
+  }
+
+  /**
+   * 设置缓存数据（带TTL支持）
+   */
+  setData(key: string, data: any, ttlSeconds?: number): void {
+    if (ttlSeconds) {
+      this.dataCache.set(key, {
+        data,
+        expireTime: Date.now() + ttlSeconds * 1000
+      })
+    } else {
+      this.dataCache.set(key, {
+        data,
+        expireTime: null
+      })
+    }
+  }
 }
 
 // 导出单例实例

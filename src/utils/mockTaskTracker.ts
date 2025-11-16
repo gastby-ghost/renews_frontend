@@ -4,7 +4,7 @@
  */
 
 export interface TaskRecord {
-  status: 'pending' | 'running' | 'completed' | 'failed'
+  status: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled'
   progress: number
   result: any
   createdAt: number
@@ -130,6 +130,13 @@ export class MockTaskTracker {
 
     console.log(`[DEBUG] updateTaskByTime - taskId: ${taskId}, updates:`, updates)
     return this.updateTask(taskId, updates)
+  }
+
+  /**
+   * 更新任务状态（简便方法）
+   */
+  updateTaskStatus(taskId: string, status: TaskRecord['status'], result?: any): TaskRecord | null {
+    return this.updateTask(taskId, { status, result })
   }
 
   /**
