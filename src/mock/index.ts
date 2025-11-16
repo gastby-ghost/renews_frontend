@@ -15,7 +15,9 @@ import {
   generateMockSearchAgentStatus,
   generateMockSearchAgentResponse,
   generateMockSearchAgentList,
-  generateMockSearchToolsResponse
+  generateMockSearchToolsResponse,
+  generateMockSearchHistory,
+  generateMockSearchSuggestions
 } from './data/search/results'
 import {
   generateScopeAgentResponse,
@@ -174,6 +176,20 @@ export class MockDataManager {
         // 生成搜索工具结果Mock数据
         // 参数: 搜索关键词, 工具类型
         data = generateMockSearchToolsResult(args[0], args[1])
+        break
+      }
+
+      case 'search-history': {
+        // 生成搜索历史Mock数据
+        // 参数: 限制数量
+        data = generateMockSearchHistory(args[0] || 10)
+        break
+      }
+
+      case 'search-suggestions': {
+        // 生成搜索建议Mock数据
+        // 参数: 查询关键词
+        data = generateMockSearchSuggestions(args[0] || '')
         break
       }
 

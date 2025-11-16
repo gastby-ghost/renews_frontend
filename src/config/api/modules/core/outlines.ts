@@ -7,7 +7,7 @@ import type { ApiEndpointConfig } from '../../types'
 
 export const outlineService: ApiEndpointConfig = {
   name: '大纲管理服务',
-  baseUrl: '/api/v1',
+  baseUrl: '/api/v1/core',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   enableMock: true,
   mockPath: '/mock/data/outlines',
@@ -22,7 +22,7 @@ export const outlineService: ApiEndpointConfig = {
   },
   paths: {
     // Create Outline
-    '/api/v1/core/projects/{project_id}/outlines': {
+    '/projects/{project_id}/outlines': {
       description: 'Create Outline',
       methods: ['POST'],
       request: {
@@ -40,7 +40,7 @@ export const outlineService: ApiEndpointConfig = {
     },
 
     // Get Active Outline
-    '/api/v1/core/projects/{project_id}/outlines/active': {
+    '/projects/{project_id}/outlines/active': {
       description: 'Get Active Outline',
       methods: ['GET'],
       request: {
@@ -57,7 +57,7 @@ export const outlineService: ApiEndpointConfig = {
     },
 
     // Get Outline History
-    '/api/v1/core/projects/{project_id}/outlines/history': {
+    '/projects/{project_id}/outlines/history': {
       description: 'Get Outline History',
       methods: ['GET'],
       request: {
@@ -76,7 +76,7 @@ export const outlineService: ApiEndpointConfig = {
     },
 
     // Delete Outline
-    '/api/v1/core/outlines/{outline_id}': {
+    '/outlines/{outline_id}': {
       description: 'Delete Outline',
       methods: ['DELETE'],
       request: {
@@ -93,7 +93,7 @@ export const outlineService: ApiEndpointConfig = {
     },
 
     // Activate Outline
-    '/api/v1/core/outlines/{outline_id}/activate': {
+    '/outlines/{outline_id}/activate': {
       description: 'Activate Outline',
       methods: ['PUT'],
       request: {
@@ -111,7 +111,7 @@ export const outlineService: ApiEndpointConfig = {
     },
 
     // Deactivate Outline
-    '/api/v1/core/outlines/{outline_id}/deactivate': {
+    '/outlines/{outline_id}/deactivate': {
       description: 'Deactivate Outline',
       methods: ['PUT'],
       request: {

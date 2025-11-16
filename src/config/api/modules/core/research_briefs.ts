@@ -7,7 +7,7 @@ import type { ApiEndpointConfig } from '../../types'
 
 export const researchBriefService: ApiEndpointConfig = {
   name: '研究简报服务',
-  baseUrl: '/api/v1',
+  baseUrl: '/api/v1/core',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   enableMock: true,
   mockPath: '/mock/data/research_briefs',
@@ -22,7 +22,7 @@ export const researchBriefService: ApiEndpointConfig = {
   },
   paths: {
     // Get Project Briefs
-    '/api/v1/core/projects/{project_id}/briefs': {
+    '/projects/{project_id}/briefs': {
       description: 'Get Project Briefs',
       methods: ['GET'],
       request: {
@@ -39,7 +39,7 @@ export const researchBriefService: ApiEndpointConfig = {
     },
 
     // Delete Research Brief
-    '/api/v1/core/briefs/{brief_id}': {
+    '/briefs/{brief_id}': {
       description: 'Delete Research Brief',
       methods: ['DELETE'],
       request: {

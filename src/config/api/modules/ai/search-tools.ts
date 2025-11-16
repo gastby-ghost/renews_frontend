@@ -22,7 +22,7 @@ export const searchToolsService: ApiEndpointConfig = {
   },
   paths: {
     // Search Endpoint
-    '/api/v1/ai/search-tools/search': {
+    '/search-tools/search': {
       description: 'Search Endpoint',
       methods: ['POST'],
       request: {
@@ -39,7 +39,7 @@ export const searchToolsService: ApiEndpointConfig = {
     },
 
     // Search Tools Status
-    '/api/v1/ai/search-tools/status': {
+    '/search-tools/status': {
       description: 'Search Tools Status',
       methods: ['GET'],
       request: {
@@ -54,7 +54,7 @@ export const searchToolsService: ApiEndpointConfig = {
     },
 
     // Get Search Providers
-    '/api/v1/ai/search-tools/providers': {
+    '/search-tools/providers': {
       description: 'Get Search Providers',
       methods: ['GET'],
       request: {

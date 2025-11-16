@@ -7,7 +7,7 @@ import type { ApiEndpointConfig } from '../../types'
 
 export const materialService: ApiEndpointConfig = {
   name: '素材管理服务',
-  baseUrl: '/api/v1',
+  baseUrl: '/api/v1/core',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   enableMock: true,
   mockPath: '/mock/data/material',
@@ -22,7 +22,7 @@ export const materialService: ApiEndpointConfig = {
   },
   paths: {
     // Create Materials From List
-    '/api/v1/core/materials/batch': {
+    '/materials/batch': {
       description: 'Create Materials From List',
       methods: ['POST'],
       request: {
@@ -39,7 +39,7 @@ export const materialService: ApiEndpointConfig = {
     },
 
     // Delete Materials
-    '/api/v1/core/materials': {
+    '/materials': {
       description: 'Delete Materials',
       methods: ['DELETE'],
       request: {
@@ -56,7 +56,7 @@ export const materialService: ApiEndpointConfig = {
     },
 
     // Update Material
-    '/api/v1/core/materials/{material_id}': {
+    '/materials/{material_id}': {
       description: 'Update Material',
       methods: ['PUT'],
       request: {
@@ -74,7 +74,7 @@ export const materialService: ApiEndpointConfig = {
     },
 
     // Get Project Materials
-    '/api/v1/core/projects/{project_id}/materials': {
+    '/projects/{project_id}/materials': {
       description: 'Get Project Materials',
       methods: ['GET'],
       request: {
@@ -94,7 +94,7 @@ export const materialService: ApiEndpointConfig = {
     },
 
     // Create Tag
-    '/api/v1/core/tags': {
+    '/tags': {
       description: 'Create Tag',
       methods: ['POST'],
       request: {

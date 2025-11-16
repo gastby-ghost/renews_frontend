@@ -20,7 +20,8 @@ export * from './projectService'
 export * from './materialService'
 
 // 素材搜索服务 - 专门服务于素材搜索模块
-export * from './searchService'
+export * from './ai/searchToolsService'
+export * from './ai/searchAgentService'
 
 // 系统偏好设置服务 - 基于OpenAPI配置
 export * from './systemPreferencesService'

@@ -7,7 +7,7 @@ import type { ApiEndpointConfig } from '../../types'
 
 export const projectService: ApiEndpointConfig = {
   name: '项目管理服务',
-  baseUrl: '/api/v1',
+  baseUrl: '/api/v1/core',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   enableMock: true,
   mockPath: '/mock/data/project',
@@ -22,7 +22,7 @@ export const projectService: ApiEndpointConfig = {
   },
   paths: {
     // Get User Projects
-    '/api/v1/core/projects': {
+    '/projects': {
       description: 'Get User Projects',
       methods: ['GET'],
       request: {
@@ -43,7 +43,7 @@ export const projectService: ApiEndpointConfig = {
     },
 
     // Update Project
-    '/api/v1/core/projects/{project_id}': {
+    '/projects/{project_id}': {
       description: 'Update Project',
       methods: ['PUT'],
       request: {
@@ -61,7 +61,7 @@ export const projectService: ApiEndpointConfig = {
     },
 
     // Delete Projects
-    '/api/v1/core/projects/batch': {
+    '/projects/batch': {
       description: 'Delete Projects',
       methods: ['DELETE'],
       request: {
@@ -78,7 +78,7 @@ export const projectService: ApiEndpointConfig = {
     },
 
     // Update Project Status
-    '/api/v1/core/projects/{project_id}/status': {
+    '/projects/{project_id}/status': {
       description: 'Update Project Status',
       methods: ['PATCH'],
       request: {
@@ -96,7 +96,7 @@ export const projectService: ApiEndpointConfig = {
     },
 
     // Update Project Component
-    '/api/v1/core/projects/{project_id}/component': {
+    '/projects/{project_id}/component': {
       description: 'Update Project Component',
       methods: ['PATCH'],
       request: {
@@ -114,7 +114,7 @@ export const projectService: ApiEndpointConfig = {
     },
 
     // Get Project Statistics
-    '/api/v1/core/projects/statistics/status': {
+    '/projects/statistics/status': {
       description: 'Get Project Statistics',
       methods: ['GET'],
       request: {

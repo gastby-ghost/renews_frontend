@@ -7,7 +7,7 @@ import type { ApiEndpointConfig } from '../../types'
 
 export const materialRelationService: ApiEndpointConfig = {
   name: '素材关联服务',
-  baseUrl: '/api/v1',
+  baseUrl: '/api/v1/core',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   enableMock: true,
   mockPath: '/mock/data/material-relations',
@@ -22,7 +22,7 @@ export const materialRelationService: ApiEndpointConfig = {
   },
   paths: {
     // Get Title Materials
-    '/api/v1/core/material-relations/titles/{title_candidate_id}/materials': {
+    '/material-relations/titles/{title_candidate_id}/materials': {
       description: 'Get Title Materials',
       methods: ['GET'],
       request: {
@@ -41,7 +41,7 @@ export const materialRelationService: ApiEndpointConfig = {
     },
 
     // Unbind Material From Title
-    '/api/v1/core/material-relations/titles/{title_candidate_id}/materials/{material_id}': {
+    '/material-relations/titles/{title_candidate_id}/materials/{material_id}': {
       description: 'Unbind Material From Title',
       methods: ['DELETE'],
       request: {
@@ -59,7 +59,7 @@ export const materialRelationService: ApiEndpointConfig = {
     },
 
     // Update Title Relevance Score
-    '/api/v1/core/material-relations/titles/relations/{relation_id}/score': {
+    '/material-relations/titles/relations/{relation_id}/score': {
       description: 'Update Title Relevance Score',
       methods: ['PUT'],
       request: {
@@ -77,7 +77,7 @@ export const materialRelationService: ApiEndpointConfig = {
     },
 
     // Get Section Materials
-    '/api/v1/core/material-relations/sections/{outline_section_id}/materials': {
+    '/material-relations/sections/{outline_section_id}/materials': {
       description: 'Get Section Materials',
       methods: ['GET'],
       request: {
@@ -96,7 +96,7 @@ export const materialRelationService: ApiEndpointConfig = {
     },
 
     // Unbind Material From Section
-    '/api/v1/core/material-relations/sections/{outline_section_id}/materials/{material_id}': {
+    '/material-relations/sections/{outline_section_id}/materials/{material_id}': {
       description: 'Unbind Material From Section',
       methods: ['DELETE'],
       request: {
@@ -114,7 +114,7 @@ export const materialRelationService: ApiEndpointConfig = {
     },
 
     // Update Section Binding Type
-    '/api/v1/core/material-relations/sections/relations/{relation_id}/binding-type': {
+    '/material-relations/sections/relations/{relation_id}/binding-type': {
       description: 'Update Section Binding Type',
       methods: ['PUT'],
       request: {
@@ -132,7 +132,7 @@ export const materialRelationService: ApiEndpointConfig = {
     },
 
     // Get Material All Relations
-    '/api/v1/core/material-relations/materials/{material_id}/relations': {
+    '/material-relations/materials/{material_id}/relations': {
       description: 'Get Material All Relations',
       methods: ['GET'],
       request: {
@@ -149,7 +149,7 @@ export const materialRelationService: ApiEndpointConfig = {
     },
 
     // Batch Bind Materials To Title
-    '/api/v1/core/material-relations/titles/{title_candidate_id}/materials/batch': {
+    '/material-relations/titles/{title_candidate_id}/materials/batch': {
       description: 'Batch Bind Materials To Title',
       methods: ['POST'],
       request: {
@@ -167,7 +167,7 @@ export const materialRelationService: ApiEndpointConfig = {
     },
 
     // Batch Bind Materials To Section
-    '/api/v1/core/material-relations/sections/{outline_section_id}/materials/batch': {
+    '/material-relations/sections/{outline_section_id}/materials/batch': {
       description: 'Batch Bind Materials To Section',
       methods: ['POST'],
       request: {
@@ -185,7 +185,7 @@ export const materialRelationService: ApiEndpointConfig = {
     },
 
     // Batch Unbind Materials From Title
-    '/api/v1/core/material-relations/titles/{title_candidate_id}/materials/batch-unbind': {
+    '/material-relations/titles/{title_candidate_id}/materials/batch-unbind': {
       description: 'Batch Unbind Materials From Title',
       methods: ['POST'],
       request: {
@@ -203,7 +203,7 @@ export const materialRelationService: ApiEndpointConfig = {
     },
 
     // Batch Unbind Materials From Section
-    '/api/v1/core/material-relations/sections/{outline_section_id}/materials/batch-unbind': {
+    '/material-relations/sections/{outline_section_id}/materials/batch-unbind': {
       description: 'Batch Unbind Materials From Section',
       methods: ['POST'],
       request: {

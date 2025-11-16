@@ -22,7 +22,7 @@ export const outlineWithMaterialService: ApiEndpointConfig = {
   },
   paths: {
     // Execute Outline With Material
-    '/api/v1/ai/document_generate/outline-with-material/execute': {
+    '/document_generate/outline-with-material/execute': {
       description: 'Execute Outline With Material',
       methods: ['POST'],
       request: {
@@ -41,7 +41,7 @@ export const outlineWithMaterialService: ApiEndpointConfig = {
     },
 
     // Get Outline With Material Task
-    '/api/v1/ai/document_generate/outline-with-material/task/{task_id}': {
+    '/document_generate/outline-with-material/task/{task_id}': {
       description: 'Get Outline With Material Task',
       methods: ['GET'],
       request: {
@@ -60,7 +60,7 @@ export const outlineWithMaterialService: ApiEndpointConfig = {
     },
 
     // List Outline Tasks
-    '/api/v1/ai/document_generate/outline-with-material/tasks': {
+    '/document_generate/outline-with-material/tasks': {
       description: 'List Outline Tasks',
       methods: ['GET'],
       request: {
@@ -78,7 +78,7 @@ export const outlineWithMaterialService: ApiEndpointConfig = {
     },
 
     // Cancel Outline Task
-    '/api/v1/ai/document_generate/outline-with-material/cancel/{task_id}': {
+    '/document_generate/outline-with-material/cancel/{task_id}': {
       description: 'Cancel Outline Task',
       methods: ['POST'],
       request: {

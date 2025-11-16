@@ -7,7 +7,7 @@ import type { ApiEndpointConfig } from '../../types'
 
 export const bodyService: ApiEndpointConfig = {
   name: '内容管理服务',
-  baseUrl: '/api/v1',
+  baseUrl: '/api/v1/core',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   enableMock: true,
   mockPath: '/mock/data/bodies',
@@ -22,7 +22,7 @@ export const bodyService: ApiEndpointConfig = {
   },
   paths: {
     // Get Bodies
-    '/api/v1/core/bodies/projects/{project_id}/bodies': {
+    '/bodies/projects/{project_id}/bodies': {
       description: 'Get Bodies',
       methods: ['GET'],
       request: {
@@ -41,7 +41,7 @@ export const bodyService: ApiEndpointConfig = {
     },
 
     // Get Active Body
-    '/api/v1/core/bodies/projects/{project_id}/bodies/active': {
+    '/bodies/projects/{project_id}/bodies/active': {
       description: 'Get Active Body',
       methods: ['GET'],
       request: {
@@ -58,7 +58,7 @@ export const bodyService: ApiEndpointConfig = {
     },
 
     // Get Body History
-    '/api/v1/core/bodies/projects/{project_id}/bodies/history': {
+    '/bodies/projects/{project_id}/bodies/history': {
       description: 'Get Body History',
       methods: ['GET'],
       request: {
@@ -77,7 +77,7 @@ export const bodyService: ApiEndpointConfig = {
     },
 
     // Delete Body
-    '/api/v1/core/bodies/bodies/{body_id}': {
+    '/bodies/bodies/{body_id}': {
       description: 'Delete Body',
       methods: ['DELETE'],
       request: {
@@ -94,7 +94,7 @@ export const bodyService: ApiEndpointConfig = {
     },
 
     // Activate Body
-    '/api/v1/core/bodies/bodies/{body_id}/activate': {
+    '/bodies/bodies/{body_id}/activate': {
       description: 'Activate Body',
       methods: ['PUT'],
       request: {
@@ -112,7 +112,7 @@ export const bodyService: ApiEndpointConfig = {
     },
 
     // Deactivate Body
-    '/api/v1/core/bodies/bodies/{body_id}/deactivate': {
+    '/bodies/bodies/{body_id}/deactivate': {
       description: 'Deactivate Body',
       methods: ['PUT'],
       request: {
@@ -130,7 +130,7 @@ export const bodyService: ApiEndpointConfig = {
     },
 
     // Get Text Stats
-    '/api/v1/core/bodies/bodies/{body_id}/stats': {
+    '/bodies/bodies/{body_id}/stats': {
       description: 'Get Text Stats',
       methods: ['GET'],
       request: {
@@ -147,7 +147,7 @@ export const bodyService: ApiEndpointConfig = {
     },
 
     // Get Readability Analysis
-    '/api/v1/core/bodies/bodies/{body_id}/readability': {
+    '/bodies/bodies/{body_id}/readability': {
       description: 'Get Readability Analysis',
       methods: ['GET'],
       request: {

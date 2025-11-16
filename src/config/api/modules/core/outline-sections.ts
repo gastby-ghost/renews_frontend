@@ -7,7 +7,7 @@ import type { ApiEndpointConfig } from '../../types'
 
 export const outlineSectionService: ApiEndpointConfig = {
   name: '大纲章节服务',
-  baseUrl: '/api/v1',
+  baseUrl: '/api/v1/core',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   enableMock: true,
   mockPath: '/mock/data/outline-sections',
@@ -22,7 +22,7 @@ export const outlineSectionService: ApiEndpointConfig = {
   },
   paths: {
     // Get Sections By Outline
-    '/api/v1/core/outlines/{outline_id}/sections': {
+    '/outlines/{outline_id}/sections': {
       description: 'Get Sections By Outline',
       methods: ['GET'],
       request: {
@@ -39,7 +39,7 @@ export const outlineSectionService: ApiEndpointConfig = {
     },
 
     // Delete Section
-    '/api/v1/core/sections/{section_id}': {
+    '/sections/{section_id}': {
       description: 'Delete Section',
       methods: ['DELETE'],
       request: {
@@ -56,7 +56,7 @@ export const outlineSectionService: ApiEndpointConfig = {
     },
 
     // Bulk Create Sections
-    '/api/v1/core/outlines/{outline_id}/sections/batch': {
+    '/outlines/{outline_id}/sections/batch': {
       description: 'Bulk Create Sections',
       methods: ['POST'],
       request: {
@@ -74,7 +74,7 @@ export const outlineSectionService: ApiEndpointConfig = {
     },
 
     // Reorder Sections
-    '/api/v1/core/sections/reorder': {
+    '/sections/reorder': {
       description: 'Reorder Sections',
       methods: ['PUT'],
       request: {

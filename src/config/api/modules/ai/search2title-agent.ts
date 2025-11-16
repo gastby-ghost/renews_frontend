@@ -22,7 +22,7 @@ export const search2titleAgentService: ApiEndpointConfig = {
   },
   paths: {
     // Execute Search2Title Agent
-    '/api/v1/ai/document_generate/search2title-agent/execute': {
+    '/document_generate/search2title-agent/execute': {
       description: 'Execute Search2Title Agent',
       methods: ['POST'],
       request: {
@@ -41,7 +41,7 @@ export const search2titleAgentService: ApiEndpointConfig = {
     },
 
     // Get Search2Title Agent Status
-    '/api/v1/ai/document_generate/search2title-agent/status/{task_id}': {
+    '/document_generate/search2title-agent/status/{task_id}': {
       description: 'Get Search2Title Agent Status',
       methods: ['GET'],
       request: {
@@ -60,7 +60,7 @@ export const search2titleAgentService: ApiEndpointConfig = {
     },
 
     // List Search2Title Agent Tasks
-    '/api/v1/ai/document_generate/search2title-agent/tasks': {
+    '/document_generate/search2title-agent/tasks': {
       description: 'List Search2Title Agent Tasks',
       methods: ['GET'],
       request: {
@@ -78,7 +78,7 @@ export const search2titleAgentService: ApiEndpointConfig = {
     },
 
     // Cancel Search2Title Agent Task
-    '/api/v1/ai/document_generate/search2title-agent/cancel/{task_id}': {
+    '/document_generate/search2title-agent/cancel/{task_id}': {
       description: 'Cancel Search2Title Agent Task',
       methods: ['POST'],
       request: {
@@ -97,7 +97,7 @@ export const search2titleAgentService: ApiEndpointConfig = {
     },
 
     // Get Search2Title Agent Graph State
-    '/api/v1/ai/document_generate/search2title-agent/state/{task_id}': {
+    '/document_generate/search2title-agent/state/{task_id}': {
       description: 'Get Search2Title Agent Graph State',
       methods: ['GET'],
       request: {

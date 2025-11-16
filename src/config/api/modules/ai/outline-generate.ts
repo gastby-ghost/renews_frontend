@@ -22,7 +22,7 @@ export const outlineGenerateService: ApiEndpointConfig = {
   },
   paths: {
     // Generate Outline Endpoint
-    '/api/v1/ai/document_generate/outline-agent/generate': {
+    '/document_generate/outline-agent/generate': {
       description: 'Generate Outline Endpoint',
       methods: ['POST'],
       request: {
@@ -39,7 +39,7 @@ export const outlineGenerateService: ApiEndpointConfig = {
     },
 
     // Get Outline Tools Status
-    '/api/v1/ai/document_generate/outline-agent/status': {
+    '/document_generate/outline-agent/status': {
       description: 'Get Outline Tools Status',
       methods: ['GET'],
       request: {

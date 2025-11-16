@@ -22,7 +22,7 @@ export const scopeAgentService: ApiEndpointConfig = {
   },
   paths: {
     // Execute Scope Agent
-    '/api/v1/ai/document_generate/scope-agent/execute': {
+    '/document_generate/scope-agent/execute': {
       description: 'Execute Scope Agent',
       methods: ['POST'],
       request: {
@@ -41,7 +41,7 @@ export const scopeAgentService: ApiEndpointConfig = {
     },
 
     // Get Scope Agent Status
-    '/api/v1/ai/document_generate/scope-agent/status/{task_id}': {
+    '/document_generate/scope-agent/status/{task_id}': {
       description: 'Get Scope Agent Status',
       methods: ['GET'],
       request: {
@@ -58,7 +58,7 @@ export const scopeAgentService: ApiEndpointConfig = {
     },
 
     // List Scope Agent Tasks
-    '/api/v1/ai/document_generate/scope-agent/tasks': {
+    '/document_generate/scope-agent/tasks': {
       description: 'List Scope Agent Tasks',
       methods: ['GET'],
       request: {
@@ -78,7 +78,7 @@ export const scopeAgentService: ApiEndpointConfig = {
     },
 
     // Cancel Scope Agent Task
-    '/api/v1/ai/document_generate/scope-agent/cancel/{task_id}': {
+    '/document_generate/scope-agent/cancel/{task_id}': {
       description: 'Cancel Scope Agent Task',
       methods: ['POST'],
       request: {

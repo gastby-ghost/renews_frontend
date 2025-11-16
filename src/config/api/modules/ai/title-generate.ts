@@ -22,7 +22,7 @@ export const titleGenerateService: ApiEndpointConfig = {
   },
   paths: {
     // Generate Titles Endpoint
-    '/api/v1/ai/document_generate/title-agent/generate': {
+    '/document_generate/title-agent/generate': {
       description: 'Generate Titles Endpoint',
       methods: ['POST'],
       request: {
@@ -39,7 +39,7 @@ export const titleGenerateService: ApiEndpointConfig = {
     },
 
     // Get Title Tools Status
-    '/api/v1/ai/document_generate/title-agent/status': {
+    '/document_generate/title-agent/status': {
       description: 'Get Title Tools Status',
       methods: ['GET'],
       request: {
@@ -54,7 +54,7 @@ export const titleGenerateService: ApiEndpointConfig = {
     },
 
     // Validate Title Generation Request
-    '/api/v1/ai/document_generate/title-agent/validate': {
+    '/document_generate/title-agent/validate': {
       description: 'Validate Title Generation Request',
       methods: ['POST'],
       request: {

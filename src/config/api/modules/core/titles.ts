@@ -7,7 +7,7 @@ import type { ApiEndpointConfig } from '../../types'
 
 export const titleService: ApiEndpointConfig = {
   name: '标题生成服务',
-  baseUrl: '/api/v1',
+  baseUrl: '/api/v1/core',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   enableMock: true,
   mockPath: '/mock/data/titles',
@@ -22,7 +22,7 @@ export const titleService: ApiEndpointConfig = {
   },
   paths: {
     // Get Project Title Candidates
-    '/api/v1/core/projects/{project_id}/title-candidates': {
+    '/projects/{project_id}/title-candidates': {
       description: 'Get Project Title Candidates',
       methods: ['GET'],
       request: {
@@ -42,7 +42,7 @@ export const titleService: ApiEndpointConfig = {
     },
 
     // Bulk Create Title Candidates
-    '/api/v1/core/projects/{project_id}/title-candidates/bulk': {
+    '/projects/{project_id}/title-candidates/bulk': {
       description: 'Bulk Create Title Candidates',
       methods: ['POST'],
       request: {
@@ -60,7 +60,7 @@ export const titleService: ApiEndpointConfig = {
     },
 
     // Delete Title Candidate
-    '/api/v1/core/title-candidates/{candidate_id}': {
+    '/title-candidates/{candidate_id}': {
       description: 'Delete Title Candidate',
       methods: ['DELETE'],
       request: {
@@ -77,7 +77,7 @@ export const titleService: ApiEndpointConfig = {
     },
 
     // Select Title Candidate
-    '/api/v1/core/title-candidates/{candidate_id}/select': {
+    '/title-candidates/{candidate_id}/select': {
       description: 'Select Title Candidate',
       methods: ['PUT'],
       request: {
@@ -95,7 +95,7 @@ export const titleService: ApiEndpointConfig = {
     },
 
     // Reject Title Candidate
-    '/api/v1/core/title-candidates/{candidate_id}/reject': {
+    '/title-candidates/{candidate_id}/reject': {
       description: 'Reject Title Candidate',
       methods: ['PUT'],
       request: {
@@ -113,7 +113,7 @@ export const titleService: ApiEndpointConfig = {
     },
 
     // Create Title
-    '/api/v1/core/projects/{project_id}/titles': {
+    '/projects/{project_id}/titles': {
       description: 'Create Title',
       methods: ['POST'],
       request: {
@@ -131,7 +131,7 @@ export const titleService: ApiEndpointConfig = {
     },
 
     // Get Active Title
-    '/api/v1/core/projects/{project_id}/titles/active': {
+    '/projects/{project_id}/titles/active': {
       description: 'Get Active Title',
       methods: ['GET'],
       request: {
@@ -148,7 +148,7 @@ export const titleService: ApiEndpointConfig = {
     },
 
     // Get Title History
-    '/api/v1/core/projects/{project_id}/titles/history': {
+    '/projects/{project_id}/titles/history': {
       description: 'Get Title History',
       methods: ['GET'],
       request: {
@@ -167,7 +167,7 @@ export const titleService: ApiEndpointConfig = {
     },
 
     // Update Title
-    '/api/v1/core/titles/{title_id}': {
+    '/titles/{title_id}': {
       description: 'Update Title',
       methods: ['PUT'],
       request: {
@@ -185,7 +185,7 @@ export const titleService: ApiEndpointConfig = {
     },
 
     // Activate Title
-    '/api/v1/core/titles/{title_id}/activate': {
+    '/titles/{title_id}/activate': {
       description: 'Activate Title',
       methods: ['PUT'],
       request: {
@@ -203,7 +203,7 @@ export const titleService: ApiEndpointConfig = {
     },
 
     // Deactivate Title
-    '/api/v1/core/titles/{title_id}/deactivate': {
+    '/titles/{title_id}/deactivate': {
       description: 'Deactivate Title',
       methods: ['PUT'],
       request: {

@@ -299,3 +299,60 @@ ${material.summary}
 export const generateMockDownloadUrl = (materialId: string): string => {
   return `https://example.com/download/${materialId}?token=${Date.now()}`
 }
+
+// 生成搜索历史记录
+export const generateMockSearchHistory = (limit: number = 10) => {
+  const queries = [
+    '人工智能发展趋势',
+    '机器学习算法研究',
+    '深度学习应用案例',
+    '自然语言处理技术',
+    '计算机视觉发展',
+    'AI芯片技术',
+    '智能制造创新',
+    '大数据分析',
+    '云计算平台',
+    '物联网应用'
+  ]
+
+  return {
+    success: true,
+    history: Array.from({ length: limit }, (_, index) => ({
+      id: `history_${Date.now() - index * 1000}`,
+      query: queries[index % queries.length],
+      provider: ['tavily', 'bocha'][Math.floor(Math.random() * 2)],
+      search_time: Math.random() * 5 + 1,
+      results_count: Math.floor(Math.random() * 50) + 10,
+      searched_at: new Date(Date.now() - Math.random() * 86400000 * 7).toISOString(),
+      user_id: 'user_123'
+    })),
+    total_count: queries.length,
+    has_more: limit < queries.length,
+    mock: true,
+    timestamp: Date.now()
+  }
+}
+
+// 生成搜索建议
+export const generateMockSearchSuggestions = (query: string) => {
+  const suggestions = [
+    `${query} 最新发展`,
+    `${query} 应用案例`,
+    `${query} 技术原理`,
+    `${query} 市场前景`,
+    `${query} 发展趋势`,
+    `${query} 研究现状`,
+    `${query} 实践指南`,
+    `${query} 最佳实践`
+  ].filter((suggestion) => suggestion.toLowerCase().includes(query.toLowerCase()))
+
+  return {
+    success: true,
+    query: query,
+    suggestions: suggestions.slice(0, 8),
+    popular_searches: ['人工智能', '机器学习', '深度学习', '自然语言处理', '计算机视觉'],
+    provider: 'tavily',
+    mock: true,
+    timestamp: Date.now()
+  }
+}

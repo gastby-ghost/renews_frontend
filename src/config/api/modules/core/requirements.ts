@@ -7,7 +7,7 @@ import type { ApiEndpointConfig } from '../../types'
 
 export const requirementService: ApiEndpointConfig = {
   name: '需求管理服务',
-  baseUrl: '/api/v1',
+  baseUrl: '/api/v1/core',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   enableMock: true,
   mockPath: '/mock/data/requirements',
@@ -22,7 +22,7 @@ export const requirementService: ApiEndpointConfig = {
   },
   paths: {
     // Get Project Requirements
-    '/api/v1/core/projects/{project_id}/requirements': {
+    '/projects/{project_id}/requirements': {
       description: 'Get Project Requirements',
       methods: ['GET'],
       request: {
@@ -39,7 +39,7 @@ export const requirementService: ApiEndpointConfig = {
     },
 
     // Delete Requirement
-    '/api/v1/core/requirements/{requirement_id}': {
+    '/requirements/{requirement_id}': {
       description: 'Delete Requirement',
       methods: ['DELETE'],
       request: {

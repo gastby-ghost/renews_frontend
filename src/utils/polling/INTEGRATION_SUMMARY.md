@@ -43,13 +43,13 @@
 
 ## 🚀 使用方法
 
-### 在 SearchService 中使用
+### 在 SearchAgentService 中使用
 
 ```typescript
-import searchService from '@/services/searchService'
+import { searchAgentService } from '@/services/ai/searchAgentService'
 
 // 方法1: 获取轮询任务实例（可监控进度）
-const task = await searchService.executeSearchAgentWithPolling(
+const task = await searchAgentService.executeSearchAgentWithPolling(
   'userId',
   'projectId',
   { brief: '研究主题' },

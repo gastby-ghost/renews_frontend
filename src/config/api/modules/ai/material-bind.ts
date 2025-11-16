@@ -22,7 +22,7 @@ export const materialBindService: ApiEndpointConfig = {
   },
   paths: {
     // Execute Material Bind
-    '/api/v1/ai/document_generate/material-bind/execute': {
+    '/document_generate/material-bind/execute': {
       description: 'Execute Material Bind',
       methods: ['POST'],
       request: {
@@ -39,7 +39,7 @@ export const materialBindService: ApiEndpointConfig = {
     },
 
     // Get Material Bind Status
-    '/api/v1/ai/document_generate/material-bind/status/{task_id}': {
+    '/document_generate/material-bind/status/{task_id}': {
       description: 'Get Material Bind Status',
       methods: ['GET'],
       request: {
@@ -56,7 +56,7 @@ export const materialBindService: ApiEndpointConfig = {
     },
 
     // Cancel Material Bind Task
-    '/api/v1/ai/document_generate/material-bind/cancel/{task_id}': {
+    '/document_generate/material-bind/cancel/{task_id}': {
       description: 'Cancel Material Bind Task',
       methods: ['POST'],
       request: {

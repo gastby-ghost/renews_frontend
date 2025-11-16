@@ -7,7 +7,7 @@ import type { ApiEndpointConfig } from '../../types'
 
 export const authService: ApiEndpointConfig = {
   name: '用户认证服务',
-  baseUrl: '/api/v1',
+  baseUrl: '/api/v1/core',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   enableMock: true,
   mockPath: '/mock/data/auth',
@@ -22,7 +22,7 @@ export const authService: ApiEndpointConfig = {
   },
   paths: {
     // Register User
-    '/api/v1/core/register': {
+    '/register': {
       description: 'Register User',
       methods: ['POST'],
       request: {
@@ -39,7 +39,7 @@ export const authService: ApiEndpointConfig = {
     },
 
     // Login User
-    '/api/v1/core/login': {
+    '/login': {
       description: 'Login User',
       methods: ['POST'],
       request: {
@@ -56,7 +56,7 @@ export const authService: ApiEndpointConfig = {
     },
 
     // Forgot Password
-    '/api/v1/core/forgot-password': {
+    '/forgot-password': {
       description: 'Forgot Password',
       methods: ['POST'],
       request: {
@@ -73,7 +73,7 @@ export const authService: ApiEndpointConfig = {
     },
 
     // Verify Email Token
-    '/api/v1/core/verify/{token}': {
+    '/verify/{token}': {
       description: 'Verify Email Token',
       methods: ['GET'],
       request: {
@@ -90,7 +90,7 @@ export const authService: ApiEndpointConfig = {
     },
 
     // Delete Account
-    '/api/v1/core/account': {
+    '/account': {
       description: 'Delete Account',
       methods: ['DELETE'],
       request: {
@@ -107,7 +107,7 @@ export const authService: ApiEndpointConfig = {
     },
 
     // Refresh Access Token
-    '/api/v1/core/refresh-token': {
+    '/refresh-token': {
       description: 'Refresh Access Token',
       methods: ['POST'],
       request: {
@@ -124,7 +124,7 @@ export const authService: ApiEndpointConfig = {
     },
 
     // Logout
-    '/api/v1/core/logout': {
+    '/logout': {
       description: 'Logout',
       methods: ['POST'],
       request: {
@@ -139,7 +139,7 @@ export const authService: ApiEndpointConfig = {
     },
 
     // Cleanup Expired Tokens
-    '/api/v1/core/cleanup-expired-tokens': {
+    '/cleanup-expired-tokens': {
       description: 'Cleanup Expired Tokens',
       methods: ['POST'],
       request: {
@@ -154,7 +154,7 @@ export const authService: ApiEndpointConfig = {
     },
 
     // Health Check
-    '/api/v1/core/health': {
+    '/health': {
       description: 'Health Check',
       methods: ['GET'],
       request: {
@@ -169,7 +169,7 @@ export const authService: ApiEndpointConfig = {
     },
 
     // Detailed Health Check
-    '/api/v1/core/health/detailed': {
+    '/health/detailed': {
       description: 'Detailed Health Check',
       methods: ['GET'],
       request: {
@@ -184,7 +184,7 @@ export const authService: ApiEndpointConfig = {
     },
 
     // Readiness Check
-    '/api/v1/core/health/ready': {
+    '/health/ready': {
       description: 'Readiness Check',
       methods: ['GET'],
       request: {
@@ -199,7 +199,7 @@ export const authService: ApiEndpointConfig = {
     },
 
     // Liveness Check
-    '/api/v1/core/health/live': {
+    '/health/live': {
       description: 'Liveness Check',
       methods: ['GET'],
       request: {
@@ -214,7 +214,7 @@ export const authService: ApiEndpointConfig = {
     },
 
     // Get Metrics
-    '/api/v1/core/metrics': {
+    '/metrics': {
       description: 'Get Metrics',
       methods: ['GET'],
       request: {
@@ -229,7 +229,7 @@ export const authService: ApiEndpointConfig = {
     },
 
     // Update User Preferences
-    '/api/v1/core/preferences': {
+    '/preferences': {
       description: 'Update User Preferences',
       methods: ['PUT'],
       request: {
@@ -246,7 +246,7 @@ export const authService: ApiEndpointConfig = {
     },
 
     // Get Default Preferences
-    '/api/v1/core/preferences/default': {
+    '/preferences/default': {
       description: 'Get Default Preferences',
       methods: ['GET'],
       request: {

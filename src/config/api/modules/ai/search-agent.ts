@@ -22,7 +22,7 @@ export const searchAgentService: ApiEndpointConfig = {
   },
   paths: {
     // Execute Search Agent
-    '/api/v1/ai/search-agent/execute': {
+    '/search-agent/execute': {
       description: 'Execute Search Agent',
       methods: ['POST'],
       request: {
@@ -41,7 +41,7 @@ export const searchAgentService: ApiEndpointConfig = {
     },
 
     // Get Search Agent Status
-    '/api/v1/ai/search-agent/status/{task_id}': {
+    '/search-agent/status/{task_id}': {
       description: 'Get Search Agent Status',
       methods: ['GET'],
       request: {
@@ -60,7 +60,7 @@ export const searchAgentService: ApiEndpointConfig = {
     },
 
     // List Search Agent Tasks
-    '/api/v1/ai/search-agent/tasks': {
+    '/search-agent/tasks': {
       description: 'List Search Agent Tasks',
       methods: ['GET'],
       request: {
@@ -78,7 +78,7 @@ export const searchAgentService: ApiEndpointConfig = {
     },
 
     // Cancel Search Agent Task
-    '/api/v1/ai/search-agent/cancel/{task_id}': {
+    '/search-agent/cancel/{task_id}': {
       description: 'Cancel Search Agent Task',
       methods: ['POST'],
       request: {
@@ -97,7 +97,7 @@ export const searchAgentService: ApiEndpointConfig = {
     },
 
     // Get Search Agent Graph State
-    '/api/v1/ai/search-agent/state/{task_id}': {
+    '/search-agent/state/{task_id}': {
       description: 'Get Search Agent Graph State',
       methods: ['GET'],
       request: {
