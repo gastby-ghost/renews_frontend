@@ -1,0 +1,337 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "AI Service API - Title Generate",
+    "description": "MediaAgent ReNews AI Content Creation Service - Module: title-generate",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/v1/ai/document_generate/title-agent/generate": {
+      "post": {
+        "tags": ["Document Generate"],
+        "summary": "Generate Titles Endpoint",
+        "description": "Generate news titles based on research brief and web search data.\n\nThis endpoint directly exposes the title generation agent with structured output,\nproviding bottom-up data flow for the research agent architecture.\n\nArgs:\n    request: Title generation parameters including research brief and search data\n    \nReturns:\n    Structured title generation output with metadata and timing information",
+        "operationId": "generate_titles_endpoint_api_v1_ai_document_generate_title_agent_generate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/TitleGenerationRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TitleGenerationResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/document_generate/title-agent/status": {
+      "get": {
+        "tags": ["Document Generate"],
+        "summary": "Get Title Tools Status",
+        "description": "Get the status of title generation tools.",
+        "operationId": "get_title_tools_status_api_v1_ai_document_generate_title_agent_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TitleToolsStatusResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/document_generate/title-agent/validate": {
+      "post": {
+        "tags": ["Document Generate"],
+        "summary": "Validate Title Generation Request",
+        "description": "Validate title generation request before processing.\n\nArgs:\n    request: Title generation request to validate\n    \nReturns:\n    Validation result with any errors or warnings",
+        "operationId": "validate_title_generation_request_api_v1_ai_document_generate_title_agent_validate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/TitleGenerationRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Validate Title Generation Request Api V1 Ai Document Generate Title Agent Validate Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": { "$ref": "#/components/schemas/ValidationError" },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "SearchResultItem": {
+        "properties": {
+          "url": { "type": "string", "title": "Url", "description": "搜索结果URL" },
+          "webtitle": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Webtitle",
+            "description": "网页标题"
+          },
+          "score": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Score",
+            "description": "搜索相关性评分"
+          },
+          "query": { "type": "string", "title": "Query", "description": "产生此结果的搜索查询" },
+          "aititle": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Aititle",
+            "description": "AI总结标题"
+          },
+          "summary": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Summary",
+            "description": "AI生成的内容摘要"
+          },
+          "content": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Content",
+            "description": "网页原始内容"
+          },
+          "tags": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Tags",
+            "description": "标签"
+          },
+          "key_excerpts": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Key Excerpts",
+            "description": "关键摘录"
+          },
+          "published_date": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Published Date",
+            "description": "发布日期"
+          }
+        },
+        "type": "object",
+        "required": ["url", "score", "query"],
+        "title": "SearchResultItem",
+        "description": "Individual search result item."
+      },
+      "Title": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "一个客观、简洁、吸引人的新闻标题"
+          },
+          "angle": {
+            "type": "string",
+            "title": "Angle",
+            "description": "具体说明报道的核心思路和切入点"
+          },
+          "why_now": { "type": "string", "title": "Why Now", "description": "新闻时效性钩子" },
+          "news_values": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "News Values",
+            "description": "新闻价值标准列表，包含：Timeliness, Impact, Proximity, Prominence, Conflict, Human Interest, Novelty"
+          },
+          "verifiability": {
+            "type": "string",
+            "title": "Verifiability",
+            "description": "评估依据现有来源进行核实的难易程度"
+          },
+          "sources": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Sources",
+            "description": "支持该标题的具体来源编号列表，如 ['1', '2']"
+          },
+          "risk_notes": { "type": "string", "title": "Risk Notes", "description": "任何潜在风险" },
+          "feasibility": {
+            "type": "string",
+            "title": "Feasibility",
+            "description": "完成报道的可行性"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "angle",
+          "why_now",
+          "news_values",
+          "verifiability",
+          "sources",
+          "risk_notes",
+          "feasibility"
+        ],
+        "title": "Title",
+        "description": "单个新闻标题候选的结构化表示"
+      },
+      "TitleGenerationRequest": {
+        "properties": {
+          "research_brief": {
+            "type": "string",
+            "minLength": 10,
+            "title": "Research Brief",
+            "description": "Research brief to guide title generation"
+          },
+          "web_search_data": {
+            "anyOf": [
+              { "items": { "$ref": "#/components/schemas/SearchResultItem" }, "type": "array" },
+              { "items": { "type": "string" }, "type": "array" }
+            ],
+            "minLength": 1,
+            "title": "Web Search Data",
+            "description": "Web search results to base titles on"
+          }
+        },
+        "type": "object",
+        "required": ["research_brief", "web_search_data"],
+        "title": "TitleGenerationRequest",
+        "description": "Request model for title generation."
+      },
+      "TitleGenerationResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "Whether the title generation was successful"
+          },
+          "titles": {
+            "items": { "$ref": "#/components/schemas/Title" },
+            "type": "array",
+            "title": "Titles",
+            "description": "Generated news titles"
+          },
+          "title_sources_details": {
+            "additionalProperties": {
+              "items": { "additionalProperties": true, "type": "object" },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Title Sources Details",
+            "description": "Title sources mapping with detailed source information"
+          },
+          "generation_time": {
+            "type": "number",
+            "title": "Generation Time",
+            "description": "Title generation time in seconds"
+          },
+          "title_count": {
+            "type": "integer",
+            "title": "Title Count",
+            "description": "Number of titles generated"
+          },
+          "generation_summary": {
+            "type": "string",
+            "title": "Generation Summary",
+            "description": "Summary of the title generation process",
+            "default": ""
+          },
+          "total_candidates": {
+            "type": "integer",
+            "title": "Total Candidates",
+            "description": "Total number of candidates generated",
+            "default": 0
+          },
+          "final_report": {
+            "type": "string",
+            "title": "Final Report",
+            "description": "Final report from the title generation agent",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": ["success", "titles", "generation_time", "title_count"],
+        "title": "TitleGenerationResponse",
+        "description": "Response model for title generation with enhanced structured output."
+      },
+      "TitleToolsStatusResponse": {
+        "properties": {
+          "configured": {
+            "type": "boolean",
+            "title": "Configured",
+            "description": "Whether title generation is properly configured"
+          },
+          "available_models": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Available Models",
+            "description": "List of available models for title generation"
+          },
+          "default_model": {
+            "type": "string",
+            "title": "Default Model",
+            "description": "Default model for title generation"
+          }
+        },
+        "type": "object",
+        "required": ["configured", "available_models", "default_model"],
+        "title": "TitleToolsStatusResponse",
+        "description": "Response model for title tools status."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": { "anyOf": [{ "type": "string" }, { "type": "integer" }] },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": { "type": "string", "title": "Message" },
+          "type": { "type": "string", "title": "Error Type" }
+        },
+        "type": "object",
+        "required": ["loc", "msg", "type"],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

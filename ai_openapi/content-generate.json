@@ -1,0 +1,345 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "AI Service API - Content Generate",
+    "description": "MediaAgent ReNews AI Content Creation Service - Module: content-generate",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/v1/ai/document_generate/content/generate": {
+      "post": {
+        "tags": ["Document Generate"],
+        "summary": "Generate Content Endpoint",
+        "description": "启动正文生成任务。\n\nArgs:\n    request: 正文生成请求参数\n\nReturns:\n    包含任务ID和初始状态的响应",
+        "operationId": "generate_content_endpoint_api_v1_ai_document_generate_content_generate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/BodyGenerationRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/BodyGenerationResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/document_generate/content/tasks/{task_id}": {
+      "get": {
+        "tags": ["Document Generate"],
+        "summary": "Get Task Status",
+        "description": "查询任务状态。\n\nArgs:\n    task_id: 任务ID\n\nReturns:\n    任务状态响应",
+        "operationId": "get_task_status_api_v1_ai_document_generate_content_tasks__task_id__get",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Task Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TaskStatusResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Document Generate"],
+        "summary": "Cancel Task",
+        "description": "取消任务。\n\nArgs:\n    task_id: 任务ID\n\nReturns:\n    取消结果",
+        "operationId": "cancel_task_api_v1_ai_document_generate_content_tasks__task_id__delete",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Task Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Cancel Task Api V1 Ai Document Generate Content Tasks  Task Id  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/document_generate/content/status": {
+      "get": {
+        "tags": ["Document Generate"],
+        "summary": "Get Content Tools Status",
+        "description": "获取正文生成工具状态",
+        "operationId": "get_content_tools_status_api_v1_ai_document_generate_content_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/BodyToolsStatusResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/document_generate/content/validate": {
+      "post": {
+        "tags": ["Document Generate"],
+        "summary": "Validate Content Generation Request",
+        "description": "验证正文生成请求。\n\nArgs:\n    request: 正文生成请求\n\nReturns:\n    验证结果",
+        "operationId": "validate_content_generation_request_api_v1_ai_document_generate_content_validate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/BodyGenerationRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Validate Content Generation Request Api V1 Ai Document Generate Content Validate Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/document_generate/content/tasks": {
+      "get": {
+        "tags": ["Document Generate"],
+        "summary": "List Tasks",
+        "description": "列出任务。\n\nArgs:\n    project_id: 项目ID（可选）\n    status: 任务状态（可选）\n    limit: 返回数量限制\n\nReturns:\n    任务列表",
+        "operationId": "list_tasks_api_v1_ai_document_generate_content_tasks_get",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "integer" }, { "type": "null" }],
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Status" }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "default": 100, "title": "Limit" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response List Tasks Api V1 Ai Document Generate Content Tasks Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "BodyGenerationRequest": {
+        "properties": {
+          "task_id": { "type": "string", "title": "Task Id", "description": "任务ID（前端生成）" },
+          "project_id": { "type": "integer", "title": "Project Id", "description": "项目ID" },
+          "requirement": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Requirement",
+            "description": "项目需求和约束"
+          },
+          "title": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Title",
+            "description": "标题信息"
+          },
+          "outline": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Outline",
+            "description": "完整大纲信息"
+          },
+          "style": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Style",
+            "description": "写作风格要求"
+          },
+          "all_materials": {
+            "items": { "additionalProperties": true, "type": "object" },
+            "type": "array",
+            "title": "All Materials",
+            "description": "所有可用素材",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": ["task_id", "project_id"],
+        "title": "BodyGenerationRequest",
+        "description": "正文生成请求模型"
+      },
+      "BodyGenerationResponse": {
+        "properties": {
+          "success": { "type": "boolean", "title": "Success", "description": "是否成功" },
+          "code": { "type": "integer", "title": "Code", "description": "响应码" },
+          "message": { "type": "string", "title": "Message", "description": "响应消息" },
+          "data": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Data",
+            "description": "响应数据"
+          },
+          "timestamp": { "type": "string", "title": "Timestamp", "description": "时间戳" }
+        },
+        "type": "object",
+        "required": ["success", "code", "message", "data", "timestamp"],
+        "title": "BodyGenerationResponse",
+        "description": "正文生成响应模型"
+      },
+      "BodyToolsStatusResponse": {
+        "properties": {
+          "configured": { "type": "boolean", "title": "Configured", "description": "是否已配置" },
+          "available_models": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Available Models",
+            "description": "可用模型列表"
+          },
+          "default_model": { "type": "string", "title": "Default Model", "description": "默认模型" }
+        },
+        "type": "object",
+        "required": ["configured", "available_models", "default_model"],
+        "title": "BodyToolsStatusResponse",
+        "description": "正文生成工具状态响应模型"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": { "$ref": "#/components/schemas/ValidationError" },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "TaskStatusResponse": {
+        "properties": {
+          "success": { "type": "boolean", "title": "Success", "description": "是否成功" },
+          "code": { "type": "integer", "title": "Code", "description": "响应码" },
+          "message": { "type": "string", "title": "Message", "description": "响应消息" },
+          "data": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Data",
+            "description": "响应数据"
+          },
+          "timestamp": { "type": "string", "title": "Timestamp", "description": "时间戳" }
+        },
+        "type": "object",
+        "required": ["success", "code", "message", "data", "timestamp"],
+        "title": "TaskStatusResponse",
+        "description": "任务状态响应模型"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": { "anyOf": [{ "type": "string" }, { "type": "integer" }] },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": { "type": "string", "title": "Message" },
+          "type": { "type": "string", "title": "Error Type" }
+        },
+        "type": "object",
+        "required": ["loc", "msg", "type"],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

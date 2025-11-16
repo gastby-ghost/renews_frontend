@@ -1,0 +1,438 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "AI Service API - Outline With Material",
+    "description": "MediaAgent ReNews AI Content Creation Service - Module: outline-with-material",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/v1/ai/document_generate/outline-with-material/execute": {
+      "post": {
+        "tags": ["Document Generate"],
+        "summary": "Execute Outline With Material",
+        "description": "Execute outline with material generation agent.\n\nThis agent generates a structured outline based on a given title and supporting materials.\nIf project_id is not provided, uses user's default project.\n\nArgs:\n    request: Outline generation request parameters\n    user_id: User identifier\n    project_id: Project identifier (optional)\n\nReturns:\n    Task execution response",
+        "operationId": "execute_outline_with_material_api_v1_ai_document_generate_outline_with_material_execute_post",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "User Id" }
+          },
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": false,
+            "schema": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Project Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ExecuteOutlineWithMaterialRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ExecuteOutlineResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/document_generate/outline-with-material/task/{task_id}": {
+      "get": {
+        "tags": ["Document Generate"],
+        "summary": "Get Outline With Material Task",
+        "description": "Get the complete task information including status and result for an outline generation task.\n\nArgs:\n    task_id: Task identifier\n    user_id: User identifier\n    project_id: Project identifier (optional)\n\nReturns:\n    Complete task information with status and result data",
+        "operationId": "get_outline_with_material_task_api_v1_ai_document_generate_outline_with_material_task__task_id__get",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Task Id" }
+          },
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "User Id" }
+          },
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": false,
+            "schema": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Project Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/document_generate/outline-with-material/tasks": {
+      "get": {
+        "tags": ["Document Generate"],
+        "summary": "List Outline Tasks",
+        "description": "List outline generation tasks for a user.\n\nArgs:\n    user_id: User identifier\n    project_id: Project identifier (optional)\n\nReturns:\n    Task list",
+        "operationId": "list_outline_tasks_api_v1_ai_document_generate_outline_with_material_tasks_get",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "User Id" }
+          },
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": false,
+            "schema": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Project Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ListOutlineTasksResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/document_generate/outline-with-material/cancel/{task_id}": {
+      "post": {
+        "tags": ["Document Generate"],
+        "summary": "Cancel Outline Task",
+        "description": "Cancel an outline generation task.\n\nArgs:\n    task_id: Task identifier\n    user_id: User identifier\n    project_id: Project identifier (optional)\n\nReturns:\n    Cancellation result",
+        "operationId": "cancel_outline_task_api_v1_ai_document_generate_outline_with_material_cancel__task_id__post",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Task Id" }
+          },
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "User Id" }
+          },
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": false,
+            "schema": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Project Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CancelOutlineTaskResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CancelOutlineTaskResponse": {
+        "properties": {
+          "task_id": { "type": "string", "title": "Task Id", "description": "任务ID" },
+          "status": {
+            "type": "string",
+            "const": "cancelled",
+            "title": "Status",
+            "description": "任务状态",
+            "default": "cancelled"
+          },
+          "message": { "type": "string", "title": "Message", "description": "响应消息" }
+        },
+        "type": "object",
+        "required": ["task_id", "message"],
+        "title": "CancelOutlineTaskResponse",
+        "description": "取消大纲任务响应模型"
+      },
+      "ExecuteOutlineResponse": {
+        "properties": {
+          "task_id": { "type": "string", "title": "Task Id", "description": "任务ID" },
+          "status": {
+            "type": "string",
+            "enum": ["started", "pending"],
+            "title": "Status",
+            "description": "任务状态"
+          },
+          "message": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Message",
+            "description": "响应消息"
+          }
+        },
+        "type": "object",
+        "required": ["task_id", "status", "message"],
+        "title": "ExecuteOutlineResponse",
+        "description": "执行大纲生成响应模型"
+      },
+      "ExecuteOutlineWithMaterialRequest": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "User Id",
+            "description": "用户ID"
+          },
+          "project_id": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Project Id",
+            "description": "项目ID"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Title",
+            "description": "新闻标题"
+          },
+          "materials": {
+            "items": { "$ref": "#/components/schemas/Material" },
+            "type": "array",
+            "maxItems": 1000,
+            "minItems": 1,
+            "title": "Materials",
+            "description": "初始素材列表"
+          },
+          "research_brief": {
+            "anyOf": [{ "type": "string", "maxLength": 2000 }, { "type": "null" }],
+            "title": "Research Brief",
+            "description": "研究简报（可选）"
+          },
+          "force_research": {
+            "type": "boolean",
+            "title": "Force Research",
+            "description": "是否强制进行研究",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": ["user_id", "project_id", "title", "materials"],
+        "title": "ExecuteOutlineWithMaterialRequest",
+        "description": "执行带素材的大纲生成请求模型"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": { "$ref": "#/components/schemas/ValidationError" },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "ListOutlineTasksResponse": {
+        "properties": {
+          "success": { "type": "boolean", "title": "Success", "description": "是否成功" },
+          "tasks": {
+            "items": { "$ref": "#/components/schemas/OutlineWithMaterialTaskInfo" },
+            "type": "array",
+            "title": "Tasks",
+            "description": "任务列表"
+          },
+          "total_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Total Count",
+            "description": "任务总数"
+          },
+          "has_more": { "type": "boolean", "title": "Has More", "description": "是否有更多任务" }
+        },
+        "type": "object",
+        "required": ["success", "total_count", "has_more"],
+        "title": "ListOutlineTasksResponse",
+        "description": "列出大纲任务响应模型"
+      },
+      "Material": {
+        "properties": {
+          "id": { "type": "integer", "minimum": 1.0, "title": "Id", "description": "素材ID" },
+          "title": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Title",
+            "description": "AI总结标题"
+          },
+          "summary": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Summary",
+            "description": "摘要"
+          },
+          "content": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Content",
+            "description": "完整内容（JSON字符串）"
+          },
+          "score": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Score",
+            "description": "相关性评分（0-1）"
+          },
+          "key_excerpts": {
+            "items": { "type": "string" },
+            "type": "array",
+            "maxItems": 50,
+            "title": "Key Excerpts",
+            "description": "关键摘录列表"
+          },
+          "published_date": {
+            "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }],
+            "title": "Published Date",
+            "description": "发布日期"
+          },
+          "source_url": {
+            "anyOf": [{ "type": "string", "maxLength": 1000 }, { "type": "null" }],
+            "title": "Source Url",
+            "description": "来源URL"
+          },
+          "source_type": {
+            "anyOf": [{ "type": "string", "maxLength": 100 }, { "type": "null" }],
+            "title": "Source Type",
+            "description": "来源类型"
+          },
+          "author": {
+            "anyOf": [{ "type": "string", "maxLength": 200 }, { "type": "null" }],
+            "title": "Author",
+            "description": "作者"
+          }
+        },
+        "type": "object",
+        "required": ["id", "title", "summary", "content", "score"],
+        "title": "Material",
+        "description": "素材数据模型\n\n对应数据库中的 Material 表"
+      },
+      "OutlineWithMaterialTaskInfo": {
+        "properties": {
+          "task_id": { "type": "string", "title": "Task Id", "description": "任务ID" },
+          "user_id": { "type": "string", "title": "User Id", "description": "用户ID" },
+          "project_id": { "type": "string", "title": "Project Id", "description": "项目ID" },
+          "query": { "type": "string", "title": "Query", "description": "任务查询" },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "processing", "completed", "failed", "cancelled"],
+            "title": "Status",
+            "description": "任务状态"
+          },
+          "progress": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Progress",
+            "description": "任务进度",
+            "default": 0
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "创建时间"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At",
+            "description": "更新时间"
+          },
+          "agent_type": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Agent Type",
+            "description": "智能体类型"
+          }
+        },
+        "type": "object",
+        "required": [
+          "task_id",
+          "user_id",
+          "project_id",
+          "query",
+          "status",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "OutlineWithMaterialTaskInfo",
+        "description": "大纲生成任务信息模型"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": { "anyOf": [{ "type": "string" }, { "type": "integer" }] },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": { "type": "string", "title": "Message" },
+          "type": { "type": "string", "title": "Error Type" }
+        },
+        "type": "object",
+        "required": ["loc", "msg", "type"],
+        "title": "ValidationError"
+      }
+    }
+  }
+}
