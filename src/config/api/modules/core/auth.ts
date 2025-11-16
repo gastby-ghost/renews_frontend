@@ -89,51 +89,25 @@ export const authService: ApiEndpointConfig = {
       }
     },
 
-    // Get Account Settings
-    'GET /account': {
-      description: 'Get Account Settings',
-      methods: ['GET'],
+    // Account Settings
+    '/account': {
+      description: 'Account Settings',
+      methods: ['GET', 'PUT', 'DELETE'],
       request: {
         bodyType: 'json',
         requireAuth: true,
-        params: {}
+        params: {
+          GET: {},
+          PUT: {
+            body: 'schema: UpdateAccountRequest - 请求体数据结构'
+          },
+          DELETE: {
+            body: 'schema: DeleteAccountRequest - 请求体数据结构'
+          }
+        }
       },
       response: {
         dataType: 'AccountSettingsResponse',
-        statusCode: 200
-      }
-    },
-
-    // Update Account Settings
-    'PUT /account': {
-      description: 'Update Account Settings',
-      methods: ['PUT'],
-      request: {
-        bodyType: 'json',
-        requireAuth: true,
-        params: {
-          body: 'schema: UpdateAccountRequest - 请求体数据结构'
-        }
-      },
-      response: {
-        dataType: 'UpdateAccountResponse',
-        statusCode: 200
-      }
-    },
-
-    // Delete Account
-    'DELETE /account': {
-      description: 'Delete Account',
-      methods: ['DELETE'],
-      request: {
-        bodyType: 'json',
-        requireAuth: true,
-        params: {
-          body: 'schema: DeleteAccountRequest - 请求体数据结构'
-        }
-      },
-      response: {
-        dataType: 'Response',
         statusCode: 200
       }
     },
@@ -260,30 +234,18 @@ export const authService: ApiEndpointConfig = {
       }
     },
 
-    // Get User Preferences
-    'GET /preferences': {
-      description: 'Get User Preferences',
-      methods: ['GET'],
-      request: {
-        bodyType: 'json',
-        requireAuth: true,
-        params: {}
-      },
-      response: {
-        dataType: 'UserPreferenceResponse',
-        statusCode: 200
-      }
-    },
-
-    // Update User Preferences
-    'PUT /preferences': {
-      description: 'Update User Preferences',
-      methods: ['PUT'],
+    // User Preferences
+    '/preferences': {
+      description: 'User Preferences',
+      methods: ['GET', 'PUT'],
       request: {
         bodyType: 'json',
         requireAuth: true,
         params: {
-          body: 'schema: UpdateUserPreferenceRequest - 请求体数据结构'
+          GET: {},
+          PUT: {
+            body: 'schema: UpdateUserPreferenceRequest - 请求体数据结构'
+          }
         }
       },
       response: {

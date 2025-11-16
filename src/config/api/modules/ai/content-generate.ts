@@ -22,7 +22,7 @@ export const contentGenerateService: ApiEndpointConfig = {
   },
   paths: {
     // Generate Content Endpoint
-    '/api/v1/ai/document_generate/content/generate': {
+    '/document_generate/content/generate': {
       description: 'Generate Content Endpoint',
       methods: ['POST'],
       request: {
@@ -39,7 +39,7 @@ export const contentGenerateService: ApiEndpointConfig = {
     },
 
     // Cancel Task
-    '/api/v1/ai/document_generate/content/tasks/{task_id}': {
+    '/document_generate/content/tasks/{task_id}': {
       description: 'Cancel Task',
       methods: ['DELETE'],
       request: {
@@ -56,7 +56,7 @@ export const contentGenerateService: ApiEndpointConfig = {
     },
 
     // Get Content Tools Status
-    '/api/v1/ai/document_generate/content/status': {
+    '/document_generate/content/status': {
       description: 'Get Content Tools Status',
       methods: ['GET'],
       request: {
@@ -71,7 +71,7 @@ export const contentGenerateService: ApiEndpointConfig = {
     },
 
     // Validate Content Generation Request
-    '/api/v1/ai/document_generate/content/validate': {
+    '/document_generate/content/validate': {
       description: 'Validate Content Generation Request',
       methods: ['POST'],
       request: {
@@ -89,7 +89,7 @@ export const contentGenerateService: ApiEndpointConfig = {
     },
 
     // List Tasks
-    '/api/v1/ai/document_generate/content/tasks': {
+    '/document_generate/content/tasks': {
       description: 'List Tasks',
       methods: ['GET'],
       request: {
