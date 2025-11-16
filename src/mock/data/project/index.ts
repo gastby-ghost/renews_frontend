@@ -12,7 +12,7 @@ export function generateProjectListResponse(): any {
     {
       id: 1,
       user_id: 1,
-      name: 'AI写作助手应用开发',
+      name: '人工智能在医疗方面的应用',
       status: 'TITLE_GENERATION',
       current_component: 'topic-selection',
       folder_id: null,
