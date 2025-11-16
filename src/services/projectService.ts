@@ -2,11 +2,13 @@
  * 项目管理服务 - 基于OpenAPI配置
  * 使用BaseApiService架构，支持Mock/真实API切换
  * 完全符合core_openapi.json中的项目API规范
+ * 重构优化版本 - 参考mock-architecture.md架构规范
  */
 
 import BaseApiService from './base/apiService'
 import type { ApiRequestConfig } from '@/config/api/types'
 import { ApiResponseWrapper, EnhancedErrorHandler } from '@/utils/apiResponseHandler'
+import { mockDataManager } from '@/mock'
 
 // 从OpenAPI规范中提取的TypeScript类型定义
 /**
@@ -423,19 +425,169 @@ class ProjectService extends BaseApiService {
     }
   }
 
+  // ============= 业务便捷方法 =============
+
   /**
-   * Mock实现方法 - 完全符合OpenAPI规范
+   * 快速创建项目
+   * @param name 项目名称
+   * @param options 额外选项
+   * @returns 创建结果
+   */
+  async quickCreateProject(
+    name: string,
+    options?: {
+      status?: string
+      folder_id?: number | null
+    }
+  ): Promise<ProjectDetailResponse> {
+    return this.createProject({
+      name,
+      status: options?.status || 'TITLE_GENERATION',
+      current_component: 'topic-selection',
+      folder_id: options?.folder_id
+    })
+  }
+
+  /**
+   * 快速搜索项目
+   * @param keywords 搜索关键词
+   * @param options 搜索选项
+   * @returns 搜索结果
+   */
+  async quickSearch(
+    keywords: string,
+    options?: {
+      status?: string | null
+      folder_id?: number | null
+      maxResults?: number
+    }
+  ): Promise<ProjectListResponse> {
+    return this.searchProjects({
+      keywords,
+      status: options?.status,
+      folder_id: options?.folder_id,
+      page: 1,
+      page_size: options?.maxResults || 10
+    })
+  }
+
+  /**
+   * 获取我的项目（按状态筛选）
+   * @param status 项目状态
+   * @param options 查询选项
+   * @returns 项目列表
+   */
+  async getMyProjects(
+    status?: string,
+    options?: {
+      page?: number
+      page_size?: number
+      folder_id?: number | null
+    }
+  ): Promise<ProjectListResponse> {
+    return this.getProjects({
+      status: status || null,
+      folder_id: options?.folder_id,
+      page: options?.page,
+      page_size: options?.page_size
+    })
+  }
+
+  /**
+   * 批量更新项目状态
+   * @param projectIds 项目ID列表
+   * @param status 新状态
+   * @returns 更新结果
+   */
+  async batchUpdateStatus(
+    projectIds: number[],
+    status: string
+  ): Promise<{ success: boolean; updated_count: number; failed_count: number }> {
+    const results = await Promise.allSettled(
+      projectIds.map((projectId) =>
+        this.updateProjectStatus(projectId, { status }).catch(() => null)
+      )
+    )
+
+    const successful = results.filter(
+      (result): result is PromiseFulfilledResult<any> =>
+        result.status === 'fulfilled' && result.value !== null
+    ).length
+
+    const failed = projectIds.length - successful
+
+    return {
+      success: failed === 0,
+      updated_count: successful,
+      failed_count: failed
+    }
+  }
+
+  /**
+   * 项目状态流转到下一步
+   * @param projectId 项目ID
+   * @returns 更新后的项目详情
+   */
+  async moveToNextStage(projectId: number): Promise<ProjectDetailResponse> {
+    // 获取当前项目状态
+    const currentProject = await this.getProjectDetail(projectId)
+    const currentStatus = currentProject.project.status
+
+    // 定义状态流转顺序
+    const statusFlow = {
+      TITLE_GENERATION: 'OUTLINE_GENERATION',
+      OUTLINE_GENERATION: 'BODY_GENERATION',
+      BODY_GENERATION: 'COMPLETED'
+    }
+
+    const nextStatus = statusFlow[currentStatus as keyof typeof statusFlow]
+    if (!nextStatus) {
+      throw new Error(`项目状态 ${currentStatus} 无法流转到下一阶段`)
+    }
+
+    return this.updateProjectStatus(projectId, { status: nextStatus })
+  }
+
+  /**
+   * 创建项目并初始化（带轮询）
+   * @param name 项目名称
+   * @param options 创建选项
+   * @returns 轮询任务
+   */
+  async createProjectWithPolling(
+    name: string,
+    options?: {
+      status?: string
+      folder_id?: number | null
+    }
+  ) {
+    // 创建项目
+    const response = await this.quickCreateProject(name, options)
+    const projectId = response.project.id
+
+    // 对于项目创建，通常不需要轮询，因为创建是同步的
+    // 但如果需要初始化过程，可以在这里添加轮询逻辑
+    return {
+      projectId,
+      project: response.project,
+      status: 'completed' as const
+    }
+  }
+
+  /**
+   * Mock实现方法 - 基于mockDataManager重构
+   * 符合mock-architecture.md架构规范
    */
   protected async mockImplementation(config: ApiRequestConfig): Promise<any> {
     const apiConfig = this.getCurrentConfig()
 
-    console.log(`[API-${this.serviceName}] 执行Mock实现:`, {
-      url: config.url,
-      method: config.method,
-      data: config.data,
-      params: config.params,
-      apiConfig
-    })
+    if (apiConfig.showDebugInfo) {
+      console.log(`[API-${this.serviceName}] 执行Mock实现:`, {
+        url: config.url,
+        method: config.method,
+        data: config.data
+      })
+    }
 
     // 模拟网络延迟
     await new Promise((resolve) => setTimeout(resolve, apiConfig.mockDelay || 1000))
@@ -443,132 +595,41 @@ class ProjectService extends BaseApiService {
     const url = config.url
     const method = config.method
 
-    console.log(`[API-${this.serviceName}] Mock实现处理URL:`, { url, method })
-
     try {
-      // 获取项目列表 - GET /api/v1/core/projects
-      if (
-        method === 'GET' &&
-        url.includes('/projects') &&
-        !url.includes('/projects/') &&
-        !url.includes('/statistics')
-      ) {
-        console.log(`[API-${this.serviceName}] Mock返回项目列表数据`)
-        const projects = [
-          {
-            id: 1,
-            user_id: 1,
-            name: '示例项目1',
-            status: 'TITLE_GENERATION',
-            current_component: 'topic-selection',
-            folder_id: null,
-            last_modified: '2023-12-31T23:59:59Z',
-            created_at: '2023-01-01T00:00:00Z',
-            updated_at: '2023-12-31T23:59:59Z'
-          },
-          {
-            id: 2,
-            user_id: 1,
-            name: '示例项目2',
-            status: 'OUTLINE_GENERATION',
-            current_component: 'outline',
-            folder_id: 1,
-            last_modified: '2023-12-30T23:59:59Z',
-            created_at: '2023-02-01T00:00:00Z',
-            updated_at: '2023-12-30T23:59:59Z'
-          },
-          {
-            id: 3,
-            user_id: 1,
-            name: '示例项目3',
-            status: 'BODY_GENERATION',
-            current_component: 'content',
-            folder_id: null,
-            last_modified: '2023-12-29T23:59:59Z',
-            created_at: '2023-03-01T00:00:00Z',
-            updated_at: '2023-12-29T23:59:59Z'
-          },
-          {
-            id: 4,
-            user_id: 1,
-            name: '示例项目4',
-            status: 'COMPLETED',
-            current_component: 'content',
-            folder_id: 2,
-            last_modified: '2023-12-28T23:59:59Z',
-            created_at: '2023-04-01T00:00:00Z',
-            updated_at: '2023-12-28T23:59:59Z'
-          }
-        ]
-        const mockData = {
-          success: true,
-          message: '获取项目列表成功',
-          projects,
-          total_count: 2,
-          page: 1,
-          page_size: 10,
-          total_pages: 1
-        }
-        console.log(`[API-${this.serviceName}] Mock项目列表数据:`, mockData)
-        return mockData
+      // 路由式Mock - 优先使用mockDataManager
+      if (method === 'GET' && url.includes('/projects/statistics')) {
+        return mockDataManager.getMockData('project-statistics')
       }
 
-      // 获取项目详情 - GET /api/v1/core/projects/{project_id}
+      if (method === 'GET' && url.includes('/search')) {
+        return mockDataManager.getMockData('project-search', config.params?.keywords || '')
+      }
+
+      // 基础项目操作Mock
+      if (method === 'GET' && url.includes('/projects') && !url.includes('/projects/')) {
+        return mockDataManager.getMockData('project-list', config.params)
+      }
+
       if (
         method === 'GET' &&
         url.includes('/projects/') &&
         !url.includes('/status') &&
-        !url.includes('/component') &&
-        !url.includes('/statistics')
+        !url.includes('/component')
       ) {
         const parts = url.split('/')
         const projectId = parts[parts.indexOf('projects') + 1]
-        const projectDetail = {
-          id: parseInt(projectId),
-          user_id: 1,
-          name: `项目 ${projectId}`,
-          status: 'TITLE_GENERATION',
-          current_component: 'topic-selection',
-          folder_id: null,
-          last_modified: '2023-12-31T23:59:59Z',
-          created_at: '2023-01-01T00:00:00Z',
-          updated_at: '2023-12-31T23:59:59Z'
-        }
-        console.log(`[API-${this.serviceName}] Mock项目详情响应:`, {
-          success: true,
-          data: projectDetail
-        })
-        return {
-          success: true,
-          data: projectDetail
-        }
+        return mockDataManager.getMockData('project-detail', parseInt(projectId))
       }
 
-      // 创建项目 - POST /api/v1/core/projects
-      if (method === 'POST' && url.includes('/projects') && !url.includes('/batch')) {
-        const requestData = config.data as ProjectCreate
-        const newProject = {
-          id: Math.floor(Math.random() * 1000) + 100,
-          user_id: 1,
-          name: requestData.name,
-          status: requestData.status || 'TITLE_GENERATION',
-          current_component: requestData.current_component || 'topic-selection',
-          folder_id: requestData.folder_id || null,
-          last_modified: new Date().toISOString(),
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }
-        console.log(`[API-${this.serviceName}] Mock创建项目响应:`, {
-          success: true,
-          data: newProject
-        })
-        return {
-          success: true,
-          data: newProject
-        }
+      if (
+        method === 'POST' &&
+        url.includes('/projects') &&
+        !url.includes('/batch') &&
+        !url.includes('/duplicate')
+      ) {
+        return mockDataManager.getMockData('project-create', config.data)
       }
 
-      // 更新项目 - PUT /api/v1/core/projects/{project_id}
       if (
         method === 'PUT' &&
         url.includes('/projects/') &&
@@ -577,140 +638,32 @@ class ProjectService extends BaseApiService {
       ) {
         const parts = url.split('/')
         const projectId = parts[parts.indexOf('projects') + 1]
-        const requestData = config.data as ProjectUpdate
-        return {
-          success: true,
-          message: '更新项目成功',
-          project: {
-            id: parseInt(projectId),
-            user_id: 1,
-            name: requestData.name || `项目 ${projectId}`,
-            status: requestData.status || 'TITLE_GENERATION',
-            current_component: requestData.current_component || 'topic-selection',
-            folder_id: requestData.folder_id || null,
-            last_modified: new Date().toISOString(),
-            created_at: '2023-01-01T00:00:00Z',
-            updated_at: new Date().toISOString()
-          }
-        }
+        return mockDataManager.getMockData('project-update', { projectId, ...config.data })
       }
 
-      // 批量删除项目 - DELETE /api/v1/core/projects/batch
       if (method === 'DELETE' && url.includes('/projects/batch')) {
-        const requestData = config.data as ProjectDeleteRequest
-        return {
-          success: true,
-          message: '批量删除项目成功',
-          deleted_count: requestData.project_ids?.length || 0,
-          failed_count: 0,
-          details:
-            requestData.project_ids?.map((id) => ({ project_id: id, status: 'success' })) || []
-        }
+        return mockDataManager.getMockData('project-batch-delete', config.data)
       }
 
-      // 更新项目状态 - PATCH /api/v1/core/projects/{project_id}/status
       if (method === 'PATCH' && url.includes('/status')) {
         const parts = url.split('/')
         const projectId = parts[parts.indexOf('projects') + 1]
-        const requestData = config.data as ProjectStatusUpdateRequest
-        return {
-          success: true,
-          message: '更新项目状态成功',
-          project: {
-            id: parseInt(projectId),
-            user_id: 1,
-            name: `项目 ${projectId}`,
-            status: requestData.status,
-            current_component: 'topic-selection',
-            folder_id: null,
-            last_modified: new Date().toISOString(),
-            created_at: '2023-01-01T00:00:00Z',
-            updated_at: new Date().toISOString()
-          }
-        }
+        return mockDataManager.getMockData('project-status-update', { projectId, ...config.data })
       }
 
-      // 更新项目组件 - PATCH /api/v1/core/projects/{project_id}/component
       if (method === 'PATCH' && url.includes('/component')) {
         const parts = url.split('/')
         const projectId = parts[parts.indexOf('projects') + 1]
-        const requestData = config.data as ProjectComponentUpdateRequest
-        return {
-          success: true,
-          message: '更新项目组件成功',
-          project: {
-            id: parseInt(projectId),
-            user_id: 1,
-            name: `项目 ${projectId}`,
-            status: 'TITLE_GENERATION',
-            current_component: requestData.current_component,
-            folder_id: null,
-            last_modified: new Date().toISOString(),
-            created_at: '2023-01-01T00:00:00Z',
-            updated_at: new Date().toISOString()
-          }
-        }
+        return mockDataManager.getMockData('project-component-update', {
+          projectId,
+          ...config.data
+        })
       }
 
-      // 复制项目 - POST /api/v1/core/projects/{project_id}/duplicate
       if (method === 'POST' && url.includes('/duplicate')) {
         const parts = url.split('/')
         const projectId = parts[parts.indexOf('projects') + 1]
-        const requestData = config.data as { name: string }
-        return {
-          success: true,
-          message: '复制项目成功',
-          project: {
-            id: Math.floor(Math.random() * 1000) + 100,
-            user_id: 1,
-            name: requestData.name || `项目 ${projectId} 副本`,
-            status: 'TITLE_GENERATION',
-            current_component: 'topic-selection',
-            folder_id: null,
-            last_modified: new Date().toISOString(),
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          }
-        }
-      }
-
-      // 搜索项目 - GET /api/v1/core/projects/search
-      if (method === 'GET' && url.includes('/search')) {
-        return {
-          success: true,
-          message: '搜索项目成功',
-          projects: [
-            {
-              id: 1,
-              user_id: 1,
-              name: '搜索结果项目1',
-              status: 'TITLE_GENERATION',
-              current_component: 'topic-selection',
-              folder_id: null,
-              last_modified: '2023-12-31T23:59:59Z',
-              created_at: '2023-01-01T00:00:00Z',
-              updated_at: '2023-12-31T23:59:59Z'
-            }
-          ],
-          total_count: 1,
-          page: 1,
-          page_size: 10,
-          total_pages: 1
-        }
-      }
-
-      // 获取项目统计信息 - GET /api/v1/core/projects/statistics/status
-      if (method === 'GET' && url.includes('/statistics')) {
-        return {
-          success: true,
-          message: '获取项目统计信息成功',
-          data: {
-            TITLE_GENERATION: 5,
-            OUTLINE_GENERATION: 3,
-            BODY_GENERATION: 2,
-            COMPLETED: 4
-          }
-        }
+        return mockDataManager.getMockData('project-duplicate', { projectId, ...config.data })
       }
 
       // 默认Mock响应
@@ -720,6 +673,7 @@ class ProjectService extends BaseApiService {
         data: {
           mock: true,
           timestamp: Date.now(),
+          service: this.serviceName,
           request_info: {
             url,
             method,
