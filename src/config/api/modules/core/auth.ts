@@ -89,8 +89,40 @@ export const authService: ApiEndpointConfig = {
       }
     },
 
+    // Get Account Settings
+    'GET /account': {
+      description: 'Get Account Settings',
+      methods: ['GET'],
+      request: {
+        bodyType: 'json',
+        requireAuth: true,
+        params: {}
+      },
+      response: {
+        dataType: 'AccountSettingsResponse',
+        statusCode: 200
+      }
+    },
+
+    // Update Account Settings
+    'PUT /account': {
+      description: 'Update Account Settings',
+      methods: ['PUT'],
+      request: {
+        bodyType: 'json',
+        requireAuth: true,
+        params: {
+          body: 'schema: UpdateAccountRequest - 请求体数据结构'
+        }
+      },
+      response: {
+        dataType: 'UpdateAccountResponse',
+        statusCode: 200
+      }
+    },
+
     // Delete Account
-    '/account': {
+    'DELETE /account': {
       description: 'Delete Account',
       methods: ['DELETE'],
       request: {
@@ -228,8 +260,23 @@ export const authService: ApiEndpointConfig = {
       }
     },
 
+    // Get User Preferences
+    'GET /preferences': {
+      description: 'Get User Preferences',
+      methods: ['GET'],
+      request: {
+        bodyType: 'json',
+        requireAuth: true,
+        params: {}
+      },
+      response: {
+        dataType: 'UserPreferenceResponse',
+        statusCode: 200
+      }
+    },
+
     // Update User Preferences
-    '/preferences': {
+    'PUT /preferences': {
       description: 'Update User Preferences',
       methods: ['PUT'],
       request: {
