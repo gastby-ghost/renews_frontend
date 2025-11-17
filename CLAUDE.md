@@ -81,3 +81,5 @@
 - **commitizen 4.3.0**：规范化提交信息
 
 **重要**：注意如果缺乏相关的类型定义与api信息，则参考@ai_openapi/ @core_openapi/ 在合适的文件中实现对应的代码
+
+**重要**：注意，任意服务的类型将会定义在对应的types文件中，比如@src/types/core/auth.ts 对应@src/services/core/authService.ts，不要在其他地方找类型，也不要将对应类型定义到其他地方。
