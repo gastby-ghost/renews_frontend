@@ -211,7 +211,7 @@
   import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
   import { Link, Document, CollectionTag, InfoFilled, Star } from '@element-plus/icons-vue'
   import type { Material } from '@/types/material'
-  import { materialApiService } from '@/services/materialService'
+  import { materialApiService } from '@/services/core/materialService'
 
   interface Props {
     material: Material | null
