@@ -16,7 +16,7 @@ import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { searchToolsService } from '@/services/ai/searchToolsService'
 import { searchAgentService } from '@/services/ai/searchAgentService'
-import { materialApiService, MaterialApiService } from '@/services/materialService'
+import { materialApiService, MaterialApiService } from '@/services/core/materialService'
 import type {
   Material,
   SearchConfig,
@@ -600,7 +600,7 @@ export const useMaterialStore = defineStore('material', () => {
 
       // 将搜索结果转换为API所需格式
       const materialsData = searchResults.map((result) =>
-        MaterialApiService.convertSearchResultToMaterialData(result)
+        materialApiService.convertSearchResultToMaterialData(result)
       )
 
       // 添加调试日志：检查转换后的materialsData的tags

@@ -790,6 +790,39 @@ declare namespace Api {
       project_id?: number
       group_by?: string
     }
+
+    /** 添加外部素材请求 */
+    interface AddExternalMaterialRequest {
+      material_ids: number[]
+    }
+
+    /** 添加素材到项目响应 */
+    interface MaterialAddToProjectResponse {
+      success: boolean
+      message: string
+      added_count: number
+      details?: any[]
+    }
+
+    /** 创建标签请求 */
+    interface MaterialTagCreate {
+      name: string
+    }
+
+    /** 创建标签响应 */
+    interface MaterialTagResponse {
+      id: number
+      name: string
+      created_at: string
+    }
+
+    /** 标签列表响应 */
+    interface TagListResponse {
+      success: boolean
+      message: string
+      tags: MaterialTagResponse[]
+      total_count: number
+    }
   }
 }
 
