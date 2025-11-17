@@ -63,7 +63,7 @@
   import { ElMessage } from 'element-plus'
   import { Loading, CircleCheck, CircleClose } from '@element-plus/icons-vue'
   import { useI18n } from 'vue-i18n'
-  import { authService } from '@/services/authService'
+  import { authService } from '@/services/core/authService'
   import { HttpError } from '@/utils/http/error'
 
   defineOptions({ name: 'VerifyEmail' })

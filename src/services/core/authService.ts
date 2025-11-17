@@ -3,7 +3,7 @@
  * 使用新的BaseApiService架构，支持Mock/真实API切换
  */
 
-import BaseApiService from './base/apiService'
+import BaseApiService from '../base/apiService'
 import type { ApiRequestConfig } from '@/config/api/types'
 import type {
   PendingRegistrationResponse,

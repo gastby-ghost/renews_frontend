@@ -115,7 +115,7 @@
   import { useI18n } from 'vue-i18n'
   import { HttpError } from '@/utils/http/error'
   import { themeAnimation } from '@/utils/theme/animation'
-  import { authService } from '@/services/authService'
+  import { authService } from '@/services/core/authService'
 
   defineOptions({ name: 'Login' })
 

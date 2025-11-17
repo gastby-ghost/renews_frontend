@@ -50,7 +50,7 @@
   import { ElMessage, ElNotification } from 'element-plus'
   import type { FormInstance, FormRules } from 'element-plus'
   import { useI18n } from 'vue-i18n'
-  import { authService } from '@/services/authService'
+  import { authService } from '@/services/core/authService'
   import { HttpError } from '@/utils/http/error'
 
   defineOptions({ name: 'ForgetPassword' })

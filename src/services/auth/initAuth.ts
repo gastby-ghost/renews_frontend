@@ -4,7 +4,7 @@
  */
 
 import { authManager } from './AuthManager'
-import { authService } from '../authService'
+import { authService } from '../core/authService'
 
 /**
  * 初始化认证模块
