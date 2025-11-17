@@ -23,7 +23,7 @@ import type {
   SearchToolsStateResponse,
   SearchToolsStatusResponse,
   SearchToolsTaskListResponse
-} from '@/types/ai'
+} from '@/types/ai/search-tool'
 
 class SearchToolsService extends BaseApiService {
   constructor() {

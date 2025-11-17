@@ -14,55 +14,12 @@ import {
 } from '@/utils/polling/asyncTaskPoller'
 import { MockTaskTracker, MockDataManager } from '@/mock'
 
-// 大纲生成相关类型
-interface OutlineGenerationRequest {
-  title?: string
-  topic?: string
-  keywords?: string[]
-  target_audience?: string
-  purpose?: string
-  length?: 'brief' | 'detailed' | 'comprehensive'
-  structure_type?: 'linear' | 'hierarchical' | 'mindmap'
-  sections_count?: number
-  language?: string
-  additional_requirements?: string
-}
-
-interface OutlineGenerationResponse {
-  task_id: string
-  status: 'pending' | 'processing' | 'completed' | 'failed'
-  result?: {
-    outline: {
-      title: string
-      sections: Array<{
-        id: string
-        title: string
-        level: number
-        description?: string
-        sub_sections?: Array<{
-          id: string
-          title: string
-          description?: string
-        }>
-      }>
-    }
-    word_count_estimate: number
-    estimated_read_time: number
-    key_points: string[]
-  }
-  error?: string
-  created_at: string
-  updated_at: string
-}
-
-interface OutlineGenerationStatusResponse {
-  service_status: 'available' | 'unavailable' | 'maintenance'
-  active_tasks: number
-  max_concurrent_tasks: number
-  average_processing_time: number
-  supported_languages: string[]
-  supported_structure_types: string[]
-}
+// 导入大纲生成相关类型定义
+import type {
+  OutlineGenerationRequest,
+  OutlineGenerationResponse,
+  OutlineToolsStatusResponse
+} from '@/types/ai/outline-generate'
 
 class OutlineGenerateService extends BaseApiService {
   private taskTracker = new MockTaskTracker()
@@ -94,7 +51,7 @@ class OutlineGenerateService extends BaseApiService {
    * @returns 工具状态信息
    */
   async getOutlineToolsStatus(options?: ApiRequestConfig) {
-    return this.get<OutlineGenerationStatusResponse>(
+    return this.get<OutlineToolsStatusResponse>(
       '/document_generate/outline-agent/status',
       undefined,
       options

@@ -14,104 +14,13 @@ import {
 } from '@/utils/polling/asyncTaskPoller'
 import { mockDataManager } from '@/mock'
 
-// 搜索代理相关类型
-interface SearchAgentRequest {
-  brief: string
-  max_concurrent_research_units?: number
-  max_researcher_iterations?: number
-  search_depth?: 'shallow' | 'medium' | 'deep'
-  focus_areas?: string[]
-  exclude_domains?: string[]
-  include_domains?: string[]
-  language?: string
-  timeframe?: string
-  result_format?: 'summary' | 'detailed' | 'comprehensive'
-  analysis_type?: 'factual' | 'comparative' | 'analytical' | 'predictive'
-}
-
-interface SearchAgentResponse {
-  task_id: string
-  status: 'pending' | 'processing' | 'completed' | 'failed'
-  result?: {
-    research_summary: {
-      executive_summary: string
-      key_findings: Array<{
-        finding: string
-        confidence: number
-        sources: string[]
-      }>
-      research_questions: string[]
-      methodology: string
-    }
-    detailed_analysis: {
-      topic_analysis: string
-      market_trends: Array<{
-        trend: string
-        impact: 'high' | 'medium' | 'low'
-        timeframe: string
-      }>
-      expert_opinions: Array<{
-        opinion: string
-        expert_name: string
-        credibility_score: number
-        source: string
-      }>
-      data_insights: Array<{
-        insight: string
-        supporting_data: string
-        interpretation: string
-      }>
-    }
-    sources: Array<{
-      title: string
-      url: string
-      credibility_score: number
-      publication_date: string
-      relevance_score: number
-      content_type: 'article' | 'research_paper' | 'report' | 'blog' | 'news'
-    }>
-    recommendations: Array<{
-      recommendation: string
-      priority: 'high' | 'medium' | 'low'
-      rationale: string
-      implementation_timeline: string
-    }>
-    research_metadata: {
-      total_sources_analyzed: number
-      research_duration: number
-      confidence_level: number
-      research_quality_score: number
-      last_updated: string
-    }
-  }
-  error?: string
-  created_at: string
-  updated_at: string
-}
-
-interface SearchAgentStatusResponse {
-  task_id: string
-  status: 'pending' | 'processing' | 'completed' | 'failed'
-  progress?: number
-  current_phase?: string
-  estimated_completion?: string
-  result?: any
-  error?: string
-}
-
-interface SearchAgentListResponse {
-  tasks: Array<{
-    task_id: string
-    status: string
-    brief: string
-    created_at: string
-    updated_at: string
-    progress?: number
-  }>
-  total_count: number
-  page: number
-  per_page: number
-}
+// 导入搜索代理相关类型定义
+import type {
+  SearchAgentRequest,
+  SearchAgentResponse,
+  SearchAgentStatusResponse,
+  SearchAgentListResponse
+} from '@/types/ai/search-agent'
 
 class SearchAgentService extends BaseApiService {
   constructor() {

@@ -13,48 +13,12 @@ import {
   TaskStatus
 } from '@/utils/polling/asyncTaskPoller'
 
-// 标题生成相关类型
-interface TitleGenerationRequest {
-  content?: string
-  topic?: string
-  keywords?: string[]
-  target_audience?: string
-  tone?: 'formal' | 'casual' | 'professional' | 'creative'
-  title_type?: 'headline' | 'subtitle' | 'seo_title' | 'social_title'
-  count?: number
-  language?: string
-  length_preference?: 'short' | 'medium' | 'long'
-  include_numbers?: boolean
-  include_questions?: boolean
-}
-
-interface TitleGenerationResponse {
-  task_id: string
-  status: 'pending' | 'processing' | 'completed' | 'failed'
-  result?: {
-    titles: Array<{
-      title: string
-      confidence_score: number
-      category: string
-      seo_score?: number
-      engagement_prediction?: number
-    }>
-    total_generated: number
-    recommended_title: string
-  }
-  error?: string
-  created_at: string
-  updated_at: string
-}
-
-interface TitleToolsStatusResponse {
-  service_status: 'available' | 'unavailable' | 'maintenance'
-  active_tasks: number
-  max_concurrent_tasks: number
-  average_processing_time: number
-  supported_languages: string[]
-  supported_title_types: string[]
-}
+// 导入标题生成相关类型定义
+import type {
+  TitleGenerationRequest,
+  TitleGenerationResponse,
+  TitleToolsStatusResponse
+} from '@/types/ai/title-generate'
 
 class TitleGenerateService extends BaseApiService {
   constructor() {

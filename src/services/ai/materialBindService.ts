@@ -14,53 +14,12 @@ import {
 } from '@/utils/polling/asyncTaskPoller'
 import { MockTaskTracker, MockDataManager } from '@/mock'
 
-// 素材绑定相关类型
-interface MaterialBindingRequest {
-  outline_id: string
-  material_ids?: string[]
-  binding_strategy?: 'auto' | 'manual' | 'hybrid'
-  content_keywords?: string[]
-  relevance_threshold?: number
-  max_materials_per_section?: number
-  exclude_duplicates?: boolean
-}
-
-interface MaterialBindingResponse {
-  task_id: string
-  status: 'pending' | 'processing' | 'completed' | 'failed'
-  result?: {
-    bindings: Array<{
-      section_id: string
-      section_title: string
-      materials: Array<{
-        material_id: string
-        title: string
-        relevance_score: number
-        binding_type: 'reference' | 'example' | 'support' | 'counterpoint'
-        suggested_position?: number
-      }>
-    }>
-    total_materials_bound: number
-    unbound_materials: string[]
-    binding_summary: {
-      high_relevance: number
-      medium_relevance: number
-      low_relevance: number
-    }
-  }
-  error?: string
-  created_at: string
-  updated_at: string
-}
-
-interface MaterialBindingStatusResponse {
-  service_status: 'available' | 'unavailable' | 'maintenance'
-  active_tasks: number
-  max_concurrent_tasks: number
-  average_processing_time: number
-  supported_binding_strategies: string[]
-  max_materials_per_outline: number
-}
+// 导入素材绑定相关类型定义
+import type {
+  MaterialBindRequest,
+  MaterialBindResponse,
+  MaterialBindStatusResponse
+} from '@/types/ai/material-bind'
 
 class MaterialBindService extends BaseApiService {
   private taskTracker = new MockTaskTracker()
@@ -78,8 +37,8 @@ class MaterialBindService extends BaseApiService {
    * @param options API请求选项
    * @returns 绑定任务响应
    */
-  async executeMaterialBinding(request: MaterialBindingRequest, options?: ApiRequestConfig) {
-    return this.post<MaterialBindingResponse>('/material-bind/execute', request, options)
+  async executeMaterialBinding(request: MaterialBindRequest, options?: ApiRequestConfig) {
+    return this.post<MaterialBindResponse>('/material-bind/execute', request, options)
   }
 
   /**
@@ -88,7 +47,7 @@ class MaterialBindService extends BaseApiService {
    * @returns 绑定状态信息
    */
   async getMaterialBindingStatus(options?: ApiRequestConfig) {
-    return this.get<MaterialBindingStatusResponse>('/material-bind/status', undefined, options)
+    return this.get<MaterialBindStatusResponse>('/material-bind/status', undefined, options)
   }
 
   /**
@@ -98,7 +57,7 @@ class MaterialBindService extends BaseApiService {
    * @returns 任务状态
    */
   async getBindingTaskStatus(taskId: string, options?: ApiRequestConfig) {
-    return this.get<MaterialBindingResponse>(`/material-bind/tasks/${taskId}`, undefined, options)
+    return this.get<MaterialBindResponse>(`/material-bind/tasks/${taskId}`, undefined, options)
   }
 
   /**
@@ -157,7 +116,7 @@ class MaterialBindService extends BaseApiService {
    * @returns 轮询任务结果
    */
   async executeMaterialBindingWithPolling(
-    request: MaterialBindingRequest,
+    request: MaterialBindRequest,
     pollingConfig?: PollingConfig
   ): Promise<PollingTask> {
     const response = await this.executeMaterialBinding(request)
@@ -192,9 +151,9 @@ class MaterialBindService extends BaseApiService {
    * @returns 绑定结果
    */
   async executeMaterialBindingAndWait(
-    request: MaterialBindingRequest,
+    request: MaterialBindRequest,
     pollingConfig?: PollingConfig
-  ): Promise<MaterialBindingResponse> {
+  ): Promise<MaterialBindResponse> {
     const task = await this.executeMaterialBindingWithPolling(request, pollingConfig)
     const result = await task.promise
 
@@ -202,7 +161,7 @@ class MaterialBindService extends BaseApiService {
       throw new Error(`素材绑定任务失败: ${result.error}`)
     }
 
-    return result.data as MaterialBindingResponse
+    return result.data as MaterialBindResponse
   }
 
   /**
@@ -222,8 +181,8 @@ class MaterialBindService extends BaseApiService {
       exclude_duplicates?: boolean
     },
     pollingConfig?: PollingConfig
-  ): Promise<MaterialBindingResponse> {
-    const request: MaterialBindingRequest = {
+  ): Promise<MaterialBindResponse> {
+    const request: MaterialBindRequest = {
       outline_id: outlineId,
       material_ids: materialIds,
       binding_strategy: 'auto',
@@ -260,7 +219,7 @@ class MaterialBindService extends BaseApiService {
   /**
    * 生成素材绑定执行响应Mock数据
    */
-  private generateMaterialBindingResponse(requestData: MaterialBindingRequest) {
+  private generateMaterialBindResponse(requestData: MaterialBindRequest) {
     const taskId = `bind_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`
 
     // 创建任务记录
@@ -601,7 +560,7 @@ class MaterialBindService extends BaseApiService {
           const errorType = errorTypes[Math.floor(Math.random() * errorTypes.length)] as any
           return this.generateErrorScenario(errorType)
         }
-        return this.generateMaterialBindingResponse(config.data)
+        return this.generateMaterialBindResponse(config.data)
       }
 
       // 获取大纲绑定详情API

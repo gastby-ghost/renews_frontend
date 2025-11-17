@@ -12,14 +12,18 @@ import type {
   ForgotPasswordResponse,
   VerificationResponse,
   AccountSettingsResponse,
-  UserResponse,
+  UserAccount,
   CleanupResponse,
   HealthCheckResponse,
   MetricsResponse,
   UserPreferenceResponse,
   UpdateUserPreferenceRequest,
-  DefaultPreferencesResponse
-} from '@/types/api'
+  DefaultPreferencesResponse,
+  RegisterRequest,
+  LoginRequest,
+  ForgotPasswordRequest,
+  TokenValidationResult
+} from '@/types/core'
 import { mockDataManager } from '@/mock'
 
 class AuthService extends BaseApiService {
@@ -30,28 +34,14 @@ class AuthService extends BaseApiService {
   /**
    * 用户注册
    */
-  async register(
-    params: {
-      username: string
-      email: string
-      password: string
-    },
-    options?: ApiRequestConfig
-  ) {
+  async register(params: RegisterRequest, options?: ApiRequestConfig) {
     return this.post<PendingRegistrationResponse>('/register', params, options)
   }
 
   /**
    * 用户登录
    */
-  async login(
-    params: {
-      email: string
-      password: string
-      remember_me?: boolean
-    },
-    options?: ApiRequestConfig
-  ) {
+  async login(params: LoginRequest, options?: ApiRequestConfig) {
     return this.post<AuthResponse>('/login', params, options)
   }
 
@@ -75,12 +65,7 @@ class AuthService extends BaseApiService {
   /**
    * 忘记密码
    */
-  async forgotPassword(
-    params: {
-      email: string
-    },
-    options?: ApiRequestConfig
-  ) {
+  async forgotPassword(params: ForgotPasswordRequest, options?: ApiRequestConfig) {
     return this.post<ForgotPasswordResponse>('/forgot-password', params, options)
   }
 
@@ -121,7 +106,7 @@ class AuthService extends BaseApiService {
   /**
    * 更新账户信息
    */
-  async updateAccount(data: Partial<UserResponse>, options?: ApiRequestConfig) {
+  async updateAccount(data: Partial<UserAccount>, options?: ApiRequestConfig) {
     return this.put<AccountSettingsResponse>('/account', data, options)
   }
 
@@ -209,7 +194,7 @@ class AuthService extends BaseApiService {
    * @param token 要验证的token
    * @returns 返回验证结果和用户类型
    */
-  async validateToken(token: string): Promise<{ valid: boolean; userType: 'real' | 'mock' }> {
+  async validateToken(token: string): Promise<TokenValidationResult> {
     // 如果是mock token，检查格式并验证基本有效性
     if (token.startsWith('mock-')) {
       // 简单的格式验证：mock-时间戳-随机字符串

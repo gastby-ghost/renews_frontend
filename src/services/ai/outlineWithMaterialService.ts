@@ -14,77 +14,11 @@ import {
 } from '@/utils/polling/asyncTaskPoller'
 import { MockTaskTracker, MockDataManager } from '@/mock'
 
-// 大纲与素材集成相关类型
-interface OutlineWithMaterialRequest {
-  title?: string
-  topic?: string
-  keywords?: string[]
-  target_audience?: string
-  purpose?: string
-  outline_config?: {
-    length?: 'brief' | 'detailed' | 'comprehensive'
-    structure_type?: 'linear' | 'hierarchical' | 'mindmap'
-    sections_count?: number
-  }
-  material_config?: {
-    material_ids?: string[]
-    binding_strategy?: 'auto' | 'manual' | 'hybrid'
-    relevance_threshold?: number
-    max_materials_per_section?: number
-    exclude_duplicates?: boolean
-  }
-  content_preferences?: {
-    language?: string
-    tone?: 'formal' | 'casual' | 'professional' | 'creative'
-    style?: string
-  }
-}
-
-interface OutlineWithMaterialResponse {
-  task_id: string
-  status: 'pending' | 'processing' | 'completed' | 'failed'
-  result?: {
-    outline: {
-      title: string
-      sections: Array<{
-        id: string
-        title: string
-        level: number
-        description?: string
-        sub_sections?: Array<{
-          id: string
-          title: string
-          description?: string
-        }>
-        bound_materials?: Array<{
-          material_id: string
-          title: string
-          relevance_score: number
-          binding_type: 'reference' | 'example' | 'support' | 'counterpoint'
-        }>
-      }>
-    }
-    material_bindings: Array<{
-      section_id: string
-      section_title: string
-      materials: Array<{
-        material_id: string
-        title: string
-        relevance_score: number
-        binding_type: string
-      }>
-    }>
-    statistics: {
-      total_sections: number
-      total_materials_bound: number
-      materials_per_section: number
-      average_relevance_score: number
-    }
-  }
-  error?: string
-  created_at: string
-  updated_at: string
-}
+// 导入大纲与素材生成相关类型定义
+import type {
+  OutlineWithMaterialRequest,
+  OutlineWithMaterialResponse
+} from '@/types/ai/outline-with-material'
 
 class OutlineWithMaterialService extends BaseApiService {
   private taskTracker = new MockTaskTracker()
