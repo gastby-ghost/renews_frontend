@@ -151,4 +151,6 @@ graph LR
     A --> J
 ```
 
+**重要**：注意如果缺乏相关的类型定义与api信息，则参考@ai_openapi/ @core_openapi/ 在合适的文件中实现对应的代码
+
 - 基于@devolepement-docs/项目结构速查.md 以及@devolepement-docs/项目开发指南.md 开发，如果开发的功能需要更新文档，则对应更新
