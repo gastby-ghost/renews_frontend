@@ -134,14 +134,14 @@
       animation: slideInLeft 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 
       h1 {
-        font-size: 24px;
-        font-weight: 400;
+        font-size: 36px;
+        font-weight: 500;
         color: var(--art-gray-900) !important;
       }
 
       p {
-        margin-top: 10px;
-        font-size: 14px;
+        margin-top: 12px;
+        font-size: 18px;
         color: var(--art-text-gray-600) !important;
       }
     }
