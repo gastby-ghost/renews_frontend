@@ -53,6 +53,10 @@
       </div>
 
       <div class="material-management__actions-right">
+        <el-button @click="importMaterials">
+          <el-icon><Upload /></el-icon>
+          导入
+        </el-button>
         <el-button @click="exportMaterials">
           <el-icon><Download /></el-icon>
           导出
@@ -124,7 +128,7 @@
   import { ref, computed, onMounted, onUnmounted } from 'vue'
   import { useRouter } from 'vue-router'
   import { ElMessage } from 'element-plus'
-  import { Search, Refresh, Delete, Download } from '@element-plus/icons-vue'
+  import { Search, Refresh, Delete, Download, Upload } from '@element-plus/icons-vue'
   import MaterialCard from '@/components/custom/material-card/UnifiedMaterialCard.vue'
   import MaterialPreviewDialog from '@/components/custom/material-card/MaterialPreviewDialog.vue'
   import { useMaterialStore } from '@/store/material'
@@ -241,6 +245,11 @@
   async function handleEdit(material: Material) {
     // 直接打开预览对话框并切换到编辑模式
     showMaterialPreview(material)
+  }
+
+  function importMaterials() {
+    // 模拟导入功能
+    ElMessage.info('导入功能开发中...')
   }
 
   function exportMaterials() {
