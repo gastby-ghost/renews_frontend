@@ -6,26 +6,57 @@
     "version": "1.0.0"
   },
   "paths": {
-    "/api/v1/ai/search-tools/search": {
+    "/api/v1/ai/search-tools/execute": {
       "post": {
         "tags": ["search-tools"],
-        "summary": "Search Endpoint",
-        "description": "Execute search using the specified provider.\n\nThis endpoint provides a unified interface for both Tavily and Bocha search,\nwith provider-specific fields applied based on the provider selection.\n\nArgs:\n    request: Unified search parameters including provider selection\n    \nReturns:\n    Structured search output with metadata and timing information",
-        "operationId": "search_endpoint_api_v1_ai_search_tools_search_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/UnifiedSearchRequest" }
+        "summary": "Execute Search Tools",
+        "description": "Execute search tools with asynchronous status mode.\n\nThis endpoint starts a search operation and returns immediately with a task_id.\nUse the status endpoint to check progress and retrieve results.\n\nArgs:\n    request: Search parameters including provider selection and search options\n    user_id: User ID\n    project_id: Project ID (uses default project if not provided)\n\nReturns:\n    Task information including task_id for tracking",
+        "operationId": "execute_search_tools_api_v1_ai_search_tools_execute_post",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
             }
           },
-          "required": true
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Project Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchToolsExecuteRequest"
+              }
+            }
+          }
         },
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/SearchToolsResponse" }
+                "schema": {
+                  "$ref": "#/components/schemas/SearchToolsExecuteResponse"
+                }
               }
             }
           },
@@ -33,25 +64,282 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
         }
       }
     },
-    "/api/v1/ai/search-tools/status": {
+    "/api/v1/ai/search-tools/status/{task_id}": {
       "get": {
         "tags": ["search-tools"],
-        "summary": "Search Tools Status",
-        "description": "Check the configuration status of search tools.\n\nReturns:\n    Status information for both Tavily and Bocha search tools",
-        "operationId": "search_tools_status_api_v1_ai_search_tools_status_get",
+        "summary": "Get Search Tools Status",
+        "description": "Get the status of a search tools task.",
+        "operationId": "get_search_tools_status_api_v1_ai_search_tools_status__task_id__get",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Task Id"
+            }
+          },
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          },
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Project Id"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/SearchToolsStatusResponse" }
+                "schema": {
+                  "$ref": "#/components/schemas/SearchToolsTaskStatusResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/search-tools/tasks": {
+      "get": {
+        "tags": ["search-tools"],
+        "summary": "List Search Tools Tasks",
+        "description": "List search tools tasks for a user.",
+        "operationId": "list_search_tools_tasks_api_v1_ai_search_tools_tasks_get",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          },
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchToolsTaskListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/search-tools/cancel/{task_id}": {
+      "post": {
+        "tags": ["search-tools"],
+        "summary": "Cancel Search Tools Task",
+        "description": "Cancel a running search tools task.",
+        "operationId": "cancel_search_tools_task_api_v1_ai_search_tools_cancel__task_id__post",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Task Id"
+            }
+          },
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          },
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/search-tools/state/{task_id}": {
+      "get": {
+        "tags": ["search-tools"],
+        "summary": "Get Search Tools Task State",
+        "description": "Get the current state for a running search tools task.",
+        "operationId": "get_search_tools_task_state_api_v1_ai_search_tools_state__task_id__get",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Task Id"
+            }
+          },
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          },
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchToolsStateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/search-tools/config/status": {
+      "get": {
+        "tags": ["search-tools"],
+        "summary": "Search Tools Config Status",
+        "description": "Check the configuration status of search tools.\n\nReturns:\n    Status information for both Tavily and Bocha search tools",
+        "operationId": "search_tools_config_status_api_v1_ai_search_tools_config_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchToolsStatusResponse"
+                }
               }
             }
           }
@@ -86,7 +374,9 @@
       "HTTPValidationError": {
         "properties": {
           "detail": {
-            "items": { "$ref": "#/components/schemas/ValidationError" },
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
             "type": "array",
             "title": "Detail"
           }
@@ -94,118 +384,278 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
-      "SearchResultItem": {
+      "SearchToolsExecuteRequest": {
         "properties": {
-          "url": { "type": "string", "title": "Url", "description": "搜索结果URL" },
-          "webtitle": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
-            "title": "Webtitle",
-            "description": "网页标题"
+          "provider": {
+            "type": "string",
+            "enum": ["tavily", "bocha"],
+            "title": "Provider",
+            "description": "Search provider to use"
           },
-          "score": {
-            "type": "number",
-            "maximum": 1.0,
-            "minimum": 0.0,
-            "title": "Score",
-            "description": "搜索相关性评分"
+          "queries": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Queries",
+            "description": "List of search queries"
           },
-          "query": { "type": "string", "title": "Query", "description": "产生此结果的搜索查询" },
-          "aititle": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
-            "title": "Aititle",
-            "description": "AI总结标题"
+          "max_results": {
+            "type": "integer",
+            "maximum": 50.0,
+            "minimum": 1.0,
+            "title": "Max Results",
+            "description": "Maximum number of results",
+            "default": 10
+          },
+          "enable_structured_summaries": {
+            "type": "boolean",
+            "title": "Enable Structured Summaries",
+            "description": "Enable AI-generated summaries for search results",
+            "default": true
+          },
+          "summarization_model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summarization Model",
+            "description": "Model to use for summarization",
+            "default": "deepseek:deepseek-chat"
+          },
+          "max_content_length": {
+            "type": "integer",
+            "maximum": 200000.0,
+            "minimum": 1000.0,
+            "title": "Max Content Length",
+            "description": "Maximum content length for summarization",
+            "default": 8192
+          },
+          "topic": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": ["general", "news", "finance"]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Topic",
+            "description": "Search topic filter (Tavily only)",
+            "default": "general"
+          },
+          "include_raw_content": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Include Raw Content",
+            "description": "Include full webpage content (Tavily only)",
+            "default": true
+          },
+          "freshness": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Freshness",
+            "description": "Time range filter (Bocha only)"
           },
           "summary": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Summary",
-            "description": "AI生成的内容摘要"
+            "description": "Return AI-generated summaries (Bocha only)",
+            "default": true
           },
-          "content": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
-            "title": "Content",
-            "description": "网页原始内容"
+          "include": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Include",
+            "description": "Include only these domains (Bocha only)"
           },
-          "tags": {
-            "items": { "type": "string" },
-            "type": "array",
-            "title": "Tags",
-            "description": "标签"
-          },
-          "key_excerpts": {
-            "items": { "type": "string" },
-            "type": "array",
-            "title": "Key Excerpts",
-            "description": "关键摘录"
-          },
-          "published_date": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
-            "title": "Published Date",
-            "description": "发布日期"
+          "exclude": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exclude",
+            "description": "Exclude these domains (Bocha only)"
           }
         },
         "type": "object",
-        "required": ["url", "score", "query"],
-        "title": "SearchResultItem",
-        "description": "Individual search result item."
+        "required": ["provider", "queries"],
+        "title": "SearchToolsExecuteRequest",
+        "description": "Request model for executing search tools with async status mode."
       },
-      "SearchToolsResponse": {
+      "SearchToolsExecuteResponse": {
         "properties": {
           "success": {
             "type": "boolean",
             "title": "Success",
-            "description": "Whether the search was successful"
+            "description": "Whether the search execution was started successfully"
+          },
+          "task_id": {
+            "type": "string",
+            "title": "Task Id",
+            "description": "Unique task ID for tracking the search execution"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Status message"
+          },
+          "user_id": {
+            "type": "string",
+            "title": "User Id",
+            "description": "User ID associated with the task"
+          },
+          "project_id": {
+            "type": "string",
+            "title": "Project Id",
+            "description": "Project ID associated with the task"
           },
           "provider": {
             "type": "string",
             "title": "Provider",
-            "description": "Search provider used (tavily/bocha)"
+            "description": "Search provider that will be used"
           },
-          "results": {
-            "items": { "$ref": "#/components/schemas/SearchResultItem" },
-            "type": "array",
-            "title": "Results",
-            "description": "搜索结果列表"
+          "query_preview": {
+            "type": "string",
+            "title": "Query Preview",
+            "description": "Preview of search queries"
           },
-          "total_results": {
-            "type": "integer",
-            "title": "Total Results",
-            "description": "总结果数量"
-          },
-          "search_queries": {
-            "items": { "type": "string" },
-            "type": "array",
-            "title": "Search Queries",
-            "description": "执行的搜索查询列表"
-          },
-          "search_time": {
-            "type": "number",
-            "title": "Search Time",
-            "description": "搜索耗时（秒）"
-          },
-          "api_execution_time": {
-            "type": "number",
-            "title": "Api Execution Time",
-            "description": "API执行时间（秒）"
-          },
-          "query_count": {
-            "type": "integer",
-            "title": "Query Count",
-            "description": "Number of queries executed"
+          "is_default_project": {
+            "type": "boolean",
+            "title": "Is Default Project",
+            "description": "Whether the task uses default project ID",
+            "default": false
           }
         },
         "type": "object",
         "required": [
           "success",
+          "task_id",
+          "message",
+          "user_id",
+          "project_id",
           "provider",
-          "results",
-          "total_results",
-          "search_queries",
-          "search_time",
-          "api_execution_time",
-          "query_count"
+          "query_preview"
         ],
-        "title": "SearchToolsResponse",
-        "description": "Response model for search tools."
+        "title": "SearchToolsExecuteResponse",
+        "description": "Response model for executing search tools."
+      },
+      "SearchToolsStateResponse": {
+        "properties": {
+          "task_id": {
+            "type": "string",
+            "title": "Task Id",
+            "description": "Task ID"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Current status of the task"
+          },
+          "progress": {
+            "type": "integer",
+            "title": "Progress",
+            "description": "Progress percentage (0-100)"
+          },
+          "query": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Query",
+            "description": "Search query description"
+          },
+          "config": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Config",
+            "description": "Task configuration"
+          },
+          "created_at": {
+            "type": "number",
+            "title": "Created At",
+            "description": "Timestamp when the task was created"
+          },
+          "updated_at": {
+            "type": "number",
+            "title": "Updated At",
+            "description": "Timestamp when the task was last updated"
+          },
+          "result_available": {
+            "type": "boolean",
+            "title": "Result Available",
+            "description": "Whether result data is available"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error",
+            "description": "Error message if the task failed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "task_id",
+          "status",
+          "progress",
+          "created_at",
+          "updated_at",
+          "result_available"
+        ],
+        "title": "SearchToolsStateResponse",
+        "description": "Response model for search tools task state."
       },
       "SearchToolsStatusResponse": {
         "properties": {
@@ -235,7 +685,9 @@
             "description": "Default search provider"
           },
           "available_providers": {
-            "items": { "type": "string" },
+            "items": {
+              "type": "string"
+            },
             "type": "array",
             "title": "Available Providers",
             "description": "List of available providers"
@@ -253,100 +705,174 @@
         "title": "SearchToolsStatusResponse",
         "description": "Response model for search tools status."
       },
-      "UnifiedSearchRequest": {
+      "SearchToolsTaskListResponse": {
         "properties": {
-          "queries": {
-            "items": { "type": "string" },
+          "tasks": {
+            "items": {
+              "$ref": "#/components/schemas/SearchToolsTaskStatusResponse"
+            },
             "type": "array",
-            "minItems": 1,
-            "title": "Queries",
-            "description": "List of search queries"
+            "title": "Tasks",
+            "description": "List of search tools tasks"
           },
-          "max_results": {
+          "total_count": {
             "type": "integer",
-            "maximum": 50.0,
-            "minimum": 1.0,
-            "title": "Max Results",
-            "description": "Maximum number of results",
-            "default": 10
+            "title": "Total Count",
+            "description": "Total number of tasks"
           },
-          "enable_structured_summaries": {
-            "type": "boolean",
-            "title": "Enable Structured Summaries",
-            "description": "Enable AI-generated summaries for search results",
-            "default": true
-          },
-          "summarization_model": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
-            "title": "Summarization Model",
-            "description": "Model to use for summarization",
-            "default": "deepseek:deepseek-chat"
-          },
-          "max_content_length": {
-            "type": "integer",
-            "maximum": 200000.0,
-            "minimum": 1000.0,
-            "title": "Max Content Length",
-            "description": "Maximum content length for summarization",
-            "default": 8192
-          },
-          "topic": {
-            "anyOf": [
-              { "type": "string", "enum": ["general", "news", "finance"] },
-              { "type": "null" }
-            ],
-            "title": "Topic",
-            "description": "Search topic filter (Tavily only)",
-            "default": "general"
-          },
-          "include_raw_content": {
-            "anyOf": [{ "type": "boolean" }, { "type": "null" }],
-            "title": "Include Raw Content",
-            "description": "Include full webpage content (Tavily only)",
-            "default": true
-          },
-          "freshness": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
-            "title": "Freshness",
-            "description": "Time range filter (Bocha only)"
-          },
-          "summary": {
-            "anyOf": [{ "type": "boolean" }, { "type": "null" }],
-            "title": "Summary",
-            "description": "Return AI-generated summaries (Bocha only)",
-            "default": true
-          },
-          "include": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
-            "title": "Include",
-            "description": "Include only these domains (Bocha only)"
-          },
-          "exclude": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
-            "title": "Exclude",
-            "description": "Exclude these domains (Bocha only)"
-          },
-          "provider": {
+          "user_id": {
             "type": "string",
-            "enum": ["tavily", "bocha"],
-            "title": "Provider",
-            "description": "Search provider to use"
+            "title": "User Id",
+            "description": "User ID"
+          },
+          "project_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Project Id",
+            "description": "Project ID if filtered by project"
           }
         },
         "type": "object",
-        "required": ["queries", "provider"],
-        "title": "UnifiedSearchRequest",
-        "description": "Unified request model for all search providers."
+        "required": ["tasks", "total_count", "user_id"],
+        "title": "SearchToolsTaskListResponse",
+        "description": "Response model for listing search tools tasks."
+      },
+      "SearchToolsTaskStatusResponse": {
+        "properties": {
+          "task_id": {
+            "type": "string",
+            "title": "Task Id",
+            "description": "Task ID"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Current status of the task"
+          },
+          "progress": {
+            "type": "integer",
+            "title": "Progress",
+            "description": "Progress percentage (0-100)"
+          },
+          "result": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Result",
+            "description": "Result data if the task completed successfully"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error",
+            "description": "Error message if the task failed"
+          },
+          "user_id": {
+            "type": "string",
+            "title": "User Id",
+            "description": "User ID associated with the task"
+          },
+          "project_id": {
+            "type": "string",
+            "title": "Project Id",
+            "description": "Project ID associated with the task"
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider",
+            "description": "Search provider used"
+          },
+          "query": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Query",
+            "description": "Search query description"
+          },
+          "created_at": {
+            "type": "number",
+            "title": "Created At",
+            "description": "Timestamp when the task was created"
+          },
+          "updated_at": {
+            "type": "number",
+            "title": "Updated At",
+            "description": "Timestamp when the task was last updated"
+          },
+          "is_default_project": {
+            "type": "boolean",
+            "title": "Is Default Project",
+            "description": "Whether the task uses default project ID",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "task_id",
+          "status",
+          "progress",
+          "user_id",
+          "project_id",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "SearchToolsTaskStatusResponse",
+        "description": "Response model for search tools task status."
       },
       "ValidationError": {
         "properties": {
           "loc": {
-            "items": { "anyOf": [{ "type": "string" }, { "type": "integer" }] },
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
             "type": "array",
             "title": "Location"
           },
-          "msg": { "type": "string", "title": "Message" },
-          "type": { "type": "string", "title": "Error Type" }
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
         },
         "type": "object",
         "required": ["loc", "msg", "type"],
