@@ -1,74 +1,29 @@
 /**
  * AI搜索工具服务 - 基于OpenAPI配置
  * 专门服务于搜索工具和检索功能
- * 支持Mock/真实API切换
+ * 支持异步轮询和Mock/真实API切换
+ * 类型定义来自@/types/ai，确保服务层与Store层类型一致
  */
 
 import BaseApiService from '../base/apiService'
 import type { ApiRequestConfig } from '@/config/api/types'
+import {
+  AsyncTaskPoller,
+  type PollingConfig,
+  type PollingTask,
+  TaskStatus
+} from '@/utils/polling/asyncTaskPoller'
 import { mockDataManager } from '@/mock'
 
-// 搜索工具相关类型
-interface SearchToolsRequest {
-  queries: string[]
-  provider: 'tavily' | 'bocha' | 'serper' | 'google'
-  max_results?: number
-  enable_structured_summaries?: boolean
-  summarization_model?: string
-  max_content_length?: number
-  topic?: 'general' | 'news' | 'finance' | 'academic' | 'technology'
-  include_raw_content?: boolean
-  freshness?: string
-  summary?: boolean
-  include?: string
-  exclude?: string
-  language?: string
-  region?: string
-  safe_search?: 'off' | 'moderate' | 'strict'
-}
-
-interface SearchToolsResponse {
-  results: Array<{
-    title: string
-    url: string
-    snippet: string
-    published_date?: string
-    score?: number
-    content?: string
-    author?: string
-    source?: string
-  }>
-  search_metadata: {
-    query: string
-    total_results: number
-    search_time: number
-    provider: string
-    processed_at: string
-  }
-  structured_summary?: {
-    main_points: string[]
-    key_entities: Array<{
-      name: string
-      type: string
-      confidence: number
-    }>
-    sentiment?: 'positive' | 'negative' | 'neutral'
-    topics: string[]
-  }
-}
-
-interface SearchToolsStatusResponse {
-  service_status: 'available' | 'unavailable' | 'maintenance'
-  supported_providers: string[]
-  active_searches: number
-  max_concurrent_searches: number
-  rate_limits: {
-    provider: string
-    requests_per_minute: number
-    requests_per_hour: number
-    remaining_requests: number
-  }[]
-}
+// 导入共享类型定义，避免循环依赖
+import type {
+  SearchToolsExecuteRequest,
+  SearchToolsExecuteResponse,
+  SearchToolsTaskStatusResponse,
+  SearchToolsStateResponse,
+  SearchToolsStatusResponse,
+  SearchToolsTaskListResponse
+} from '@/types/ai'
 
 class SearchToolsService extends BaseApiService {
   constructor() {
@@ -78,22 +33,114 @@ class SearchToolsService extends BaseApiService {
   // ============= 搜索工具服务 =============
 
   /**
-   * 执行搜索工具
+   * 执行搜索工具（异步）
+   * @param userId 用户ID
+   * @param projectId 项目ID
    * @param request 搜索请求参数
    * @param options API请求选项
-   * @returns 搜索结果
+   * @returns 搜索工具执行响应
    */
-  async searchTools(request: SearchToolsRequest, options?: ApiRequestConfig) {
-    return this.post<SearchToolsResponse>('/search-tools/search', request, options)
+  async executeSearchTools(
+    userId: string,
+    projectId: string,
+    request: SearchToolsExecuteRequest,
+    options?: ApiRequestConfig
+  ) {
+    return this.post<SearchToolsExecuteResponse>('/search-tools/execute', request, {
+      params: { user_id: userId, project_id: projectId },
+      ...options
+    })
   }
 
   /**
-   * 获取搜索工具状态
+   * 获取搜索工具任务状态
+   * @param taskId 任务ID
+   * @param userId 用户ID
+   * @param projectId 项目ID
    * @param options API请求选项
-   * @returns 搜索工具状态
+   * @returns 任务状态
    */
-  async getSearchToolsStatus(options?: ApiRequestConfig) {
-    return this.get<SearchToolsStatusResponse>('/search-tools/status', undefined, options)
+  async getSearchToolsStatus(
+    taskId: string,
+    userId: string,
+    projectId: string,
+    options?: ApiRequestConfig
+  ) {
+    return this.get<SearchToolsTaskStatusResponse>(
+      `/search-tools/status/${taskId}`,
+      {
+        user_id: userId,
+        project_id: projectId
+      },
+      options
+    )
+  }
+
+  /**
+   * 获取搜索工具任务列表
+   * @param userId 用户ID
+   * @param projectId 项目ID（可选）
+   * @param options API请求选项
+   * @returns 任务列表
+   */
+  async getSearchToolsTasks(userId: string, projectId?: string, options?: ApiRequestConfig) {
+    const params: any = { user_id: userId }
+    if (projectId) params.project_id = projectId
+
+    return this.get<SearchToolsTaskListResponse>('/search-tools/tasks', params, options)
+  }
+
+  /**
+   * 取消搜索工具任务
+   * @param taskId 任务ID
+   * @param userId 用户ID
+   * @param projectId 项目ID
+   * @param options API请求选项
+   * @returns 取消结果
+   */
+  async cancelSearchToolsTask(
+    taskId: string,
+    userId: string,
+    projectId: string,
+    options?: ApiRequestConfig
+  ) {
+    return this.post(`/search-tools/cancel/${taskId}`, null, {
+      params: { user_id: userId, project_id: projectId },
+      ...options
+    })
+  }
+
+  /**
+   * 获取搜索工具任务状态
+   * @param taskId 任务ID
+   * @param userId 用户ID
+   * @param projectId 项目ID
+   * @param options API请求选项
+   * @returns 任务状态
+   */
+  async getSearchToolsState(
+    taskId: string,
+    userId: string,
+    projectId: string,
+    options?: ApiRequestConfig
+  ) {
+    return this.get<SearchToolsStateResponse>(
+      `/search-tools/state/${taskId}`,
+      {
+        user_id: userId,
+        project_id: projectId
+      },
+      options
+    )
+  }
+
+  /**
+   * 获取搜索工具配置状态
+   * @param options API请求选项
+   * @returns 配置状态
+   */
+  async getSearchToolsConfigStatus(options?: ApiRequestConfig) {
+    return this.get<SearchToolsStatusResponse>('/search-tools/config/status', undefined, options)
   }
 
   /**
@@ -106,131 +153,159 @@ class SearchToolsService extends BaseApiService {
   }
 
   /**
-   * 获取搜索历史记录
-   * @param params 查询参数
-   * @param options API请求选项
-   * @returns 搜索历史
+   * 启动搜索工具并轮询完成
+   * @param userId 用户ID
+   * @param projectId 项目ID
+   * @param request 搜索工具请求参数
+   * @param pollingConfig 轮询配置
+   * @returns 轮询任务结果
    */
-  async getSearchHistory(
-    params?: {
-      limit?: number
-      offset?: number
-      date_from?: string
-      date_to?: string
-      query?: string
-    },
-    options?: ApiRequestConfig
-  ) {
-    return this.get<any>('/search-tools/history', params, options)
+  async executeSearchToolsWithPolling(
+    userId: string,
+    projectId: string,
+    request: SearchToolsExecuteRequest,
+    pollingConfig?: PollingConfig
+  ): Promise<PollingTask> {
+    const response = await this.executeSearchTools(userId, projectId, request)
+
+    if (!response.success) {
+      throw new Error(response.message || '搜索工具任务启动失败')
+    }
+
+    const taskId = response.task_id
+
+    if (!taskId) {
+      throw new Error('搜索工具任务启动失败：未获取到任务ID')
+    }
+
+    const poller = new AsyncTaskPoller(
+      () =>
+        this.getSearchToolsStatus(taskId, userId, projectId).then((result) => ({
+          status:
+            result.status === 'completed'
+              ? TaskStatus.COMPLETED
+              : result.status === 'failed'
+                ? TaskStatus.FAILED
+                : TaskStatus.RUNNING,
+          data: result,
+          isCompleted: result.status === 'completed'
+        })),
+      {
+        interval: 5000,
+        timeout: 600000,
+        maxAttempts: 120,
+        ...pollingConfig
+      }
+    )
+
+    return poller.start(`search-tools-${taskId}`)
   }
 
   /**
-   * 保存搜索结果
-   * @param searchResult 搜索结果
-   * @param options API请求选项
-   * @returns 保存结果
+   * 启动搜索工具并等待完成
+   * @param userId 用户ID
+   * @param projectId 项目ID
+   * @param request 搜索工具请求参数
+   * @param pollingConfig 轮询配置
+   * @returns 搜索结果
    */
-  async saveSearchResult(
-    searchResult: {
-      query: string
-      results: any[]
-      provider: string
-      search_metadata: any
-    },
-    options?: ApiRequestConfig
-  ) {
-    return this.post('/search-tools/save', searchResult, options)
-  }
+  async executeSearchToolsAndWait(
+    userId: string,
+    projectId: string,
+    request: SearchToolsExecuteRequest,
+    pollingConfig?: PollingConfig
+  ): Promise<SearchToolsTaskStatusResponse> {
+    const task = await this.executeSearchToolsWithPolling(userId, projectId, request, pollingConfig)
+    const result = await task.promise
 
-  /**
-   * 获取搜索建议
-   * @param query 查询关键词
-   * @param options API请求选项
-   * @returns 搜索建议
-   */
-  async getSearchSuggestions(query: string, options?: ApiRequestConfig) {
-    return this.get<any>('/search-tools/suggestions', { q: query }, options)
-  }
+    if (result.status !== TaskStatus.COMPLETED) {
+      throw new Error(`搜索工具任务失败: ${result.error}`)
+    }
 
-  /**
-   * 分析搜索结果
-   * @param searchId 搜索ID
-   * @param analysisType 分析类型
-   * @param options API请求选项
-   * @returns 分析结果
-   */
-  async analyzeSearchResults(
-    searchId: string,
-    analysisType: 'sentiment' | 'topics' | 'entities' | 'quality',
-    options?: ApiRequestConfig
-  ) {
-    return this.post(`/search-tools/analyze/${searchId}`, { analysis_type: analysisType }, options)
+    return result.data as SearchToolsTaskStatusResponse
   }
 
   /**
    * 快速搜索
-   * @param query 查询关键词
+   * @param userId 用户ID
+   * @param projectId 项目ID
+   * @param queries 查询关键词
    * @param options 搜索选项
+   * @param pollingConfig 轮询配置
    * @returns 搜索结果
    */
   async quickSearch(
-    query: string,
+    userId: string,
+    projectId: string,
+    queries: string | string[],
     options?: {
-      provider?: 'tavily' | 'bocha' | 'serper'
+      provider?: 'tavily' | 'bocha'
       max_results?: number
-      topic?: 'general' | 'news' | 'finance' | 'academic' | 'technology'
-      language?: string
-    }
-  ): Promise<SearchToolsResponse> {
-    const request: SearchToolsRequest = {
-      queries: [query],
+      topic?: 'general' | 'news' | 'finance'
+      enable_structured_summaries?: boolean
+    },
+    pollingConfig?: PollingConfig
+  ): Promise<SearchToolsTaskStatusResponse> {
+    const request: SearchToolsExecuteRequest = {
       provider: options?.provider || 'tavily',
+      queries: Array.isArray(queries) ? queries : [queries],
       max_results: options?.max_results || 10,
       topic: options?.topic || 'general',
-      language: options?.language || 'zh-CN',
-      enable_structured_summaries: true,
-      summary: true
+      enable_structured_summaries: options?.enable_structured_summaries !== false,
+      summary: true,
+      include_raw_content: true
     }
 
-    return this.searchTools(request)
+    return this.executeSearchToolsAndWait(userId, projectId, request, pollingConfig)
   }
 
   /**
-   * 多查询搜索
+   * 批量搜索
+   * @param userId 用户ID
+   * @param projectId 项目ID
    * @param queries 查询关键词数组
    * @param options 搜索选项
-   * @returns 搜索结果
+   * @returns 搜索结果数组
    */
-  async multiQuerySearch(
+  async batchSearch(
+    userId: string,
+    projectId: string,
     queries: string[],
     options?: {
-      provider?: 'tavily' | 'bocha' | 'serper'
+      provider?: 'tavily' | 'bocha'
       max_results?: number
-      combine_results?: boolean
-      language?: string
+      topic?: 'general' | 'news' | 'finance'
+      concurrent?: boolean
     }
-  ): Promise<SearchToolsResponse[]> {
-    const results: SearchToolsResponse[] = []
-
-    for (const query of queries) {
-      const request: SearchToolsRequest = {
-        queries: [query],
-        provider: options?.provider || 'tavily',
-        max_results: options?.max_results || 5,
-        language: options?.language || 'zh-CN',
-        enable_structured_summaries: true,
-        summary: true
-      }
-
-      try {
-        const result = await this.searchTools(request)
-        results.push(result)
-      } catch (error) {
-        console.error(`搜索查询失败: ${query}`, error)
-      }
+  ): Promise<SearchToolsTaskStatusResponse[]> {
+    const request: SearchToolsExecuteRequest = {
+      provider: options?.provider || 'tavily',
+      queries,
+      max_results: options?.max_results || 5,
+      topic: options?.topic || 'general',
+      enable_structured_summaries: true,
+      summary: true,
+      include_raw_content: false // 减少带宽使用
     }
 
-    return results
+    // 支持并发搜索（一次提交多个查询）或分别搜索
+    if (options?.concurrent) {
+      const result = await this.executeSearchToolsAndWait(userId, projectId, request)
+      return [result]
+    } else {
+      // 分别搜索每个查询
+      const results: SearchToolsTaskStatusResponse[] = []
+      for (const query of queries) {
+        try {
+          const singleQueryRequest = { ...request, queries: [query] }
+          const result = await this.executeSearchToolsAndWait(userId, projectId, singleQueryRequest)
+          results.push(result)
+        } catch (error) {
+          console.error(`批量搜索查询失败: ${query}`, error)
+        }
+      }
+      return results
+    }
   }
 
   /**
@@ -255,65 +330,104 @@ class SearchToolsService extends BaseApiService {
     const method = config.method
 
     try {
-      // 搜索工具相关API（material search - 普通搜索）
-      if (method === 'GET' && url.includes('/search-tools/status')) {
-        return mockDataManager.getMockData('search-tools-status')
+      // 搜索工具相关API（异步轮询模式）
+      if (method === 'POST' && url.includes('/search-tools/execute')) {
+        const requestData = config.data
+        const params = config.params || {}
+        const taskId = `search_tools_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`
+
+        return {
+          success: true,
+          task_id: taskId,
+          message: '搜索任务已启动，正在执行搜索操作...',
+          user_id: params.user_id,
+          project_id: params.project_id,
+          provider: requestData.provider || 'tavily',
+          query_preview: Array.isArray(requestData.queries)
+            ? requestData.queries.join(', ')
+            : 'search query',
+          is_default_project: !params.project_id,
+          mock: true,
+          timestamp: Date.now()
+        }
+      }
+
+      if (method === 'GET' && url.includes('/search-tools/status/')) {
+        // 从URL中提取taskId
+        const parts = url.split('/')
+        const statusIndex = parts.indexOf('status')
+        const taskId = statusIndex > -1 ? parts[statusIndex + 1] : ''
+
+        if (taskId) {
+          const params = config.params || {}
+          const isCompleted = Math.random() > 0.3 // 70%概率完成
+          const hasError = Math.random() < 0.1 // 10%概率出错
+
+          return {
+            task_id: taskId,
+            status: isCompleted ? 'completed' : hasError ? 'failed' : 'processing',
+            progress: isCompleted ? 100 : hasError ? 0 : Math.floor(Math.random() * 80 + 10),
+            result: isCompleted
+              ? mockDataManager.getMockData('search-results', params.queries || [])
+              : null,
+            error: hasError ? '模拟搜索失败：API密钥无效或网络错误' : null,
+            user_id: params.user_id,
+            project_id: params.project_id || 'default-project',
+            provider: 'tavily',
+            query: '示例搜索查询',
+            created_at: Date.now() - 30000,
+            updated_at: Date.now(),
+            is_default_project: !params.project_id,
+            mock: true
+          }
+        }
+      }
+
+      if (method === 'GET' && url.includes('/search-tools/tasks')) {
+        const params = config.params || {}
+        return mockDataManager.getMockData('search-tools-tasks', params.user_id, params.project_id)
+      }
+
+      if (method === 'POST' && url.includes('/search-tools/cancel/')) {
+        const taskId = url.split('/')[4]
+        return {
+          success: true,
+          message: '搜索工具任务已取消',
+          task_id: taskId,
+          cancelled_at: new Date().toISOString(),
+          mock: true,
+          timestamp: Date.now()
+        }
+      }
+
+      if (method === 'GET' && url.includes('/search-tools/state/')) {
+        const taskId = url.split('/')[4]
+        const params = config.params || {}
+        return {
+          task_id: taskId,
+          status: 'processing',
+          progress: Math.floor(Math.random() * 100),
+          query: '当前执行的搜索查询',
+          config: {
+            provider: 'tavily',
+            max_results: 10,
+            enable_summaries: true
+          },
+          created_at: Date.now() - 60000,
+          updated_at: Date.now(),
+          result_available: false,
+          error: null,
+          user_id: params.user_id,
+          mock: true
+        }
+      }
+
+      if (method === 'GET' && url.includes('/search-tools/config/status')) {
+        return mockDataManager.getMockData('search-tools-config-status')
       }
 
       if (method === 'GET' && url.includes('/search-tools/providers')) {
         return mockDataManager.getMockData('search-providers')
-      }
-
-      if (method === 'POST' && url.includes('/search-tools/search')) {
-        const requestData = config.data
-        return mockDataManager.getMockData(
-          'search-tools',
-          requestData.queries || [],
-          requestData.provider || 'tavily'
-        )
-      }
-
-      if (method === 'GET' && url.includes('/search-tools/history')) {
-        return mockDataManager.getMockData('search-history', config.params?.limit || 10)
-      }
-
-      if (method === 'GET' && url.includes('/search-tools/suggestions')) {
-        return mockDataManager.getMockData('search-suggestions', config.params?.q || '')
-      }
-
-      if (method === 'POST' && url.includes('/search-tools/save')) {
-        return {
-          success: true,
-          message: '搜索结果已成功保存到个人收藏',
-          search_id: `search_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
-          saved_at: new Date().toISOString(),
-          mock: true,
-          timestamp: Date.now()
-        }
-      }
-
-      if (method === 'POST' && url.includes('/search-tools/analyze/')) {
-        const searchId = url.split('/')[4]
-        const analysisType = config.data?.analysis_type || 'sentiment'
-
-        return {
-          search_id: searchId,
-          analysis_type: analysisType,
-          result: {
-            overall: ['positive', 'neutral', 'negative'][Math.floor(Math.random() * 3)],
-            confidence: 0.7 + Math.random() * 0.25,
-            breakdown: {
-              positive: Math.random() * 0.4 + 0.3,
-              neutral: Math.random() * 0.3 + 0.2,
-              negative: Math.random() * 0.2 + 0.1
-            }
-          },
-          processing_time: 1.2 + Math.random() * 2,
-          confidence_level: 0.75 + Math.random() * 0.2,
-          analyzed_at: new Date().toISOString(),
-          mock: true,
-          timestamp: Date.now()
-        }
       }
 
       // 默认Mock响应

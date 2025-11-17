@@ -131,6 +131,11 @@ export class MockDataManager {
         break
       }
 
+      case 'search-tools-config-status': {
+        data = generateMockSearchToolsStatus()
+        break
+      }
+
       case 'search-providers': {
         data = generateMockAIProviders()
         break
@@ -190,6 +195,23 @@ export class MockDataManager {
         // 生成搜索建议Mock数据
         // 参数: 查询关键词
         data = generateMockSearchSuggestions(args[0] || '')
+        break
+      }
+
+      case 'search-results': {
+        // 生成搜索结果Mock数据
+        // 参数: 搜索关键词数组
+        const keywords = Array.isArray(args[0]) ? args[0][0] || '默认搜索' : args[0] || '默认搜索'
+        data = generateMockSearchResult(keywords, 1, 20)
+        break
+      }
+
+      case 'search-tools-tasks': {
+        // 生成搜索工具任务列表Mock数据
+        // 参数: 用户ID, 项目ID
+        const userId = args[0] || 'user_123'
+        const projectId = args[1]
+        data = generateMockSearchAgentList(userId, projectId, '搜索工具任务')
         break
       }
 

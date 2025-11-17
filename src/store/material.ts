@@ -236,23 +236,29 @@ export const useMaterialStore = defineStore('material', () => {
 
       updateSearchProgress('searching', 20, 100, '正在搜索素材...')
 
-      // 调用搜索API
-      const result = await searchToolsService.searchTools(searchParams)
+      // 调用新的搜索API（带轮询）
+      const result = await searchToolsService.executeSearchToolsAndWait(
+        getCurrentUserId(),
+        getCurrentProjectId(),
+        searchParams
+      )
 
       updateSearchProgress('processing', 80, 100, '处理搜索结果...')
 
-      // 转换搜索结果
-      const materials = transformSearchResultsToMaterials(result.results)
+      // 转换搜索结果（处理嵌套的结果结构）
+      const results = result.result?.results || result.result || []
+      const materials = transformSearchResultsToMaterials(results)
 
       // 更新当前搜索结果
       currentSearchResults.value = materials
 
       // 更新分页状态
+      const totalResults = results.length || 0
       paginationState.value = {
         currentPage: 1,
         pageSize: paginationState.value.pageSize, // 使用当前页面大小而不是硬编码
-        totalResults: result.total_results,
-        totalPages: Math.ceil(result.total_results / paginationState.value.pageSize)
+        totalResults,
+        totalPages: Math.ceil(totalResults / paginationState.value.pageSize)
       }
 
       // 添加到素材库
@@ -284,7 +290,7 @@ export const useMaterialStore = defineStore('material', () => {
 
       console.log('[material store] checkSearchToolsStatus: 开始检查搜索工具状态')
       console.log('[material store] 时间戳:', new Date().toISOString())
-      const status = await searchToolsService.getSearchToolsStatus()
+      const status = await searchToolsService.getSearchToolsConfigStatus()
       console.log('[material store] checkSearchToolsStatus: 搜索工具状态检查完成')
       console.log('[material store] 完成时间戳:', new Date().toISOString())
       searchToolsStatus.value = status
@@ -389,8 +395,8 @@ export const useMaterialStore = defineStore('material', () => {
         requestData
       )
 
-      if (!executeResponse.success) {
-        throw new Error(executeResponse.message || 'Agent执行失败')
+      if (executeResponse.status === 'failed') {
+        throw new Error(executeResponse.error || 'Agent执行失败')
       }
 
       updateSearchProgress('processing', 40, 100, 'Agent正在处理搜索结果...')
@@ -600,7 +606,7 @@ export const useMaterialStore = defineStore('material', () => {
 
       // 将搜索结果转换为API所需格式
       const materialsData = searchResults.map((result) =>
-        materialApiService.convertSearchResultToMaterialData(result)
+        MaterialApiService.convertSearchResultToMaterialData(result)
       )
 
       // 添加调试日志：检查转换后的materialsData的tags
@@ -621,12 +627,12 @@ export const useMaterialStore = defineStore('material', () => {
         throw new Error('API 返回数据为空')
       }
 
-      if (!response.materials || !Array.isArray(response.materials)) {
+      if (!response.items || !Array.isArray(response.items)) {
         throw new Error('API 返回数据格式错误：缺少 materials 字段或不是数组')
       }
 
       // 将API返回的素材转换为前端格式
-      const newMaterials = response.materials.map((apiMaterial) =>
+      const newMaterials = response.items.map((apiMaterial) =>
         MaterialApiService.convertApiMaterialToMaterial(apiMaterial)
       )
 
@@ -634,8 +640,8 @@ export const useMaterialStore = defineStore('material', () => {
       addMaterials(newMaterials)
 
       return {
-        success: response.success,
-        message: response.message,
+        success: true,
+        message: '素材创建成功',
         addedCount: newMaterials.length,
         materials: newMaterials
       }
@@ -671,12 +677,12 @@ export const useMaterialStore = defineStore('material', () => {
         throw new Error('API 返回数据为空')
       }
 
-      if (!response.materials || !Array.isArray(response.materials)) {
+      if (!response.items || !Array.isArray(response.items)) {
         throw new Error('API 返回数据格式错误：缺少 materials 字段或不是数组')
       }
 
       // 将API返回的素材转换为前端格式
-      const materials = response.materials.map((apiMaterial) =>
+      const materials = response.items.map((apiMaterial) =>
         MaterialApiService.convertApiMaterialToMaterial(apiMaterial)
       )
 
@@ -685,10 +691,10 @@ export const useMaterialStore = defineStore('material', () => {
 
       return {
         materials,
-        totalCount: response.total_count,
+        totalCount: response.total,
         page: response.page || params?.page || 1,
-        pageSize: response.page_size || params?.page_size || 20,
-        totalPages: response.total_pages
+        pageSize: response.per_page || params?.page_size || 20,
+        totalPages: Math.ceil(response.total / (response.per_page || params?.page_size || 20))
       }
     } catch (error) {
       state.value.error = error instanceof Error ? error.message : '从数据库加载素材失败'
@@ -721,12 +727,12 @@ export const useMaterialStore = defineStore('material', () => {
         throw new Error('API 返回数据为空')
       }
 
-      if (!response.materials || !Array.isArray(response.materials)) {
+      if (!response.items || !Array.isArray(response.items)) {
         throw new Error('API 返回数据格式错误：缺少 materials 字段或不是数组')
       }
 
       // 将API返回的素材转换为前端格式
-      const materials = response.materials.map((apiMaterial) =>
+      const materials = response.items.map((apiMaterial) =>
         MaterialApiService.convertApiMaterialToMaterial(apiMaterial)
       )
 
@@ -735,10 +741,10 @@ export const useMaterialStore = defineStore('material', () => {
 
       return {
         materials,
-        totalCount: response.total_count,
+        totalCount: response.total,
         page: response.page || params?.page || 1,
-        pageSize: response.page_size || params?.page_size || 20,
-        totalPages: response.total_pages
+        pageSize: response.per_page || params?.page_size || 20,
+        totalPages: Math.ceil(response.total / (response.per_page || params?.page_size || 20))
       }
     } catch (error) {
       state.value.error = error instanceof Error ? error.message : '从数据库加载素材失败'
