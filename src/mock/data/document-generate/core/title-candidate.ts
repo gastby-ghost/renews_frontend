@@ -145,3 +145,11 @@ export const rejectTitleCandidateMock = (url: string) => ({
     updated_at: new Date().toISOString()
   }
 })
+
+// ==================== 标题候选相关别名导出 ====================
+// 为了兼容mock-routes.ts的导入，添加别名
+
+/**
+ * 获取标题候选列表（别名，指向getProjectTitleCandidatesMock）
+ */
+export const getTitleCandidatesMock = (url: string) => getProjectTitleCandidatesMock(url)

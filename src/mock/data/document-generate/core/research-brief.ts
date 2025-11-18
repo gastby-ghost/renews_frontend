@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * 研究简报 Mock 数据
  * 提供研究简报相关的模拟响应数据
@@ -77,7 +78,7 @@ export const updateResearchBriefMock = (url: string, requestData: any) => ({
 /**
  * 删除研究简报的Mock响应
  */
-export const deleteResearchBriefMock = () => ({
+export const deleteResearchBriefMock = (url: string, requestData?: any) => ({
   success: true,
   message: '研究简报删除成功',
   deleted_count: 1

@@ -218,7 +218,7 @@ class TaskPollingManager {
       cancelled: TaskStatus.CANCELLED,
       revoked: TaskStatus.CANCELLED
     }
-    return statusMap[status.toLowerCase()] || TaskStatus.RUNNING
+    return statusMap[status?.toLowerCase?.() || ''] || TaskStatus.RUNNING
   }
 }
 

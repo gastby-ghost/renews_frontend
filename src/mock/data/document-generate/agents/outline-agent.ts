@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * Outline Agent Mock 数据
  * 提供Outline Agent相关的模拟响应数据
@@ -6,7 +7,7 @@
 /**
  * 生成大纲的Mock响应
  */
-export const generateOutlineMock = () => ({
+export const generateOutlineMock = (url: string, requestData: any) => ({
   success: true,
   message: '大纲生成成功',
   data: {
@@ -40,6 +41,7 @@ export const generateOutlineMock = () => ({
       }
     ],
     total_count: 3,
+    section_count: 3,
     total_word_estimate: 600,
     generation_summary: '成功生成包含3个主要章节的大纲'
   }
@@ -48,7 +50,7 @@ export const generateOutlineMock = () => ({
 /**
  * 获取大纲生成工具状态的Mock响应
  */
-export const getOutlineToolsStatusMock = () => ({
+export const getOutlineToolsStatusMock = (url: string, requestData?: any) => ({
   success: true,
   message: '获取工具状态成功',
   data: {
@@ -73,7 +75,7 @@ export const getOutlineToolsStatusMock = () => ({
 /**
  * 验证大纲生成请求的Mock响应
  */
-export const validateOutlineGenerationMock = (request: any) => ({
+export const validateOutlineGenerationMock = (url: string, requestData: any) => ({
   success: true,
   message: '请求验证通过',
   data: {
@@ -83,7 +85,7 @@ export const validateOutlineGenerationMock = (request: any) => ({
       '建议每个主要章节控制在200-300字',
       '建议包含数据需求说明'
     ],
-    warnings: request?.title ? [] : ['缺少标题信息'],
+    warnings: requestData?.title ? [] : ['缺少标题信息'],
     errors: []
   }
 })

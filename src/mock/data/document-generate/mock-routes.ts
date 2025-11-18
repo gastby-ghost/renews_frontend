@@ -46,25 +46,25 @@ import {
  * 格式：[HTTP方法:路径, Mock处理函数]
  */
 export const mockRoutes = new Map([
-  // Scope Agent 路由
-  ['POST:/scope-agent/execute', executeScopeAgentMock],
-  ['GET:/scope-agent/status/:taskId', getScopeAgentStatusMock],
-  ['GET:/scope-agent/tasks', getScopeAgentTasksMock],
+  // Scope Agent 路由（添加 /api/v1/ai/document_generate 前缀）
+  ['POST:/api/v1/ai/document_generate/scope-agent/execute', executeScopeAgentMock],
+  ['GET:/api/v1/ai/document_generate/scope-agent/status/:taskId', getScopeAgentStatusMock],
+  ['GET:/api/v1/ai/document_generate/scope-agent/tasks', getScopeAgentTasksMock],
 
-  // Title Agent 路由
-  ['POST:/title-agent/generate', generateTitlesMock],
-  ['GET:/title-agent/status', getTitleToolsStatusMock],
+  // Title Agent 路由（添加 /api/v1/ai 前缀）
+  ['POST:/api/v1/ai/title-agent/generate', generateTitlesMock],
+  ['GET:/api/v1/ai/title-agent/status', getTitleToolsStatusMock],
 
-  // Outline Agent 路由
-  ['POST:/outline-agent/generate', generateOutlineMock],
-  ['GET:/outline-agent/status', getOutlineToolsStatusMock],
+  // Outline Agent 路由（添加 /api/v1/ai 前缀）
+  ['POST:/api/v1/ai/outline-agent/generate', generateOutlineMock],
+  ['GET:/api/v1/ai/outline-agent/status', getOutlineToolsStatusMock],
 
-  // Search2Title Agent 路由
-  ['POST:/search2title/execute', search2TitleMock],
+  // Search2Title Agent 路由（添加 /api/v1/ai 前缀）
+  ['POST:/api/v1/ai/search2title/execute', search2TitleMock],
 
-  // Material Bind 路由
-  ['POST:/ai/bind-materials', bindMaterialsWithAIMock],
-  ['GET:/material-bind/status/:taskId', getMaterialBindStatusMock],
+  // Material Bind 路由（添加 /api/v1/ai 前缀）
+  ['POST:/api/v1/ai/bind-materials', bindMaterialsWithAIMock],
+  ['GET:/api/v1/ai/material-bind/status/:taskId', getMaterialBindStatusMock],
 
   // Core API 路由
   ['POST:/api/v1/core/projects/:projectId/briefs', createResearchBriefMock],
@@ -97,6 +97,8 @@ export function buildRouteKey(config: { method: string; url: string }): string {
   // 参数化路径匹配，将动态参数替换为通用标识符
   routeKey = routeKey.replace(/\/\d+/g, '/:id') // 数字ID替换
   routeKey = routeKey.replace(/\/tasks\/[^/]+/g, '/tasks/:taskId') // 任务ID替换
+  routeKey = routeKey.replace(/\/status\/[^/]+/g, '/status/:taskId') // 任务状态ID替换（支持花括号和普通路径）
+  routeKey = routeKey.replace(/\/cancel\/[^/]+/g, '/cancel/:taskId') // 任务取消ID替换
   routeKey = routeKey.replace(/\/projects\/[^/]+/g, '/projects/:projectId') // 项目ID替换
   routeKey = routeKey.replace(/\/briefs\/[^/]+/g, '/briefs/:briefId') // 简报ID替换
   routeKey = routeKey.replace(/\/title-candidates\/[^/]+/g, '/title-candidates/:candidateId') // 标题候选ID替换

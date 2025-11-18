@@ -131,3 +131,28 @@ export const deactivateTitleMock = (url: string) => ({
     updated_at: new Date().toISOString()
   }
 })
+
+// ==================== 标题版本相关别名导出 ====================
+// 为了兼容mock-routes.ts的导入，添加别名
+
+/**
+ * 创建标题版本（别名，指向createTitleMock）
+ */
+export const createTitleVersionMock = (url: string, requestData: any) =>
+  createTitleMock(url, requestData)
+
+/**
+ * 获取标题版本列表（别名，指向getActiveTitleMock）
+ */
+export const getTitleVersionsMock = (url: string) => getActiveTitleMock(url)
+
+/**
+ * 更新标题版本（别名，指向updateTitleMock）
+ */
+export const updateTitleVersionMock = (url: string, requestData: any) =>
+  updateTitleMock(url, requestData)
+
+/**
+ * 删除标题版本（别名，指向deactivateTitleMock）
+ */
+export const deleteTitleVersionMock = (url: string) => deactivateTitleMock(url)
