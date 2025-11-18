@@ -135,12 +135,12 @@ export function generateMockSearchAgentStatus(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   brief?: string
 ): SearchAgentStatusResponse {
-  const currentStatus = 'SUCCESS'
+  const currentStatus = 'completed'
   const progress = 100
 
   // 根据状态生成相应的结果
   let result = null
-  if (currentStatus === 'SUCCESS') {
+  if (currentStatus === 'completed') {
     result = searchData
   }
 
@@ -149,7 +149,7 @@ export function generateMockSearchAgentStatus(
     status: currentStatus,
     progress: progress,
     result: result,
-    error: '搜索任务失败：网络连接超时',
+    error: '',
     user_id: 'user_123',
     project_id: 'project_456',
     agent_type: 'search_agent',

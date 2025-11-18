@@ -27,7 +27,7 @@ import type {
   AgentState,
   PaginationState
 } from '@/types/material'
-import type { SearchToolsStatusResponse } from '@/types/ai'
+import type { SearchToolsStatusResponse } from '@/types/ai/search-tool'
 import CryptoJS from 'crypto-js'
 import { useUserStore } from '@/store/modules/user'
 import { useProjectStore } from '@/store/modules/project'
@@ -1052,7 +1052,7 @@ export const useMaterialStore = defineStore('material', () => {
 
             return {
               status:
-                status === 'SUCCESS'
+                status === 'completed'
                   ? TaskStatus.COMPLETED
                   : status === 'FAILURE'
                     ? TaskStatus.FAILED
@@ -1060,12 +1060,12 @@ export const useMaterialStore = defineStore('material', () => {
                       ? TaskStatus.CANCELLED
                       : TaskStatus.RUNNING,
               data: (response as any).result || response,
-              isCompleted: status === 'SUCCESS' || status === 'FAILURE' || status === 'REVOKED'
+              isCompleted: status === 'completed' || status === 'FAILURE' || status === 'REVOKED'
             }
           }),
       {
-        interval: 2000,
-        timeout: 120000,
+        interval: 20000,
+        timeout: 12000000,
         maxAttempts: 60,
         onStatusUpdate: (status) => {
           console.log('Agent轮询状态:', status)
