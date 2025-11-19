@@ -56,11 +56,6 @@
       description: '构建完整的自主知识体系架构，实现知识的系统性管理与应用'
     },
     {
-      src: '/images/architecture/02闻曦智能体技术框架图.png',
-      title: '闻曦智能体技术框架图',
-      description: '展示闻曦智能体的核心技术架构与各模块间的协同关系'
-    },
-    {
       src: '/images/architecture/03闻曦智能体功能架构图.jpg',
       title: '闻曦智能体功能架构图',
       description: '详细展示系统功能模块划分与层次化设计'
@@ -69,6 +64,11 @@
       src: '/images/architecture/04闻曦智能体人机协同流程图.jpg',
       title: '闻曦智能体人机协同流程图',
       description: '阐明人机协作的工作流程与交互机制'
+    },
+    {
+      src: '/images/architecture/02闻曦智能体技术框架图.png',
+      title: '闻曦智能体技术框架图',
+      description: '展示闻曦智能体的核心技术架构与各模块间的协同关系'
     }
   ])
 
