@@ -2,7 +2,9 @@
 /**
  * Material Bind Mock 数据
  * 提供素材绑定相关的模拟响应数据
+ * 使用 outline-with-material.json 作为数据源
  */
+import outlineWithMaterialData from '../../../json/outline-with-material.json'
 
 /**
  * 执行素材绑定的Mock响应
@@ -27,6 +29,7 @@ export const executeMaterialBindMock = bindMaterialsWithAIMock
 
 /**
  * 获取素材绑定任务状态的Mock响应
+ * 使用 outline-with-material.json 中的绑定数据
  */
 export const getMaterialBindStatusMock = (url: string) => {
   // 从URL中提取taskId：/material-bind/status/{taskId}
@@ -50,35 +53,37 @@ export const getMaterialBindStatusMock = (url: string) => {
     }
   }
 
-  // 任务完成 - 返回模拟的绑定结果
+  // 任务完成 - 使用 outline-with-material.json 中的绑定结果
+  const bindingData = (outlineWithMaterialData as any).data?.material_bindings || []
+  const title = (outlineWithMaterialData as any).data?.title || 'AI医疗革命性突破'
+
   const mockResult = {
-    title: 'AI技术在2024年的最新发展',
-    material_section_bindings: [
-      {
-        section_id: 1,
-        section_title: 'AI技术概述',
-        materials: [
-          {
-            id: 1001,
-            title: 'AI技术发展简史',
-            summary: '从1950年代开始的人工智能发展历程',
-            score: 0.95,
-            published_date: '2024-01-15 10:00:00',
-            url: 'https://example.com/ai-history',
-            relevance_explanation: '直接提供AI发展历程的核心内容，完美匹配章节需求'
-          }
-        ],
-        binding_type: 'required',
-        binding_reason: '该章节需要介绍AI技术的基本概念和发展历程',
-        match_scores: [0.95],
-        material_usage_justification: '素材1001作为核心素材，为章节提供AI发展历程的完整框架',
-        section_level: 1
-      }
-    ],
-    binding_summary: '本次绑定成功为1个章节分配了1个素材，匹配度较高',
-    final_report: '成功绑定 1 个章节的素材',
-    total_sections: 1,
-    total_materials_bound: 1
+    title: title,
+    material_section_bindings: bindingData.map((binding: any) => ({
+      section_id: binding.section_id,
+      section_title: binding.section_title,
+      materials: binding.materials.map((material: any) => ({
+        id: material.id,
+        title: material.title,
+        summary: material.summary,
+        score: material.score,
+        published_date: material.published_date,
+        url: material.url,
+        relevance_explanation: material.relevance_explanation
+      })),
+      binding_type: binding.binding_type || 'required',
+      binding_reason: binding.binding_reason || 'AI智能绑定',
+      match_scores: binding.match_scores || [],
+      material_usage_justification: binding.material_usage_justification || 'AI推荐绑定',
+      section_level: binding.section_level || 1
+    })),
+    binding_summary: `本次绑定成功为${bindingData.length}个章节分配了素材`,
+    final_report: `成功绑定 ${bindingData.length} 个章节的素材`,
+    total_sections: bindingData.length,
+    total_materials_bound: bindingData.reduce(
+      (total: number, binding: any) => total + (binding.materials?.length || 0),
+      0
+    )
   }
 
   return {

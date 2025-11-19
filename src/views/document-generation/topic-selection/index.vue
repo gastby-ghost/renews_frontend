@@ -395,6 +395,7 @@
   import { useTopicSelection } from '@/composables/document/useTopicSelection'
   import { useProjectStore } from '@/store/modules/project'
   import { useDocumentGenerateStore } from '@/store/modules/documentGenerate'
+  import { useOutlineEditorStore } from '@/store/modules/outlineEditor'
 
   // 自定义组件
   import TitleCard from '@/components/custom/TitleCard.vue'
@@ -776,6 +777,12 @@
    */
   const handleMaterialsSelected = (materials: Material[]) => {
     ElMessage.success(`已选择 ${materials.length} 个素材`)
+
+    // 将选中的素材传递到 outlineEditorStore
+    const outlineEditorStore = useOutlineEditorStore()
+    outlineEditorStore.setSelectedMaterials(materials)
+    console.log('📋 [handleMaterialsSelected] 素材已传递到 outlineEditorStore:', materials)
+
     closeMaterialSelection()
   }
 

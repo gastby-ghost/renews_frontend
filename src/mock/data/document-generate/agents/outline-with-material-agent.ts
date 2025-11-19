@@ -3,6 +3,7 @@
  * 直接引用真实 API 响应数据文件
  */
 import responseJson from '../../../json/document-generate-title.json'
+import outlineWithMaterialJson from '../../../json/outline-with-material.json'
 // 大纲与素材集成相关类型
 interface OutlineWithMaterialRequest {
   title?: string
@@ -105,8 +106,14 @@ export function generateTaskStatusMock(
 
 /**
  * 获取真实的API响应数据
+ * 使用 outline-with-material.json 作为数据源
  */
 function getRealResponseData() {
+  // 优先使用 outline-with-material.json 中的完整数据
+  if (outlineWithMaterialJson && outlineWithMaterialJson.data) {
+    return outlineWithMaterialJson.data
+  }
+  // 回退到原来的响应数据
   return (responseJson as any).data
 }
 

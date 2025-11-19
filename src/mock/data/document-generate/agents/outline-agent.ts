@@ -2,50 +2,41 @@
 /**
  * Outline Agent Mock 数据
  * 提供Outline Agent相关的模拟响应数据
+ * 使用 outline-with-material.json 作为数据源
  */
+import outlineWithMaterialData from '../../../json/outline-with-material.json'
 
 /**
  * 生成大纲的Mock响应
+ * 使用 outline-with-material.json 中的大纲数据
  */
-export const generateOutlineMock = (url: string, requestData: any) => ({
-  success: true,
-  message: '大纲生成成功',
-  data: {
-    outline: [
-      {
-        level: 1,
-        title: '导语：AI医疗革命性突破重塑就医体验',
-        content_direction: '采用倒金字塔结构，开篇点明AI在医疗领域的革命性影响',
-        data_requirements: ['AI诊断准确率对比数据', '手术并发症发生率统计'],
-        estimated_word_count: 150,
-        priority: 'high',
-        sources: ['1', '2']
-      },
-      {
-        level: 1,
-        title: 'AI诊断：精准识别微小病灶，癌症筛查准确率达95%',
-        content_direction: '详细展开AI在诊断领域的突破，重点介绍深度学习系统识别微小肿瘤的能力',
-        data_requirements: ['深度学习系统技术原理简化说明', '不同癌症类型诊断准确率细分'],
-        estimated_word_count: 250,
-        priority: 'high',
-        sources: ['1']
-      },
-      {
-        level: 1,
-        title: '机器人手术：并发症降低40%，住院时间缩短30%',
-        content_direction: '介绍机器人辅助手术系统的临床应用成效',
-        data_requirements: ['机器人手术系统操作原理简化说明', '不同手术类型并发症降低数据'],
-        estimated_word_count: 200,
-        priority: 'high',
-        sources: ['2']
-      }
-    ],
-    total_count: 3,
-    section_count: 3,
-    total_word_estimate: 600,
-    generation_summary: '成功生成包含3个主要章节的大纲'
+export const generateOutlineMock = (url: string, requestData: any) => {
+  // 从 outline-with-material.json 获取大纲数据
+  const outlineData = (outlineWithMaterialData as any).data?.outline || []
+
+  return {
+    success: true,
+    message: '大纲生成成功',
+    data: {
+      outline: outlineData.map((section: any, index: number) => ({
+        level: section.level || 1,
+        title: section.title || `章节 ${index + 1}`,
+        content_direction: section.content_direction || '',
+        data_requirements: section.data_requirements || [],
+        estimated_word_count: section.estimated_word_count || 500,
+        priority: section.priority || 'medium',
+        sources: section.sources || []
+      })),
+      total_count: outlineData.length,
+      section_count: outlineData.length,
+      total_word_estimate: outlineData.reduce(
+        (total: number, section: any) => total + (section.estimated_word_count || 500),
+        0
+      ),
+      generation_summary: `成功生成包含${outlineData.length}个主要章节的大纲`
+    }
   }
-})
+}
 
 /**
  * 获取大纲生成工具状态的Mock响应

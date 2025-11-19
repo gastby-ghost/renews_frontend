@@ -60,7 +60,7 @@
 </template>
 
 <script setup lang="ts">
-  import { computed } from 'vue'
+  import { computed, watch, ref } from 'vue'
   import { useRouter } from 'vue-router'
   import { ElMessage } from 'element-plus'
   import { useOutlinePage } from '@/composables/document/useOutlinePage'
@@ -98,6 +98,22 @@
     allTitleMaterials.value = materials
   }
 
+  // 同步 selectedMaterials 到 allTitleMaterials
+  watch(
+    () => selectedMaterials.value,
+    (materials) => {
+      if (materials && materials.length > 0) {
+        allTitleMaterials.value = materials
+        console.log(
+          '[DEBUG] 同步 selectedMaterials 到 allTitleMaterials:',
+          materials.length,
+          '个素材'
+        )
+      }
+    },
+    { immediate: true }
+  )
+
   const documentStore = useDocumentGenerateStore()
   const projectStore = useProjectStore()
   const router = useRouter()
@@ -132,11 +148,11 @@
 
     generatingOutline.value = true
     try {
-      // 基于标题生成大纲
+      // 使用选中的素材生成大纲
       const response = await outline.generateOutline(
         documentStore.documentState.selectedTitle,
         documentStore.documentState.researchBrief,
-        documentStore.documentState.searchResults
+        selectedMaterials.value // 使用选中的素材而不是 searchResults
       )
       ElMessage.success('AI大纲生成成功！')
 
@@ -148,7 +164,8 @@
           generatedOutline: response.outline
         })
       }
-    } catch {
+    } catch (error) {
+      console.error('大纲生成失败:', error)
       ElMessage.error('大纲生成失败')
     } finally {
       generatingOutline.value = false

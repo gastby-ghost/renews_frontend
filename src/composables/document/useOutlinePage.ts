@@ -7,6 +7,7 @@ import { useMaterialRelationStore } from '@/store/modules/materialRelation'
 import { useDocumentGenerateStore } from '@/store/modules/documentGenerate'
 import { useProjectStore } from '@/store/modules/project'
 import { useMaterialBindStore } from '@/store/modules/materialBind'
+import { useOutlineEditorStore } from '@/store/modules/outlineEditor'
 import { storeToRefs } from 'pinia'
 import type { Material } from '@/types/material'
 import type { OutlineSection } from '@/types/ai'
@@ -65,6 +66,9 @@ export function useOutlinePage() {
   const loadingProject = ref(false)
   const selectedMaterials = ref<Material[]>([])
   const showMaterialLibraryDialog = ref(false)
+
+  // 从 outlineEditorStore 获取已选择的素材
+  const outlineEditorStore = useOutlineEditorStore()
 
   // ========== 计算属性 ==========
   const hasGeneratedOutline = computed(() => state.generatedOutline.length > 0)
@@ -146,6 +150,22 @@ export function useOutlinePage() {
     (isBinding) => {
       state.isBindingMaterials = isBinding
     }
+  )
+
+  // 同步 outlineEditorStore 的素材到本地 selectedMaterials
+  watch(
+    () => outlineEditorStore.selectedMaterials,
+    (materials) => {
+      if (materials && materials.length > 0) {
+        selectedMaterials.value = materials
+        console.log(
+          '[DEBUG] 同步 outlineEditorStore 素材到 selectedMaterials:',
+          materials.length,
+          '个素材'
+        )
+      }
+    },
+    { immediate: true }
   )
 
   watch(

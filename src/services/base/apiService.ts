@@ -18,9 +18,27 @@ let mockRoutes: typeof import('@/mock/data/document-generate/mock-routes') | nul
 async function loadMockRoutes() {
   if (!mockRoutes) {
     console.log('[MOCK调试] 正在加载 Mock 路由模块...')
-    mockRoutes = await import('@/mock/data/document-generate/mock-routes')
-    console.log('[MOCK调试] Mock 路由模块加载完成')
-    console.log('[MOCK调试] 模块导出:', Object.keys(mockRoutes))
+    try {
+      mockRoutes = await import('@/mock/data/document-generate/mock-routes')
+      console.log('[MOCK调试] Mock 路由模块加载完成')
+      console.log('[MOCK调试] 模块导出:', Object.keys(mockRoutes))
+
+      // 验证必要的函数是否存在
+      if (typeof mockRoutes.getMockHandler !== 'function') {
+        console.error('[MOCK调试] 错误: getMockHandler 函数未找到')
+        throw new Error('getMockHandler 函数未在mock-routes模块中导出')
+      }
+
+      if (!mockRoutes.mockRoutes || !(mockRoutes.mockRoutes instanceof Map)) {
+        console.error('[MOCK调试] 错误: mockRoutes Map 未找到或格式不正确')
+        throw new Error('mockRoutes Map 未在mock-routes模块中正确导出')
+      }
+
+      console.log('[MOCK调试] Mock路由数量:', mockRoutes.mockRoutes.size)
+    } catch (error) {
+      console.error('[MOCK调试] Mock路由模块加载失败:', error)
+      throw error
+    }
   }
   return mockRoutes
 }
@@ -62,17 +80,23 @@ abstract class BaseApiService {
     const apiConfig = apiConfigManager.getConfig()
     const mockConfig = apiConfigManager.getMockConfig()
 
+    console.log(`[MOCK调试] handleMockRequest - 请求配置:`, config)
+    console.log(`[MOCK调试] API配置:`, apiConfig)
+    console.log(`[MOCK调试] Mock配置:`, mockConfig)
+
     // 模拟网络延迟
     await this.simulateDelay(apiConfig.mockDelay || mockConfig.defaultDelay)
 
     // 优先尝试路由式Mock
     const routeMockResult = await this.handleRouteMock(config)
     if (routeMockResult !== null) {
+      console.log(`[MOCK调试] 路由式Mock结果:`, routeMockResult)
       return routeMockResult as T
     }
 
     // 回退到传统Mock实现
     const result = await this.mockImplementation?.(config)
+    console.log(`[MOCK调试] 传统Mock结果:`, result)
 
     return result as T
   }
@@ -82,25 +106,37 @@ abstract class BaseApiService {
    */
   private async handleRouteMock(config: ApiRequestConfig): Promise<any> {
     try {
+      console.log(`[MOCK调试] 开始处理路由式Mock...`)
       const { getMockHandler } = await loadMockRoutes()
       console.log(`[MOCK调试] handleRouteMock - 原始请求: ${config.method} ${config.url}`)
-      const mockHandler = getMockHandler({
-        method: config.method,
-        url: config.url
-      })
+
+      // 构建路由键值用于匹配
+      const routeConfig = { method: config.method, url: config.url }
+      console.log(`[MOCK调试] 路由配置:`, routeConfig)
+
+      const mockHandler = getMockHandler(routeConfig)
 
       console.log(`[MOCK调试] getMockHandler 返回:`, mockHandler ? '找到处理器' : '未找到处理器')
 
       if (mockHandler) {
         console.log(`[MOCK调试] 使用路由式Mock处理器`)
         // Mock处理函数需要两个参数：url 和 requestData
-        return mockHandler(config.url, config as any)
+        console.log(`[MOCK调试] 路由式Mock匹配路径:`, config.url)
+        const result = mockHandler(config.url, config as any)
+        console.log(`[MOCK调试] 路由式Mock处理结果:`, result)
+        return result
       } else {
         console.log(`[MOCK调试] 未找到匹配的路由式Mock，将回退到传统Mock`)
+        if (mockRoutes) {
+          console.log(`[MOCK调试] 可用路由:`, Array.from(mockRoutes.mockRoutes.keys()))
+        } else {
+          console.log(`[MOCK调试] Mock路由模块未加载`)
+        }
       }
     } catch (error) {
       // Mock路由加载失败，返回null使用传统Mock
       console.warn('[MOCK调试] Mock路由加载失败，回退到传统Mock实现:', error)
+      console.warn('[MOCK调试] 错误详情:', error instanceof Error ? error.message : String(error))
     }
 
     return null

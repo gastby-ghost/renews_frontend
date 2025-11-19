@@ -66,7 +66,7 @@
           <el-tooltip
             content="一键完成大纲生成、素材检索和智能绑定（将清空当前大纲）"
             placement="top"
-            :disabled="canGenerateFromTitle && getAllMaterials.length > 0"
+            :disabled="!canGenerateFromTitle || getAllMaterials.length === 0"
           >
             <el-button
               @click="handleGenerateAICompleteOutline"
@@ -99,8 +99,8 @@
           <div v-else-if="bindingResult" class="status-success">
             <el-icon><Check /></el-icon>
             <span
-              >已绑定 {{ bindingResult.total_materials_bound }} 个素材到
-              {{ bindingResult.total_sections }} 个章节</span
+              >已绑定 {{ bindingResult.binding_summary.total_materials_bound }} 个素材到
+              {{ bindingResult.binding_summary.total_sections }} 个章节</span
             >
           </div>
         </div>
@@ -254,23 +254,28 @@
             <div class="detail-tabs">
               <div
                 class="tab-item"
-                :class="{ active: activeDetailTab === `${sectionIndex}-content` }"
-                @click="activeDetailTab = `${sectionIndex}-content`"
+                :class="{ active: getActiveDetailTab(sectionIndex) === `${sectionIndex}-content` }"
+                @click="setActiveDetailTab(sectionIndex, `${sectionIndex}-content`)"
               >
                 <el-icon><EditPen /></el-icon>
                 内容方向
               </div>
               <div
                 class="tab-item"
-                :class="{ active: activeDetailTab === `${sectionIndex}-requirements` }"
-                @click="activeDetailTab = `${sectionIndex}-requirements`"
+                :class="{
+                  active: getActiveDetailTab(sectionIndex) === `${sectionIndex}-requirements`
+                }"
+                @click="setActiveDetailTab(sectionIndex, `${sectionIndex}-requirements`)"
               >
                 <el-icon><Link /></el-icon>
                 素材需求
               </div>
             </div>
 
-            <div v-show="activeDetailTab === `${sectionIndex}-content`" class="tab-content">
+            <div
+              v-show="getActiveDetailTab(sectionIndex) === `${sectionIndex}-content`"
+              class="tab-content"
+            >
               <div class="content-direction">
                 <label>
                   <el-icon><Guide /></el-icon>
@@ -290,7 +295,10 @@
               </div>
             </div>
 
-            <div v-show="activeDetailTab === `${sectionIndex}-requirements`" class="tab-content">
+            <div
+              v-show="getActiveDetailTab(sectionIndex) === `${sectionIndex}-requirements`"
+              class="tab-content"
+            >
               <div class="data-requirements">
                 <label>
                   <el-icon><Document /></el-icon>
@@ -336,7 +344,7 @@
 
                 <!-- 手动绑定的素材 -->
                 <div
-                  v-else-if="section.data_requirements && section.data_requirements.length > 0"
+                  v-if="section.data_requirements && section.data_requirements.length > 0"
                   class="manual-bindings-section"
                 >
                   <div class="bindings-header">
@@ -357,42 +365,62 @@
                   </div>
                 </div>
 
-                <!-- 空状态 -->
-                <div v-else class="empty-requirements">
-                  <el-icon><FolderOpened /></el-icon>
-                  <span>暂无绑定的素材</span>
-                  <small v-if="getAllMaterials.length > 0">
-                    使用"智能素材绑定"功能或手动添加素材
-                  </small>
-                  <small v-else> 请先在标题区域选择素材，然后使用智能绑定功能 </small>
-                </div>
-
-                <!-- 手动添加素材按钮 -->
-                <div v-if="getAllMaterials.length > 0" class="manual-add-section">
+                <!-- 选择并绑定素材 -->
+                <div class="material-selection-section">
                   <el-dropdown trigger="click">
-                    <el-button size="small" type="primary" plain>
-                      <el-icon><Plus /></el-icon>
-                      手动添加素材
+                    <el-button
+                      size="small"
+                      :type="getAllMaterials.length === 0 ? 'info' : 'primary'"
+                      :plain="getAllMaterials.length > 0"
+                      :disabled="getAllMaterials.length === 0"
+                    >
+                      <el-icon><Collection /></el-icon>
+                      {{ getAllMaterials.length === 0 ? '请先选择素材' : '选择并绑定素材' }}
+                      <el-icon v-if="getAllMaterials.length > 0"><CaretBottom /></el-icon>
                     </el-button>
                     <template #dropdown>
                       <el-dropdown-menu>
                         <el-dropdown-item
-                          v-for="material in getAvailableMaterialsForSection(sectionIndex)"
+                          v-for="material in getAvailableMaterialsForSectionCached(sectionIndex)"
                           :key="material.id"
                           @click="handleBindMaterial(sectionIndex, material)"
                         >
                           <el-icon><Document /></el-icon>
                           {{ material.title }}
+                          <small style="margin-left: 8px; color: var(--art-text-color-secondary)">
+                            {{ material.summary?.substring(0, 30) }}...
+                          </small>
                         </el-dropdown-item>
                         <el-dropdown-item
-                          v-if="getAvailableMaterialsForSection(sectionIndex).length === 0"
+                          v-if="
+                            getAvailableMaterialsForSectionCached(sectionIndex).length === 0 &&
+                            getAllMaterials.length > 0
+                          "
                           disabled
                         >
+                          <el-icon><Check /></el-icon>
                           所有素材已绑定
+                        </el-dropdown-item>
+                        <el-dropdown-item v-if="getAllMaterials.length === 0" disabled>
+                          <el-icon><WarningFilled /></el-icon>
+                          暂无可用素材，请先从其他地方选择素材
                         </el-dropdown-item>
                       </el-dropdown-menu>
                     </template>
                   </el-dropdown>
+                </div>
+
+                <!-- 空状态 -->
+                <div
+                  v-if="
+                    (!bindingResult || !getSectionBindings(sectionIndex)) &&
+                    (!section.data_requirements || section.data_requirements.length === 0)
+                  "
+                  class="empty-requirements"
+                >
+                  <el-icon><FolderOpened /></el-icon>
+                  <span>暂无绑定的素材</span>
+                  <small>点击上面的"选择并绑定素材"按钮或使用"智能素材绑定"功能</small>
                 </div>
               </div>
             </div>
@@ -419,8 +447,6 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, computed } from 'vue'
-
   // UI图标导入
   import {
     Plus,
@@ -440,225 +466,118 @@
     Link,
     Guide,
     FolderOpened,
-    Cpu
+    Cpu,
+    Collection,
+    CaretBottom
   } from '@element-plus/icons-vue'
 
+  // 导入 composable
+  import { useOutlineEditor } from '@/composables/document/useOutlineEditor'
+
   // 类型定义
-  interface Material {
-    id: string
-    user_id: string
-    summary: string
-    score: number
-    title: string
-    key_excerpts: string[]
-    tags: string[]
-    url?: string
-    createdAt: Date
-    updatedAt?: Date
-    selected?: boolean
-  }
+  import type { Material } from '@/types/material'
 
-  interface OutlineSection {
-    title: string
-    content_direction: string
-    data_requirements: string[]
-    level: number
-    estimated_word_count: number
-    priority: 'high' | 'medium' | 'low'
-    sources: string[]
-  }
-
-  // 扩展 Material 类型，包含绑定相关属性
-  interface MaterialWithBinding extends Material {
-    relevance_explanation?: string
-    match_score?: number
-    binding_type?: string
-  }
-
-  interface MaterialBindResult {
-    title: string
-    material_section_bindings: Array<{
-      section_id: number
-      section_title: string
-      materials: MaterialWithBinding[]
-      match_scores: number[]
-      relevance_explanation: string
-      binding_type?: string
-      binding_reason?: string
-      material_usage_justification?: string
-      section_level?: number
-    }>
-    binding_summary?: string
-    final_report?: string
-    total_sections: number
-    total_materials_bound: number
-  }
+  // 响应式状态
+  import { reactive, computed } from 'vue'
 
   // ========== Props 定义 ==========
   const props = defineProps<{
-    /** 生成的大纲章节列表 */
-    generatedOutline: OutlineSection[]
-    /** 是否可以从标题生成大纲 */
-    canGenerateFromTitle: boolean
-    /** 是否可以添加章节 */
-    canAddSection: boolean
-    /** 是否正在生成大纲 */
-    generatingOutline: boolean
-    /** 已选择的素材列表 */
-    selectedMaterials: Material[]
-    /** 是否正在绑定素材 */
-    isBindingMaterials: boolean
-    /** 素材绑定进度 */
-    bindingProgress: number
-    /** 素材绑定结果 */
-    bindingResult: MaterialBindResult | null
+    selectedMaterials?: Material[]
   }>()
 
   // ========== Emits 定义 ==========
-  const emit = defineEmits<{
-    /** 生成AI大纲 */
-    (e: 'generateAIOutline'): void
-    /** 生成AI完整大纲 */
-    (e: 'generateAICompleteOutline'): void
-    /** 添加章节 */
-    (e: 'addSection'): void
-    /** 删除章节 */
-    (e: 'deleteSection', index: number): void
-    /** 上移章节 */
-    (e: 'moveSectionUp', index: number): void
-    /** 下移章节 */
-    (e: 'moveSectionDown', index: number): void
-    /** 清空大纲 */
-    (e: 'clearOutline'): void
-    /** 确认大纲 */
-    (e: 'confirmOutline'): void
-    /** 编辑章节 */
-    (e: 'editSection', title: string, data: any): void
+  defineEmits<{
     /** 返回 */
     (e: 'goBack'): void
-    /** 绑定素材到章节 */
-    (e: 'bindMaterial', sectionIndex: number, material: Material): void
-    /** 解绑素材 */
-    (e: 'unbindMaterial', sectionIndex: number, materialTitle: string): void
-    /** AI绑定素材 */
-    (e: 'aiBindMaterials'): void
   }>()
 
+  // ========== 使用 Composable ==========
+  const {
+    // 计算属性
+    generatedOutline,
+    canGenerateFromTitle,
+    canAddSection,
+    generatingOutline,
+    isBindingMaterials,
+    bindingResult,
+    getAllMaterials,
+
+    // 事件处理方法
+    handleGenerateAIOutline,
+    handleGenerateAICompleteOutline,
+    handleAIBindMaterials,
+    handleAddSection,
+    handleDeleteSection,
+    handleMoveSectionUp,
+    handleMoveSectionDown,
+    handleClearOutline,
+    handleConfirmOutline,
+    handleEditSection,
+    handleBindMaterial,
+    handleUnbindMaterial,
+
+    // 业务逻辑方法
+    getSectionBindings,
+    getAverageMatchScore
+  } = useOutlineEditor(props.selectedMaterials)
+
+  /**
+   * 缓存每个章节的可用素材（使用 computed 避免递归更新）
+   * 这个 computed 只在 generatedOutline 或 getAllMaterials 变化时重新计算
+   */
+  const availableMaterialsCache = computed(() => {
+    const cache = new Map<number, Material[]>()
+    const allMaterials = getAllMaterials.value
+
+    generatedOutline.value.forEach((section: any, index: number) => {
+      // 获取当前章节已绑定的素材
+      const boundMaterials = new Set(section.data_requirements || [])
+
+      // 过滤出未绑定的素材
+      const available = allMaterials.filter((material) => !boundMaterials.has(material.title))
+      cache.set(index, available)
+    })
+
+    return cache
+  })
+
   // ========== 本地状态 ==========
-  /** 当前激活的详情标签页 */
-  const activeDetailTab = ref('')
-
-  // ========== 计算属性 ==========
-
-  /** 获取所有素材（从props） */
-  const getAllMaterials = computed(() => props.selectedMaterials || [])
-
-  // ========== 事件处理方法 ==========
-
-  /** 处理生成AI大纲 */
-  const handleGenerateAIOutline = () => {
-    emit('generateAIOutline')
-  }
-
-  /** 处理生成AI完整大纲 */
-  const handleGenerateAICompleteOutline = () => {
-    emit('generateAICompleteOutline')
-  }
-
-  /** 处理AI绑定素材 */
-  const handleAIBindMaterials = () => {
-    emit('aiBindMaterials')
-  }
-
-  /** 处理添加章节 */
-  const handleAddSection = () => {
-    emit('addSection')
-  }
-
-  /** 处理删除章节 */
-  const handleDeleteSection = (index: number) => {
-    emit('deleteSection', index)
-  }
-
-  /** 处理上移章节 */
-  const handleMoveSectionUp = (index: number) => {
-    emit('moveSectionUp', index)
-  }
-
-  /** 处理下移章节 */
-  const handleMoveSectionDown = (index: number) => {
-    emit('moveSectionDown', index)
-  }
-
-  /** 处理清空大纲 */
-  const handleClearOutline = () => {
-    emit('clearOutline')
-  }
-
-  /** 处理确认大纲 */
-  const handleConfirmOutline = () => {
-    emit('confirmOutline')
-  }
-
-  /** 处理编辑章节 */
-  const handleEditSection = (title: string, data: any) => {
-    emit('editSection', title, data)
-  }
-
-  /** 处理绑定素材 */
-  const handleBindMaterial = (sectionIndex: number, material: Material) => {
-    emit('bindMaterial', sectionIndex, material)
-  }
-
-  /** 处理解绑素材 */
-  const handleUnbindMaterial = (sectionIndex: number, materialTitle: string) => {
-    emit('unbindMaterial', sectionIndex, materialTitle)
-  }
-
-  // ========== 业务逻辑方法 ==========
-  // 这些方法接收 props 和 emits 作为参数，保持纯函数特性
+  // 每个章节的tab状态，使用 reactive 创建响应式对象
+  const sectionTabStates = reactive<Record<number, string>>({})
 
   /**
-   * 获取章节的绑定素材
+   * 设置章节的活跃tab
    */
-  const getSectionBindings = (sectionIndex: number) => {
-    if (!props.bindingResult) return undefined
-    return props.bindingResult.material_section_bindings.find(
-      (binding) => binding.section_id === sectionIndex + 1
-    )
+  const setActiveDetailTab = (sectionIndex: number, tab: string) => {
+    sectionTabStates[sectionIndex] = tab
   }
 
   /**
-   * 获取章节的平均匹配分数
+   * 获取章节的活跃tab
    */
-  const getAverageMatchScore = (sectionIndex: number): number => {
-    const bindings = getSectionBindings(sectionIndex)
-    if (!bindings || bindings.match_scores.length === 0) return 0
-    const average =
-      bindings.match_scores.reduce((sum, score) => sum + score, 0) / bindings.match_scores.length
-    return Math.round(average)
-  }
-
-  /**
-   * 获取可用于当前章节的素材（排除已绑定的）
-   */
-  const getAvailableMaterialsForSection = (sectionIndex: number): Material[] => {
-    const section = props.generatedOutline[sectionIndex]
-    if (!section) return []
-
-    // 获取已绑定的素材标题
-    const boundMaterials = new Set(section.data_requirements || [])
-
-    // 如果有AI绑定结果，也排除那些
-    const aiBindings = getSectionBindings(sectionIndex)
-    if (aiBindings) {
-      aiBindings.materials.forEach((material) => {
-        boundMaterials.add(material.title)
-      })
+  const getActiveDetailTab = (sectionIndex: number) => {
+    // 如果没有设置过tab，默认显示 'content'
+    if (!sectionTabStates[sectionIndex]) {
+      sectionTabStates[sectionIndex] = `${sectionIndex}-content`
     }
+    return sectionTabStates[sectionIndex]
+  }
 
-    // 返回所有素材中未绑定的部分
-    return getAllMaterials.value.filter((material) => !boundMaterials.has(material.title))
+  /**
+   * 获取指定章节的可用素材（使用缓存）
+   */
+  const getAvailableMaterialsForSectionCached = (sectionIndex: number): Material[] => {
+    const cached = availableMaterialsCache.value.get(sectionIndex)
+    if (cached) {
+      return cached
+    }
+    // 如果缓存中没有，直接计算并返回
+    if (generatedOutline.value[sectionIndex]) {
+      const section = generatedOutline.value[sectionIndex] as any
+      const boundMaterials = new Set(section.data_requirements || [])
+      return getAllMaterials.value.filter((material) => !boundMaterials.has(material.title))
+    }
+    return []
   }
 </script>
 

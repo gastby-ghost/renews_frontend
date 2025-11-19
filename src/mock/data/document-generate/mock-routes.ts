@@ -19,6 +19,12 @@ import { search2TitleMock } from './agents/search2title-agent'
 // 素材绑定相关Mock
 import { bindMaterialsWithAIMock, getMaterialBindStatusMock } from './agents/material-bind'
 
+// 大纲与素材集成相关Mock
+import {
+  generateOutlineWithMaterialResponse,
+  generateTaskStatusMock
+} from './agents/outline-with-material-agent'
+
 // Core相关Mock
 import {
   createResearchBriefMock,
@@ -52,19 +58,26 @@ export const mockRoutes = new Map([
   ['GET:/api/v1/ai/document_generate/scope-agent/tasks', getScopeAgentTasksMock],
 
   // Title Agent 路由（添加 /api/v1/ai 前缀）
-  ['POST:/api/v1/ai/title-agent/generate', generateTitlesMock],
-  ['GET:/api/v1/ai/title-agent/status', getTitleToolsStatusMock],
+  ['POST:/api/v1/ai/document_generate/title-agent/generate', generateTitlesMock],
+  ['GET:/api/v1/ai/document_generate/title-agent/status', getTitleToolsStatusMock],
 
   // Outline Agent 路由（添加 /api/v1/ai 前缀）
-  ['POST:/api/v1/ai/outline-agent/generate', generateOutlineMock],
-  ['GET:/api/v1/ai/outline-agent/status', getOutlineToolsStatusMock],
+  ['POST:/api/v1/ai/document_generate/outline-agent/generate', generateOutlineMock],
+  ['GET:/api/v1/ai/document_generate/outline-agent/status', getOutlineToolsStatusMock],
 
   // Search2Title Agent 路由（添加 /api/v1/ai 前缀）
   ['POST:/api/v1/ai/search2title/execute', search2TitleMock],
 
   // Material Bind 路由（添加 /api/v1/ai 前缀）
-  ['POST:/api/v1/ai/bind-materials', bindMaterialsWithAIMock],
-  ['GET:/api/v1/ai/material-bind/status/:taskId', getMaterialBindStatusMock],
+  ['POST:/api/v1/ai/document_generate/material-bind/execute', bindMaterialsWithAIMock],
+  ['GET:/api/v1/ai/document_generate/material-bind/status/:taskId', getMaterialBindStatusMock],
+
+  // Outline With Material 路由（添加 /api/v1/ai 前缀）
+  [
+    'POST:/api/v1/ai/document_generate/outline-with-material/generate',
+    generateOutlineWithMaterialResponse
+  ],
+  ['GET:/api/v1/ai/document_generate/outline-with-material/task/:taskId', generateTaskStatusMock],
 
   // Core API 路由
   ['POST:/api/v1/core/projects/:projectId/briefs', createResearchBriefMock],
@@ -92,7 +105,15 @@ export const mockRoutes = new Map([
  * @returns 路由键值
  */
 export function buildRouteKey(config: { method: string; url: string }): string {
-  let routeKey = `${config.method.toUpperCase()}:${config.url}`
+  let url = config.url
+
+  // 移除协议和主机部分，只保留路径
+  if (url.includes('://')) {
+    url = url.split('://')[1].split('/').slice(1).join('/')
+    url = '/' + url
+  }
+
+  let routeKey = `${config.method.toUpperCase()}:${url}`
 
   // 参数化路径匹配，将动态参数替换为通用标识符
   routeKey = routeKey.replace(/\/\d+/g, '/:id') // 数字ID替换
@@ -113,6 +134,18 @@ export function buildRouteKey(config: { method: string; url: string }): string {
  * @returns Mock处理函数或null
  */
 export function getMockHandler(config: { method: string; url: string }) {
+  console.log(`[Mock路由] 原始请求: ${config.method} ${config.url}`)
+
   const routeKey = buildRouteKey(config)
-  return mockRoutes.get(routeKey) || null
+  console.log(`[Mock路由] 构建的键值: ${routeKey}`)
+
+  const handler = mockRoutes.get(routeKey)
+
+  if (handler) {
+    console.log(`[Mock路由] 找到匹配的处理器`)
+    return handler
+  }
+
+  console.log(`[Mock路由] 未找到匹配的路由，可用路由:`, Array.from(mockRoutes.keys()))
+  return null
 }

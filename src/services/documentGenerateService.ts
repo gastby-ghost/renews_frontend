@@ -197,7 +197,7 @@ class MaterialBindService extends BaseApiService {
    * AI智能素材绑定（兼容旧版本）
    */
   async bindMaterialsWithAI(request: any, options?: ApiRequestConfig) {
-    return this.post('/ai/bind-materials', request, options)
+    return this.post('/document_generate/material-bind/execute', request, options)
   }
 }
 
