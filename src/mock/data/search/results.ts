@@ -6,6 +6,9 @@ import type {
   SearchToolsResponse,
   SearchResultItem,
   SearchToolsStatusResponse,
+  SearchToolsExecuteRequest,
+  SearchToolsExecuteResponse,
+  SearchToolsTaskStatusResponse,
   SearchAgentResponse,
   SearchAgentStatusResponse,
   SearchAgentListResponse
@@ -13,6 +16,7 @@ import type {
 import type { Material } from '@/types/material'
 
 import searchData from '../../json/search.json'
+import searchToolData from '../../json/search-tool.json'
 /**
  * 生成搜索工具状态的Mock响应
  */
@@ -354,5 +358,44 @@ export const generateMockSearchSuggestions = (query: string) => {
     provider: 'tavily',
     mock: true,
     timestamp: Date.now()
+  }
+}
+
+/**
+ * 生成搜索工具执行Mock响应
+ */
+export function generateMockSearchToolsExecute(
+  request: SearchToolsExecuteRequest
+): SearchToolsExecuteResponse {
+  return {
+    success: true,
+    task_id: `search_tools_${Date.now()}`,
+    message: '搜索工具任务已启动',
+    user_id: 'user_123',
+    project_id: 'project_456',
+    provider: request?.provider || 'tavily',
+    query_preview: request?.queries?.join(', ') || '默认搜索查询',
+    is_default_project: true
+  }
+}
+
+/**
+ * 生成搜索工具任务状态Mock响应
+ */
+export function generateMockSearchToolsTaskStatus(taskId: string): SearchToolsTaskStatusResponse {
+  // 总是返回已完成状态，使用JSON文件中的数据
+  return {
+    task_id: taskId,
+    status: 'completed',
+    progress: 100,
+    result: (searchToolData as any).result,
+    error: null,
+    user_id: 'user_123',
+    project_id: 'project_456',
+    provider: 'tavily',
+    query: 'tavily search: 人工智能，医疗',
+    created_at: Date.now() - 120000,
+    updated_at: Date.now(),
+    is_default_project: true
   }
 }

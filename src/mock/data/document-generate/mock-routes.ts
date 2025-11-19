@@ -47,11 +47,30 @@ import {
   deleteTitleVersionMock
 } from './core/title-version'
 
+// 搜索工具相关Mock
+import { mockDataManager } from '../../index'
+
+// 搜索工具执行Mock处理函数
+const executeSearchToolsMock = (config: { method: string; url: string; data?: any }) => {
+  console.log('[Mock] 执行搜索工具', config)
+  return mockDataManager.getMockData('search-tools-execute', config.data)
+}
+
+// 搜索工具状态查询Mock处理函数
+const getSearchToolsStatusMock = (config: { method: string; url: string }) => {
+  console.log('[Mock] 获取搜索工具状态', config)
+  // 从URL中提取taskId
+  const url = config.url || ''
+  const taskIdMatch = url.match(/\/status\/([^/]+)/)
+  const taskId = taskIdMatch ? taskIdMatch[1] : ''
+  return mockDataManager.getMockData('search-tools-task-status', taskId)
+}
+
 /**
  * Mock路由映射表
  * 格式：[HTTP方法:路径, Mock处理函数]
  */
-export const mockRoutes = new Map([
+export const mockRoutes = new Map<string, any>([
   // Scope Agent 路由（添加 /api/v1/ai/document_generate 前缀）
   ['POST:/api/v1/ai/document_generate/scope-agent/execute', executeScopeAgentMock],
   ['GET:/api/v1/ai/document_generate/scope-agent/status/:taskId', getScopeAgentStatusMock],
@@ -79,6 +98,10 @@ export const mockRoutes = new Map([
   ],
   ['GET:/api/v1/ai/document_generate/outline-with-material/task/:taskId', generateTaskStatusMock],
 
+  // Search Tools 路由
+  ['POST:/api/v1/ai/search-tools/execute', executeSearchToolsMock],
+  ['GET:/api/v1/ai/search-tools/status/:taskId', getSearchToolsStatusMock],
+
   // Core API 路由
   ['POST:/api/v1/core/projects/:projectId/briefs', createResearchBriefMock],
   ['GET:/api/v1/core/projects/:projectId/briefs', getProjectBriefsMock],
@@ -97,7 +120,7 @@ export const mockRoutes = new Map([
   ['GET:/api/v1/core/projects/:projectId/title-versions', getTitleVersionsMock],
   ['PUT:/api/v1/core/projects/:projectId/title-versions/:versionId', updateTitleVersionMock],
   ['DELETE:/api/v1/core/projects/:projectId/title-versions/:versionId', deleteTitleVersionMock]
-])
+] as const)
 
 /**
  * 构建路由键值

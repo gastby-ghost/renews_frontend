@@ -17,7 +17,9 @@ import {
   generateMockSearchAgentList,
   generateMockSearchToolsResponse,
   generateMockSearchHistory,
-  generateMockSearchSuggestions
+  generateMockSearchSuggestions,
+  generateMockSearchToolsExecute,
+  generateMockSearchToolsTaskStatus
 } from './data/search/results'
 import {
   generateScopeAgentResponse,
@@ -212,6 +214,20 @@ export class MockDataManager {
         const userId = args[0] || 'user_123'
         const projectId = args[1]
         data = generateMockSearchAgentList(userId, projectId, '搜索工具任务')
+        break
+      }
+
+      case 'search-tools-execute': {
+        // 生成搜索工具执行Mock数据
+        // 参数: 请求数据
+        data = generateMockSearchToolsExecute(args[0] || {})
+        break
+      }
+
+      case 'search-tools-task-status': {
+        // 生成搜索工具任务状态Mock数据
+        // 参数: 任务ID
+        data = generateMockSearchToolsTaskStatus(args[0] || '')
         break
       }
 
