@@ -834,28 +834,30 @@ export const useDocumentGenerateStore = defineStore('documentGenerateStore', () 
           getTaskPollingManager().stopPolling(taskId)
 
           // 任务完成后更新文档状态
-          if (task.status === 'completed' && status.result) {
+          if (task.status === 'completed') {
             const updates: Partial<DocumentState> = {}
 
+            // 支持多种数据结构：status.data.research_brief 或 status.result.research_brief
+            const researchBrief = status.data?.research_brief || status.result?.research_brief
+
             // 如果有研究简报结果，更新到文档状态
-            if (status.result.research_brief) {
-              console.log(
-                `[DEBUG] getScopeTaskStatus - found research_brief:`,
-                status.result.research_brief
-              )
-              console.log(
-                `[DEBUG] getScopeTaskStatus - research_brief type:`,
-                typeof status.result.research_brief
-              )
+            if (researchBrief) {
+              console.log(`[DEBUG] getScopeTaskStatus - found research_brief:`, researchBrief)
+              console.log(`[DEBUG] getScopeTaskStatus - research_brief type:`, typeof researchBrief)
               console.log(
                 `[DEBUG] getScopeTaskStatus - research_brief length:`,
-                status.result.research_brief.length
+                researchBrief.length
               )
-              updates.researchBrief = status.result.research_brief
+              updates.researchBrief = researchBrief
             } else {
-              console.log(`[DEBUG] getScopeTaskStatus - NO research_brief found in result!`)
+              console.log(`[DEBUG] getScopeTaskStatus - NO research_brief found in status!`)
+              console.log(`[DEBUG] getScopeTaskStatus - status keys:`, Object.keys(status || {}))
               console.log(
-                `[DEBUG] getScopeTaskStatus - result keys:`,
+                `[DEBUG] getScopeTaskStatus - status.data keys:`,
+                Object.keys(status.data || {})
+              )
+              console.log(
+                `[DEBUG] getScopeTaskStatus - status.result keys:`,
                 Object.keys(status.result || {})
               )
             }

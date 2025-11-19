@@ -4,6 +4,27 @@
  * 提供Scope Agent相关的模拟响应数据
  */
 
+// 导入真实的breif数据
+import briefData from '@/mock/json/breif.json'
+
+// 定义类型接口
+interface BriefResult {
+  brief: string
+}
+
+interface BreifData {
+  task_id: string
+  status: string
+  progress: number
+  result: BriefResult
+  error: null
+  user_id: string
+  project_id: string
+  agent_type: string
+  created_at: number
+  updated_at: number
+}
+
 /**
  * 执行Scope Agent的Mock响应
  */
@@ -56,11 +77,10 @@ export const getScopeAgentStatusMock = (url: string) => {
     status: 'completed',
     progress: 100,
     data: {
-      research_brief:
-        'AI技术在医疗诊断、治疗和健康管理中的应用。研究范围包括人工智能在医疗影像诊断、智能手术系统、个性化治疗方案、药物研发、健康数据分析和患者管理等领域的最新进展和未来趋势。重点关注AI技术如何提高医疗效率、降低成本、改善患者体验，并探讨其在实际应用中面临的挑战和解决方案。',
-      research_scope: 'AI技术在医疗诊断、治疗和健康管理中的应用',
-      key_topics: ['AI诊断系统', '机器人手术', '健康管理平台', '医疗数据分析'],
-      target_audience: '医疗专业人士、技术决策者、患者',
+      research_brief: briefData.result.brief,
+      research_scope: '人工智能技术在医疗健康领域的应用、发展和影响',
+      key_topics: ['疾病诊断', '药物研发', '医疗影像分析', '个性化治疗'],
+      target_audience: '医疗专业人士、技术决策者、研究者',
       estimated_word_count: 5000,
       complexity_level: 'medium'
     },
