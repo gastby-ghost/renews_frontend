@@ -48,6 +48,11 @@
 - `pnpm clean:dev` - 清理开发缓存和临时文件
 - `pnpm prepare` - 设置 Husky git 钩子
 
+**API 和代码生成：**
+
+- `pnpm generate:api:core` - 从 OpenAPI 规范生成核心服务类型和接口
+- `pnpm generate:api:ai` - 生成 AI 服务相关类型定义
+
 ## 高级功能系统
 
 ### 素材库与 AI 搜索
@@ -118,19 +123,223 @@
 
 ### 目录结构
 
+这是一个基于 **Vue 3 + TypeScript + Vite** 的管理系统，目录结构如下：
+
 ```
 src/
-├── components/          # 自动导入的组件
-│   ├── core/           # 系统组件（布局、图表、表格）
-│   ├── custom/         # 特定功能组件
-│   └── dev/            # 开发工具
-├── config/api/         # 集中化的 API 配置
-├── services/           # 业务逻辑和 API 服务
-├── store/              # Pinia 状态管理
-├── utils/              # 工具函数
-├── views/              # 页面组件
-└── types/              # TypeScript 定义
+├── api/                  # 旧版 API 定义（已弃用，请使用 services/）
+├── assets/               # 静态资源（样式、图片、字体、图标）
+├── components/           # Vue 组件
+│   ├── core/            # 核心可复用组件（图表、表单、表格等）
+│   ├── custom/          # 业务特定组件
+│   └── dev/             # 开发/调试组件
+├── composables/         # Vue Composition API 组合式函数
+├── config/              # 应用配置
+├── directives/          # 自定义 Vue 指令
+├── enums/               # TypeScript 枚举
+├── locales/             # i18n 国际化语言文件
+├── main.ts              # 应用入口文件
+├── mock/                # 开发用模拟数据
+├── router/              # Vue Router 路由配置
+├── services/            # API 服务层
+│   ├── ai/              # AI 服务模块（内容生成、大纲等）
+│   ├── auth/            # 认证服务
+│   ├── core/            # 核心业务服务（素材、项目等）
+│   └── base/            # 基础 HTTP 客户端和工具
+├── store/               # Pinia 状态管理
+├── types/               # TypeScript 类型定义
+│   ├── ai/              # AI 服务类型
+│   ├── api/             # API 请求/响应类型
+│   ├── core/            # 核心业务类型
+│   └── ...              # 其他领域类型
+├── utils/               # 工具函数
+└── views/               # 页面组件
+    ├── auth/            # 认证页面
+    ├── document-generation/  # 文档生成工作流（v2/ 表示重构版本）
+    ├── material/        # 素材管理
+    └── ...
 ```
+
+### API 集成架构
+
+**基于 OpenAPI 的开发方式：**
+
+- OpenAPI 规范存储在 `/ai_openapi/` 和 `/core_openapi/` 目录
+- 运行 `pnpm generate:api:core` 从 OpenAPI 规范重新生成类型
+- 类型定义自动生成并存储在 `/src/types/` 目录
+- 每个服务模块在同域目录中有对应的类型定义
+
+**服务层结构：**
+
+- `services/` 包含所有 API 集成
+- `services/ai/` 处理 AI 功能（内容生成、大纲创建等）
+- `services/core/` 处理核心业务逻辑（素材、项目、大纲等）
+- `services/base/apiService.ts` 提供带拦截器的基础 HTTP 客户端
+
+### 状态管理
+
+**Pinia 存储：**
+
+- 全局状态通过 Pinia 管理，位置在 `/src/store/`
+- 模块化存储位于 `/src/store/modules/`
+- 关键存储：`user`、`material`、`project`、`outline`、`setting`、`menu`、`worktab`
+- 轮询功能位于 `/src/store/polling.ts`，用于异步操作
+
+### 路由架构
+
+**Vue Router 配置：**
+
+- 基于哈希的路由（`createWebHashHistory`）
+- 静态路由位于 `/src/router/routes/staticRoutes.ts`
+- 动态路由从菜单配置加载
+- 路由守卫位于 `/src/router/guards/`
+  - `beforeEach.ts` - 认证和权限检查
+  - `afterEach.ts` - 分析和进度跟踪
+
+### 文档生成工作流
+
+**多步骤流程：**
+
+1. **主题选择** (`/document-generation/topic-selection`) - 选择或输入主题
+2. **大纲生成** (`/document-generation/outline`) - AI 生成大纲
+3. **内容生成** (`/document-generation/content`) - 生成和编辑内容
+4. **素材管理** (`/material/management`) - 将素材与文档关联
+
+**工作流状态管理组合式函数：**
+
+- `useTopicSelection.ts` - 主题选择状态
+- `useOutlinePage.ts` - 大纲生成和编辑
+- `useContent.ts` - 内容编辑和 AI 辅助
+- `useMaterialSearch.ts` - 素材搜索和管理
+
+### 组件架构
+
+**三层组件系统：**
+
+1. **核心组件** (`/components/core/`) - 底层 UI 基础组件（图表、表单、表格）
+2. **自定义组件** (`/components/custom/`) - 业务组件（文档编辑器、素材卡片）
+3. **页面组件** (`/views/`) - 完整页面视图
+
+**关键自定义组件：**
+
+- `document/` - 文档编辑器、大纲编辑器、统计面板
+- `material-card/` - 素材展示和管理
+- `material-search/` - 搜索和筛选素材
+
+### 开发模式
+
+**Vue 3 Composition API：**
+
+- 所有组件使用 `<script setup>` 语法
+- 逻辑提取到 `/src/composables/` 中的组合式函数
+- 可复用工具位于 `/src/utils/`
+
+**类型安全：**
+
+- `tsconfig.json` 中的严格 TypeScript 配置
+- `/src/types/` 中的全面类型定义
+- 自动导入配置带类型声明
+
+**样式架构：**
+
+- SCSS 变量和混入
+- 主题支持（亮色/暗色模式）
+- 组件作用域样式与全局变量
+- Element Plus UI 库与自定义主题覆盖
+
+### 关键功能
+
+**AI 驱动的文档生成：**
+
+- AI 生成大纲
+- 内容生成和编辑
+- AI 辅助素材绑定
+- 实时预览和统计
+
+**素材管理：**
+
+- 上传和组织素材
+- AI 驱动的素材匹配
+- 搜索和筛选素材
+- 将素材关联到文档章节
+
+**项目管理：**
+
+- 创建和管理文档项目
+- 版本跟踪
+- 导出功能（PDF、Word 等）
+
+### 开发工作流
+
+**代码质量：**
+
+- Husky 和 lint-staged 预提交钩子
+- ESLint 代码质量检查
+- Prettier 代码格式化
+- Stylelint SCSS/CSS 质量检查
+- Commitizen 标准化提交消息
+
+**API 开发：**
+
+1. 在 `/ai_openapi/` 或 `/core_openapi/` 中添加/编辑 OpenAPI 规范
+2. 运行 `pnpm generate:api:core` 重新生成类型
+3. 在适当的 `/services/` 目录实现服务
+4. 创建组合式函数进行状态管理
+5. 在适当目录构建 UI 组件
+
+**测试：**
+
+- `/src/mock/` 中提供模拟数据
+- 可通过环境变量切换 API 模拟
+- 使用组合式函数隔离测试组件
+
+### 环境配置
+
+**关键环境变量：**
+
+- `VITE_API_URL` - 后端 API URL
+- `VITE_API_PROXY_URL` - 开发代理目标
+- `VITE_PORT` - 开发服务器端口
+- `VITE_BASE_URL` - 生产环境基础 URL
+- `VITE_VERSION` - 应用版本
+
+**配置文件：**
+
+- `vite.config.ts` - Vite 配置和插件
+- `.env*` - 环境特定变量
+- `eslint.config.mjs` - ESLint 规则
+- `.stylelintrc.cjs` - Stylelint 配置
+- `.prettierrc` - Prettier 格式化规则
+
+### 构建配置
+
+**Vite 优化：**
+
+- Vue、Vue Router、Pinia、VueUse 自动导入
+- Element Plus 组件自动导入
+- 供应商库手动分块（Vue、Router、Pinia、Element Plus）
+- 启用 Gzip 压缩
+- 生产环境移除 console
+
+**路径别名：**
+
+- `@/` - src 目录
+- `@views/` - views 目录
+- `@imgs/` - assets/img 目录
+- `@icons/` - assets/icons 目录
+- `@utils/` - utils 目录
+- `@stores/` - store 目录
+- `@plugins/` - plugins 目录
+- `@styles/` - assets/styles 目录
+
+### 重要开发说明
+
+1. **类型共位**：每个服务模块的类型位于 `/src/types/{domain}/`
+2. **模拟集成**：使用 `/src/mock/` 在无后端情况下开发
+3. **组件发现**：组件自动导入，无需手动导入
+4. **路由配置**：路由从菜单配置动态加载
+5. **AI 服务**：AI 功能需要后端 API 集成
+6. **重构**：部分页面有 v2/ 版本，正在开发改进架构
 
 ### API 架构
 
