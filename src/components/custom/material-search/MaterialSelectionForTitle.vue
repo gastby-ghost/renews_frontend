@@ -149,11 +149,12 @@
             <div class="library-content">
               <div class="materials-grid">
                 <el-card
-                  v-for="material in paginatedLibraryMaterials"
+                  v-for="material in libraryMaterials"
                   :key="material.id"
                   class="material-item library-material"
                   shadow="hover"
                   :class="{ selected: isSelected(material.id) }"
+                  v-loading="libraryLoading"
                 >
                   <div class="material-content">
                     <div class="material-header">
@@ -192,7 +193,9 @@
                   v-model:page-size="libraryPagination.pageSize"
                   :page-sizes="[10, 20, 50]"
                   layout="total, sizes, prev, pager, next"
-                  :total="filteredLibraryMaterials.length"
+                  :total="libraryTotal"
+                  @size-change="fetchLibraryMaterials"
+                  @current-change="fetchLibraryMaterials"
                 />
               </div>
             </div>
@@ -362,6 +365,8 @@
   import { useMaterialStore } from '@/store/material'
   import { useDocumentGenerateStore } from '@/store/documentGenerate'
   import { useMaterialSearch } from '@/composables/material/useMaterialSearch'
+  import { materialApiService } from '@/services/core/materialService'
+  import type { MaterialQueryParams } from '@/types/core/material'
 
   // Props
   interface Props {
@@ -393,9 +398,12 @@
 
   // 素材库相关
   const libraryMaterials = ref<Material[]>([])
+  const libraryTotal = ref(0)
+  const libraryLoading = ref(false)
   const libraryFilter = reactive({
     keyword: '',
-    tag: ''
+    tag: '',
+    tags: [] as string[]
   })
   const libraryPagination = reactive({
     page: 1,
@@ -424,32 +432,52 @@
     return Array.from(tags)
   })
 
-  // 筛选后的素材库
-  const filteredLibraryMaterials = computed(() => {
-    let filtered = libraryMaterials.value
+  // 获取素材库数据
+  const fetchLibraryMaterials = async () => {
+    try {
+      libraryLoading.value = true
 
-    if (libraryFilter.keyword) {
-      const keyword = libraryFilter.keyword.toLowerCase()
-      filtered = filtered.filter(
-        (material) =>
-          material.title.toLowerCase().includes(keyword) ||
-          material.summary.toLowerCase().includes(keyword)
+      const queryParams: MaterialQueryParams = {
+        page: libraryPagination.page,
+        page_size: libraryPagination.pageSize,
+        keywords: libraryFilter.keyword || undefined,
+        tags: libraryFilter.tags.length > 0 ? libraryFilter.tags : undefined,
+        sort_by: 'created_at',
+        sort_order: 'desc'
+      }
+
+      const response = await materialApiService.getAllMaterials(
+        {
+          page: queryParams.page,
+          page_size: queryParams.page_size,
+          keywords: queryParams.keywords
+        },
+        {
+          tags: queryParams.tags
+        }
       )
+
+      if (response.success) {
+        libraryMaterials.value = response.materials.map((material: any) => ({
+          id: material.id.toString(),
+          user_id: material.user_id,
+          title: material.title,
+          summary: material.summary,
+          url: material.source_url,
+          tags: material.tags,
+          createdAt: new Date(material.created_at),
+          score: material.score,
+          key_excerpts: material.metadata?.key_excerpts || []
+        }))
+        libraryTotal.value = response.pagination.total
+      }
+    } catch (error) {
+      console.error('获取素材库失败:', error)
+      ElMessage.error('获取素材库失败')
+    } finally {
+      libraryLoading.value = false
     }
-
-    if (libraryFilter.tag) {
-      filtered = filtered.filter((material) => material.tags.includes(libraryFilter.tag))
-    }
-
-    return filtered
-  })
-
-  // 分页后的素材库
-  const paginatedLibraryMaterials = computed(() => {
-    const start = (libraryPagination.page - 1) * libraryPagination.pageSize
-    const end = start + libraryPagination.pageSize
-    return filteredLibraryMaterials.value.slice(start, end)
-  })
+  }
 
   // 检查素材是否已选中
   const isSelected = (materialId: string) => {
@@ -484,44 +512,22 @@
 
   // 刷新素材库
   const refreshLibrary = async () => {
-    try {
-      // 这里应该调用获取素材库的API
-      // 暂时使用模拟数据
-      const mockMaterials: Material[] = [
-        {
-          id: 'lib-1',
-          user_id: 'system',
-          title: 'AI医疗市场研究报告',
-          summary: '2025年中国AI+医疗市场正以年复合增长率58.3%的速度爆发式增长',
-          url: 'https://example.com/report1',
-          tags: ['AI医疗', '市场研究', '技术突破'],
-          createdAt: new Date(),
-          score: 0.95,
-          key_excerpts: ['市场增长率58.3%', '预计2030年市场规模1200亿元']
-        },
-        {
-          id: 'lib-2',
-          user_id: 'system',
-          title: 'FDA人工智能医疗器械指南',
-          summary: 'FDA发布人工智能医疗器械指南草案，提出全生命周期管理框架',
-          url: 'https://example.com/guideline',
-          tags: ['FDA指南', 'AI医疗器械', '监管政策'],
-          createdAt: new Date(),
-          score: 0.92,
-          key_excerpts: ['生命周期管理', '透明度问题', '偏见风险']
-        }
-      ]
-
-      libraryMaterials.value = mockMaterials
-      ElMessage.success('素材库已刷新')
-    } catch {
-      ElMessage.error('刷新素材库失败')
-    }
+    await fetchLibraryMaterials()
+    ElMessage.success('素材库已刷新')
   }
 
   // 处理素材库筛选
-  const handleLibraryFilter = () => {
+  const handleLibraryFilter = async () => {
     libraryPagination.page = 1
+
+    // 更新tags数组
+    if (libraryFilter.tag) {
+      libraryFilter.tags = [libraryFilter.tag]
+    } else {
+      libraryFilter.tags = []
+    }
+
+    await fetchLibraryMaterials()
   }
 
   // 处理模式切换
@@ -622,13 +628,13 @@
       }))
 
       // 更新documentStore的搜索结果
-      documentStore.updateSearchResults(searchResults)
+      documentStore.updateTitleSearchResults(searchResults)
 
       // 调用title API生成标题
       const response = await documentStore.generateTitles(researchBrief, searchResults)
 
       if (response) {
-        ElMessage.success(`成功生成 ${response.title_count} 个标题`)
+        ElMessage.success(`成功生成 ${response.result?.total_generated || 0} 个标题`)
         // 直接关闭对话框，Store状态变化会自动更新父组件UI
         emit('close')
       }

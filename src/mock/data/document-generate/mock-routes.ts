@@ -15,6 +15,7 @@ import { generateTitlesMock, getTitleToolsStatusMock } from './agents/title-agen
 import { generateOutlineMock, getOutlineToolsStatusMock } from './agents/outline-agent'
 
 import { search2TitleMock } from './agents/search2title-agent'
+import { generateSearch2TitleAgentStatusResponse } from './index'
 
 // 素材绑定相关Mock
 import { bindMaterialsWithAIMock, getMaterialBindStatusMock } from './agents/material-bind'
@@ -114,6 +115,10 @@ export const mockRoutes = new Map<string, any>([
 
   // Search2Title Agent 路由（添加 /api/v1/ai 前缀）
   ['POST:/api/v1/ai/search2title/execute', search2TitleMock],
+  [
+    'GET:/api/v1/ai/document_generate/search2title-agent/status/:taskId',
+    generateSearch2TitleAgentStatusResponse
+  ],
 
   // Material Bind 路由（添加 /api/v1/ai 前缀）
   ['POST:/api/v1/ai/document_generate/material-bind/execute', bindMaterialsWithAIMock],
