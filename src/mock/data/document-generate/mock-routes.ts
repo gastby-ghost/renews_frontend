@@ -49,6 +49,24 @@ import {
 
 // 搜索工具相关Mock
 import { mockDataManager } from '../../index'
+import { generateMockSearchAgentResponse, generateMockSearchAgentStatus } from '../search/results'
+
+// 搜索代理执行Mock处理函数
+const executeSearchAgentMock = (config: { method: string; url: string; data?: any }) => {
+  console.log('[Mock] 执行搜索代理', config)
+  const { userId, projectId, brief } = config.data || {}
+  return generateMockSearchAgentResponse(userId, projectId, brief)
+}
+
+// 搜索代理状态查询Mock处理函数
+const getSearchAgentStatusMock = (config: { method: string; url: string }) => {
+  console.log('[Mock] 获取搜索代理状态', config)
+  // 从URL中提取taskId
+  const url = config.url || ''
+  const taskIdMatch = url.match(/\/status\/([^/]+)/)
+  const taskId = taskIdMatch ? taskIdMatch[1] : ''
+  return generateMockSearchAgentStatus(taskId)
+}
 
 // 搜索工具执行Mock处理函数
 const executeSearchToolsMock = (config: { method: string; url: string; data?: any }) => {
@@ -101,6 +119,10 @@ export const mockRoutes = new Map<string, any>([
   // Search Tools 路由
   ['POST:/api/v1/ai/search-tools/execute', executeSearchToolsMock],
   ['GET:/api/v1/ai/search-tools/status/:taskId', getSearchToolsStatusMock],
+
+  // Search Agent 路由
+  ['POST:/api/v1/ai/search-agent/execute', executeSearchAgentMock],
+  ['GET:/api/v1/ai/search-agent/status/:taskId', getSearchAgentStatusMock],
 
   // Core API 路由
   ['POST:/api/v1/core/projects/:projectId/briefs', createResearchBriefMock],

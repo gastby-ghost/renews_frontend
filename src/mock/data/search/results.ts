@@ -17,6 +17,7 @@ import type { Material } from '@/types/material'
 
 import searchData from '../../json/search.json'
 import searchToolData from '../../json/search-tool.json'
+import searchAgentData from '../../json/search-agent.json'
 /**
  * 生成搜索工具状态的Mock响应
  */
@@ -58,19 +59,19 @@ export function generateMockSearchToolsResponse(
   queries: string[],
   provider: string
 ): SearchToolsResponse {
-  const results = Array.from({ length: 10 }, (_, index) => ({
-    url: `https://example${index + 1}.com/article`,
-    score: Math.random(),
-    query: queries[Math.floor(Math.random() * queries.length)],
-    aititle: `AI生成标题 ${index + 1}`,
-    summary: `这是第${index + 1}个搜索结果的AI生成摘要，内容相关且信息丰富`,
-    tags: ['人工智能', '技术', '创新'],
-    key_excerpts: [
-      '关键摘录1：人工智能技术正在改变世界',
-      '关键摘录2：机器学习应用越来越广泛',
-      '关键摘录3：深度学习技术不断突破'
-    ],
-    published_date: new Date(Date.now() - Math.random() * 86400000 * 30).toISOString()
+  // 总是返回search-agent.json中的固定数据
+  const webSearchData = (searchAgentData as any).result.web_search_data || []
+
+  // 将web_search_data转换为SearchResultItem格式
+  const results = webSearchData.map((item: any) => ({
+    url: item.url,
+    score: item.score,
+    query: item.query,
+    aititle: item.aititle,
+    summary: item.summary,
+    tags: item.tags || [],
+    key_excerpts: item.key_excerpts || [],
+    published_date: item.published_date
   }))
 
   return {
@@ -79,8 +80,8 @@ export function generateMockSearchToolsResponse(
     results: results,
     total_results: results.length,
     search_queries: queries,
-    search_time: Math.random() * 5 + 1,
-    api_execution_time: Math.random() * 2 + 0.5,
+    search_time: 2.5,
+    api_execution_time: 1.8,
     query_count: queries.length
   }
 }
