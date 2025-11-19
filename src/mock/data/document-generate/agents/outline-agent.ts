@@ -11,31 +11,64 @@ import outlineWithMaterialData from '../../../json/outline-with-material.json'
  * 使用 outline-with-material.json 中的大纲数据
  */
 export const generateOutlineMock = (url: string, requestData: any) => {
+  console.log('🎯 [generateOutlineMock] 开始执行')
+  console.log('📋 [generateOutlineMock] 请求数据:', requestData)
+
   // 从 outline-with-material.json 获取大纲数据
   const outlineData = (outlineWithMaterialData as any).data?.outline || []
 
-  return {
-    success: true,
-    message: '大纲生成成功',
-    data: {
-      outline: outlineData.map((section: any, index: number) => ({
-        level: section.level || 1,
-        title: section.title || `章节 ${index + 1}`,
-        content_direction: section.content_direction || '',
-        data_requirements: section.data_requirements || [],
-        estimated_word_count: section.estimated_word_count || 500,
-        priority: section.priority || 'medium',
-        sources: section.sources || []
-      })),
-      total_count: outlineData.length,
-      section_count: outlineData.length,
-      total_word_estimate: outlineData.reduce(
+  console.log('📝 [generateOutlineMock] 原始大纲数据:', outlineData.length, '个章节')
+
+  const transformedOutlineData = outlineData.map((section: any, index: number) => ({
+    level: section.level || 1,
+    title: section.title || `章节 ${index + 1}`,
+    content_direction: section.content_direction || '',
+    data_requirements: section.data_requirements || [],
+    estimated_word_count: section.estimated_word_count || 500,
+    priority: section.priority || 'medium',
+    sources: section.sources || []
+  }))
+
+  const response = {
+    task_id: `outline_task_${Date.now()}`,
+    status: 'completed' as const,
+    result: {
+      title: requestData?.title?.title || '生成的大纲标题',
+      outline_type: 'structured' as const,
+      total_sections: transformedOutlineData.length,
+      estimated_word_count: transformedOutlineData.reduce(
         (total: number, section: any) => total + (section.estimated_word_count || 500),
         0
       ),
-      generation_summary: `成功生成包含${outlineData.length}个主要章节的大纲`
-    }
+      sections: transformedOutlineData.map((section: any, index: number) => ({
+        id: String(index + 1),
+        title: section.title,
+        level: section.level,
+        parent_id: undefined,
+        content_summary: section.content_direction,
+        keywords: section.data_requirements || [],
+        estimated_word_count: section.estimated_word_count
+      })),
+      creation_metadata: {
+        created_at: new Date().toISOString(),
+        processing_time: 2.5,
+        model_version: 'v2.1.0',
+        quality_score: 0.92
+      }
+    },
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
   }
+
+  console.log('✅ [generateOutlineMock] 响应结构预览:', {
+    hasResult: !!response.result,
+    hasResultSections: !!response.result?.sections,
+    resultSectionsLength: response.result?.sections?.length,
+    responseKeys: Object.keys(response),
+    resultKeys: response.result ? Object.keys(response.result) : []
+  })
+
+  return response
 }
 
 /**

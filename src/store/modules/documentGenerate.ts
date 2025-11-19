@@ -442,6 +442,20 @@ export const useDocumentGenerateStore = defineStore('documentGenerateStore', () 
         : []
     }
 
+    // 确保 generatedOutline 始终是数组
+    if (updates.generatedOutline !== undefined) {
+      console.log('🔧 [UPDATE] 检查 generatedOutline:', {
+        value: updates.generatedOutline,
+        type: typeof updates.generatedOutline,
+        isArray: Array.isArray(updates.generatedOutline),
+        length: updates.generatedOutline?.length
+      })
+      updates.generatedOutline = Array.isArray(updates.generatedOutline)
+        ? updates.generatedOutline
+        : []
+      console.log('🔧 [UPDATE] 修正后的 generatedOutline:', updates.generatedOutline)
+    }
+
     const oldResearchBrief = documentState.value.researchBrief
     Object.assign(documentState.value, {
       ...updates,
@@ -622,17 +636,35 @@ export const useDocumentGenerateStore = defineStore('documentGenerateStore', () 
       console.log('✅ [generateOutline] response.outline 类型:', typeof response.outline)
       console.log('✅ [generateOutline] response.data:', response.data)
 
-      // 检查响应数据结构
-      let outlineData = response.outline
-      if (response.data && response.data.outline) {
-        console.log('📝 [generateOutline] 使用 response.data.outline')
-        outlineData = response.data.outline
-      } else if (response.outline) {
-        console.log('📝 [generateOutline] 使用 response.outline')
-        outlineData = response.outline
+      // 检查响应数据结构 - 根据OutlineGenerationResponse类型定义
+      let outlineData = response.result?.sections
+      console.log('🔍 [generateOutline] 初始 outlineData:', outlineData)
+      console.log('🔍 [generateOutline] outlineData 类型:', typeof outlineData)
+      console.log('🔍 [generateOutline] outlineData 是数组吗:', Array.isArray(outlineData))
+
+      if (response.result && response.result.sections) {
+        console.log(
+          '📝 [generateOutline] 使用 response.result.sections，章节数量:',
+          response.result.sections.length
+        )
+        outlineData = response.result.sections
+        console.log('✅ [generateOutline] 设置后的 outlineData:', outlineData)
+        console.log('✅ [generateOutline] 设置后的 outlineData 长度:', outlineData?.length)
       } else {
-        console.warn('⚠️ [generateOutline] 未找到大纲数据在响应中')
-        outlineData = []
+        console.warn('⚠️ [generateOutline] 未找到大纲数据在响应中，检查所有可能的响应结构')
+        console.log('🔍 [generateOutline] 完整响应结构:', JSON.stringify(response, null, 2))
+
+        // 尝试从旧的响应结构中获取数据（兼容性处理）
+        if (response.data && Array.isArray(response.data.outline)) {
+          console.log('📝 [generateOutline] 使用旧的 response.data.outline 结构')
+          outlineData = response.data.outline
+        } else if (Array.isArray(response.outline)) {
+          console.log('📝 [generateOutline] 使用旧的 response.outline 结构')
+          outlineData = response.outline
+        } else {
+          console.log('📝 [generateOutline] 设置为空数组')
+          outlineData = []
+        }
       }
 
       // 更新文档状态
@@ -641,16 +673,28 @@ export const useDocumentGenerateStore = defineStore('documentGenerateStore', () 
         generationStats: {
           ...documentState.value.generationStats,
           outlineSectionCount:
-            response.section_count ||
+            response.result?.total_sections ||
             (outlineData as any).length ||
+            response.section_count ||
             response.data?.total_count ||
             0,
-          totalWordEstimate: response.total_word_estimate || response.data?.total_word_estimate || 0
+          totalWordEstimate:
+            response.result?.estimated_word_count ||
+            response.total_word_estimate ||
+            response.data?.total_word_estimate ||
+            0
         }
       })
 
       // 同时更新 outlineEditorStore
       const outlineEditorStore = useOutlineEditorStore()
+      console.log('🔍 [generateOutline] outlineEditorStore 更新前检查:')
+      console.log('  - outlineData 存在:', !!outlineData)
+      console.log('  - outlineData 类型:', typeof outlineData)
+      console.log('  - outlineData 是数组:', Array.isArray(outlineData))
+      console.log('  - outlineData 长度:', outlineData?.length)
+      console.log('  - outlineData 内容预览:', outlineData?.slice?.(0, 2))
+
       if (outlineData && Array.isArray(outlineData) && outlineData.length > 0) {
         console.log('📝 [generateOutline] 转换大纲章节:', outlineData.length, '个章节')
         console.log('📝 [generateOutline] 第一个章节数据:', outlineData[0])
@@ -666,9 +710,10 @@ export const useDocumentGenerateStore = defineStore('documentGenerateStore', () 
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
             level: section.level || 1,
-            parent_section_id: section.parent_section_id
-              ? parseInt(section.parent_section_id)
-              : undefined,
+            parent_section_id:
+              section.parent_section_id || section.parent_id
+                ? parseInt(section.parent_section_id || section.parent_id)
+                : undefined,
             word_count_target: section.word_count_target || section.estimated_word_count || 500,
             estimated_reading_time: section.estimated_word_count
               ? Math.ceil(section.estimated_word_count / 200)
@@ -886,13 +931,13 @@ export const useDocumentGenerateStore = defineStore('documentGenerateStore', () 
   /**
    * 获取Search2Title任务状态
    */
-  const getSearch2TitleTaskStatus = async (taskId: string, userId: string, projectId: string) => {
+  const getSearch2TitleTaskStatus = async (
+    taskId: string,
+    userId?: string, // eslint-disable-line @typescript-eslint/no-unused-vars
+    projectId?: string // eslint-disable-line @typescript-eslint/no-unused-vars
+  ) => {
     try {
-      const status = (await documentGenerateService.getSearch2TitleAgentStatus(
-        taskId,
-        userId,
-        projectId
-      )) as any
+      const status = (await documentGenerateService.getSearch2TitleAgentStatus(taskId)) as any
 
       // 更新本地任务状态
       const task = activeTasks.value.find((t) => t.taskId === taskId)
