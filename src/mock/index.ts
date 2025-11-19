@@ -58,6 +58,19 @@ import {
   generateProjectDuplicateResponse,
   generateProjectSearchResponse
 } from './data/project'
+import {
+  mockCreateBody,
+  mockGetBodies,
+  mockGetActiveBody,
+  mockGetBodyHistory,
+  mockGetBody,
+  mockUpdateBody,
+  mockDeleteBody,
+  mockActivateBody,
+  mockDeactivateBody,
+  mockGetTextStats,
+  mockGetReadabilityAnalysis
+} from './data/body'
 
 // 素材相关Mock数据
 export * from './data/material/list'
@@ -82,6 +95,12 @@ export * from './data/outline-section'
 
 // 素材关系相关Mock数据
 export * from './data/material-relation'
+
+// 正文相关Mock数据
+export * from './data/body'
+
+// 导入文章数据用于内容生成
+import articleData from './json/article.json'
 
 // 导出 MockTaskTracker 类
 export { MockTaskTracker }
@@ -457,6 +476,167 @@ export class MockDataManager {
         // 生成项目搜索Mock数据
         // 参数: 搜索关键词
         data = generateProjectSearchResponse(args[0] || '')
+        break
+      }
+
+      // ========== 正文相关Mock数据 ==========
+      case 'body-create': {
+        // 创建正文
+        // 参数: 项目ID, 正文数据
+        data = mockCreateBody(args[0] || 1, args[1] || {})
+        break
+      }
+
+      case 'bodies-get': {
+        // 获取项目的所有正文（分页）
+        // 参数: 项目ID, skip, limit
+        data = mockGetBodies(args[0] || 1, args[1] || 0, args[2] || 100)
+        break
+      }
+
+      case 'body-active': {
+        // 获取活动正文
+        // 参数: 项目ID
+        data = mockGetActiveBody(args[0] || 1)
+        break
+      }
+
+      case 'body-history': {
+        // 获取正文历史
+        // 参数: 项目ID, skip, limit
+        data = mockGetBodyHistory(args[0] || 1, args[1] || 0, args[2] || 100)
+        break
+      }
+
+      case 'body-detail': {
+        // 获取正文详情
+        // 参数: 正文ID
+        data = mockGetBody(args[0] || 1)
+        break
+      }
+
+      case 'body-update': {
+        // 更新正文
+        // 参数: 正文ID, 更新数据
+        data = mockUpdateBody(args[0] || 1, args[1] || {})
+        break
+      }
+
+      case 'body-delete': {
+        // 删除正文（停用）
+        // 参数: 正文ID
+        data = mockDeleteBody(args[0] || 1)
+        break
+      }
+
+      case 'body-activate': {
+        // 激活正文
+        // 参数: 正文ID, 激活数据
+        data = mockActivateBody(args[0] || 1, args[1] || {})
+        break
+      }
+
+      case 'body-deactivate': {
+        // 停用正文
+        // 参数: 正文ID
+        data = mockDeactivateBody(args[0] || 1)
+        break
+      }
+
+      case 'body-text-stats': {
+        // 获取文本统计
+        // 参数: 正文ID
+        data = mockGetTextStats(args[0] || 1)
+        break
+      }
+
+      case 'body-readability': {
+        // 获取可读性分析
+        // 参数: 正文ID
+        data = mockGetReadabilityAnalysis(args[0] || 1)
+        break
+      }
+
+      // ========== 内容生成相关Mock数据 ==========
+      case 'content-generate-execute': {
+        // 执行内容生成
+        // 参数: title, format, length
+        data = {
+          task_id: `content_task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          status: 'processing',
+          message: '内容生成任务已启动',
+          created_at: new Date().toISOString(),
+          request: {
+            title: args[0] || '默认标题',
+            format: args[1] || 'markdown',
+            length: args[2] || 'medium'
+          }
+        }
+        break
+      }
+
+      case 'content-validate': {
+        // 内容验证
+        // 参数: title, keywordsCount, audience, purpose
+        data = {
+          valid: true,
+          score: 85,
+          issues: [],
+          suggestions: ['标题具有较好的吸引力', '关键词密度适中', '目标受众定位明确'],
+          validated_at: new Date().toISOString()
+        }
+        break
+      }
+
+      case 'content-task-status': {
+        // 内容生成任务状态
+        // 参数: taskId
+        const taskId = args[0] || 'default_task'
+        const timestamp = Date.now()
+
+        // 根据taskId的长度和时间戳模拟不同状态
+        const hash = taskId.length + (timestamp % 100)
+        let status, progress, result
+
+        if (hash < 30) {
+          status = 'processing'
+          progress = hash * 3
+        } else if (hash < 60) {
+          status = 'processing'
+          progress = 60 + (hash - 30) * 1.5
+        } else if (hash < 90) {
+          status = 'completed'
+          progress = 100
+          result = {
+            title: '人工智能在医疗领域的革命性突破',
+            content: articleData.data?.content || '# 生成的内容\n\n这是通过AI生成的示例内容...',
+            word_count: 1568,
+            format: 'markdown',
+            generated_at: new Date().toISOString()
+          }
+        } else {
+          status = 'failed'
+          progress = 0
+          result = {
+            error: '内容生成失败，请重试',
+            error_code: 'GENERATION_FAILED'
+          }
+        }
+
+        data = {
+          task_id: taskId,
+          status,
+          progress,
+          message:
+            status === 'completed'
+              ? '内容生成完成'
+              : status === 'failed'
+                ? '内容生成失败'
+                : `正在生成内容... ${Math.round(progress)}%`,
+          created_at: new Date(timestamp - 30000).toISOString(),
+          updated_at: new Date().toISOString(),
+          result
+        }
         break
       }
 

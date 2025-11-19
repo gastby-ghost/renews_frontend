@@ -107,6 +107,16 @@ async function handleRouteGuard(
 
   // 处理已知的匹配路由
   if (to.matched.length > 0) {
+    // 添加调试日志
+    if (to.path.includes('document-generation')) {
+      console.log('[Router Guard] Document-generation路由通过:', {
+        from: from.path,
+        to: to.path,
+        matched: to.matched.length,
+        name: to.name,
+        params: to.params
+      })
+    }
     setWorktab(to)
     setPageTitle(to)
     next()

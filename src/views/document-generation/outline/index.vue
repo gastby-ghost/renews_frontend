@@ -41,13 +41,49 @@
         @move-section-up="moveSectionUp"
         @move-section-down="moveSectionDown"
         @clear-outline="clearOutline"
-        @confirm-outline="confirmOutline"
         @edit-section="handleEditSection"
-        @go-back="goBack"
         @ai-bind-materials="handleAIBindMaterials"
         @bind-material-to-section="bindMaterialToSection"
         @unbind-material-from-section="unbindMaterialFromSection"
       />
+
+      <!-- 确认大纲操作区域 -->
+      <div class="outline-actions-container art-card">
+        <div class="actions-content">
+          <div class="actions-info">
+            <h4>
+              <el-icon><Document /></el-icon>
+              大纲确认
+            </h4>
+            <p>确认当前大纲结构并开始正文创作</p>
+            <el-tag
+              v-if="outline.state.generatedOutline.length > 0"
+              type="success"
+              effect="light"
+              class="chapter-count"
+            >
+              <el-icon><Check /></el-icon>
+              已创建 {{ outline.state.generatedOutline.length }} 个章节
+            </el-tag>
+          </div>
+
+          <div class="actions-buttons">
+            <el-button @click="goBack" size="large" class="action-button secondary">
+              <el-icon><ArrowLeft /></el-icon>
+              返回标题
+            </el-button>
+            <el-button
+              type="success"
+              size="large"
+              @click="confirmOutline"
+              class="action-button primary"
+            >
+              <el-icon><Right /></el-icon>
+              确认大纲并继续
+            </el-button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- 素材库选择对话框 -->
@@ -63,6 +99,7 @@
   import { computed, watch, ref } from 'vue'
   import { useRouter } from 'vue-router'
   import { ElMessage } from 'element-plus'
+  import { Document, Check, ArrowLeft, Right } from '@element-plus/icons-vue'
   import { useOutlinePage } from '@/composables/document/useOutlinePage'
   import { useDocumentGenerateStore } from '@/store/modules/documentGenerate'
   import { useProjectStore } from '@/store/modules/project'
@@ -128,6 +165,24 @@
   // 头部操作按钮
   const headerActions = computed(() => {
     return [
+      {
+        label: '测试跳转',
+        type: 'warning' as const,
+        icon: 'el-icon-right',
+        handler: () => {
+          console.log('[DEBUG] 手动测试跳转按钮点击')
+          const targetUrl = `/document-generation/content/${projectId}`
+          console.log('[DEBUG] 手动跳转目标:', targetUrl)
+          router
+            .push(targetUrl)
+            .then(() => {
+              console.log('[DEBUG] 手动跳转成功')
+            })
+            .catch((error) => {
+              console.error('[DEBUG] 手动跳转失败:', error)
+            })
+        }
+      },
       {
         label: '导出',
         type: 'primary' as const,
@@ -234,27 +289,44 @@
   }
 
   const confirmOutline = async () => {
-    if (outline.state.generatedOutline.length === 0 && outline.state.sections.length === 0) {
-      ElMessage.warning('请创建大纲')
-      return
-    }
-
-    // 验证大纲
-    if (!outline.validateOutline()) {
-      return
-    }
+    console.log('[DEBUG] ===== 大纲确认开始 =====')
+    console.log('[DEBUG] projectId:', projectId)
+    console.log('[DEBUG] outline.state.generatedOutline:', outline.state.generatedOutline)
+    console.log('[DEBUG] outline.state.sections:', outline.state.sections)
 
     // 保存到store
+    console.log('[DEBUG] 保存大纲到store')
     documentStore.updateDocumentState({
       generatedOutline: outline.state.generatedOutline
     })
+    console.log('[DEBUG] store更新完成，当前documentState:', documentStore.documentState)
 
     ElMessage.success('大纲已确认，正在跳转到正文章节...')
 
+    // 构建目标URL
+    const targetUrl = `/document-generation/content/${projectId}`
+    console.log('[DEBUG] 目标URL:', targetUrl)
+    console.log('[DEBUG] 当前router当前路径:', router.currentRoute.value.path)
+    console.log('[DEBUG] 准备跳转，延迟800ms')
+
     // Navigate to content
     setTimeout(() => {
-      router.push(`/document-generation/content/${projectId}`)
+      console.log('[DEBUG] 开始执行路由跳转')
+      console.log('[DEBUG] router.push调用前，当前路径:', router.currentRoute.value.path)
+
+      router
+        .push(targetUrl)
+        .then(() => {
+          console.log('[DEBUG] 路由跳转成功')
+        })
+        .catch((error) => {
+          console.error('[DEBUG] 路由跳转失败:', error)
+        })
+
+      console.log('[DEBUG] router.push调用完成')
     }, 800)
+
+    console.log('[DEBUG] ===== 大纲确认函数结束 =====')
   }
 
   const handleEditSection = (title: string, data: any) => {
@@ -323,6 +395,162 @@
     &:hover {
       border-color: var(--el-color-primary-light-6);
       box-shadow: var(--art-box-shadow);
+    }
+  }
+
+  .outline-actions-container {
+    padding: var(--art-padding-xl, 32px);
+    background: linear-gradient(
+      135deg,
+      var(--art-fill-color-light) 0%,
+      var(--art-main-bg-color) 100%
+    );
+    border: 1px solid var(--art-border-color);
+    border-radius: var(--art-border-radius-lg, 12px);
+    box-shadow: 0 4px 16px rgb(0 0 0 / 8%);
+
+    .actions-content {
+      display: flex;
+      gap: var(--art-spacing-lg, 24px);
+      align-items: center;
+      justify-content: space-between;
+
+      .actions-info {
+        flex: 1;
+
+        h4 {
+          display: flex;
+          gap: var(--art-spacing-sm, 8px);
+          align-items: center;
+          margin: 0 0 var(--art-spacing-sm, 8px);
+          font-size: var(--art-font-size-xl, 20px);
+          font-weight: var(--art-font-weight-semibold, 600);
+          color: var(--art-text-color-primary);
+
+          .el-icon {
+            font-size: 24px;
+            color: var(--el-color-primary);
+          }
+        }
+
+        p {
+          margin: 0 0 var(--art-spacing-md, 12px);
+          font-size: var(--art-font-size-base, 16px);
+          line-height: var(--art-line-height-relaxed, 1.6);
+          color: var(--art-text-color-secondary);
+        }
+
+        .chapter-count {
+          display: inline-flex;
+          gap: var(--art-spacing-xs, 4px);
+          align-items: center;
+          padding: var(--art-spacing-sm, 8px) var(--art-spacing-md, 12px);
+          font-weight: var(--art-font-weight-medium, 500);
+
+          .el-icon {
+            font-size: 16px;
+          }
+        }
+      }
+
+      .actions-buttons {
+        display: flex;
+        gap: var(--art-spacing-lg, 20px);
+        align-items: center;
+
+        .action-button {
+          min-width: 140px;
+          height: 48px;
+          font-size: var(--art-font-size-base, 16px);
+          font-weight: var(--art-font-weight-medium, 500);
+          border-radius: var(--art-border-radius-lg, 8px);
+          transition: all 0.3s ease;
+
+          &.secondary {
+            color: var(--art-text-color-primary);
+            background: var(--art-fill-color-light);
+            border: 1px solid var(--art-border-color);
+
+            &:hover {
+              background: var(--art-fill-color);
+              border-color: var(--el-color-primary-light-6);
+              box-shadow: 0 4px 12px rgb(0 0 0 / 12%);
+              transform: translateY(-1px);
+            }
+          }
+
+          &.primary {
+            background: linear-gradient(
+              135deg,
+              var(--el-color-success) 0%,
+              var(--el-color-success-light-3) 100%
+            );
+            border: none;
+            box-shadow: 0 4px 12px rgba(var(--el-color-success-rgb), 0.3);
+
+            &:hover:not(:disabled) {
+              background: linear-gradient(
+                135deg,
+                var(--el-color-success-light-3) 0%,
+                var(--el-color-success-light-5) 100%
+              );
+              box-shadow: 0 6px 20px rgba(var(--el-color-success-rgb), 0.4);
+              transform: translateY(-2px);
+            }
+
+            &:disabled {
+              cursor: not-allowed;
+              box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
+              opacity: 0.5;
+              transform: none;
+            }
+
+            .el-icon {
+              margin-left: var(--art-spacing-xs, 4px);
+              font-size: 18px;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // 响应式设计
+  @media (width <= 768px) {
+    .outline-actions-container {
+      padding: var(--art-padding-lg, 20px);
+
+      .actions-content {
+        flex-direction: column;
+        gap: var(--art-spacing-lg, 20px);
+        align-items: flex-start;
+
+        .actions-info {
+          width: 100%;
+          text-align: center;
+
+          h4 {
+            justify-content: center;
+            font-size: var(--art-font-size-lg, 18px);
+          }
+
+          p {
+            font-size: var(--art-font-size-sm, 14px);
+          }
+        }
+
+        .actions-buttons {
+          gap: var(--art-spacing-md, 16px);
+          justify-content: center;
+          width: 100%;
+
+          .action-button {
+            min-width: 120px;
+            height: 44px;
+            font-size: var(--art-font-size-sm, 14px);
+          }
+        }
+      }
     }
   }
 </style>

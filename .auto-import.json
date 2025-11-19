@@ -307,10 +307,6 @@
     "watchThrottled": true,
     "watchTriggerable": true,
     "watchWithFilter": true,
-    "whenever": true,
-    "ElMessage": true,
-    "ElTag": true,
-    "ElTimeSelect": true,
-    "ElRadio": true
+    "whenever": true
   }
 }

@@ -15,6 +15,7 @@ import type {
   TextStatsResponse,
   ReadabilityAnalysisResponse
 } from '@/services/bodyService'
+import articleData from '@/mock/json/article.json'
 
 // Mock数据库
 const mockBodies: Map<number, any[]> = new Map() // projectId -> bodies[]
@@ -55,16 +56,29 @@ export function mockCreateBody(projectId: number, data: BodyCreate): BodyCreateR
   const bodies = mockBodies.get(projectId) || []
   const newId = bodies.length > 0 ? Math.max(...bodies.map((b) => b.id)) + 1 : 1
 
+  // 如果没有提供内容，使用文章生成的内容
+  let content = data.content || ''
+  if (!content && import.meta.env.VITE_USE_MOCK === 'true') {
+    // 使用导入的文章mock数据
+    content = articleData.data?.content || ''
+    if (content) {
+      console.log('[MOCK] Using article.json content for body creation')
+    } else {
+      console.warn('[MOCK] No content found in article.json')
+      content = `# ${data.title || '默认标题'}\n\n这是生成的正文内容...`
+    }
+  }
+
   const newBody = {
     id: newId,
     project_id: projectId,
     title: data.title || `正文版本 ${newId}`,
-    content: data.content || '',
-    status: data.status || 'draft',
+    content,
+    status: data.status || 'active',
     version: newId,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
-    activated_at: data.status === 'active' ? new Date().toISOString() : undefined
+    activated_at: new Date().toISOString()
   }
 
   bodies.push(newBody)

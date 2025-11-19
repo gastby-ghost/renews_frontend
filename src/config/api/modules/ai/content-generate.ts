@@ -38,10 +38,10 @@ export const contentGenerateService: ApiEndpointConfig = {
       }
     },
 
-    // Cancel Task
+    // Get Task Status / Cancel Task
     '/document_generate/content/tasks/{task_id}': {
-      description: 'Cancel Task',
-      methods: ['DELETE'],
+      description: 'Get Task Status / Cancel Task',
+      methods: ['GET', 'DELETE'],
       request: {
         bodyType: 'json',
         requireAuth: false,
@@ -50,7 +50,7 @@ export const contentGenerateService: ApiEndpointConfig = {
         }
       },
       response: {
-        dataType: 'Response Cancel Task Api V1 Ai Document Generate Content Tasks  Task Id  Delete',
+        dataType: 'TaskStatusResponse',
         statusCode: 200
       }
     },

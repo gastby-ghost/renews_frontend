@@ -428,21 +428,6 @@
         </div>
       </div>
     </div>
-
-    <div class="outline-actions-bottom">
-      <el-button @click="$emit('goBack')" size="large" class="art-button art-button--secondary"
-        >返回标题</el-button
-      >
-      <el-button
-        type="success"
-        size="large"
-        @click="handleConfirmOutline"
-        :disabled="generatedOutline.length === 0"
-        class="art-button art-button--primary"
-      >
-        确认大纲并继续
-      </el-button>
-    </div>
   </div>
 </template>
 
@@ -485,12 +470,6 @@
     selectedMaterials?: Material[]
   }>()
 
-  // ========== Emits 定义 ==========
-  defineEmits<{
-    /** 返回 */
-    (e: 'goBack'): void
-  }>()
-
   // ========== 使用 Composable ==========
   const {
     // 计算属性
@@ -511,7 +490,6 @@
     handleMoveSectionUp,
     handleMoveSectionDown,
     handleClearOutline,
-    handleConfirmOutline,
     handleEditSection,
     handleBindMaterial,
     handleUnbindMaterial,
@@ -1251,41 +1229,6 @@
     }
   }
 
-  .outline-actions-bottom {
-    display: flex;
-    gap: var(--art-spacing-lg, 20px);
-    justify-content: center;
-    padding-top: var(--art-spacing-lg, 24px);
-    margin-top: var(--art-spacing-xl, 32px);
-    border-top: 1px solid var(--art-border-color);
-
-    .art-button {
-      min-width: 120px;
-      font-weight: var(--art-font-weight-medium, 500);
-
-      &--primary {
-        background: var(--el-color-primary);
-        border-color: var(--el-color-primary);
-
-        &:hover {
-          background: var(--el-color-primary-light-3);
-          border-color: var(--el-color-primary-light-3);
-        }
-      }
-
-      &--secondary {
-        color: var(--art-text-color-primary);
-        background: var(--art-fill-color-light);
-        border-color: var(--art-border-color);
-
-        &:hover {
-          background: var(--art-fill-color);
-          border-color: var(--el-color-primary-light-6);
-        }
-      }
-    }
-  }
-
   // 移动端适配
   @media (max-width: $device-phone) {
     .outline-content {
@@ -1341,17 +1284,6 @@
       .quick-actions {
         grid-template-columns: 1fr;
         gap: var(--art-spacing-md, 16px);
-      }
-    }
-
-    .outline-actions-bottom {
-      flex-direction: column;
-      gap: var(--art-spacing-md, 16px);
-      align-items: center;
-
-      .art-button {
-        width: 100%;
-        max-width: 200px;
       }
     }
   }
