@@ -407,41 +407,143 @@ export function generateMockSearchToolsTaskStatus(taskId: string): SearchToolsTa
  * 基于search-tool.json和search-agent.json中90%的数据
  */
 export function generateMockMaterialsResponse() {
+  console.log('[generateMockMaterialsResponse] 开始生成素材库Mock数据')
+
   // 从search-agent.json中获取web_search_data（90%数据）
   const webSearchData = (searchAgentData as any).result.web_search_data || []
+  console.log('[generateMockMaterialsResponse] webSearchData原始数据:', {
+    length: webSearchData.length,
+    type: typeof webSearchData,
+    isArray: Array.isArray(webSearchData),
+    firstItemType: webSearchData.length > 0 ? typeof webSearchData[0] : 'undefined',
+    firstItemValue: webSearchData.length > 0 ? webSearchData[0] : 'undefined'
+  })
 
   // 从search-tool.json中获取results（剩余10%数据）
   const toolResults = (searchToolData as any).result.results || []
+  // console.log('[generateMockMaterialsResponse] toolResults原始数据:', {
+  //   length: toolResults.length,
+  //   type: typeof toolResults,
+  //   isArray: Array.isArray(toolResults),
+  //   firstItemType: toolResults.length > 0 ? typeof toolResults[0] : 'undefined',
+  //   firstItemValue: toolResults.length > 0 ? toolResults[0] : 'undefined'
+  // })
+
+  // 预处理webSearchData：解析JSON字符串
+  let processedWebSearchData: any[] = []
+  if (webSearchData.length > 0) {
+    processedWebSearchData = webSearchData
+      .map((item: any, index: number) => {
+        // console.log(`[generateMockMaterialsResponse] 处理webSearchData第${index}项:`, {
+        //   itemType: typeof item,
+        //   isString: typeof item === 'string',
+        //   itemLength: typeof item === 'string' ? item.length : 'N/A'
+        // })
+
+        if (typeof item === 'string') {
+          try {
+            const parsed = JSON.parse(item)
+            // console.log(`[generateMockMaterialsResponse] 第${index}项解析成功:`, {
+            //   hasUrl: !!parsed.url,
+            //   hasTitle: !!parsed.aititle || !!parsed.webtitle,
+            //   title: parsed.aititle || parsed.webtitle
+            // })
+            return parsed
+          } catch (error) {
+            console.error(`[generateMockMaterialsResponse] 第${index}项JSON解析失败:`, {
+              error: (error as Error).message,
+              itemValue: item.substring(0, 100)
+            })
+            return null
+          }
+        } else if (typeof item === 'object' && item !== null) {
+          // console.log(`[generateMockMaterialsResponse] 第${index}项已是对象:`, {
+          //   hasUrl: !!item.url,
+          //   hasTitle: !!item.aititle || !!item.webtitle,
+          //   title: item.aititle || item.webtitle
+          // })
+          return item
+        } else {
+          console.warn(`[generateMockMaterialsResponse] 第${index}项类型未知:`, item)
+          return null
+        }
+      })
+      .filter(Boolean) // 过滤掉null值
+  }
+
+  // console.log('[generateMockMaterialsResponse] 预处理后的webSearchData:', {
+  //   originalLength: webSearchData.length,
+  //   processedLength: processedWebSearchData.length
+  // })
+
+  // 预处理toolResults（已经是对象数组）
+  const processedToolResults = toolResults.map((item: any) => {
+    // console.log(`[generateMockMaterialsResponse] 处理toolResults:`, {
+    //   itemType: typeof item,
+    //   hasUrl: !!item?.url,
+    //   hasTitle: !!item?.aititle || !!item?.webtitle,
+    //   title: item?.aititle || item?.webtitle
+    // })
+    return item
+  })
+
+  // console.log('[generateMockMaterialsResponse] 预处理后的toolResults:', {
+  //   originalLength: toolResults.length,
+  //   processedLength: processedToolResults.length
+  // })
 
   // 合并数据，约90%来自search-agent，10%来自search-tool
   const combinedData = [
-    ...webSearchData.slice(0, Math.ceil(webSearchData.length * 0.9)),
-    ...toolResults.slice(0, Math.ceil(toolResults.length * 0.1))
+    ...processedWebSearchData.slice(0, Math.ceil(processedWebSearchData.length * 0.9)),
+    ...processedToolResults.slice(0, Math.ceil(processedToolResults.length * 0.1))
   ]
 
-  // 转换为素材格式
-  const materials = combinedData.map((item: any, index: number) => ({
-    id: index + 1,
-    user_id: '1',
-    title: item.aititle || item.webtitle || '未命名素材',
-    content: item.key_excerpts?.[0] || item.summary || '',
-    summary: item.summary || '',
-    source: 'web',
-    source_url: item.url,
-    score: item.score || Math.random() * 5,
-    type: 'article',
-    status: 'active',
-    tags: item.tags || ['AI', '医疗', '技术'],
-    created_at: new Date(Date.now() - Math.random() * 86400000 * 30).toISOString(),
-    updated_at: new Date(Date.now() - Math.random() * 86400000 * 7).toISOString(),
-    metadata: {
-      url: item.url,
-      key_excerpts: item.key_excerpts || [],
-      query: item.query || ''
-    }
-  }))
+  // console.log('[generateMockMaterialsResponse] 合并后的数据:', {
+  //   webDataCount: Math.ceil(processedWebSearchData.length * 0.9),
+  //   toolDataCount: Math.ceil(processedToolResults.length * 0.1),
+  //   combinedLength: combinedData.length
+  // })
 
-  return {
+  // 转换为素材格式
+  const materials = combinedData.map((item: any, index: number) => {
+    // console.log(`[generateMockMaterialsResponse] 转换第${index}项为素材:`, {
+    //   itemType: typeof item,
+    //   hasUrl: !!item?.url,
+    //   hasTitle: !!item?.aititle || !!item?.webtitle,
+    //   title: item?.aititle || item?.webtitle,
+    //   hasTags: !!item?.tags
+    // })
+
+    return {
+      id: index + 1,
+      user_id: '1',
+      title: item?.aititle || item?.webtitle || '未命名素材',
+      content: item?.key_excerpts?.[0] || item?.summary || '',
+      summary: item?.summary || '',
+      source: 'web',
+      url: item?.url,
+      score: item?.score || Math.random() * 5,
+      type: 'article',
+      status: 'active',
+      key_excerpts: item?.key_excerpts || [],
+      tags: item?.tags || ['AI', '医疗', '技术'],
+      created_at: new Date(Date.now() - Math.random() * 86400000 * 30).toISOString(),
+      updated_at: new Date(Date.now() - Math.random() * 86400000 * 7).toISOString(),
+      metadata: {
+        url: item?.url,
+        key_excerpts: item?.key_excerpts || [],
+        query: item?.query || ''
+      }
+    }
+  })
+
+  // console.log('[generateMockMaterialsResponse] 最终生成的素材:', {
+  //   count: materials.length,
+  //   firstItem: materials[0],
+  //   lastItem: materials[materials.length - 1]
+  // })
+
+  const result = {
     success: true,
     message: '获取素材库成功',
     materials: materials,
@@ -452,4 +554,8 @@ export function generateMockMaterialsResponse() {
       total_pages: 1
     }
   }
+
+  console.log('[generateMockMaterialsResponse] 最终返回结果:', result)
+
+  return result
 }

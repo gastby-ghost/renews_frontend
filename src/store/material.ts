@@ -627,12 +627,12 @@ export const useMaterialStore = defineStore('material', () => {
         throw new Error('API 返回数据为空')
       }
 
-      if (!response.items || !Array.isArray(response.items)) {
+      if (!response.materials || !Array.isArray(response.materials)) {
         throw new Error('API 返回数据格式错误：缺少 materials 字段或不是数组')
       }
 
       // 将API返回的素材转换为前端格式
-      const newMaterials = response.items.map((apiMaterial) =>
+      const newMaterials = response.materials.map((apiMaterial) =>
         MaterialApiService.convertApiMaterialToMaterial(apiMaterial)
       )
 
@@ -677,12 +677,12 @@ export const useMaterialStore = defineStore('material', () => {
         throw new Error('API 返回数据为空')
       }
 
-      if (!response.items || !Array.isArray(response.items)) {
+      if (!response.materials || !Array.isArray(response.materials)) {
         throw new Error('API 返回数据格式错误：缺少 materials 字段或不是数组')
       }
 
       // 将API返回的素材转换为前端格式
-      const materials = response.items.map((apiMaterial) =>
+      const materials = response.materials.map((apiMaterial) =>
         MaterialApiService.convertApiMaterialToMaterial(apiMaterial)
       )
 
@@ -727,12 +727,12 @@ export const useMaterialStore = defineStore('material', () => {
         throw new Error('API 返回数据为空')
       }
 
-      if (!response.items || !Array.isArray(response.items)) {
+      if (!response.materials || !Array.isArray(response.materials)) {
         throw new Error('API 返回数据格式错误：缺少 materials 字段或不是数组')
       }
 
       // 将API返回的素材转换为前端格式
-      const materials = response.items.map((apiMaterial) =>
+      const materials = response.materials.map((apiMaterial) =>
         MaterialApiService.convertApiMaterialToMaterial(apiMaterial)
       )
 
@@ -857,11 +857,22 @@ export const useMaterialStore = defineStore('material', () => {
 
     try {
       // 由于移除了materialSearchService，这里使用素材API获取项目素材作为替代
-      const result = await materialApiService.getProjectMaterials(1, params)
+      const response = await materialApiService.getProjectMaterials(1, params)
+
+      // 防御性检查：确保 response 和 materials 字段存在
+      if (!response) {
+        throw new Error('API 返回数据为空')
+      }
+
+      if (!response.materials || !Array.isArray(response.materials)) {
+        throw new Error('API 返回数据格式错误：缺少 materials 字段或不是数组')
+      }
+
       // 将API返回的素材转换为前端格式
-      const materials = result.materials.map((apiMaterial) =>
+      const materials = response.materials.map((apiMaterial) =>
         MaterialApiService.convertApiMaterialToMaterial(apiMaterial)
       )
+
       state.value.materials = materials
       return materials
     } catch (error) {
