@@ -3,86 +3,55 @@
 ## 📋 核心原则
 
 - ✅ **零风险**: 原有文件完全保留，随时可以回滚
-- ✅ **页面优先**: 先让v2页面在前端显示，再逐步实现组件
+- ✅ **v2页面优先**: 先创建v2版本页面，确保能正常显示和访问，再逐步添加组件
 - ✅ **渐进实现**: 逐个组件实现，每步都要验证功能正确
 - ✅ **并行开发**: 新旧版本并存，支持A/B测试
 - ✅ **灵活切换**: 支持多种版本切换方式
 
-## 🚀 快速开始：让v2页面显示在前端
+## 🎯 总体策略：v2页面优先，组件逐步添加
 
-### 第一步：创建基础v2页面
+### 核心理念
 
-创建最简单的v2页面，确保能在前端正常显示。
+**先有页面，再有组件！** 这是一个关键理念转变：
 
-### 第二步：添加路由配置
+1. **第一步**: 创建最基础的v2页面（仅包含基本结构和占位内容）
+2. **第二步**: 让v2页面能在前端正常访问和显示
+3. **第三步**: 在v2页面内逐步添加拆分后的组件
+4. **第四步**: 验证每个组件的功能正确性
 
-在路由配置中添加v2版本的路径。
+这种策略的优势：
 
-### 第三步：更新导航菜单
+- 页面框架先行，降低重构风险
+- 早期验证路由和导航配置
+- 组件添加过程可逆，便于调试
+- 便于团队协作，分模块开发
 
-在侧边栏或顶部导航中添加v2版本的菜单项。
+---
 
-### 第四步：验证页面显示
+## 🚀 第一阶段：创建v2基础页面
 
-1. 启动开发服务器
-2. 访问v2版本的URL
-3. 确认页面正常显示
-4. 验证可以正常切换回原版本
-
-## 📈 组件实现路线图
-
-按照从简单到复杂的顺序逐步实现组件：
-
-### 阶段1: 最简单的组件（建立信心）
-
-1. MaterialFilter - 最简单，快速见效
-2. MaterialBatchActions - 独立性强
-3. TitleEmptyState - 功能单一
-
-### 阶段2: 中等复杂度组件
-
-4. TaskStatusSection - 状态管理
-5. TitleGenerationControls - 参数配置
-
-### 阶段3: 复杂组件
-
-6. TitleDisplaySection - 展示逻辑
-7. SelectedTitleDisplay - 交互较多
-
-### 阶段4: 最复杂的组件
-
-8. RequirementsSection - 业务逻辑复杂
-9. OutlineTreeEditor - 功能最复杂
-
-**每个组件实现后的验证清单：**
-
-- [ ] 组件在页面中正常显示
-- [ ] 基础功能工作正常
-- [ ] 与原版本功能一致
-- [ ] 页面可以正常切换版本
-
-## 📁 目录结构设计
+### 页面目录结构设计
 
 ```
 src/views/document-generation/
 ├── topic-selection/
 │   ├── index.vue                    # 原有文件保留 ✅
-│   └── v2/                         # 新版本目录
-│       ├── index.vue               # 新的主页面
-│       ├── components/             # 拆分后的组件
+│   └── v2/                          # 新版本目录
+│       ├── index.vue               # v2主页面 - 最简单版本
+│       ├── components/             # 拆分后的组件目录
 │       │   ├── RequirementsSection.vue
 │       │   ├── TitleGenerationControls.vue
 │       │   ├── TitleGenerationActions.vue
 │       │   ├── TitleDisplaySection.vue
 │       │   ├── TitleMaterialsSection.vue
 │       │   └── TaskStatusSection.vue
-│       └── composables/            # 组合式函数
+│       └── composables/            # v2页面专用组合式函数
 ├── outline/
 │   ├── index.vue                   # 原有文件保留 ✅
 │   ├── TitleSection.vue            # 原有文件保留 ✅
 │   ├── OutlineEditorSection.vue    # 原有文件保留 ✅
 │   └── v2/                        # 新版本目录
-│       ├── index.vue              # 新的主页面
+│       ├── index.vue              # v2主页面
 │       └── components/            # 拆分后的组件
 │           ├── SelectedTitleDisplay.vue
 │           ├── RelatedMaterialsManager.vue
@@ -91,245 +60,190 @@ src/views/document-generation/
 │           ├── OutlineEmptyState.vue
 │           ├── OutlineTreeEditor.vue
 │           └── SectionDetailEditor.vue
-└── material/
-    ├── management/
-    │   ├── index.vue              # 原有文件保留 ✅
-    │   └── v2/                   # 新版本目录
-    │       ├── index.vue        # 新的主页面
-    │       └── components/
-    │           ├── MaterialFilter.vue
-    │           └── MaterialBatchActions.vue
+└── content/
+    ├── index.vue                   # 原有文件保留 ✅
+    └── v2/                        # 新版本目录
+        ├── index.vue              # v2主页面
+        └── components/            # 拆分后的组件
+            ├── HeaderSection.vue
+            ├── OutlinePanel.vue
+            ├── EditorPanel.vue
+            ├── StatsPanel.vue
+            └── AIDialog.vue
+
+src/views/material/
+├── management/
+│   ├── index.vue                  # 原有文件保留 ✅
+│   └── v2/                       # 新版本目录
+│       ├── index.vue             # v2主页面
+│       └── components/
+│           ├── MaterialFilter.vue
+│           └── MaterialBatchActions.vue
 ```
 
-## 🔄 版本切换方案
+### 步骤1：创建v2主页面（最小可行版本）
 
-### 方案A: 路由切换（推荐）
+#### 1.1 最简单的v2页面模板
 
-**优点**:
+**目标**: 创建一个能正常显示的v2页面，不需要包含任何复杂逻辑
 
-- URL明确，便于调试和测试
-- 支持浏览器回退
-- 便于A/B测试
-- v1和v2版本同时可见
+**topic-selection/v2/index.vue 示例**:
 
-### 方案B: 环境变量切换
+```vue
+<template>
+  <div class="topic-selection-v2">
+    <!-- 页面标题 -->
+    <div class="page-header">
+      <h1>选题策划 (v2)</h1>
+      <el-tag type="warning">重构版本</el-tag>
+    </div>
 
-**优点**:
+    <!-- 占位内容 -->
+    <div class="placeholder-content">
+      <el-empty description="v2页面正在开发中...">
+        <el-button type="primary" @click="goToV1"> 切换到v1版本 </el-button>
+      </el-empty>
+    </div>
+  </div>
+</template>
 
-- 统一版本控制
-- 便于部署管理
-- 可以在不同环境展示不同版本
+<script setup lang="ts">
+  import { useRouter } from 'vue-router'
 
-### 方案C: 功能开关切换
+  const router = useRouter()
 
-**优点**:
+  const goToV1 = () => {
+    router.push('/document-generation/topic-selection')
+  }
+</script>
 
-- 实时切换，无需重启
-- 用户体验平滑
+<style scoped>
+  .topic-selection-v2 {
+    padding: 24px;
+  }
 
-## 🎯 实施步骤
+  .page-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
 
-### 阶段1: 环境准备
+  .placeholder-content {
+    padding: 60px 0;
+  }
+</style>
+```
 
-1. 创建目录结构
-2. 创建版本配置文件
-3. 设置开发工具
+**关键要点**:
 
-### 阶段2: 基础页面实现
+- 页面结构简单清晰
+- 显示v2版本标识
+- 提供返回v1的按钮
+- 不依赖任何复杂逻辑
 
-1. 创建v2页面（占位符模式）
-2. 实现第一个简单组件
-3. 验证页面显示正确
-4. 逐个添加组件，每添加一个都要验证
+#### 1.2 其他页面的v2最小版本
 
-### 阶段3: 路由和导航
+类似地，为其他页面创建最小v2版本：
 
-1. 添加新版本路由
-2. 更新导航菜单配置
-3. 配置面包屑导航
-4. 设置页面标题和meta信息
+- `outline/v2/index.vue` - 大纲页面最小版本
+- `content/v2/index.vue` - 正文页面最小版本
+- `material/management/v2/index.vue` - 素材管理最小版本
 
-### 阶段4: 组件迁移
+### 步骤2：添加v2路由配置
 
-1. 按优先级顺序实现组件
-2. 每个组件都要验证功能
-3. 确保与原版本功能一致
-4. 逐步替换原页面内容
+#### 2.1 更新路由配置
 
-### 阶段5: 测试和优化
+在 `src/router/routes/asyncRoutes.ts` 中添加v2路由：
 
-1. 功能完整性测试
-2. 性能对比测试
-3. 用户体验测试
-4. 错误处理验证
+```typescript
+// 添加v2版本路由（与原路由平行）
+{
+  path: '/document-generation/topic-selection-v2',
+  name: 'DocumentTopicSelectionV2',
+  component: () => import('@/views/document-generation/topic-selection/v2/index.vue'),
+  meta: {
+    title: '选题策划 (v2)',
+    keepAlive: true,
+    isHide: true,
+    activePath: '/document-generation/project-list',
+    version: 'v2'
+  }
+},
+{
+  path: '/document-generation/outline-v2/:projectId',
+  name: 'DocumentOutlineV2',
+  component: () => import('@/views/document-generation/outline/v2/index.vue'),
+  meta: {
+    title: '大纲 (v2)',
+    keepAlive: true,
+    isHide: true,
+    activePath: '/document-generation/project-list',
+    version: 'v2'
+  }
+},
+{
+  path: '/document-generation/content-v2/:projectId',
+  name: 'DocumentContentV2',
+  component: () => import('@/views/document-generation/content/v2/index.vue'),
+  meta: {
+    title: '正文 (v2)',
+    keepAlive: true,
+    isHide: true,
+    activePath: '/document-generation/project-list',
+    version: 'v2'
+  }
+},
+{
+  path: '/material/management-v2',
+  name: 'MaterialManagementV2',
+  component: () => import('@/views/material/management/v2/index.vue'),
+  meta: {
+    title: '素材管理 (v2)',
+    keepAlive: true,
+    version: 'v2'
+  }
+}
+```
 
-## 🖥️ 前端显示实施指南
+#### 2.2 添加版本切换按钮
 
-### 关键实施步骤
+在v1页面中添加切换到v2的按钮：
 
-1. **验证路由配置**: 确保v2页面路由可以正常访问
-2. **更新导航菜单**: 确保v2版本选项在菜单中显示
-3. **面包屑导航**: 配置v2版本路径显示
-4. **页面标题**: 设置v2版本标识
-5. **权限验证**: 确保用户有权限访问v2页面
+```vue
+<!-- 在原页面添加版本切换 -->
+<template>
+  <div class="original-page">
+    <!-- 原页面内容... -->
 
-### 前端显示验证清单
+    <!-- 版本切换按钮 -->
+    <div class="version-switcher">
+      <el-divider>版本切换</el-divider>
+      <el-button @click="switchToV2" type="primary" plain> 体验v2版本 (开发中) </el-button>
+    </div>
+  </div>
+</template>
 
-#### 开发环境验证
+<script setup lang="ts">
+  import { useRouter } from 'vue-router'
+
+  const router = useRouter()
+
+  const switchToV2 = () => {
+    // 根据当前路径决定v2路径
+    const currentPath = router.currentRoute.value.path
+    const v2Path = currentPath.replace('/topic-selection', '/topic-selection-v2')
+    router.push(v2Path)
+  }
+</script>
+```
+
+### 步骤3：验证v2页面显示
+
+#### 验证清单
 
 - [ ] v2页面路由可以正常访问
-- [ ] 侧边栏菜单显示v2版本选项
-- [ ] 面包屑导航正确显示路径
-- [ ] 页面标题显示v2标识
-- [ ] 可以正常切换版本
-
-#### 用户体验验证
-
-- [ ] v2页面UI显示正常
-- [ ] 功能与v1版本一致
-- [ ] 页面加载速度正常
-- [ ] 响应式设计正常
-- [ ] 错误处理机制正常
-
-## 🧪 测试策略
-
-### 单元测试
-
-- 每个组件独立测试
-- 验证组件功能正确性
-- 测试Props和Events
-
-### 集成测试
-
-- 验证组件间协作
-- 测试页面整体功能
-- 确保数据流正确
-
-### 对比测试
-
-- v1和v2版本功能对比
-- 性能指标对比
-- 用户体验对比
-
-### 回归测试
-
-- 确保原有功能不受影响
-- 验证所有API调用正常
-- 测试边界条件
-
-## 📊 监控和回滚
-
-### 性能监控
-
-- 页面加载时间
-- 组件渲染性能
-- 用户操作响应时间
-
-### 错误监控
-
-- JavaScript错误
-- API调用失败
-- 用户操作异常
-
-### 回滚机制
-
-- 快速回滚到v1版本
-- 数据状态恢复
-- 用户通知机制
-
-## 📝 开发规范
-
-### 组件开发规范
-
-- 组件命名使用PascalCase
-- Props使用camelCase
-- 事件使用kebab-case
-- 样式使用scoped
-
-### 组合式函数规范
-
-- 以use开头命名
-- 返回响应式数据和方法
-- 处理副作用和清理
-
-### 类型定义规范
-
-- 使用TypeScript接口
-- 明确定义Props和Events
-- 提供完整的类型注解
-
-## 🚀 部署策略
-
-### 渐进式部署
-
-1. 开发环境验证
-2. 测试环境部署
-3. 灰度发布（部分用户）
-4. 全量发布
-
-### 环境配置
-
-- 开发环境：启用所有v2功能
-- 测试环境：启用部分v2功能
-- 生产环境：根据需要启用v2功能
-
-## 📋 检查清单
-
-### 开发阶段检查清单
-
-- [ ] 创建新版本目录结构
-- [ ] 实现基础v2页面
-- [ ] 按优先级实现组件
-- [ ] 编写单元测试
-- [ ] 编写集成测试
-
-### 测试阶段检查清单
-
-- [ ] 功能完整性测试
-- [ ] UI兼容性测试
-- [ ] 性能基准测试
-- [ ] 用户体验测试
-- [ ] 浏览器兼容性测试
-
-### 部署阶段检查清单
-
-- [ ] 环境变量配置
-- [ ] 路由配置更新
-- [ ] 构建测试通过
-- [ ] 监控配置完成
-- [ ] 回滚方案准备
-
-## 🎯 成功指标
-
-### 技术指标
-
-- 组件平均行数从300+行降至160行
-- 单文件最大行数不超过300行
-- 代码可维护性提升80%
-- 单元测试覆盖率达到90%以上
-
-### 业务指标
-
-- 页面加载性能提升或保持原有水平
-- 用户操作成功率99.5%以上
-- 错误率降低至0.1%以下
-- 开发效率提升60%
-
-### 用户体验指标
-
-- 首屏加载时间减少40%
-- 交互响应时间提升50%
-- 用户满意度保持或提升
-- 功能可用性100%
-
-## 🔗 相关文档
-
-- [组件拆分重构方案](./component-refactoring-plan.md)
-- [Vue 3 组合式API最佳实践](https://vuejs.org/guide/extras/composition-api-faq.html)
-- [Element Plus 组件库文档](https://element-plus.org/)
-
----
-
-_重构成功的关键：渐进式迁移、充分测试、及时监控、快速响应。_
-
-_文档版本: v1.0_
+- [ ] 页面显示正确的v2标识
+- [ ] 可以在v1和v2之间正常切换
+- [ ] 导航菜单显示v2版本选项
+- [ ] 浏览器前进/后退功能正常
