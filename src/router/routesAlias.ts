@@ -10,6 +10,7 @@ export enum RoutesAlias {
   ForgetPassword = '/auth/forget-password', // 忘记密码
   VerifyEmail = '/auth/verify-email', // 邮件验证
   Exception404 = '/exception/404', // 404
+  Welcome = '/welcome', // 欢迎页面
   MaterialSearch = '/material/search', // 素材检索
   MaterialManagement = '/material/management', // 素材管理
   // 文档生成 - AI创作

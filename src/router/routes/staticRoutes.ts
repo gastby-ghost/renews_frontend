@@ -13,9 +13,9 @@ export const staticRoutes: AppRouteRecordRaw[] = [
   // 不需要登录就能访问的路由示例
   // {
   //   path: '/welcome',
-  //   name: 'WelcomeStatic',
-  //   component: () => import('@views/dashboard/console/index.vue'),
-  //   meta: { title: 'menus.dashboard.title', noLogin: true }
+  //   name: 'Welcome',
+  //   component: () => import('@views/welcome/index.vue'),
+  //   meta: { title: 'menus.welcome.title', noLogin: true }
   // },
   {
     path: RoutesAlias.Login,
@@ -42,7 +42,7 @@ export const staticRoutes: AppRouteRecordRaw[] = [
     meta: { title: 'menus.verifyEmail.title', isHideTab: true, noLogin: true, setTheme: true }
   },
   {
-    path: RoutesAlias.UserPreferences,
+    path: '/user/preferences',
     name: 'UserPreferences',
     component: () => import('@views/user/preferences/index.vue'),
     meta: { title: 'menus.userPreferences.title', isHideTab: true }

@@ -294,6 +294,10 @@
     "outside": {
       "title": "内嵌页面"
     },
+    "welcome": {
+      "introduce": "系统介绍",
+      "architecture": "闻曦系统架构"
+    },
     "material": {
       "title": "云端素材库",
       "search": "云端素材智能化检索",

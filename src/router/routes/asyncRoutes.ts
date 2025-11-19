@@ -29,6 +29,28 @@ export const asyncRoutes: AppRouteRecord[] = [
   // },
 
   {
+    path: '/welcome',
+    name: 'Welcome',
+    component: RoutesAlias.Layout,
+    meta: {
+      title: 'menus.welcome.introduce',
+      icon: '&#xe733;',
+      keepAlive: true
+    },
+    redirect: '/welcome/index',
+    children: [
+      {
+        path: 'index',
+        name: 'WelcomeIndex',
+        component: RoutesAlias.Welcome,
+        meta: {
+          title: 'menus.welcome.architecture',
+          keepAlive: true
+        }
+      }
+    ]
+  },
+  {
     path: '/material',
     name: 'Material',
     component: RoutesAlias.Layout,
