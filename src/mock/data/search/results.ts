@@ -90,17 +90,18 @@ export function generateMockSearchToolsResponse(
  * 生成Search Agent执行的Mock响应
  */
 export function generateMockSearchAgentResponse(
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   userId: string,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   projectId: string,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   brief: string
 ): SearchAgentResponse {
   return {
-    success: true,
     task_id: `search_agent_${Date.now()}`,
-    message: `Search Agent任务已启动 - 研究主题: ${brief}`,
-    user_id: userId,
-    project_id: projectId,
-    agent_type: 'search_agent'
+    status: 'pending',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
   }
 }
 
@@ -398,5 +399,57 @@ export function generateMockSearchToolsTaskStatus(taskId: string): SearchToolsTa
     created_at: Date.now() - 120000,
     updated_at: Date.now(),
     is_default_project: true
+  }
+}
+
+/**
+ * 生成素材库Mock数据
+ * 基于search-tool.json和search-agent.json中90%的数据
+ */
+export function generateMockMaterialsResponse() {
+  // 从search-agent.json中获取web_search_data（90%数据）
+  const webSearchData = (searchAgentData as any).result.web_search_data || []
+
+  // 从search-tool.json中获取results（剩余10%数据）
+  const toolResults = (searchToolData as any).result.results || []
+
+  // 合并数据，约90%来自search-agent，10%来自search-tool
+  const combinedData = [
+    ...webSearchData.slice(0, Math.ceil(webSearchData.length * 0.9)),
+    ...toolResults.slice(0, Math.ceil(toolResults.length * 0.1))
+  ]
+
+  // 转换为素材格式
+  const materials = combinedData.map((item: any, index: number) => ({
+    id: index + 1,
+    user_id: '1',
+    title: item.aititle || item.webtitle || '未命名素材',
+    content: item.key_excerpts?.[0] || item.summary || '',
+    summary: item.summary || '',
+    source: 'web',
+    source_url: item.url,
+    score: item.score || Math.random() * 5,
+    type: 'article',
+    status: 'active',
+    tags: item.tags || ['AI', '医疗', '技术'],
+    created_at: new Date(Date.now() - Math.random() * 86400000 * 30).toISOString(),
+    updated_at: new Date(Date.now() - Math.random() * 86400000 * 7).toISOString(),
+    metadata: {
+      url: item.url,
+      key_excerpts: item.key_excerpts || [],
+      query: item.query || ''
+    }
+  }))
+
+  return {
+    success: true,
+    message: '获取素材库成功',
+    materials: materials,
+    pagination: {
+      page: 1,
+      page_size: materials.length,
+      total: materials.length,
+      total_pages: 1
+    }
   }
 }

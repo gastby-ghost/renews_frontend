@@ -49,7 +49,11 @@ import {
 
 // 搜索工具相关Mock
 import { mockDataManager } from '../../index'
-import { generateMockSearchAgentResponse, generateMockSearchAgentStatus } from '../search/results'
+import {
+  generateMockSearchAgentResponse,
+  generateMockSearchAgentStatus,
+  generateMockMaterialsResponse
+} from '../search/results'
 
 // 搜索代理执行Mock处理函数
 const executeSearchAgentMock = (config: { method: string; url: string; data?: any }) => {
@@ -82,6 +86,12 @@ const getSearchToolsStatusMock = (config: { method: string; url: string }) => {
   const taskIdMatch = url.match(/\/status\/([^/]+)/)
   const taskId = taskIdMatch ? taskIdMatch[1] : ''
   return mockDataManager.getMockData('search-tools-task-status', taskId)
+}
+
+// 素材库Mock处理函数
+const getMaterialsMock = (config: { method: string; url: string; data?: any }) => {
+  console.log('[Mock] 获取素材库', config)
+  return generateMockMaterialsResponse()
 }
 
 /**
@@ -141,7 +151,10 @@ export const mockRoutes = new Map<string, any>([
   ['POST:/api/v1/core/projects/:projectId/title-versions', createTitleVersionMock],
   ['GET:/api/v1/core/projects/:projectId/title-versions', getTitleVersionsMock],
   ['PUT:/api/v1/core/projects/:projectId/title-versions/:versionId', updateTitleVersionMock],
-  ['DELETE:/api/v1/core/projects/:projectId/title-versions/:versionId', deleteTitleVersionMock]
+  ['DELETE:/api/v1/core/projects/:projectId/title-versions/:versionId', deleteTitleVersionMock],
+
+  // 素材库路由
+  ['GET:/api/v1/core/materials', getMaterialsMock]
 ] as const)
 
 /**
