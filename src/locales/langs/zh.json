@@ -295,13 +295,13 @@
       "title": "内嵌页面"
     },
     "material": {
-      "title": "素材库",
-      "search": "素材检索",
-      "management": "素材管理"
+      "title": "云端素材库",
+      "search": "云端素材智能化检索",
+      "management": "云端素材智能化管理"
     },
     "documentGeneration": {
-      "title": "AI创作",
-      "projectList": "项目列表",
+      "title": "云端人机智能化协作",
+      "projectList": "云端智能化创作空间",
       "topicSelection": "选题页面",
       "requirements": "需求分析",
       "outline": "文档大纲",

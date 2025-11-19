@@ -3,8 +3,8 @@
     <div class="page-header">
       <div class="header-content">
         <div class="header-left">
-          <h1 class="page-title">AI创作项目列表</h1>
-          <p class="page-subtitle">管理和创建您的AI文档创作项目</p>
+          <h1 class="page-title">云端智能化创作空间</h1>
+          <p class="page-subtitle">管理和创建您的人机协同创作项目</p>
         </div>
         <div class="header-right">
           <el-input
