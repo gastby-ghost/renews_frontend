@@ -11,7 +11,7 @@ import { storeToRefs } from 'pinia'
 import type { Material } from '@/types/material'
 import type { OutlineSection } from '@/types/ai'
 import documentGenerateService from '@/services/documentGenerateService'
-import type { OutlineSectionCreate } from '@/services/outlineSectionService'
+import type { OutlineSectionCreateRequest } from '@/types/core/outlineSection'
 
 /**
  * 大纲管理状态接口

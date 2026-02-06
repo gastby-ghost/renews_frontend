@@ -92,7 +92,6 @@ This is a **Vue 3 + TypeScript + Vite** admin management system with the followi
 
 ```
 src/
-├── api/                  # Legacy API definitions (deprecated, use services/)
 ├── assets/               # Static assets (styles, images, fonts, icons)
 ├── components/           # Vue components
 │   ├── core/            # Core reusable components (charts, forms, tables, etc.)
@@ -112,6 +111,9 @@ src/
 │   ├── core/            # Core business services (materials, projects, etc.)
 │   └── base/            # Base HTTP client and utilities
 ├── store/               # Pinia state management
+│   ├── material.ts      # Main material store (legacy, ~1200 lines)
+│   ├── polling.ts       # Async task polling management
+│   └── modules/         # Modular stores
 ├── types/               # TypeScript type definitions
 │   ├── ai/              # AI service types
 │   ├── api/             # API request/response types
@@ -304,4 +306,7 @@ src/
 3. **Component Discovery:** Components are auto-imported, no manual imports needed
 4. **Router Configuration:** Routes are dynamically loaded from menu configuration
 5. **AI Services:** AI features require backend API integration
-6. **Refactoring:** Some pages have v2/ versions being developed for improved architecture
+6. **Technical Debt:** Large files needing refactoring:
+   - `store/material.ts` (~1200 lines)
+   - `store/modules/documentGenerate.ts` (~1400 lines)
+   - `composables/document/useOutlinePage.ts` (~1200 lines)

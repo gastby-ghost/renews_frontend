@@ -12,7 +12,6 @@
 <script setup lang="ts">
   import * as echarts from 'echarts'
   import { useSettingStore } from '@/store/modules/setting'
-  import chinaMapJson from '@/mock/json/chinaMap.json'
   import type { MapChartProps } from '@/types/component/chart'
   import { ElEmpty } from 'element-plus'
 
@@ -22,6 +21,9 @@
   const chartInstance = shallowRef<echarts.ECharts | null>(null)
   const settingStore = useSettingStore()
   const { isDark } = storeToRefs(settingStore)
+
+  // 地图数据 - 组件删除后默认为空
+  const chinaMapJson = shallowRef<any>(null)
 
   const props = withDefaults(defineProps<MapChartProps>(), {
     mapData: () => [],
@@ -39,7 +41,7 @@
 
   // 检查是否为空数据
   const isEmpty = computed(() => {
-    return props.isEmpty || (!props.mapData?.length && !chinaMapJson)
+    return props.isEmpty || (!props.mapData?.length && !chinaMapJson.value)
   })
 
   // 根据 geoJson 数据准备地图数据
@@ -201,16 +203,26 @@
 
     chartInstance.value = echarts.init(chinaMapRef.value)
 
-    echarts.registerMap('china', chinaMapJson as any)
-    const mapData = props.mapData.length > 0 ? props.mapData : prepareMapData(chinaMapJson)
-    const option = createChartOption(mapData)
+    // 检查地图数据是否存在
+    if (!chinaMapJson.value || (Array.isArray(chinaMapJson.value) && chinaMapJson.value.length === 0)) {
+      console.warn('地图数据未加载，请提供 chinaMap.json')
+      return
+    }
 
-    chartInstance.value.setOption(option)
+    try {
+      echarts.registerMap('china', chinaMapJson.value as any)
+      const mapData = props.mapData.length > 0 ? props.mapData : prepareMapData(chinaMapJson.value)
+      const option = createChartOption(mapData)
 
-    // 绑定事件
-    chartInstance.value.on('click', handleMapClick)
+      chartInstance.value.setOption(option)
 
-    emit('renderComplete')
+      // 绑定事件
+      chartInstance.value.on('click', handleMapClick)
+
+      emit('renderComplete')
+    } catch (error) {
+      console.error('地图初始化失败:', error)
+    }
   }
 
   // 处理地图点击事件
@@ -279,7 +291,7 @@
     () => props.mapData,
     () => {
       if (chartInstance.value && !isEmpty.value) {
-        const mapData = props.mapData.length > 0 ? props.mapData : prepareMapData(chinaMapJson)
+        const mapData = props.mapData.length > 0 ? props.mapData : prepareMapData(chinaMapJson.value)
         const option = createChartOption(mapData)
         chartInstance.value.setOption(option)
       }

@@ -1,3 +1,8 @@
+/**
+ * 认证服务 - API 调用层
+ * 负责与后端认证 API 通信
+ */
+
 import request from '@/utils/http'
 
 export class AuthService {
