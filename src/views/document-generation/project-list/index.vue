@@ -166,8 +166,7 @@
   onMounted(async () => {
     try {
       await projectStore.fetchProjects()
-    } catch (err) {
-      console.error('加载项目列表失败:', err)
+    } catch {
       ElMessage.error('加载项目列表失败')
     }
   })

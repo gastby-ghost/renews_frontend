@@ -45,11 +45,14 @@
 </template>
 
 <script setup lang="ts">
+  import { computed } from 'vue'
   import { Loading } from '@element-plus/icons-vue'
+  import type { AIDialogType } from '@/composables/document/useAIDialog'
+  import { useAIDialog } from '@/composables/document/useAIDialog'
 
-  type DialogType = 'polish' | 'expand' | 'summarize' | 'translate' | 'rewrite' | null
+  type DialogType = AIDialogType
 
-  defineProps<{
+  const props = defineProps<{
     visible: boolean
     dialogTitle: string
     dialogType: DialogType
@@ -64,13 +67,16 @@
     (e: 'cancel'): void
   }>()
 
-  const handleApply = () => {
-    emit('apply')
-  }
-
-  const handleCancel = () => {
-    emit('cancel')
-  }
+  // 使用 composable
+  const { handleApply, handleCancel } = useAIDialog({
+    visible: computed(() => props.visible),
+    dialogType: computed(() => props.dialogType),
+    aiLoading: computed(() => props.aiLoading),
+    selectedText: computed(() => props.selectedText),
+    aiResult: computed(() => props.aiResult),
+    onApply: () => emit('apply'),
+    onCancel: () => emit('cancel')
+  })
 </script>
 
 <style scoped lang="scss">

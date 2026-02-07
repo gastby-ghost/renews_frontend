@@ -219,20 +219,6 @@
   let logInterval: any = null
 
   onMounted(async () => {
-    // 调试日志：检查 Circle 图标是否存在
-    console.log('调试：正在检查 @element-plus/icons-vue 中的 Circle 图标...')
-    try {
-      const iconsModule = await import('@element-plus/icons-vue')
-      const circleIcons = Object.keys(iconsModule).filter((key) =>
-        key.toLowerCase().includes('circle')
-      )
-      console.log('可用的圆形相关图标：', circleIcons)
-      console.log('Circle 图标存在：', 'Circle' in iconsModule)
-      console.log('建议使用的替代图标：', 'circle-check, circle-close, circle-plus 等')
-    } catch (error) {
-      console.error('检查图标时出错：', error)
-    }
-
     // 添加初始日志
     addLog('info', 'Agent检索任务已启动')
 

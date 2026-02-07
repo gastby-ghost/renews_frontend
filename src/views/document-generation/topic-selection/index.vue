@@ -425,7 +425,6 @@
   const saveFormState = () => {
     const projectId = route.params.projectId as string
     if (!projectId) {
-      console.log('[DEBUG] saveFormState: 无项目ID，跳过保存')
       return
     }
 
@@ -440,28 +439,12 @@
 
     try {
       localStorage.setItem(key, JSON.stringify(data))
-      console.log(`\n=== [DEBUG] 表单状态保存 ===`)
-      console.log(`项目ID: ${projectId}`)
-      console.log(`存储键: ${key}`)
-      console.log(`保存时间: ${new Date(data.timestamp).toLocaleString()}`)
-      console.log(`完整表单数据:`, data)
-      console.log(`表单摘要:`, {
-        topic: data.requirementsForm.topic || '(空)',
-        keyPoints: data.requirementsForm.keyPoints || [],
-        specialRequirements: data.requirementsForm.specialRequirements ? '有内容' : '(空)',
-        customKeywords: data.titleState.customKeywords || []
-      })
-      console.log(`========================\n`)
-    } catch (error) {
-      console.error('[DEBUG] 保存表单状态失败:', error)
+    } catch {
+      // 保存失败时不影响主流程
     }
 
     // 同时保存到文档状态存储
-    console.log(
-      `[DEBUG] 准备保存文档状态，项目ID: ${projectId}, currentProjectId: ${documentStore.currentProjectId}`
-    )
     if (documentStore.currentProjectId !== projectId) {
-      console.log(`[DEBUG] 设置当前项目: ${projectId}`)
       documentStore.setCurrentProject(projectId)
     }
     documentStore.updateDocumentState({}, projectId)
@@ -472,33 +455,23 @@
    */
   const restoreLocalFormState = (projectId: string) => {
     const key = getFormStateKey(projectId)
-    console.log(`\n=== [DEBUG] 开始恢复表单状态 ===`)
-    console.log(`项目ID: ${projectId}`)
-    console.log(`查找存储键: ${key}`)
 
     try {
       const data = localStorage.getItem(key)
-      console.log(`存储数据:`, data ? '存在' : '不存在`')
 
       if (data) {
         const parsed = JSON.parse(data)
-        console.log(`解析后的数据:`, parsed)
-        console.log(`保存时间: ${new Date(parsed.timestamp).toLocaleString()}`)
 
         // 检查数据是否过期（7天）
         const isExpired = Date.now() - (parsed.timestamp || 0) > 7 * 24 * 60 * 60 * 1000
-        console.log(`数据是否过期:`, isExpired ? '是' : '否')
 
         if (isExpired) {
-          console.log('[DEBUG] 表单状态已过期，清理并重新开始')
           localStorage.removeItem(key)
-          console.log(`========================\n`)
           return
         }
 
         // 恢复需求表单状态
         if (parsed.requirementsForm) {
-          console.log(`[DEBUG] 恢复前表单数据:`, requirementsState.form)
           requirementsState.form = {
             topic: parsed.requirementsForm.topic || '',
             keyPoints: Array.isArray(parsed.requirementsForm.keyPoints)
@@ -506,30 +479,16 @@
               : [],
             specialRequirements: parsed.requirementsForm.specialRequirements || ''
           }
-          console.log(`[DEBUG] 恢复后表单数据:`, requirementsState.form)
-          console.log(`✅ 需求表单状态已恢复`)
-        } else {
-          console.log(`⚠️  未找到需求表单数据`)
         }
 
         // 恢复标题状态
         if (parsed.titleState?.customKeywords) {
-          console.log(`[DEBUG] 恢复前自定义关键词:`, titleState.customKeywords)
           titleState.customKeywords = parsed.titleState.customKeywords
-          console.log(`[DEBUG] 恢复后自定义关键词:`, titleState.customKeywords)
-          console.log(`✅ 标题状态已恢复`)
-        } else {
-          console.log(`⚠️  未找到标题状态数据`)
         }
-
-        console.log(`✅ 表单状态恢复完成`)
-      } else {
-        console.log(`⚠️  localStorage中无此项目的数据`)
       }
-    } catch (error) {
-      console.error('[DEBUG] 恢复表单状态失败:', error)
+    } catch {
+      // 恢复失败时不影响主流程
     }
-    console.log(`========================\n`)
   }
 
   // ====== 路由和状态初始化 ======
@@ -673,7 +632,6 @@
         : []
 
       if (searchResults.length === 0) {
-        console.warn('[DEBUG] titleSearchResults is empty or not an object array')
         return []
       }
 
@@ -701,27 +659,11 @@
 
   /** 渲染研究简报内容（Markdown转HTML） */
   const renderedBriefing = computed(() => {
-    console.log(
-      `[DEBUG] renderedBriefing computed - researchBrief:`,
-      documentState.value.researchBrief
-    )
-    console.log(
-      `[DEBUG] renderedBriefing computed - researchBrief type:`,
-      typeof documentState.value.researchBrief
-    )
-    console.log(
-      `[DEBUG] renderedBriefing computed - researchBrief length:`,
-      documentState.value.researchBrief?.length || 'N/A'
-    )
-
     if (!documentState.value.researchBrief) {
-      console.log(`[DEBUG] renderedBriefing computed - no researchBrief, returning empty string`)
       return ''
     }
 
-    const rendered = marked(documentState.value.researchBrief)
-    console.log(`[DEBUG] renderedBriefing computed - rendered HTML length:`, rendered.length)
-    return rendered
+    return marked(documentState.value.researchBrief)
   })
 
   /** 渲染可编辑简报内容（Markdown转HTML） */
@@ -822,9 +764,8 @@
   /** 处理素材点击事件
    * @param material - 被点击的素材
    */
-  const handleMaterialClick = (material: Material) => {
+  const handleMaterialClick = () => {
     // TODO: 实现素材点击逻辑
-    console.log('素材被点击:', material)
   }
 
   /** 返回上一页 */
@@ -838,24 +779,12 @@
   watch(
     () => documentState.value.search2titleTask,
     (task) => {
-      console.log('[DEBUG] search2titleTask watcher - task:', task)
       if (task) {
         const shouldLoading = task.status === 'pending' || task.status === 'running'
-        console.log(
-          '[DEBUG] search2titleTask watcher - task.status:',
-          task.status,
-          'shouldLoading:',
-          shouldLoading
-        )
         search2titleLoading.value = shouldLoading
       } else {
-        console.log('[DEBUG] search2titleTask watcher - no task, setting loading to false')
         search2titleLoading.value = false
       }
-      console.log(
-        '[DEBUG] search2titleTask watcher - final search2titleLoading:',
-        search2titleLoading.value
-      )
     },
     { immediate: true }
   )
@@ -865,11 +794,8 @@
   /** 监听需求表单变化，自动保存 */
   const stopRequirementsWatch = watch(
     () => requirementsState.form,
-    (newVal, oldVal) => {
+    () => {
       // 防抖保存，避免频繁写入
-      console.log(`[DEBUG] 需求表单变化触发自动保存`)
-      console.log(`  - 旧值:`, oldVal)
-      console.log(`  - 新值:`, newVal)
       saveFormState()
     },
     { deep: true, immediate: false }
@@ -878,10 +804,7 @@
   /** 监听标题状态变化，自动保存 */
   const stopTitleStateWatch = watch(
     () => titleState.customKeywords,
-    (newVal, oldVal) => {
-      console.log(`[DEBUG] 自定义关键词变化触发自动保存`)
-      console.log(`  - 旧值:`, oldVal)
-      console.log(`  - 新值:`, newVal)
+    () => {
       saveFormState()
     },
     { deep: true, immediate: false }
@@ -891,22 +814,11 @@
 
   /** 页面卸载时保存状态 */
   const beforeUnloadHandler = () => {
-    console.log(`\n=== [DEBUG] beforeunload 事件触发 ===`)
-    console.log(`触发时间: ${new Date().toLocaleString()}`)
-    console.log(`当前项目ID: ${route.params.projectId}`)
-    console.log(`当前表单数据:`, requirementsState.form)
-    console.log(`当前研究简报长度: ${documentState.value.researchBrief?.length || 0}`)
-    console.log(`当前生成的标题数量: ${documentState.value.generatedTitles?.length || 0}`)
-
     saveFormState()
     const projectId = route.params.projectId as string
     if (projectId) {
-      console.log(`[DEBUG] 页面卸载时触发文档状态保存`)
       documentStore.updateDocumentState({}, projectId)
-      console.log(`[DEBUG] 页面卸载状态保存完成`)
     }
-
-    console.log(`========================\n`)
   }
 
   /** 页面初始化
@@ -914,47 +826,31 @@
    * @since 2025-11-08 添加项目切换时的状态重置逻辑
    */
   onMounted(async () => {
-    console.log(`\n=== [DEBUG] 页面加载 (onMounted) ===`)
-    console.log(`加载时间: ${new Date().toLocaleString()}`)
-
     // 加载项目信息
     const projectId = route.params.projectId as string
-    console.log(`项目ID: ${projectId}`)
 
     if (projectId) {
       try {
         const numericProjectId = Number(projectId)
-        console.log(`数值项目ID: ${numericProjectId}`)
 
         // 检查当前项目是否已加载且匹配
-        console.log(`当前项目信息:`, {
-          storeProject: projectStore.currentProject?.id,
-          routeProject: numericProjectId
-        })
-
         if (
           !projectStore.currentProject ||
           Number(projectStore.currentProject.id) !== numericProjectId
         ) {
-          console.log(`[DEBUG] 项目信息未加载或已切换，开始加载项目信息...`)
-
           // 先从已加载的项目列表中查找
           if (projectStore.projects.length === 0) {
-            console.log(`[DEBUG] 项目列表为空，开始获取项目列表...`)
             await projectStore.fetchProjects()
           }
 
           const project = projectStore.projects.find((p) => Number(p.id) === numericProjectId)
           if (project) {
-            console.log(`[DEBUG] 从项目列表中找到项目:`, project.name)
             projectStore.setCurrentProject(project)
           } else {
             // 如果未找到，通过API获取项目详情
-            console.log(`[DEBUG] 项目列表中未找到，通过API获取...`)
             const { projectService } = await import('@/services/projectService')
             const response = await projectService.getProjectDetail(numericProjectId)
             if (response.project) {
-              console.log(`[DEBUG] 从API获取到项目:`, response.project.name)
               projectStore.setCurrentProject(response.project)
             }
           }
@@ -963,101 +859,46 @@
         // ========== 项目状态管理 ==========
         // 检查是否为新项目或项目已切换
         const currentPersistedProjectId = sessionStorage.getItem('current-topic-selection-project')
-        console.log(`[DEBUG] SessionStorage中的项目ID:`, currentPersistedProjectId)
 
         if (currentPersistedProjectId !== projectId) {
-          console.log(
-            `\n🔄 检测到项目变化: ${currentPersistedProjectId || '(首次进入)'} -> ${projectId}`
-          )
-
           // 1. 加载项目状态（先尝试恢复，不强制重置）
-          console.log(`[DEBUG] 开始加载项目状态...`)
           documentStore.resetStateForProject(numericProjectId, false)
 
           // 2. 总是尝试恢复表单状态
-          console.log(`[DEBUG] 开始恢复表单状态...`)
           restoreLocalFormState(projectId)
 
           // 3. 更新当前项目ID记录
           sessionStorage.setItem('current-topic-selection-project', projectId)
-
-          console.log(`✅ 项目 ${projectId} 状态已就绪`)
         } else {
-          console.log(`\n🔄 同一项目，恢复之前的状态`)
-
+          // 同一项目，恢复之前的状态
           // 对于同一项目，尝试从存储恢复状态
           if (!documentStore.currentProjectId) {
-            console.log(`[DEBUG] Store中无当前项目ID，设置项目ID: ${projectId}`)
             documentStore.setCurrentProject(projectId)
           }
 
           // 尝试加载已保存的状态
-          console.log(`[DEBUG] 开始加载文档状态...`)
           const hasSavedState = documentStore.loadFromProjectStorage(projectId)
-          console.log(`[DEBUG] 文档状态加载结果:`, hasSavedState ? '成功' : '无数据')
 
           if (hasSavedState) {
-            console.log(`✅ 已恢复之前的文档状态`)
-            console.log(`[DEBUG] 恢复的文档状态摘要:`, {
-              researchBriefLength: documentState.value.researchBrief?.length || 0,
-              generatedTitlesCount: documentState.value.generatedTitles?.length || 0
-            })
-          } else {
-            console.log(`⚠️  无已保存的文档状态，但可能仍有表单状态`)
+            // 已恢复之前的文档状态
           }
 
           // 总是尝试恢复表单状态（独立于文档状态）
-          console.log(`[DEBUG] 开始恢复表单状态...`)
           restoreLocalFormState(projectId)
         }
         // ========== 项目状态管理结束 ==========
-      } catch (error) {
-        console.error('加载项目失败:', error)
+      } catch {
         ElMessage.error('加载项目信息失败，请刷新页面重试')
       }
-    } else {
-      console.log(`⚠️  无项目ID`)
     }
 
     // 添加按钮状态调试日志（延迟执行，确保状态重置完成）
     setTimeout(() => {
-      console.log(`\n=== [DEBUG] 页面状态总结 ===`)
-      console.log(`当前项目ID: ${projectId}`)
-      console.log(`当前项目名: ${projectStore.currentProject?.name || '(无)'}`)
-      console.log(`当前Store项目ID: ${documentStore.currentProjectId || '(无)'}`)
-
-      console.log(`\n📋 需求表单状态:`)
-      console.log(`  - 主题:`, requirementsState.form.topic || '(空)')
-      console.log(`  - 关键要点数量:`, requirementsState.form.keyPoints.length)
-      console.log(`  - 特殊要求:`, requirementsState.form.specialRequirements ? '有内容' : '(空)')
-
-      console.log(`\n📄 文档状态:`)
-      console.log(`  - 研究简报长度:`, documentState.value.researchBrief?.length || 0)
-      console.log(`  - 生成的标题数量:`, documentState.value.generatedTitles?.length || 0)
-      console.log(`  - 选中的标题:`, documentState.value.selectedTitle?.title || '(无)')
-
-      console.log(`\n⚙️  任务状态:`)
-      console.log(`  - isGeneratingBriefing:`, requirementsState.isGeneratingBriefing)
-      console.log(`  - isExecutingScope:`, requirementsState.isExecutingScope)
-      console.log(`  - canGenerateBriefing:`, canGenerateBriefing.value)
-      console.log(`  - hasScopeTask:`, hasScopeTask.value)
-      console.log(`  - scopeTask:`, documentState.value.scopeTask ? '存在' : '(无)')
-      console.log(`  - search2titleTask:`, documentState.value.search2titleTask ? '存在' : '(无)')
-      console.log(`  - search2titleLoading:`, search2titleLoading.value)
-
       // 检查并清理无效的任务状态
       const scopeTask = documentState.value.scopeTask
       if (scopeTask) {
         const now = Date.now()
         const taskAge = now - scopeTask.createdAt
-
-        console.log(`\n🔍 Scope任务详情:`)
-        console.log(`  - taskId:`, scopeTask.taskId)
-        console.log(`  - task.status:`, scopeTask.status)
-        console.log(`  - task.createdAt:`, new Date(scopeTask.createdAt).toLocaleString())
-        console.log(`  - now:`, new Date(now).toLocaleString())
-        console.log(`  - taskAge:`, `${Math.floor(taskAge / 1000)}秒`)
-        console.log(`  - task.progress:`, scopeTask.progress || 0)
 
         // 如果任务时间戳异常或任务已完成但未清理，手动清理
         if (
@@ -1066,7 +907,6 @@
           scopeTask.status === 'failed' ||
           taskAge > 30 * 60 * 1000
         ) {
-          console.log('[DEBUG] Clearing invalid task on mount')
           documentStore.updateDocumentState({ scopeTask: null })
         }
       }
@@ -1077,14 +917,6 @@
         const now = Date.now()
         const taskAge = now - search2titleTask.createdAt
 
-        console.log(`\n🔍 Search2Title任务详情:`)
-        console.log(`  - taskId:`, search2titleTask.taskId)
-        console.log(`  - task.status:`, search2titleTask.status)
-        console.log(`  - task.createdAt:`, new Date(search2titleTask.createdAt).toLocaleString())
-        console.log(`  - now:`, new Date(now).toLocaleString())
-        console.log(`  - taskAge:`, `${Math.floor(taskAge / 1000)}秒`)
-        console.log(`  - task.progress:`, search2titleTask.progress || 0)
-
         // 如果任务时间戳异常或任务已完成但未清理，手动清理
         if (
           search2titleTask.createdAt > now ||
@@ -1092,13 +924,9 @@
           search2titleTask.status === 'failed' ||
           taskAge > 30 * 60 * 1000
         ) {
-          console.log(`[DEBUG] 清理无效的Search2Title任务`)
           documentStore.updateDocumentState({ search2titleTask: null })
         }
       }
-
-      console.log(`✅ 页面状态检查完成`)
-      console.log(`========================\n`)
     }, 1000)
 
     // 初始化Search2Title loading状态
@@ -1106,7 +934,6 @@
 
     // 添加页面卸载事件监听器
     window.addEventListener('beforeunload', beforeUnloadHandler)
-    console.log('[DEBUG] 已添加 beforeunload 事件监听器')
   })
 
   /**
@@ -1115,36 +942,22 @@
    */
   onUnmounted(() => {
     try {
-      console.log(`\n=== [DEBUG] 页面卸载 (onUnmounted) ===`)
-      console.log(`卸载时间: ${new Date().toLocaleString()}`)
-
       // 页面卸载前先保存状态
-      console.log(`[DEBUG] 开始保存当前状态...`)
-      console.log(`当前表单数据:`, requirementsState.form)
-      console.log(`当前研究简报:`, documentState.value.researchBrief?.substring(0, 100) || '(空)')
-
       saveFormState()
       const projectId = route.params.projectId as string
       if (projectId) {
         documentStore.updateDocumentState({}, projectId)
-        console.log(`✅ 项目 ${projectId} 的状态已保存`)
       }
 
       // 清理当前项目的sessionStorage记录，让下次进入时重新检查
       sessionStorage.removeItem('current-topic-selection-project')
-      console.log(`✅ 已清理项目ID记录`)
 
       // 清理监听器
-      console.log(`[DEBUG] 清理监听器...`)
       stopRequirementsWatch()
       stopTitleStateWatch()
       window.removeEventListener('beforeunload', beforeUnloadHandler)
-      console.log(`✅ 已清理所有监听器`)
-
-      console.log(`[DEBUG] 页面卸载完成`)
-      console.log(`========================\n`)
-    } catch (error) {
-      console.error('页面卸载时发生错误:', error)
+    } catch {
+      // 页面卸载时发生错误，静默处理
     }
   })
 </script>

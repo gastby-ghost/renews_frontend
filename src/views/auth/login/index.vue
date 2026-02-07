@@ -105,23 +105,42 @@
 </template>
 
 <script setup lang="ts">
+  // Vue 核心导入
+  import { computed } from 'vue'
+
+  // Vue Router
+  import { useRouter } from 'vue-router'
+
+  // Pinia Store
+  import { useUserStore } from '@/store/modules/user'
+  import { useSettingStore } from '@/store/modules/setting'
+
+  // Element Plus
+  import { ElNotification, ElMessage } from 'element-plus'
+  import type { FormInstance, FormRules } from 'element-plus'
+
+  // Composables
+  import { useI18n } from 'vue-i18n'
+
+  // 工具函数
+  import { getCssVar } from '@/utils/ui'
+  import { themeAnimation } from '@/utils/theme/animation'
+
+  // 配置和类型
   import AppConfig from '@/config'
   import { RoutesAlias } from '@/router/routesAlias'
-  import { ElNotification, ElMessage } from 'element-plus'
-  import { useUserStore } from '@/store/modules/user'
-  import { getCssVar } from '@/utils/ui'
   import { languageOptions } from '@/locales'
   import { LanguageEnum } from '@/enums/appEnum'
-  import { useI18n } from 'vue-i18n'
-  import { HttpError } from '@/utils/http/error'
-  import { themeAnimation } from '@/utils/theme/animation'
+
+  // 服务
   import { authService } from '@/services/core/authService'
+
+  // 错误处理
+  import { HttpError } from '@/utils/http/error'
 
   defineOptions({ name: 'Login' })
 
   const { t } = useI18n()
-  import { useSettingStore } from '@/store/modules/setting'
-  import type { FormInstance, FormRules } from 'element-plus'
 
   const settingStore = useSettingStore()
   const { isDark } = storeToRefs(settingStore)
@@ -146,7 +165,7 @@
     login: [
       { required: true, message: t('login.placeholder[0]'), trigger: 'blur' },
       {
-        validator: (rule: any, value: string, callback: any) => {
+        validator: (_rule: unknown, value: string, callback: (error?: Error) => void) => {
           if (!value) {
             callback(new Error(t('login.placeholder[0]')))
           } else {
@@ -197,56 +216,34 @@
       // 登录请求
       const { login, password } = formData
 
-      console.log('[Login] 开始登录请求:', {
-        login,
-        password: password ? '***' : 'empty',
-        remember_me: formData.remember_me,
-        apiUrl: import.meta.env.VITE_API_URL
-      })
-
       const authResponse = await authService.login({
         login: login,
         password,
         remember_me: formData.remember_me
       })
 
-      console.log('[Login] 登录响应:', authResponse)
-
       // 验证响应
       if (!authResponse.success || !authResponse.token) {
-        console.log('[Login] 登录响应验证失败:', {
-          success: authResponse.success,
-          hasToken: !!authResponse.token,
-          message: authResponse.message
-        })
         throw new Error(authResponse.message || '登录失败')
       }
 
       // 使用新的登录方法处理认证响应
       const loginSuccess = userStore.loginWithAuthResponse(authResponse)
-      console.log('[Login] 登录响应处理结果:', loginSuccess)
 
       if (!loginSuccess) {
         throw new Error('登录响应处理失败')
-      }
-
-      // 如果认证响应中没有用户信息，单独获取
-      if (!authResponse.user) {
-        console.warn('[Login] 认证响应中未包含用户信息，但登录仍然成功')
       }
 
       // 登录成功处理
       showLoginSuccessNotice()
       router.push('/')
     } catch (error) {
-      console.error('[Login] 登录错误:', error)
       // 处理 HttpError
       if (error instanceof HttpError) {
         ElMessage.error(error.message || '登录失败，请检查用户名和密码')
       } else {
         // 处理非 HttpError
         ElMessage.error(error instanceof Error ? error.message : '登录失败，请稍后重试')
-        console.error('[Login] Unexpected error:', error)
       }
     } finally {
       loading.value = false

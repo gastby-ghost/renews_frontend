@@ -19,6 +19,9 @@ export { useTitleMaterials } from './useTitleMaterials'
 // 大纲编辑器相关组合式函数
 export { useOutlineEditor } from './useOutlineEditor'
 
+// AI 对话框相关组合式函数
+export { useAIDialog } from './useAIDialog'
+
 export { useContent } from './useContent'
 export { useTopicSelection } from './useTopicSelection'
 export { useCeremony } from '../useCeremony'

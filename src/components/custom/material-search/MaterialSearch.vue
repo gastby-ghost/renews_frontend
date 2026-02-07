@@ -242,8 +242,6 @@
       const valid = await searchFormRef.value.validate()
       if (!valid) return
 
-      console.log('[MaterialSearch] 开始搜索，关键词:', searchForm.keywords)
-
       // 使用公共搜索逻辑
       // 构建搜索配置
       const searchConfig: SearchConfig = {
@@ -255,7 +253,7 @@
 
       await searchWithSearchTools(searchConfig)
     } catch (error) {
-      console.error('Search error:', error)
+      ElMessage.error(error instanceof Error ? error.message : '搜索失败，请稍后重试')
     }
   }
 
@@ -289,8 +287,6 @@
     autoClear: boolean
     goToLibrary: boolean
   }) => {
-    console.log('[MaterialSearch] handleAddToLibraryConfirm 被调用', { options })
-
     try {
       // 更新选项
       addToLibraryOptions.value.autoClear = options.autoClear
@@ -301,15 +297,8 @@
         .map((id) => searchResults.value.find((material) => material.id === id))
         .filter(Boolean) as Material[]
 
-      console.log('[MaterialSearch] 准备添加素材到数据库', {
-        materialsCount: materialsToAdd.length,
-        materials: materialsToAdd.map((m) => ({ id: m.id, title: m.title }))
-      })
-
       // 使用Store方法将搜索结果添加到数据库
       const result = await materialStore.addSearchResultsToDatabase(materialsToAdd)
-
-      console.log('[MaterialSearch] 添加到数据库完成', { result })
 
       // 根据选项执行后续操作
       if (options.autoClear) {
@@ -322,22 +311,14 @@
         ElMessage.success(`已添加 ${result.addedCount} 个素材到数据库`)
       }
 
-      console.log(
-        '[MaterialSearch] handleAddToLibraryConfirm 完成，准备调用子组件的 completeAdd 方法'
-      )
-
       // 调用子组件的 completeAdd 方法来关闭进度对话框
       if (addToLibraryDialogRef.value && addToLibraryDialogRef.value.completeAdd) {
-        console.log('[MaterialSearch] 调用子组件 completeAdd 方法')
         addToLibraryDialogRef.value.completeAdd(
           true,
           `成功添加 ${result.addedCount} 个素材到数据库`
         )
-      } else {
-        console.log('[MaterialSearch] 无法获取子组件引用或 completeAdd 方法')
       }
-    } catch (error) {
-      console.error('添加到数据库失败:', error)
+    } catch {
       ElMessage.error('添加到数据库失败')
 
       // 即使出错也要调用 completeAdd 来关闭进度对话框
@@ -350,32 +331,18 @@
   // 组件挂载时检查搜索工具状态
   onMounted(async () => {
     try {
-      console.log('[MaterialSearch] 组件挂载，开始检查搜索工具状态...')
-      console.log('[MaterialSearch] 时间戳:', new Date().toISOString())
-
       // 检查是否已经有缓存的状态数据
-      if (materialStore.searchToolsStatus) {
-        console.log('[MaterialSearch] 使用store中的缓存状态数据')
-      } else {
-        const status = await materialStore.checkSearchToolsStatus()
-        console.log('[MaterialSearch] 搜索工具状态检查完成:', status)
+      if (!materialStore.searchToolsStatus) {
+        await materialStore.checkSearchToolsStatus()
       }
-
-      console.log('[MaterialSearch] 完成时间戳:', new Date().toISOString())
 
       // 检查搜索工具配置状态
       const currentStatus = materialStore.searchToolsStatus
       if (currentStatus && !currentStatus.tavily_configured && !currentStatus.bocha_configured) {
-        console.log('[MaterialSearch] 搜索工具未配置，显示警告')
         ElMessage.warning('搜索工具未配置，请联系管理员')
       }
-    } catch (error) {
-      console.error('[MaterialSearch] Check search tools status error:', error)
-      console.error('[MaterialSearch] 错误详情:', {
-        error: error,
-        errorMessage: error instanceof Error ? error.message : '未知错误',
-        errorType: typeof error
-      })
+    } catch {
+      ElMessage.error('检查搜索工具状态失败')
     }
   })
 </script>

@@ -286,17 +286,14 @@
         // 应用主题设置
         if (response.theme) {
           // settingStore.setThemeMode(response.theme as 'light' | 'dark' | 'auto')
-          console.log('主题设置:', response.theme)
         }
 
         // 应用语言设置
         if (response.language) {
           // userStore.setLanguage(response.language as 'zh-CN' | 'en-US')
-          console.log('语言设置:', response.language)
         }
       }
-    } catch (error) {
-      console.error('获取用户偏好设置失败:', error)
+    } catch {
       ElMessage.error('获取用户偏好设置失败，使用默认设置')
     } finally {
       isLoading.value = false
@@ -330,7 +327,6 @@
         ElMessage.error(error.message || '保存失败')
       } else {
         ElMessage.error('保存失败，请稍后重试')
-        console.error('保存用户偏好设置失败:', error)
       }
     } finally {
       saving.value = false
@@ -367,12 +363,10 @@
 
         // 应用主题设置
         // settingStore.setThemeMode(response.theme as 'light' | 'dark' | 'auto')
-        console.log('主题设置:', response.theme)
 
         // 应用语言设置
         // if (response.language) {
         //   // userStore.setLanguage(response.language as 'zh-CN' | 'en-US')
-        //   console.log('语言设置:', response.language)
         // }
       }
 
@@ -380,7 +374,6 @@
     } catch (error) {
       if (error !== 'cancel') {
         ElMessage.error('重置失败，请稍后重试')
-        console.error('重置用户偏好设置失败:', error)
       }
     }
   }
@@ -396,9 +389,8 @@
       link.download = 'user-preferences.json'
       link.click()
       URL.revokeObjectURL(url)
-    } catch (error) {
+    } catch {
       ElMessage.error('导出失败，请稍后重试')
-      console.error('导出用户偏好设置失败:', error)
     }
   }
 
@@ -427,22 +419,19 @@
           // 应用主题设置
           if (importedPrefs.theme) {
             // settingStore.setThemeMode(importedPrefs.theme as 'light' | 'dark' | 'auto')
-            console.log('主题设置:', importedPrefs.theme)
           }
 
           // 应用语言设置
           if (importedPrefs.language) {
             // userStore.setLanguage(importedPrefs.language as 'zh-CN' | 'en-US')
-            console.log('语言设置:', importedPrefs.language)
           }
 
           ElMessage.success(t('userPreferences.messages.importSuccess'))
         } else {
           throw new Error('无效的偏好设置文件格式')
         }
-      } catch (error) {
+      } catch {
         ElMessage.error(t('userPreferences.messages.importError'))
-        console.error('导入用户偏好设置失败:', error)
       }
     }
 
@@ -453,9 +442,8 @@
   }
 
   // 处理各种设置变更
-  const handleThemeChange = (value: string) => {
+  const handleThemeChange = () => {
     // settingStore.setThemeMode(value as 'light' | 'dark' | 'auto')
-    console.log('主题设置:', value)
   }
 
   const handleFontSizeChange = (value: string) => {
@@ -464,44 +452,36 @@
       value === 'small' ? '14px' : value === 'large' ? '18px' : '16px'
   }
 
-  const handleLanguageChange = (value: string) => {
+  const handleLanguageChange = () => {
     // userStore.setLanguage(value as 'zh-CN' | 'en-US')
-    console.log('语言设置:', value)
   }
 
-  const handleAutoSaveChange = (value: string) => {
+  const handleAutoSaveChange = () => {
     // 应用自动保存频率设置
-    console.log('自动保存频率变更为:', value)
   }
 
-  const handleNotificationChange = (value: boolean) => {
+  const handleNotificationChange = () => {
     // 应用通知设置
-    console.log('通知设置变更为:', value)
   }
 
-  const handleSoundChange = (value: boolean) => {
+  const handleSoundChange = () => {
     // 应用声音设置
-    console.log('声音设置变更为:', value)
   }
 
-  const handleCompactModeChange = (value: boolean) => {
+  const handleCompactModeChange = () => {
     // 应用紧凑模式设置
-    console.log('紧凑模式设置变更为:', value)
   }
 
-  const handleTooltipsChange = (value: boolean) => {
+  const handleTooltipsChange = () => {
     // 应用工具提示设置
-    console.log('工具提示设置变更为:', value)
   }
 
-  const handleAutoCompleteChange = (value: boolean) => {
+  const handleAutoCompleteChange = () => {
     // 应用自动完成设置
-    console.log('自动完成设置变更为:', value)
   }
 
-  const handleSpellCheckChange = (value: boolean) => {
+  const handleSpellCheckChange = () => {
     // 应用拼写检查设置
-    console.log('拼写检查设置变更为:', value)
   }
 
   onMounted(() => {

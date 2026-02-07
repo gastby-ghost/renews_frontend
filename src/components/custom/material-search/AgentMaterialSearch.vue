@@ -304,7 +304,6 @@
     } else {
       Object.assign(agentForm, config)
     }
-    console.log('Agent配置已更新:', config)
   }
 
   // 处理Agent搜索
@@ -312,7 +311,6 @@
     try {
       await executeAgentSearch(config)
     } catch (error) {
-      console.error('Agent search error:', error)
       ElMessage.error(error instanceof Error ? error.message : 'Agent检索失败，请稍后重试')
     }
   }
@@ -338,7 +336,6 @@
 
       await handleAgentSearch(agentConfig)
     } catch (error) {
-      console.error('Search error:', error)
       ElMessage.error(error instanceof Error ? error.message : '搜索失败，请稍后重试')
     }
   }
@@ -350,8 +347,7 @@
         // 调用取消API
         await materialStore.cancelAgentTask(currentTaskId.value)
         ElMessage.success('Agent任务已取消')
-      } catch (error) {
-        console.error('Cancel agent task error:', error)
+      } catch {
         ElMessage.warning('取消任务时发生错误，但搜索已停止')
       }
     }
@@ -395,8 +391,6 @@
     autoClear: boolean
     goToLibrary: boolean
   }) => {
-    console.log('[AgentMaterialSearch] handleAddToLibraryConfirm 被调用', { options })
-
     try {
       // 更新选项
       addToLibraryOptions.value.autoClear = options.autoClear
@@ -407,15 +401,8 @@
         .map((id) => searchResults.value.find((material) => material.id === id))
         .filter(Boolean) as Material[]
 
-      console.log('[AgentMaterialSearch] 准备添加素材到数据库', {
-        materialsCount: materialsToAdd.length,
-        materials: materialsToAdd.map((m) => ({ id: m.id, title: m.title }))
-      })
-
       // 使用Store方法将搜索结果添加到数据库
       const result = await materialStore.addSearchResultsToDatabase(materialsToAdd)
-
-      console.log('[AgentMaterialSearch] 添加到数据库完成', { result })
 
       // 根据选项执行后续操作
       if (options.autoClear) {
@@ -428,22 +415,14 @@
         ElMessage.success(`已添加 ${result.addedCount} 个素材到数据库`)
       }
 
-      console.log(
-        '[AgentMaterialSearch] handleAddToLibraryConfirm 完成，准备调用子组件的 completeAdd 方法'
-      )
-
       // 调用子组件的 completeAdd 方法来关闭进度对话框
       if (addToLibraryDialogRef.value && addToLibraryDialogRef.value.completeAdd) {
-        console.log('[AgentMaterialSearch] 调用子组件 completeAdd 方法')
         addToLibraryDialogRef.value.completeAdd(
           true,
           `成功添加 ${result.addedCount} 个素材到数据库`
         )
-      } else {
-        console.log('[AgentMaterialSearch] 无法获取子组件引用或 completeAdd 方法')
       }
-    } catch (error) {
-      console.error('添加到数据库失败:', error)
+    } catch {
       ElMessage.error('添加到数据库失败')
 
       // 即使出错也要调用 completeAdd 来关闭进度对话框

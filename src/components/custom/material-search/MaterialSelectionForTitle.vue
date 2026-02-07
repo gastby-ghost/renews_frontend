@@ -633,7 +633,6 @@
         emit('close')
       }
     } catch (error: any) {
-      console.error('标题生成失败:', error)
       ElMessage.error(error?.message || '标题生成失败')
     } finally {
       titleGenerating.value = false

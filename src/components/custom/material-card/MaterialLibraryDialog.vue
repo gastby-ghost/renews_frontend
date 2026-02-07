@@ -88,7 +88,6 @@
           :show-score="true"
           context="management"
           @select="() => toggleMaterial(material)"
-          @preview="(m) => console.log('预览素材:', m)"
         />
       </div>
 
@@ -203,8 +202,7 @@
     try {
       await loadMaterials()
       ElMessage.success(`筛选结果：${filteredMaterials.value.length} 个素材`)
-    } catch (error) {
-      console.error('筛选失败:', error)
+    } catch {
       ElMessage.error('筛选失败')
     }
   }
@@ -217,8 +215,8 @@
     try {
       await loadMaterials()
       ElMessage.info('已重置筛选条件')
-    } catch (error) {
-      console.error('重置失败:', error)
+    } catch {
+      ElMessage.error('重置失败')
     }
   }
 
@@ -257,19 +255,14 @@
   }
 
   async function loadMaterials() {
-    try {
-      const params = {
-        page: 1,
-        page_size: 50,
-        keywords: filterForm.value.search || undefined,
-        tags: filterForm.value.tags.length > 0 ? filterForm.value.tags : undefined
-      }
-
-      await materialStore.loadAllMaterialsFromDatabase(params)
-    } catch (error) {
-      console.error('加载素材失败:', error)
-      throw error
+    const params = {
+      page: 1,
+      page_size: 50,
+      keywords: filterForm.value.search || undefined,
+      tags: filterForm.value.tags.length > 0 ? filterForm.value.tags : undefined
     }
+
+    await materialStore.loadAllMaterialsFromDatabase(params)
   }
 
   // 监听对话框打开，加载素材

@@ -226,8 +226,7 @@
       deleteDialogVisible.value = false
       // 重新加载数据
       await loadMaterials()
-    } catch (err) {
-      console.error('删除失败:', err)
+    } catch {
       ElMessage.error('删除失败')
     }
   }
@@ -290,8 +289,7 @@
 
       const result = await materialStore.loadAllMaterialsFromDatabase(params)
       totalCount.value = result.totalCount
-    } catch (err) {
-      console.error('加载素材失败:', err)
+    } catch {
       ElMessage.error('加载素材失败')
     }
   }
@@ -302,8 +300,7 @@
       await loadMaterials()
       // 清空之前的选择状态，确保从搜索页面跳转过来时不会保留之前的选择
       materialStore.clearSelection()
-    } catch (err) {
-      console.error('加载素材库失败:', err)
+    } catch {
       ElMessage.error('加载素材库失败')
     }
 
@@ -314,8 +311,8 @@
           await loadMaterials()
           // 进入页面时清空选择状态
           materialStore.clearSelection()
-        } catch (err) {
-          console.error('刷新素材库失败:', err)
+        } catch {
+          // 静默处理刷新错误
         }
       }
     })

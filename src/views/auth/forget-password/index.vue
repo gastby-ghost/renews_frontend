@@ -126,9 +126,7 @@
       if (error instanceof HttpError) {
         ElMessage.error(error.message || '请求失败，请稍后重试')
       } else {
-        // 处理非 HttpError
         ElMessage.error(error instanceof Error ? error.message : '请求失败，请稍后重试')
-        console.error('[ForgetPassword] Unexpected error:', error)
       }
     } finally {
       loading.value = false

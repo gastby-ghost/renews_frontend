@@ -105,7 +105,6 @@
         errorMessage.value = error.message || t('verifyEmail.error.message')
       } else {
         errorMessage.value = error instanceof Error ? error.message : t('verifyEmail.error.message')
-        console.error('[VerifyEmail] Unexpected error:', error)
       }
     }
   }

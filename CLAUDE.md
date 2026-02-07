@@ -84,6 +84,10 @@
 
 **重要**：注意，任意服务的类型将会定义在对应的types文件中，比如@src/types/core/auth.ts 对应@src/services/core/authService.ts，不要在其他地方找类型，也不要将对应类型定义到其他地方。
 
+**参考文档**：
+
+- [Vue 3.0 最优实践指南](docs/vue3-best-practices.md) - 组件设计、Composition API、Composable 模式等规范
+
 ## Project Architecture
 
 ### Directory Structure

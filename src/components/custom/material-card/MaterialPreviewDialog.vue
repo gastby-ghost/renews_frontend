@@ -350,8 +350,7 @@
       emit('material-updated', updatedMaterial)
       ElMessage.success('素材更新成功')
       previewMode.value = 'preview'
-    } catch (error) {
-      console.error('更新素材失败:', error)
+    } catch {
       ElMessage.error('更新素材失败')
     } finally {
       saving.value = false
