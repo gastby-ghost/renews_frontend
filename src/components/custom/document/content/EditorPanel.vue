@@ -1,9 +1,6 @@
 <template>
   <div class="editor-panel">
-    <EditorEmptyState
-      v-if="!hasContent && !showPreview"
-      @generate="generateAIContent"
-    />
+    <EditorEmptyState v-if="!hasContent && !showPreview" @generate="generateAIContent" />
 
     <div v-else class="editor-wrapper">
       <!-- 模式切换标签 -->

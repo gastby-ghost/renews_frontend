@@ -1,11 +1,15 @@
 #!/usr/bin/env node
 
+/* eslint-disable @typescript-eslint/no-require-imports */
 /**
  * 验证 AI 模块转换结果
  */
 
 const fs = require('fs')
 const path = require('path')
+
+// 获取当前文件所在目录
+const __dirname = path.dirname(process.cwd())
 
 const aiModulesDir = path.join(__dirname, '../src/config/api/modules/ai')
 

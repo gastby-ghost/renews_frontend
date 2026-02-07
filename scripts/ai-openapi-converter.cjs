@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+/* eslint-disable @typescript-eslint/no-require-imports */
 /**
  * AI OpenAPI 3.1.0 到 TypeScript API 配置转换器
  * 将 ai_openapi 中的 JSON 文件转换为 src/config/api/modules/ai 中的 TypeScript 文件
@@ -7,6 +8,9 @@
 
 const fs = require('fs')
 const path = require('path')
+
+// 获取当前文件所在目录
+const __dirname = path.dirname(process.cwd())
 
 // 配置
 const config = {
@@ -18,7 +22,7 @@ const config = {
 /**
  * 提取 AI OpenAPI 路径信息并转换为 API 配置格式
  */
-function extractPathInfo(openapiSpec, fileName) {
+function extractPathInfo(openapiSpec) {
   const paths = openapiSpec.paths || {}
   const result = {}
 
@@ -220,7 +224,7 @@ function extractBaseUrl(openapiSpec) {
       return new URL(serverUrl).pathname
     } catch {
       // 如果无法解析URL，尝试提取路径部分
-      const pathMatch = serverUrl.match(/\/api\/[^\/]*/)
+      const pathMatch = serverUrl.match(/\/api\/[^/]*/)
       return pathMatch ? pathMatch[0] : '/api/v1/ai'
     }
   }
@@ -229,7 +233,7 @@ function extractBaseUrl(openapiSpec) {
   const paths = Object.keys(openapiSpec.paths || {})
   if (paths.length > 0) {
     const firstPath = paths[0]
-    const match = firstPath.match(/(\/api\/[^\/]*\/[^\/]*)/)
+    const match = firstPath.match(/(\/api\/[^/]*\/[^/]*)/)
     if (match) {
       return match[1]
     }

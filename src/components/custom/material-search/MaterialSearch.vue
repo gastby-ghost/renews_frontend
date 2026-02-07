@@ -90,7 +90,12 @@
     maxResults: number
   }
 
-  const initialSearchConfig: SearchConfig = { keywords: '', providers: [], searchScope: '', filters: { tags: [] } }
+  const initialSearchConfig: SearchConfig = {
+    keywords: '',
+    providers: [],
+    searchScope: '',
+    filters: { tags: [] }
+  }
 
   // 使用公共搜索逻辑
   const {
@@ -121,7 +126,11 @@
   } = useMaterialSearch()
 
   // 响应式数据
-  const searchFormRef = ref<{ validate: () => Promise<boolean>; resetFields: () => void; form: SearchForm }>()
+  const searchFormRef = ref<{
+    validate: () => Promise<boolean>
+    resetFields: () => void
+    form: SearchForm
+  }>()
   const addToLibraryDialogRef = ref()
   const materialStore = useMaterialStore()
 

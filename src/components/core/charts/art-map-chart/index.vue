@@ -204,7 +204,10 @@
     chartInstance.value = echarts.init(chinaMapRef.value)
 
     // 检查地图数据是否存在
-    if (!chinaMapJson.value || (Array.isArray(chinaMapJson.value) && chinaMapJson.value.length === 0)) {
+    if (
+      !chinaMapJson.value ||
+      (Array.isArray(chinaMapJson.value) && chinaMapJson.value.length === 0)
+    ) {
       console.warn('地图数据未加载，请提供 chinaMap.json')
       return
     }
@@ -291,7 +294,8 @@
     () => props.mapData,
     () => {
       if (chartInstance.value && !isEmpty.value) {
-        const mapData = props.mapData.length > 0 ? props.mapData : prepareMapData(chinaMapJson.value)
+        const mapData =
+          props.mapData.length > 0 ? props.mapData : prepareMapData(chinaMapJson.value)
         const option = createChartOption(mapData)
         chartInstance.value.setOption(option)
       }

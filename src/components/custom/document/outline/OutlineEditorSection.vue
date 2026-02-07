@@ -130,101 +130,101 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import type { Material } from '@/types/core/material'
-import type { OutlineSection } from '@/types/core/outline'
-import type { MaterialBindResult } from './types'
+  import { computed } from 'vue'
+  import type { Material } from '@/types/core/material'
+  import type { OutlineSection } from '@/types/core/outline'
+  import type { MaterialBindResult } from './types'
 
-// 子组件
-import OutlineEditorHeader from './OutlineEditorHeader.vue'
-import OutlineEditorEmpty from './OutlineEditorEmpty.vue'
-import OutlineSectionItem from './OutlineSectionItem.vue'
+  // 子组件
+  import OutlineEditorHeader from './OutlineEditorHeader.vue'
+  import OutlineEditorEmpty from './OutlineEditorEmpty.vue'
+  import OutlineSectionItem from './OutlineSectionItem.vue'
 
-defineOptions({ name: 'OutlineEditorSection' })
+  defineOptions({ name: 'OutlineEditorSection' })
 
-// Props
-interface Props {
-  /** 生成的大纲章节列表 */
-  generatedOutline: OutlineSection[]
-  /** 是否可以从标题生成大纲 */
-  canGenerateFromTitle: boolean
-  /** 是否可以添加章节 */
-  canAddSection: boolean
-  /** 是否正在生成大纲 */
-  generatingOutline: boolean
-  /** 已选择的素材列表 */
-  selectedMaterials: Material[]
-  /** 是否正在绑定素材 */
-  isBindingMaterials: boolean
-  /** 素材绑定结果 */
-  bindingResult: MaterialBindResult | null
-}
+  // Props
+  interface Props {
+    /** 生成的大纲章节列表 */
+    generatedOutline: OutlineSection[]
+    /** 是否可以从标题生成大纲 */
+    canGenerateFromTitle: boolean
+    /** 是否可以添加章节 */
+    canAddSection: boolean
+    /** 是否正在生成大纲 */
+    generatingOutline: boolean
+    /** 已选择的素材列表 */
+    selectedMaterials: Material[]
+    /** 是否正在绑定素材 */
+    isBindingMaterials: boolean
+    /** 素材绑定结果 */
+    bindingResult: MaterialBindResult | null
+  }
 
-const props = defineProps<Props>()
+  const props = defineProps<Props>()
 
-// Emits
-const emit = defineEmits<{
-  (e: 'generateAIOutline'): void
-  (e: 'generateAICompleteOutline'): void
-  (e: 'addSection'): void
-  (e: 'deleteSection', index: number): void
-  (e: 'moveSectionUp', index: number): void
-  (e: 'moveSectionDown', index: number): void
-  (e: 'clearOutline'): void
-  (e: 'confirmOutline'): void
-  (e: 'editSection', title: string, data: Partial<OutlineSection>): void
-  (e: 'goBack'): void
-  (e: 'bindMaterial', sectionIndex: number, material: Material): void
-  (e: 'unbindMaterial', sectionIndex: number, materialTitle: string): void
-  (e: 'aiBindMaterials'): void
-}>()
+  // Emits
+  const emit = defineEmits<{
+    (e: 'generateAIOutline'): void
+    (e: 'generateAICompleteOutline'): void
+    (e: 'addSection'): void
+    (e: 'deleteSection', index: number): void
+    (e: 'moveSectionUp', index: number): void
+    (e: 'moveSectionDown', index: number): void
+    (e: 'clearOutline'): void
+    (e: 'confirmOutline'): void
+    (e: 'editSection', title: string, data: Partial<OutlineSection>): void
+    (e: 'goBack'): void
+    (e: 'bindMaterial', sectionIndex: number, material: Material): void
+    (e: 'unbindMaterial', sectionIndex: number, materialTitle: string): void
+    (e: 'aiBindMaterials'): void
+  }>()
 
-// 计算属性：获取所有素材
-const getAllMaterials = computed(() => props.selectedMaterials)
+  // 计算属性：获取所有素材
+  const getAllMaterials = computed(() => props.selectedMaterials)
 
-// 计算属性：获取章节的绑定信息
-const getSectionBindings = (sectionIndex: number) => {
-  if (!props.bindingResult) return null
-  const binding = props.bindingResult.material_section_bindings[sectionIndex]
-  return binding || null
-}
+  // 计算属性：获取章节的绑定信息
+  const getSectionBindings = (sectionIndex: number) => {
+    if (!props.bindingResult) return null
+    const binding = props.bindingResult.material_section_bindings[sectionIndex]
+    return binding || null
+  }
 
-// 计算属性：获取平均匹配分数
-const getAverageMatchScore = (sectionIndex: number): number => {
-  const bindings = getSectionBindings(sectionIndex)
-  if (!bindings || bindings.match_scores.length === 0) return 0
-  const sum = bindings.match_scores.reduce((acc, score) => acc + score, 0)
-  return Math.round(sum / bindings.match_scores.length)
-}
+  // 计算属性：获取平均匹配分数
+  const getAverageMatchScore = (sectionIndex: number): number => {
+    const bindings = getSectionBindings(sectionIndex)
+    if (!bindings || bindings.match_scores.length === 0) return 0
+    const sum = bindings.match_scores.reduce((acc, score) => acc + score, 0)
+    return Math.round(sum / bindings.match_scores.length)
+  }
 
-// 计算属性：获取可用的素材列表
-const getAvailableMaterialsForSection = (sectionIndex: number): Material[] => {
-  const bindings = getSectionBindings(sectionIndex)
-  if (!bindings) return props.selectedMaterials
+  // 计算属性：获取可用的素材列表
+  const getAvailableMaterialsForSection = (sectionIndex: number): Material[] => {
+    const bindings = getSectionBindings(sectionIndex)
+    if (!bindings) return props.selectedMaterials
 
-  const boundTitles = bindings.materials.map(m => m.title)
-  return props.selectedMaterials.filter(m => !boundTitles.includes(m.title))
-}
+    const boundTitles = bindings.materials.map((m) => m.title)
+    return props.selectedMaterials.filter((m) => !boundTitles.includes(m.title))
+  }
 
-// 方法：编辑章节标题
-const handleEditTitle = (title: string, newTitle: string) => {
-  emit('editSection', title, { title: newTitle })
-}
+  // 方法：编辑章节标题
+  const handleEditTitle = (title: string, newTitle: string) => {
+    emit('editSection', title, { title: newTitle })
+  }
 
-// 方法：编辑章节内容方向
-const handleEditContent = (title: string, contentDirection: string) => {
-  emit('editSection', title, { content_direction: contentDirection })
-}
+  // 方法：编辑章节内容方向
+  const handleEditContent = (title: string, contentDirection: string) => {
+    emit('editSection', title, { content_direction: contentDirection })
+  }
 
-// 方法：绑定素材
-const handleBindMaterial = (sectionIndex: number, material: Material) => {
-  emit('bindMaterial', sectionIndex, material)
-}
+  // 方法：绑定素材
+  const handleBindMaterial = (sectionIndex: number, material: Material) => {
+    emit('bindMaterial', sectionIndex, material)
+  }
 
-// 方法：解绑素材
-const handleUnbindMaterial = (sectionIndex: number, materialTitle: string) => {
-  emit('unbindMaterial', sectionIndex, materialTitle)
-}
+  // 方法：解绑素材
+  const handleUnbindMaterial = (sectionIndex: number, materialTitle: string) => {
+    emit('unbindMaterial', sectionIndex, materialTitle)
+  }
 </script>
 
 <style scoped lang="scss">
