@@ -15,278 +15,50 @@
         <el-card class="topic-content-card" shadow="never">
           <div class="content-wrapper">
             <!-- 需求定义区域 -->
-            <div class="requirements-section">
-              <h2 class="section-title">需求定义</h2>
-              <el-form
-                ref="requirementsFormRef"
-                :model="requirementsState.form"
-                :rules="requirementsValidationRules"
-                label-width="120px"
-                size="large"
-              >
-                <el-form-item label="主题/标题" prop="topic">
-                  <el-input
-                    v-model="requirementsState.form.topic"
-                    placeholder="请输入文档的主题或标题"
-                    maxlength="100"
-                    show-word-limit
-                  />
-                </el-form-item>
-
-                <el-form-item label="关键要点" prop="keyPoints">
-                  <div class="key-points-input">
-                    <el-input
-                      v-model="requirementsState.currentKeyPoint"
-                      placeholder="输入关键要点后按回车添加"
-                      @keyup.enter="addKeyPoint"
-                    />
-                    <el-button
-                      @click="addKeyPoint"
-                      :disabled="!requirementsState.currentKeyPoint.trim()"
-                    >
-                      添加
-                    </el-button>
-                  </div>
-                  <div class="key-points-list" v-if="requirementsState.form.keyPoints.length > 0">
-                    <el-tag
-                      v-for="(point, index) in requirementsState.form.keyPoints"
-                      :key="index"
-                      closable
-                      @close="removeKeyPoint(index)"
-                      type="info"
-                    >
-                      {{ point }}
-                    </el-tag>
-                  </div>
-                </el-form-item>
-
-                <el-form-item label="特殊要求" prop="specialRequirements">
-                  <el-input
-                    v-model="requirementsState.form.specialRequirements"
-                    type="textarea"
-                    :rows="4"
-                    placeholder="请输入任何特殊要求，如需要包含的特定信息、避免的词汇等"
-                  />
-                </el-form-item>
-              </el-form>
-
-              <div class="requirements-actions">
-                <el-button
-                  ref="generateButtonRef"
-                  type="primary"
-                  size="large"
-                  @click="generateAIBriefing(requirementsFormRef)"
-                  :loading="
-                    requirementsState.isGeneratingBriefing || requirementsState.isExecutingScope
-                  "
-                  :disabled="!canGenerateBriefing || hasScopeTask"
-                >
-                  <template v-if="hasScopeTask">
-                    {{ getTaskStatusText }} ({{ getTaskProgress }}%)
-                  </template>
-                  <template v-else>生成AI简报</template>
-                </el-button>
-                <el-button
-                  v-if="hasScopeTask"
-                  @click="cancelScopeTask"
-                  size="large"
-                  type="danger"
-                  plain
-                >
-                  取消任务
-                </el-button>
-              </div>
-
-              <!-- AI简报展示区域 -->
-              <div class="ai-briefing-section" v-if="documentState.researchBrief">
-                <div class="section-header">
-                  <h3>AI创作简报</h3>
-                  <el-button @click="editBriefing" size="small" type="primary" plain
-                    >编辑简报</el-button
-                  >
-                </div>
-
-                <div class="briefing-content markdown-body" v-html="renderedBriefing"></div>
-              </div>
-
-              <!-- Scope Agent 任务状态指示器 -->
-              <div class="task-status-card" v-if="hasScopeTask">
-                <el-card>
-                  <div class="task-status">
-                    <div class="status-icon">
-                      <el-icon v-if="scopeTaskStatus === 'completed'" color="#67C23A">
-                        <Check />
-                      </el-icon>
-                      <el-icon v-else-if="scopeTaskStatus === 'failed'" color="#F56C6C">
-                        <Close />
-                      </el-icon>
-                      <el-icon v-else color="#409EFF" class="is-loading">
-                        <Loading />
-                      </el-icon>
-                    </div>
-                    <div class="status-content">
-                      <h4>AI简报生成任务</h4>
-                      <p>{{ getTaskStatusText }}</p>
-                      <el-progress
-                        v-if="scopeTaskStatus && ['running', 'pending'].includes(scopeTaskStatus)"
-                        :percentage="getTaskProgress"
-                        :status="scopeTaskStatus === 'failed' ? 'exception' : undefined"
-                      />
-                    </div>
-                  </div>
-                </el-card>
-              </div>
-            </div>
+            <RequirementsSection
+              :form="requirementsState.form"
+              :current-key-point="requirementsState.currentKeyPoint"
+              :can-generate-briefing="canGenerateBriefing"
+              :has-scope-task="hasScopeTask"
+              :scope-task-status="scopeTaskStatus"
+              :task-progress="getTaskProgress"
+              :task-status-text="getTaskStatusText"
+              :is-generating-briefing="requirementsState.isGeneratingBriefing"
+              :is-executing-scope="requirementsState.isExecutingScope"
+              :research-brief="documentState.researchBrief"
+              @update:current-key-point="(val) => (requirementsState.currentKeyPoint = val)"
+              @update:form="(val) => (requirementsState.form = val)"
+              @generate-briefing="generateAIBriefing"
+              @cancel-scope-task="cancelScopeTask"
+              @edit-briefing="editBriefing"
+              @add-key-point="addKeyPoint"
+              @remove-key-point="removeKeyPoint"
+            />
 
             <!-- 标题选择区域 - 仅在AI简报生成后显示 -->
-            <div v-if="documentState.researchBrief" class="titles-section">
-              <h2 class="section-title">标题选择</h2>
-
-              <!-- 生成进度显示 -->
-              <div v-if="titleState.isGenerating" class="generation-progress">
-                <el-progress
-                  :percentage="titleState.progress"
-                  :status="titleState.progress === 100 ? 'success' : undefined"
-                  :stroke-width="6"
-                />
-                <p class="progress-text">正在生成标题，请稍候...</p>
-              </div>
-
-              <!-- 标题生成控制 -->
-              <div class="generation-controls">
-                <div class="control-group">
-                  <h4>标题生成控制</h4>
-                  <el-form :model="titleControls" label-width="100px">
-                    <el-form-item label="标题数量">
-                      <el-slider
-                        v-model="titleControls.count"
-                        :min="3"
-                        :max="10"
-                        :step="1"
-                        show-input
-                        show-stops
-                      />
-                    </el-form-item>
-                    <el-form-item label="标题长度">
-                      <el-radio-group v-model="titleControls.length">
-                        <el-radio value="short">简短</el-radio>
-                        <el-radio value="medium">适中</el-radio>
-                        <el-radio value="long">详细</el-radio>
-                      </el-radio-group>
-                    </el-form-item>
-                    <el-form-item label="风格偏好">
-                      <el-checkbox-group v-model="titleControls.styles">
-                        <el-checkbox value="creative">创意性</el-checkbox>
-                        <el-checkbox value="professional">专业性</el-checkbox>
-                        <el-checkbox value="catchy">吸引力</el-checkbox>
-                        <el-checkbox value="descriptive">描述性</el-checkbox>
-                      </el-checkbox-group>
-                    </el-form-item>
-                    <el-form-item label="包含关键词">
-                      <div class="keywords-section">
-                        <el-tag
-                          v-for="keyword in titleState.customKeywords"
-                          :key="keyword"
-                          closable
-                          @close="removeCustomKeyword(keyword)"
-                          type="info"
-                        >
-                          {{ keyword }}
-                        </el-tag>
-                        <el-input
-                          v-model="newKeyword"
-                          placeholder="添加关键词"
-                          size="small"
-                          style="width: 120px"
-                          @keyup.enter="addKeyword"
-                        />
-                      </div>
-                    </el-form-item>
-                  </el-form>
-                </div>
-              </div>
-
-              <div class="generation-actions">
-                <!-- 方式一：检索+生成标题 -->
-                <el-button type="primary" size="large" @click="openMaterialSelection">
-                  <el-icon><Search /></el-icon>
-                  检索素材后生成标题
-                </el-button>
-
-                <!-- 方式二：直接Search2Title -->
-                <el-button
-                  type="success"
-                  size="large"
-                  @click="handleExecuteSearch2Title"
-                  :loading="search2titleLoading"
-                  :disabled="!canGenerateSearch2Title"
-                >
-                  <el-icon><MagicStick /></el-icon>
-                  一键Search2Title
-                </el-button>
-
-                <el-button
-                  v-if="search2titleLoading"
-                  @click="handleCancelSearch2Title"
-                  type="danger"
-                  plain
-                >
-                  取消任务
-                </el-button>
-
-                <p class="generation-tip" v-if="!canGenerateTitles && !canGenerateSearch2Title">
-                  请先完成需求定义并生成AI简报
-                </p>
-              </div>
-
-              <!-- 生成的标题展示 -->
-              <div class="titles-display-section" v-if="hasGeneratedTitles">
-                <div class="section-header">
-                  <h3>生成的标题选项</h3>
-                  <el-tag type="info">共 {{ titleState.generatedTitles.length }} 个标题</el-tag>
-                </div>
-
-                <div class="titles-grid">
-                  <TitleCard
-                    v-for="(title, index) in titleState.generatedTitles"
-                    :key="index"
-                    :title="title"
-                    :is-selected="titleState.selectedTitle === title"
-                    :score="getTitleScore(title)"
-                    :suggestions="getTitleSuggestions(title)"
-                    @select="selectTitle"
-                    @update="updateTitle"
-                  />
-                </div>
-
-                <!-- 当前选中标题对应的素材 -->
-                <div
-                  v-if="titleState.selectedTitle && currentTitleMaterials.length > 0"
-                  class="title-materials-section"
-                >
-                  <div class="section-header">
-                    <h3>「{{ titleState.selectedTitle.title }}」对应素材</h3>
-                    <div class="section-actions">
-                      <el-tag type="success" size="large">
-                        共 {{ currentTitleMaterials.length }} 个素材
-                      </el-tag>
-                    </div>
-                  </div>
-                  <div class="materials-list">
-                    <UnifiedMaterialCard
-                      v-for="material in currentTitleMaterials"
-                      :key="material.id"
-                      :material="material"
-                      :context="'search'"
-                      :show-selection="false"
-                      :show-score="true"
-                      @preview="handleMaterialPreview"
-                      @click="handleMaterialClick"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
+            <TitleGenerationSection
+              v-if="documentState.researchBrief"
+              :is-generating="titleState.isGenerating"
+              :progress="titleState.progress"
+              :controls="titleControls"
+              :custom-keywords="titleState.customKeywords"
+              :can-generate-titles="canGenerateTitles"
+              :can-generate-search2title="canGenerateSearch2Title"
+              :search2title-loading="search2titleLoading"
+              :has-generated-titles="hasGeneratedTitles"
+              :generated-titles="titleState.generatedTitles"
+              :selected-title="titleState.selectedTitle"
+              :current-title-materials="currentTitleMaterials"
+              @open-material-selection="openMaterialSelection"
+              @execute-search2title="handleExecuteSearch2Title"
+              @cancel-search2title="handleCancelSearch2Title"
+              @select-title="selectTitle"
+              @update-title="updateTitle"
+              @add-keyword="addKeyword"
+              @remove-keyword="removeCustomKeyword"
+              @preview-material="handleMaterialPreview"
+              @material-click="handleMaterialClick"
+            />
           </div>
 
           <!-- 底部操作按钮 -->
@@ -388,8 +160,6 @@
   import { useRouter, useRoute } from 'vue-router'
   import { ElMessage } from 'element-plus'
   import { marked } from 'marked'
-  import { Check, Close, Loading, Search, MagicStick } from '@element-plus/icons-vue'
-  import type { FormInstance, FormRules } from 'element-plus'
 
   // 组合式函数和状态管理
   import { useTopicSelection } from '@/composables/document/useTopicSelection'
@@ -397,10 +167,10 @@
   import { useDocumentGenerateStore } from '@/store/modules/documentGenerate'
 
   // 自定义组件
-  import TitleCard from '@/components/custom/TitleCard.vue'
-  import UnifiedMaterialCard from '@/components/custom/material-card/UnifiedMaterialCard.vue'
   import MaterialPreviewDialog from '@/components/custom/material-card/MaterialPreviewDialog.vue'
   import MaterialSelectionForTitle from '@/components/custom/material-search/MaterialSelectionForTitle.vue'
+  import RequirementsSection from './RequirementsSection.vue'
+  import TitleGenerationSection from './TitleGenerationSection.vue'
 
   // 类型定义
   import type { Title } from '@/types/ai'
@@ -539,10 +309,6 @@
 
   /** 编辑简报对话框的活跃标签页 */
   const activeEditTab = ref<'edit' | 'preview'>('edit')
-  /** 需求表单引用 */
-  const requirementsFormRef = ref<FormInstance>()
-  /** 生成按钮引用 */
-  const generateButtonRef = ref()
 
   // ====== 对话框状态 ======
   /** 素材选择对话框是否显示 */
@@ -596,17 +362,6 @@
     }
   ])
 
-  /** 需求表单验证规则
-   * @description 简化后的表单验证规则（仅验证主题字段）
-   * @since 2024-11-03 移除了目标受众、文档类型等字段的验证
-   */
-  const requirementsValidationRules: FormRules = {
-    topic: [
-      { required: true, message: '请输入文档主题', trigger: 'blur' },
-      { min: 2, max: 100, message: '主题长度应在2-100个字符之间', trigger: 'blur' }
-    ]
-  }
-
   // ====== 计算属性 ======
 
   /** 是否可以生成标题（基于是否有研究简报） */
@@ -655,15 +410,6 @@
     }
 
     return []
-  })
-
-  /** 渲染研究简报内容（Markdown转HTML） */
-  const renderedBriefing = computed(() => {
-    if (!documentState.value.researchBrief) {
-      return ''
-    }
-
-    return marked(documentState.value.researchBrief)
   })
 
   /** 渲染可编辑简报内容（Markdown转HTML） */
@@ -990,40 +736,6 @@
     border-left: 4px solid var(--el-color-primary);
   }
 
-  .requirements-section {
-    max-width: 1200px;
-    padding: 0 40px;
-    margin: 0 auto;
-    margin-bottom: 50px;
-  }
-
-  .key-points-input {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 10px;
-  }
-
-  .key-points-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  .requirements-actions {
-    display: flex;
-    justify-content: center;
-    margin-top: 30px;
-    margin-bottom: 20px;
-  }
-
-  .ai-briefing-section {
-    padding: 30px;
-    margin-top: 30px;
-    background: var(--el-bg-color-page);
-    border: 1px solid var(--el-color-primary-light-8);
-    border-radius: 8px;
-  }
-
   .section-header {
     display: flex;
     align-items: center;
@@ -1034,137 +746,6 @@
       margin: 0;
       font-size: 18px;
       color: var(--el-color-primary);
-    }
-  }
-
-  .titles-section .section-header {
-    padding: 0;
-  }
-
-  .title-materials-section .section-header {
-    padding: 0;
-  }
-
-  .task-status-card {
-    margin-top: 20px;
-
-    .task-status {
-      display: flex;
-      gap: 20px;
-      align-items: center;
-
-      .status-icon {
-        font-size: 32px;
-
-        .is-loading {
-          animation: rotating 2s linear infinite;
-        }
-      }
-
-      .status-content {
-        flex: 1;
-
-        h4 {
-          margin: 0 0 8px;
-          font-size: 16px;
-          color: var(--el-text-color-primary);
-        }
-
-        p {
-          margin: 0 0 12px;
-          color: var(--el-text-color-regular);
-        }
-      }
-    }
-  }
-
-  .titles-section {
-    max-width: 1200px;
-    padding: 50px 40px 0;
-    margin: 0 auto;
-    border-top: 1px solid var(--el-border-color);
-  }
-
-  .generation-progress {
-    padding: 20px;
-    margin-bottom: 30px;
-    text-align: center;
-    background: var(--el-bg-color-page);
-    border-radius: 8px;
-
-    .progress-text {
-      margin: 10px 0 0;
-      color: var(--el-text-color-secondary);
-    }
-  }
-
-  .generation-controls {
-    margin: 0 0 30px;
-
-    .control-group h4 {
-      margin: 0 0 20px;
-      font-size: 16px;
-      color: var(--el-text-color-primary);
-    }
-  }
-
-  .keywords-section {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    align-items: center;
-  }
-
-  .generation-actions {
-    display: flex;
-    gap: 15px;
-    align-items: center;
-    padding-top: 30px;
-    margin-top: 30px;
-    border-top: 1px solid var(--el-border-color);
-  }
-
-  .generation-tip {
-    margin: 0;
-    font-size: 14px;
-    color: var(--el-text-color-secondary);
-  }
-
-  .titles-display-section {
-    padding: 30px 0;
-    margin-top: 30px;
-  }
-
-  .titles-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
-    gap: 20px;
-    padding: 4px;
-    margin-bottom: 40px;
-
-    @media (width <= 1400px) {
-      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-    }
-
-    @media (width <= 768px) {
-      grid-template-columns: 1fr;
-      gap: 15px;
-    }
-  }
-
-  .title-materials-section {
-    padding: 24px 0;
-    margin-top: 30px;
-
-    .section-header h3 {
-      color: var(--el-color-primary);
-    }
-
-    .materials-list {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-      gap: 20px;
-      margin-top: 20px;
     }
   }
 
@@ -1221,16 +802,6 @@
     border-radius: 4px;
   }
 
-  @keyframes rotating {
-    from {
-      transform: rotate(0deg);
-    }
-
-    to {
-      transform: rotate(360deg);
-    }
-  }
-
   @media (width <= 768px) {
     .topic-selection-container {
       padding: 15px;
@@ -1249,26 +820,13 @@
       padding: 20px 15px;
     }
 
-    .requirements-section,
-    .titles-section {
-      padding: 0;
-    }
-
     .section-title {
       font-size: 18px;
-    }
-
-    .titles-grid {
-      grid-template-columns: 1fr;
     }
 
     .footer-actions {
       flex-direction: column;
       align-items: center;
-    }
-
-    .key-points-input {
-      flex-direction: column;
     }
   }
 </style>

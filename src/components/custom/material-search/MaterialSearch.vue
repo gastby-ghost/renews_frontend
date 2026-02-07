@@ -1,118 +1,27 @@
 <template>
   <div class="art-material-search">
     <!-- 搜索表单区域 -->
-    <div class="art-material-search__form">
-      <el-card class="art-material-search__card">
-        <template #header>
-          <div class="art-material-search__header">
-            <h3 class="art-material-search__title">
-              <el-icon><Search /></el-icon>
-              素材检索
-            </h3>
-            <div class="art-material-search__header-actions">
-              <el-button
-                v-if="searchHistory.length > 0"
-                size="small"
-                @click="showHistory = !showHistory"
-              >
-                搜索历史
-              </el-button>
-            </div>
-          </div>
-        </template>
-
-        <!-- 搜索历史 -->
-        <div v-if="showHistory && searchHistory.length > 0" class="art-material-search__history">
-          <div class="art-material-search__history-header">
-            <span>最近搜索</span>
-            <el-button size="small" text @click="clearHistory">清空</el-button>
-          </div>
-          <div class="art-material-search__history-list">
-            <el-tag
-              v-for="(item, index) in searchHistory.slice(0, 5)"
-              :key="index"
-              class="art-material-search__history-item"
-              @click="useHistoryItemAndSearch(item)"
-            >
-              {{ item.keywords }}
-            </el-tag>
-          </div>
-        </div>
-
-        <!-- 搜索表单 -->
-        <el-form
-          ref="searchFormRef"
-          :model="searchForm"
-          :rules="searchRules"
-          label-width="80px"
-          @submit.prevent="handleSearch"
-        >
-          <el-form-item label="关键词" prop="keywords">
-            <el-input
-              v-model="searchForm.keywords"
-              placeholder="请输入搜索关键词"
-              clearable
-              @keyup.enter="handleSearch"
-            >
-              <template #append>
-                <el-button :icon="Search" @click="handleSearch" />
-              </template>
-            </el-input>
-          </el-form-item>
-
-          <el-form-item label="搜索源" prop="providers">
-            <el-select
-              v-model="searchForm.providers"
-              multiple
-              placeholder="选择搜索提供商"
-              style="width: 100%"
-            >
-              <el-option
-                v-for="provider in availableProviders"
-                :key="provider.id"
-                :label="provider.name"
-                :value="provider.id"
-              >
-                <div class="art-material-search__provider-option">
-                  <span>{{ provider.name }}</span>
-                  <el-tag size="small" :type="provider.type === 'ai' ? 'warning' : 'success'">
-                    {{ provider.type === 'ai' ? 'AI' : 'API' }}
-                  </el-tag>
-                </div>
-              </el-option>
-            </el-select>
-          </el-form-item>
-
-          <el-form-item label="结果数量" prop="maxResults">
-            <el-slider
-              v-model="searchForm.maxResults"
-              :min="1"
-              :max="10"
-              :step="1"
-              show-stops
-              show-input
-            />
-          </el-form-item>
-
-          <el-form-item>
-            <div class="art-material-search__actions">
-              <el-button type="primary" @click="handleSearch" :loading="searching">
-                开始搜索
-              </el-button>
-              <el-button @click="resetForm">重置</el-button>
-            </div>
-          </el-form-item>
-        </el-form>
-      </el-card>
-    </div>
+    <MaterialSearchForm
+      ref="searchFormRef"
+      :loading="searching"
+      :show-history="showHistory"
+      :search-history="searchHistory"
+      :providers="availableProviders"
+      :initial-config="initialSearchConfig"
+      @search="handleSearch"
+      @reset="resetForm"
+      @toggle-history="showHistory = !showHistory"
+      @clear-history="clearHistory"
+      @use-history="useHistoryItemAndSearch"
+    />
 
     <!-- 搜索进度 -->
     <div v-if="searching" class="art-material-search__progress">
       <SearchProgressComponent
         :progress="searchProgress"
         :config="{
-          keywords: searchForm.keywords,
-          providers: searchForm.providers,
+          keywords: searchFormData.keywords,
+          providers: searchFormData.providers,
           searchScope: '',
           filters: { tags: [] }
         }"
@@ -164,16 +73,15 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, reactive, computed, onMounted } from 'vue'
+  import { ref, computed, onMounted } from 'vue'
   import { ElMessage } from 'element-plus'
-  import { Search } from '@element-plus/icons-vue'
-  import type { FormInstance, FormRules } from 'element-plus'
   import { useMaterialStore } from '@/store/material'
   import type { Material, SearchConfig } from '@/types/material'
   import SearchProgressComponent from '@/components/custom/search-progress/SearchProgress.vue'
   import MaterialPreviewDialog from '@/components/custom/material-card/MaterialPreviewDialog.vue'
   import MaterialSearchResults from './common/MaterialSearchResults.vue'
   import AddToLibraryDialog from './common/AddToLibraryDialog.vue'
+  import MaterialSearchForm from './MaterialSearchForm.vue'
   import { useMaterialSearch } from '@/composables/material/useMaterialSearch'
 
   interface SearchForm {
@@ -181,6 +89,8 @@
     providers: ('tavily' | 'bocha')[]
     maxResults: number
   }
+
+  const initialSearchConfig: SearchConfig = { keywords: '', providers: [], searchScope: '', filters: { tags: [] } }
 
   // 使用公共搜索逻辑
   const {
@@ -211,28 +121,17 @@
   } = useMaterialSearch()
 
   // 响应式数据
-  const searchFormRef = ref<FormInstance>()
+  const searchFormRef = ref<{ validate: () => Promise<boolean>; resetFields: () => void; form: SearchForm }>()
   const addToLibraryDialogRef = ref()
   const materialStore = useMaterialStore()
-
-  // 搜索表单数据
-  const searchForm = reactive<SearchForm>({
-    keywords: '',
-    providers: ['tavily'],
-    maxResults: 20
-  })
 
   // 可用的搜索提供商
   const availableProviders = computed(() => materialStore.providers)
 
-  // 表单验证规则
-  const searchRules: FormRules = {
-    keywords: [
-      { required: true, message: '请输入搜索关键词', trigger: 'blur' },
-      { min: 2, max: 100, message: '关键词长度应在 2 到 100 个字符之间', trigger: 'blur' }
-    ],
-    providers: [{ required: true, message: '请选择至少一个搜索提供商', trigger: 'change' }]
-  }
+  // 获取搜索表单数据
+  const searchFormData = computed(() => {
+    return searchFormRef.value?.form || { keywords: '', providers: ['tavily'], maxResults: 20 }
+  })
 
   // 处理搜索
   const handleSearch = async () => {
@@ -242,11 +141,10 @@
       const valid = await searchFormRef.value.validate()
       if (!valid) return
 
-      // 使用公共搜索逻辑
       // 构建搜索配置
       const searchConfig: SearchConfig = {
-        keywords: searchForm.keywords,
-        providers: searchForm.providers,
+        keywords: searchFormRef.value.form.keywords || '',
+        providers: searchFormRef.value.form.providers,
         searchScope: '',
         filters: { tags: [] }
       }
@@ -265,20 +163,12 @@
 
   // 重置表单
   const resetForm = () => {
-    if (!searchFormRef.value) return
-
-    searchFormRef.value.resetFields()
-    searchForm.providers = ['tavily']
-    searchForm.maxResults = 20
-
-    // 重置搜索状态
+    searchFormRef.value?.resetFields()
     resetSearchState()
   }
 
   // 使用历史记录并搜索
-  const useHistoryItemAndSearch = (item: SearchConfig) => {
-    searchForm.keywords = item.keywords
-    searchForm.providers = item.providers as ('tavily' | 'bocha')[]
+  const useHistoryItemAndSearch = () => {
     handleSearch()
   }
 
@@ -359,70 +249,6 @@
 
     &__card {
       margin-bottom: 20px;
-    }
-
-    &__header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-
-      &-actions {
-        display: flex;
-        gap: 8px;
-      }
-
-      .art-material-search__title {
-        display: flex;
-        gap: 8px;
-        align-items: center;
-        margin: 0;
-        font-size: 18px;
-        font-weight: 600;
-        color: var(--el-text-color-primary);
-
-        .el-icon {
-          color: var(--el-color-primary);
-        }
-      }
-    }
-
-    &__history {
-      padding: 16px;
-      margin-bottom: 20px;
-      background: var(--el-fill-color-lighter);
-      border-radius: 6px;
-
-      &-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 12px;
-        font-weight: 500;
-        color: var(--el-text-color-primary);
-      }
-
-      &-list {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-      }
-
-      &-item {
-        cursor: pointer;
-        transition: all 0.3s ease;
-
-        &:hover {
-          box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
-          transform: translateY(-2px);
-        }
-      }
-    }
-
-    &__provider-option {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      width: 100%;
     }
 
     &__actions {

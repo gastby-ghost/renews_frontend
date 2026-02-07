@@ -1,13 +1,9 @@
 <template>
   <div class="editor-panel">
-    <div v-if="!hasContent && !showPreview" class="empty-editor">
-      <div class="empty-icon">📝</div>
-      <h3>开始创作您的 Markdown 文档</h3>
-      <p>点击"AI生成"让AI帮您生成内容，或手动开始写作</p>
-      <div class="empty-actions">
-        <el-button @click="generateAIContent" type="primary" size="large"> AI生成正文 </el-button>
-      </div>
-    </div>
+    <EditorEmptyState
+      v-if="!hasContent && !showPreview"
+      @generate="generateAIContent"
+    />
 
     <div v-else class="editor-wrapper">
       <!-- 模式切换标签 -->
@@ -47,31 +43,15 @@
           ></textarea>
 
           <!-- AI 工具栏 -->
-          <div
+          <AIToolbar
             v-if="showSelectionToolbar"
-            class="ai-toolbar"
-            :style="{
-              top: toolbarPosition.top + 'px',
-              left: toolbarPosition.left + 'px'
-            }"
-          >
-            <div class="ai-toolbar-header">
-              <el-icon class="ai-icon"><MagicStick /></el-icon>
-              <span>AI 助手</span>
-            </div>
-            <div class="ai-actions">
-              <div class="ai-action-group">
-                <el-button @click="polishSelection" class="ai-action-btn" text>
-                  <el-icon><Brush /></el-icon>
-                  <span class="btn-text">润色</span>
-                </el-button>
-                <el-button @click="expandSelection" class="ai-action-btn" text>
-                  <el-icon><Expand /></el-icon>
-                  <span class="btn-text">扩写</span>
-                </el-button>
-              </div>
-            </div>
-          </div>
+            :position="toolbarPosition"
+            @polish="polishSelection"
+            @expand="expandSelection"
+            @summarize="$emit('summarize-selection')"
+            @translate="$emit('translate-selection')"
+            @rewrite="$emit('rewrite-selection')"
+          />
         </div>
 
         <!-- Markdown 预览 -->
@@ -82,7 +62,9 @@
 </template>
 
 <script setup lang="ts">
-  import { Brush, Edit, View, MagicStick, Expand } from '@element-plus/icons-vue'
+  import { Edit, View } from '@element-plus/icons-vue'
+  import EditorEmptyState from './EditorEmptyState.vue'
+  import AIToolbar from './AIToolbar.vue'
 
   interface ToolbarPosition {
     top: number
@@ -159,36 +141,6 @@
     height: 100%;
     min-height: 0;
     overflow: hidden;
-  }
-
-  .empty-editor {
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 400px;
-    text-align: center;
-
-    .empty-icon {
-      margin-bottom: 24px;
-      font-size: 72px;
-      opacity: 0.8;
-    }
-
-    h3 {
-      margin: 0 0 12px;
-      font-size: 22px;
-      font-weight: 600;
-      color: var(--el-text-color-primary);
-    }
-
-    p {
-      margin: 0 0 24px;
-      font-size: 15px;
-      line-height: 1.5;
-      color: var(--el-text-color-secondary);
-    }
   }
 
   .editor-wrapper {
@@ -304,118 +256,6 @@
     }
   }
 
-  .ai-toolbar {
-    position: absolute;
-    z-index: 100;
-    min-width: 200px;
-    overflow: hidden;
-    background: var(--art-main-bg-color);
-    border: 1px solid var(--el-border-color-light);
-    border-radius: 10px;
-    box-shadow: 0 8px 32px rgb(0 0 0 / 20%);
-    animation: slideIn 0.2s ease;
-
-    .ai-toolbar-header {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      padding: 10px 12px;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--el-color-primary);
-      background: linear-gradient(
-        135deg,
-        var(--el-color-primary-light-9) 0%,
-        var(--el-color-primary-light-8) 100%
-      );
-      border-bottom: 1px solid var(--el-border-color-lighter);
-
-      .ai-icon {
-        font-size: 15px;
-      }
-
-      .el-tag {
-        margin-left: auto;
-        font-size: 11px;
-        font-weight: 500;
-      }
-    }
-
-    .ai-actions {
-      display: flex;
-      flex-direction: column;
-      padding: 8px 6px;
-
-      .ai-action-group {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-
-        .ai-group-title {
-          padding: 0 8px;
-          font-size: 11px;
-          font-weight: 500;
-          color: var(--el-text-color-secondary);
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
-
-        .ai-action-btn {
-          display: flex;
-          align-items: center;
-          justify-content: flex-start;
-          width: 100%;
-          padding: 8px 10px;
-          font-size: 13px;
-          color: var(--el-text-color-regular);
-          text-align: left;
-          border-radius: 6px;
-          transition: all 0.15s ease;
-
-          &:hover {
-            color: var(--el-color-primary);
-            background: var(--el-fill-color-light);
-            transform: translateX(2px);
-          }
-
-          .el-icon {
-            flex-shrink: 0;
-            margin-right: 8px;
-            font-size: 15px;
-            color: var(--el-color-primary);
-          }
-
-          .btn-text {
-            font-weight: 500;
-          }
-        }
-      }
-
-      .ai-divider {
-        height: 1px;
-        margin: 6px 4px;
-        background: linear-gradient(
-          90deg,
-          transparent 0%,
-          var(--el-border-color-lighter) 50%,
-          transparent 100%
-        );
-      }
-    }
-  }
-
-  @keyframes slideIn {
-    from {
-      opacity: 0;
-      transform: translateY(-8px) scale(0.95);
-    }
-
-    to {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-    }
-  }
-
   .markdown-preview {
     flex: 1;
     padding: 20px;
@@ -481,16 +321,6 @@
   }
 
   @media (width <= 900px) {
-    .empty-editor {
-      h3 {
-        font-size: 20px;
-      }
-
-      .empty-icon {
-        font-size: 64px;
-      }
-    }
-
     .editor-tabs {
       padding: 0 12px;
 
@@ -508,37 +338,9 @@
     .markdown-preview {
       padding: 16px;
     }
-
-    .ai-toolbar {
-      min-width: 160px;
-
-      .ai-toolbar-header {
-        padding: 8px 10px;
-        font-size: 12px;
-      }
-
-      .ai-actions .el-button {
-        padding: 6px 10px;
-        font-size: 12px;
-      }
-    }
   }
 
   @media (width <= 600px) {
-    .empty-editor {
-      h3 {
-        font-size: 18px;
-      }
-
-      p {
-        font-size: 14px;
-      }
-
-      .empty-icon {
-        font-size: 56px;
-      }
-    }
-
     .editor-tabs {
       padding: 0 8px;
 
@@ -571,20 +373,6 @@
 
       :deep(h3) {
         font-size: 16px;
-      }
-    }
-
-    .ai-toolbar {
-      min-width: 140px;
-
-      .ai-toolbar-header {
-        padding: 6px 8px;
-        font-size: 11px;
-      }
-
-      .ai-actions .el-button {
-        padding: 5px 8px;
-        font-size: 11px;
       }
     }
   }

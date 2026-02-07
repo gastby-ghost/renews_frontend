@@ -104,13 +104,6 @@
     context: 'search' | 'management'
   }
 
-  interface Emits {
-    (e: 'select', id: string): void
-    (e: 'preview', material: Material): void
-    (e: 'edit', material: Material): void
-    (e: 'click', material: Material): void
-  }
-
   const props = withDefaults(defineProps<Props>(), {
     selected: false,
     loading: false,
@@ -118,7 +111,12 @@
     showScore: false
   })
 
-  const emit = defineEmits<Emits>()
+  const emit = defineEmits<{
+    select: [id: string]
+    preview: [material: Material]
+    edit: [material: Material]
+    click: [material: Material]
+  }>()
 
   const isSelected = computed(() => props.selected)
 
@@ -136,10 +134,7 @@
 
   // 显示标题
   const displayTitle = computed(() => {
-    if ('title' in props.material && props.material.title) {
-      return props.material.title
-    }
-    return props.material.title
+    return props.material.title || ''
   })
 
   function handleClick() {
