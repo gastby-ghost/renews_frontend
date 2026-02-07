@@ -11,7 +11,6 @@ import { storeToRefs } from 'pinia'
 import type { Material } from '@/types/material'
 import type { OutlineSection } from '@/types/ai'
 import documentGenerateService from '@/services/documentGenerateService'
-import type { OutlineSectionCreateRequest } from '@/types/core/outlineSection'
 
 /**
  * 大纲管理状态接口
@@ -1109,6 +1108,194 @@ export function useOutlinePage() {
     state.generatedOutline = newOutline
   }
 
+  /**
+   * AI生成大纲（基于标题和研究简报）
+   */
+  const generateAIOutline = async () => {
+    if (!canGenerateFromTitle.value) {
+      ElMessage.warning('请先选择标题并完善研究简报')
+      return null
+    }
+
+    state.isGenerating = true
+    try {
+      const response = await generateOutline(
+        documentStore.documentState.selectedTitle,
+        documentStore.documentState.researchBrief,
+        documentStore.documentState.searchResults
+      )
+
+      if (response) {
+        state.generatedOutline = response.outline
+        documentStore.updateDocumentState({
+          generatedOutline: response.outline
+        })
+        ElMessage.success('AI大纲生成成功！')
+      }
+      return response
+    } catch {
+      ElMessage.error('大纲生成失败')
+      return null
+    } finally {
+      state.isGenerating = false
+    }
+  }
+
+  /**
+   * AI完整生成（含素材绑定）
+   */
+  const generateAICompleteOutlineFromUI = async () => {
+    if (!canGenerateFromTitle.value) {
+      ElMessage.warning('请先选择标题并完善研究简报')
+      return
+    }
+
+    if (selectedMaterials.value.length === 0) {
+      ElMessage.warning('请先从素材库选择素材')
+      return
+    }
+
+    state.isGenerating = true
+    try {
+      await generateAICompleteOutline()
+    } catch (error) {
+      console.error('AI完整生成失败:', error)
+      ElMessage.error('AI完整生成失败，请重试')
+    } finally {
+      state.isGenerating = false
+    }
+  }
+
+  /**
+   * 确认大纲并跳转
+   */
+  const confirmOutline = async () => {
+    if (state.generatedOutline.length === 0 && state.sections.length === 0) {
+      ElMessage.warning('请创建大纲')
+      return
+    }
+
+    if (!validateOutline()) {
+      return
+    }
+
+    documentStore.updateDocumentState({
+      generatedOutline: state.generatedOutline
+    })
+
+    ElMessage.success('大纲已确认，正在跳转到正文章节...')
+
+    setTimeout(() => {
+      router.push(`/document-generation/content/${projectId}`)
+    }, 800)
+  }
+
+  /**
+   * 清空大纲
+   */
+  const clearOutline = () => {
+    resetLocalOutline()
+    ElMessage.success('大纲已清空')
+  }
+
+  /**
+   * 添加章节
+   */
+  const addLocalSectionFromUI = () => {
+    addLocalSection()
+  }
+
+  /**
+   * 删除章节
+   */
+  const deleteSectionFromUI = (index: number) => {
+    const sections = state.generatedOutline
+    if (index >= 0 && index < sections.length) {
+      sections.splice(index, 1)
+      ElMessage.success('章节已删除')
+    }
+  }
+
+  /**
+   * 上移章节
+   */
+  const moveSectionUpFromUI = (index: number) => {
+    const sections = state.generatedOutline
+    if (index > 0) {
+      const temp = sections[index]
+      sections[index] = sections[index - 1]
+      sections[index - 1] = temp
+    }
+  }
+
+  /**
+   * 下移章节
+   */
+  const moveSectionDownFromUI = (index: number) => {
+    const sections = state.generatedOutline
+    if (index < sections.length - 1) {
+      const temp = sections[index]
+      sections[index] = sections[index + 1]
+      sections[index + 1] = temp
+    }
+  }
+
+  /**
+   * 编辑章节
+   */
+  const editSectionFromUI = (title: string, data: any) => {
+    editLocalSection(title, data)
+  }
+
+  /**
+   * 处理素材更新
+   */
+  const handleAllMaterialsUpdate = () => {
+    // 素材更新时触发的回调，状态由store管理
+  }
+
+  /**
+   * 预览素材
+   */
+  const previewMaterial = (material: Material) => {
+    ElMessage.info(`预览素材: ${material.title}`)
+  }
+
+  /**
+   * 绑定素材到章节
+   */
+  const bindMaterialToSectionFromUI = (sectionIndex: number, material: Material) => {
+    const section = state.generatedOutline[sectionIndex]
+    if (section) {
+      if (!section.data_requirements.includes(material.title)) {
+        section.data_requirements.push(material.title)
+        editLocalSection(section.title, {
+          data_requirements: section.data_requirements
+        })
+        ElMessage.success(`已将素材 "${material.title}" 绑定到章节`)
+      } else {
+        ElMessage.info('该素材已绑定到此章节')
+      }
+    }
+  }
+
+  /**
+   * 解绑素材
+   */
+  const unbindMaterialFromSectionFromUI = (sectionIndex: number, materialTitle: string) => {
+    const section = state.generatedOutline[sectionIndex]
+    if (section) {
+      const index = section.data_requirements.indexOf(materialTitle)
+      if (index > -1) {
+        section.data_requirements.splice(index, 1)
+        editLocalSection(section.title, {
+          data_requirements: section.data_requirements
+        })
+        ElMessage.success(`已将素材 "${materialTitle}" 从章节中解绑`)
+      }
+    }
+  }
+
   // ========== 返回值 ==========
   return {
     // 状态
@@ -1166,6 +1353,21 @@ export function useOutlinePage() {
     getAverageMatchScore,
     getAvailableMaterialsForSection,
     updateGeneratedOutline,
+
+    // 页面UI方法 (从组件提取)
+    generateAIOutline,
+    generateAICompleteOutlineFromUI,
+    confirmOutline,
+    clearOutline,
+    addLocalSectionFromUI,
+    deleteSectionFromUI,
+    moveSectionUpFromUI,
+    moveSectionDownFromUI,
+    editSectionFromUI,
+    handleAllMaterialsUpdate,
+    previewMaterial,
+    bindMaterialToSectionFromUI,
+    unbindMaterialFromSectionFromUI,
 
     // 原有页面方法
     loadProject,

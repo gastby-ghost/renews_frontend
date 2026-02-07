@@ -419,8 +419,6 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, computed } from 'vue'
-
   // UI图标导入
   import {
     Plus,
@@ -444,29 +442,8 @@
   } from '@element-plus/icons-vue'
 
   // 类型定义
-  interface Material {
-    id: string
-    user_id: string
-    summary: string
-    score: number
-    title: string
-    key_excerpts: string[]
-    tags: string[]
-    url?: string
-    createdAt: Date
-    updatedAt?: Date
-    selected?: boolean
-  }
-
-  interface OutlineSection {
-    title: string
-    content_direction: string
-    data_requirements: string[]
-    level: number
-    estimated_word_count: number
-    priority: 'high' | 'medium' | 'low'
-    sources: string[]
-  }
+  import type { Material } from '@/types/core/material'
+  import type { OutlineSection } from '@/types/core/outlineSection'
 
   // 扩展 Material 类型，包含绑定相关属性
   interface MaterialWithBinding extends Material {
@@ -494,7 +471,11 @@
     total_materials_bound: number
   }
 
-  // ========== Props 定义 ==========
+  import { useOutlineEditor } from '@/composables/document/useOutlineEditor'
+
+  defineOptions({ name: 'OutlineEditorSection' })
+
+  // Props
   const props = defineProps<{
     /** 生成的大纲章节列表 */
     generatedOutline: OutlineSection[]
@@ -514,152 +495,60 @@
     bindingResult: MaterialBindResult | null
   }>()
 
-  // ========== Emits 定义 ==========
+  // Emits
   const emit = defineEmits<{
-    /** 生成AI大纲 */
     (e: 'generateAIOutline'): void
-    /** 生成AI完整大纲 */
     (e: 'generateAICompleteOutline'): void
-    /** 添加章节 */
     (e: 'addSection'): void
-    /** 删除章节 */
     (e: 'deleteSection', index: number): void
-    /** 上移章节 */
     (e: 'moveSectionUp', index: number): void
-    /** 下移章节 */
     (e: 'moveSectionDown', index: number): void
-    /** 清空大纲 */
     (e: 'clearOutline'): void
-    /** 确认大纲 */
     (e: 'confirmOutline'): void
-    /** 编辑章节 */
     (e: 'editSection', title: string, data: any): void
-    /** 返回 */
     (e: 'goBack'): void
-    /** 绑定素材到章节 */
     (e: 'bindMaterial', sectionIndex: number, material: Material): void
-    /** 解绑素材 */
     (e: 'unbindMaterial', sectionIndex: number, materialTitle: string): void
-    /** AI绑定素材 */
     (e: 'aiBindMaterials'): void
   }>()
 
-  // ========== 本地状态 ==========
-  /** 当前激活的详情标签页 */
-  const activeDetailTab = ref('')
-
-  // ========== 计算属性 ==========
-
-  /** 获取所有素材（从props） */
-  const getAllMaterials = computed(() => props.selectedMaterials || [])
-
-  // ========== 事件处理方法 ==========
-
-  /** 处理生成AI大纲 */
-  const handleGenerateAIOutline = () => {
-    emit('generateAIOutline')
-  }
-
-  /** 处理生成AI完整大纲 */
-  const handleGenerateAICompleteOutline = () => {
-    emit('generateAICompleteOutline')
-  }
-
-  /** 处理AI绑定素材 */
-  const handleAIBindMaterials = () => {
-    emit('aiBindMaterials')
-  }
-
-  /** 处理添加章节 */
-  const handleAddSection = () => {
-    emit('addSection')
-  }
-
-  /** 处理删除章节 */
-  const handleDeleteSection = (index: number) => {
-    emit('deleteSection', index)
-  }
-
-  /** 处理上移章节 */
-  const handleMoveSectionUp = (index: number) => {
-    emit('moveSectionUp', index)
-  }
-
-  /** 处理下移章节 */
-  const handleMoveSectionDown = (index: number) => {
-    emit('moveSectionDown', index)
-  }
-
-  /** 处理清空大纲 */
-  const handleClearOutline = () => {
-    emit('clearOutline')
-  }
-
-  /** 处理确认大纲 */
-  const handleConfirmOutline = () => {
-    emit('confirmOutline')
-  }
-
-  /** 处理编辑章节 */
-  const handleEditSection = (title: string, data: any) => {
-    emit('editSection', title, data)
-  }
-
-  /** 处理绑定素材 */
-  const handleBindMaterial = (sectionIndex: number, material: Material) => {
-    emit('bindMaterial', sectionIndex, material)
-  }
-
-  /** 处理解绑素材 */
-  const handleUnbindMaterial = (sectionIndex: number, materialTitle: string) => {
-    emit('unbindMaterial', sectionIndex, materialTitle)
-  }
-
-  // ========== 业务逻辑方法 ==========
-  // 这些方法接收 props 和 emits 作为参数，保持纯函数特性
-
-  /**
-   * 获取章节的绑定素材
-   */
-  const getSectionBindings = (sectionIndex: number) => {
-    if (!props.bindingResult) return undefined
-    return props.bindingResult.material_section_bindings.find(
-      (binding) => binding.section_id === sectionIndex + 1
-    )
-  }
-
-  /**
-   * 获取章节的平均匹配分数
-   */
-  const getAverageMatchScore = (sectionIndex: number): number => {
-    const bindings = getSectionBindings(sectionIndex)
-    if (!bindings || bindings.match_scores.length === 0) return 0
-    const average =
-      bindings.match_scores.reduce((sum, score) => sum + score, 0) / bindings.match_scores.length
-    return Math.round(average)
-  }
-
-  /**
-   * 获取可用于当前章节的素材（排除已绑定的）
-   */
-  const getAvailableMaterialsForSection = (sectionIndex: number): Material[] => {
-    const section = props.generatedOutline[sectionIndex]
-    if (!section) return []
-
-    // 获取已绑定的素材标题
-    const boundMaterials = new Set(section.data_requirements || [])
-
-    // 如果有AI绑定结果，也排除那些
-    const aiBindings = getSectionBindings(sectionIndex)
-    if (aiBindings) {
-      aiBindings.materials.forEach((material) => {
-        boundMaterials.add(material.title)
-      })
+  // ====== 组合式函数 ======
+  const outlineEditor = useOutlineEditor({
+    get generatedOutline() {
+      return props.generatedOutline
+    },
+    get selectedMaterials() {
+      return props.selectedMaterials
+    },
+    get bindingResult() {
+      return props.bindingResult
     }
+  })
 
-    // 返回所有素材中未绑定的部分
-    return getAllMaterials.value.filter((material) => !boundMaterials.has(material.title))
-  }
+  // ====== 事件处理方法 ======
+  const handleGenerateAIOutline = () => emit('generateAIOutline')
+  const handleGenerateAICompleteOutline = () => emit('generateAICompleteOutline')
+  const handleAIBindMaterials = () => emit('aiBindMaterials')
+  const handleAddSection = () => emit('addSection')
+  const handleDeleteSection = (index: number) => emit('deleteSection', index)
+  const handleMoveSectionUp = (index: number) => emit('moveSectionUp', index)
+  const handleMoveSectionDown = (index: number) => emit('moveSectionDown', index)
+  const handleClearOutline = () => emit('clearOutline')
+  const handleConfirmOutline = () => emit('confirmOutline')
+  const handleEditSection = (title: string, data: any) => emit('editSection', title, data)
+  const handleBindMaterial = (sectionIndex: number, material: Material) =>
+    emit('bindMaterial', sectionIndex, material)
+  const handleUnbindMaterial = (sectionIndex: number, materialTitle: string) =>
+    emit('unbindMaterial', sectionIndex, materialTitle)
+
+  // ====== 解构以便模板使用 ======
+  const {
+    activeDetailTab,
+    getAllMaterials,
+    getSectionBindings,
+    getAverageMatchScore,
+    getAvailableMaterialsForSection
+  } = outlineEditor
 </script>
 
 <style scoped lang="scss">

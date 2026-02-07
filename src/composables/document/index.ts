@@ -12,6 +12,13 @@
 // 统一的大纲页面管理组合式函数
 export { useOutlinePage } from './useOutlinePage'
 
+// 标题区域相关组合式函数
+export { useTitleSection } from './useTitleSection'
+export { useTitleMaterials } from './useTitleMaterials'
+
+// 大纲编辑器相关组合式函数
+export { useOutlineEditor } from './useOutlineEditor'
+
 export { useContent } from './useContent'
 export { useTopicSelection } from './useTopicSelection'
 export { useCeremony } from '../useCeremony'

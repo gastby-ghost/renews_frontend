@@ -14,12 +14,12 @@
       <StepIndicator :steps="stepList" />
 
       <!-- 标题信息分区 -->
-      <TitleSection
+      <DocumentTitleSection
         :project-id="projectId"
         :selected-materials="selectedMaterials"
         @edit-title="editTitle"
         @view-search-results="viewSearchResults"
-        @material-preview="handleMaterialPreview"
+        @material-preview="previewMaterial"
         @add-material="openMaterialLibrary"
         @update:allMaterials="handleAllMaterialsUpdate"
       />
@@ -35,18 +35,18 @@
         :is-binding-materials="outline.state.isBindingMaterials"
         :binding-progress="outline.state.bindingProgress"
         @generate-ai-outline="generateAIOutline"
-        @generate-ai-complete-outline="generateAICompleteOutline"
-        @add-section="addSection"
-        @delete-section="deleteSection"
-        @move-section-up="moveSectionUp"
-        @move-section-down="moveSectionDown"
+        @generate-ai-complete-outline="generateAICompleteOutlineFromUI"
+        @add-section="addLocalSectionFromUI"
+        @delete-section="deleteSectionFromUI"
+        @move-section-up="moveSectionUpFromUI"
+        @move-section-down="moveSectionDownFromUI"
         @clear-outline="clearOutline"
         @confirm-outline="confirmOutline"
-        @edit-section="handleEditSection"
+        @edit-section="editSectionFromUI"
         @go-back="goBack"
         @ai-bind-materials="handleAIBindMaterials"
-        @bind-material-to-section="bindMaterialToSection"
-        @unbind-material-from-section="unbindMaterialFromSection"
+        @bind-material-to-section="bindMaterialToSectionFromUI"
+        @unbind-material-from-section="unbindMaterialFromSectionFromUI"
       />
     </div>
 
@@ -61,18 +61,14 @@
 
 <script setup lang="ts">
   import { computed } from 'vue'
-  import { useRouter } from 'vue-router'
-  import { ElMessage } from 'element-plus'
-  import { useOutlinePage } from '@/composables/document/useOutlinePage'
-  import { useDocumentGenerateStore } from '@/store/modules/documentGenerate'
   import { useProjectStore } from '@/store/modules/project'
   import type { Material } from '@/types/material'
   import MaterialLibraryDialog from '@/components/custom/material-card/MaterialLibraryDialog.vue'
   import StepIndicator, { type Step } from '@/components/custom/StepIndicator.vue'
-  import TitleSection from './TitleSection.vue'
-  import OutlineEditorSection from './OutlineEditorSection.vue'
+  import { DocumentTitleSection, OutlineEditorSection } from '@/components/custom/document/outline'
+  import { useOutlinePage } from '@/composables/document/useOutlinePage'
 
-  // 使用composable
+  // 使用 composable
   const {
     projectId,
     loadingProject,
@@ -87,20 +83,26 @@
     handleAIBindMaterials,
     openMaterialLibrary,
     handleMaterialLibraryConfirm,
-    outline
+    outline,
+    generateAIOutline,
+    generateAICompleteOutlineFromUI,
+    confirmOutline,
+    clearOutline,
+    addLocalSectionFromUI,
+    deleteSectionFromUI,
+    moveSectionUpFromUI,
+    moveSectionDownFromUI,
+    editSectionFromUI,
+    handleAllMaterialsUpdate,
+    previewMaterial,
+    bindMaterialToSectionFromUI,
+    unbindMaterialFromSectionFromUI
   } = useOutlinePage()
 
-  // 存储标题区域的完整素材列表（包括标题相关素材和用户选择的素材）
-  const allTitleMaterials = ref<Material[]>([])
-
-  // 处理标题区域素材更新
-  const handleAllMaterialsUpdate = (materials: Material[]) => {
-    allTitleMaterials.value = materials
-  }
-
-  const documentStore = useDocumentGenerateStore()
   const projectStore = useProjectStore()
-  const router = useRouter()
+
+  // 存储标题区域的完整素材列表
+  const allTitleMaterials = ref<Material[]>([])
 
   // 步骤指示器数据
   const stepList: Step[] = [
@@ -110,174 +112,14 @@
   ]
 
   // 头部操作按钮
-  const headerActions = computed(() => {
-    return [
-      {
-        label: '导出',
-        type: 'primary' as const,
-        icon: 'el-icon-download',
-        handler: () => {
-          outline.exportOutline('json')
-        }
-      }
-    ]
-  })
-
-  const generateAIOutline = async () => {
-    // 检查条件
-    if (!canGenerateFromTitle.value) {
-      ElMessage.warning('请先选择标题并完善研究简报')
-      return
+  const headerActions = computed(() => [
+    {
+      label: '导出',
+      type: 'primary' as const,
+      icon: 'el-icon-download',
+      handler: () => outline.exportOutline('json')
     }
-
-    generatingOutline.value = true
-    try {
-      // 基于标题生成大纲
-      const response = await outline.generateOutline(
-        documentStore.documentState.selectedTitle,
-        documentStore.documentState.researchBrief,
-        documentStore.documentState.searchResults
-      )
-      ElMessage.success('AI大纲生成成功！')
-
-      // 保存到本地状态
-      if (response) {
-        outline.state.generatedOutline = response.outline
-        // 同时保存到store
-        documentStore.updateDocumentState({
-          generatedOutline: response.outline
-        })
-      }
-    } catch {
-      ElMessage.error('大纲生成失败')
-    } finally {
-      generatingOutline.value = false
-    }
-  }
-
-  // AI完整生成（含素材绑定）
-  const generateAICompleteOutline = async () => {
-    // 检查条件
-    if (!canGenerateFromTitle.value) {
-      ElMessage.warning('请先选择标题并完善研究简报')
-      return
-    }
-
-    if (selectedMaterials.value.length === 0) {
-      ElMessage.warning('请先从素材库选择素材')
-      return
-    }
-
-    generatingOutline.value = true
-    try {
-      // 调用新的API：同时生成大纲并绑定素材
-      await outline.generateAICompleteOutline()
-    } catch (error) {
-      console.error('AI完整生成失败:', error)
-      ElMessage.error('AI完整生成失败，请重试')
-    } finally {
-      generatingOutline.value = false
-    }
-  }
-
-  const addSection = () => {
-    // 优先使用本地操作（AI生成的大纲）
-    outline.addLocalSection()
-  }
-
-  const deleteSection = (index: number) => {
-    const sections = outline.state.generatedOutline
-    if (index >= 0 && index < sections.length) {
-      sections.splice(index, 1)
-      ElMessage.success('章节已删除')
-    }
-  }
-
-  const moveSectionUp = (index: number) => {
-    const sections = outline.state.generatedOutline
-    if (index > 0) {
-      const temp = sections[index]
-      sections[index] = sections[index - 1]
-      sections[index - 1] = temp
-    }
-  }
-
-  const moveSectionDown = (index: number) => {
-    const sections = outline.state.generatedOutline
-    if (index < sections.length - 1) {
-      const temp = sections[index]
-      sections[index] = sections[index + 1]
-      sections[index + 1] = temp
-    }
-  }
-
-  const clearOutline = () => {
-    outline.resetLocalOutline()
-    ElMessage.success('大纲已清空')
-  }
-
-  const confirmOutline = async () => {
-    if (outline.state.generatedOutline.length === 0 && outline.state.sections.length === 0) {
-      ElMessage.warning('请创建大纲')
-      return
-    }
-
-    // 验证大纲
-    if (!outline.validateOutline()) {
-      return
-    }
-
-    // 保存到store
-    documentStore.updateDocumentState({
-      generatedOutline: outline.state.generatedOutline
-    })
-
-    ElMessage.success('大纲已确认，正在跳转到正文章节...')
-
-    // Navigate to content
-    setTimeout(() => {
-      router.push(`/document-generation/content/${projectId}`)
-    }, 800)
-  }
-
-  const handleEditSection = (title: string, data: any) => {
-    outline.editLocalSection(title, data)
-  }
-
-  const handleMaterialPreview = (material: Material) => {
-    // TODO: 实现素材预览功能
-    console.log('Preview material:', material)
-    ElMessage.info(`预览素材: ${material.title}`)
-  }
-
-  const bindMaterialToSection = (sectionIndex: number, material: Material) => {
-    const section = outline.state.generatedOutline[sectionIndex]
-    if (section) {
-      if (!section.data_requirements.includes(material.title)) {
-        section.data_requirements.push(material.title)
-        outline.editLocalSection(section.title, {
-          data_requirements: section.data_requirements
-        })
-        ElMessage.success(`已将素材 "${material.title}" 绑定到章节`)
-      } else {
-        ElMessage.info('该素材已绑定到此章节')
-      }
-    }
-  }
-
-  const unbindMaterialFromSection = (sectionIndex: number, materialTitle: string) => {
-    const section = outline.state.generatedOutline[sectionIndex]
-    if (section) {
-      const index = section.data_requirements.indexOf(materialTitle)
-      if (index > -1) {
-        section.data_requirements.splice(index, 1)
-        outline.editLocalSection(section.title, {
-          data_requirements: section.data_requirements
-        })
-        ElMessage.success(`已将素材 "${materialTitle}" 从章节中解绑`)
-      }
-    }
-  }
+  ])
 </script>
 
 <style scoped lang="scss">
@@ -293,19 +135,5 @@
   .project-loading {
     padding: var(--art-padding-2xl, 60px);
     text-align: center;
-  }
-
-  .art-card {
-    margin-bottom: var(--art-spacing-lg, 24px);
-    background: var(--art-main-bg-color);
-    border: 1px solid var(--art-border-color);
-    border-radius: var(--art-border-radius, 8px);
-    box-shadow: var(--art-box-shadow-sm);
-    transition: all 0.3s ease;
-
-    &:hover {
-      border-color: var(--el-color-primary-light-6);
-      box-shadow: var(--art-box-shadow);
-    }
   }
 </style>
