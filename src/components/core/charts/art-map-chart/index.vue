@@ -237,8 +237,6 @@
         level: params.data?.level || ''
       }
 
-      console.log(`选中区域: ${params.name}`, params)
-
       // 高亮选中区域
       chartInstance.value?.dispatchAction({
         type: 'select',

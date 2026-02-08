@@ -30,7 +30,7 @@
               @update:form="(val) => (requirementsState.form = val)"
               @generate-briefing="generateAIBriefing"
               @cancel-scope-task="cancelScopeTask"
-              @edit-briefing="editBriefing"
+              @edit-briefing="openBriefingDialog"
               @add-key-point="addKeyPoint"
               @remove-key-point="removeKeyPoint"
             />
@@ -88,40 +88,11 @@
   </div>
 
   <!-- 编辑简报对话框 -->
-  <el-dialog
-    v-model="requirementsState.briefingDialogVisible"
-    title="编辑AI简报"
-    width="900px"
-    :close-on-click-modal="false"
-  >
-    <el-tabs v-model="activeEditTab" class="briefing-edit-tabs">
-      <el-tab-pane label="编辑模式" name="edit">
-        <el-form label-width="80px">
-          <el-form-item label="简报内容">
-            <el-input
-              v-model="requirementsState.editableBriefing"
-              type="textarea"
-              :rows="15"
-              placeholder="请输入Markdown格式的简报内容"
-            />
-          </el-form-item>
-        </el-form>
-      </el-tab-pane>
-      <el-tab-pane label="预览模式" name="preview">
-        <div
-          class="briefing-preview markdown-body"
-          v-html="renderedEditableBriefing"
-          style="max-height: 500px; padding: 20px; overflow-y: auto"
-        ></div>
-      </el-tab-pane>
-    </el-tabs>
-    <template #footer>
-      <span class="dialog-footer">
-        <el-button @click="requirementsState.briefingDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="saveBriefing">保存</el-button>
-      </span>
-    </template>
-  </el-dialog>
+  <BriefingEditDialog
+    v-model:visible="briefingDialogVisible"
+    :briefing="requirementsState.editableBriefing"
+    @save="handleSaveBriefing"
+  />
 
   <!-- 素材选择对话框 -->
   <el-dialog
@@ -159,7 +130,6 @@
   import { ref, computed, reactive, onMounted, onUnmounted, watch } from 'vue'
   import { useRouter, useRoute } from 'vue-router'
   import { ElMessage } from 'element-plus'
-  import { marked } from 'marked'
 
   // 组合式函数和状态管理
   import { useTopicSelection } from '@/composables/document/useTopicSelection'
@@ -171,14 +141,12 @@
   import MaterialSelectionForTitle from '@/components/custom/material-search/MaterialSelectionForTitle.vue'
   import RequirementsSection from './RequirementsSection.vue'
   import TitleGenerationSection from './TitleGenerationSection.vue'
+  import BriefingEditDialog from './BriefingEditDialog.vue'
 
   // 类型定义
   import type { Title } from '@/types/ai'
   import type { Material } from '@/types/material'
   import StepIndicator, { type Step } from '@/components/custom/StepIndicator.vue'
-
-  // 样式
-  import '@/assets/styles/markdown.scss'
 
   // ====== 工具函数 ======
 
@@ -287,8 +255,7 @@
     addKeyPoint,
     removeKeyPoint,
     generateAIBriefing,
-    editBriefing,
-    saveBriefing,
+    saveBriefing: saveBriefingToStore,
     addCustomKeyword,
     removeCustomKeyword,
     executeSearch2Title,
@@ -307,10 +274,9 @@
     { label: '正文', status: 'pending' }
   ]
 
-  /** 编辑简报对话框的活跃标签页 */
-  const activeEditTab = ref<'edit' | 'preview'>('edit')
-
   // ====== 对话框状态 ======
+  /** 编辑简报对话框是否显示 */
+  const briefingDialogVisible = ref(false)
   /** 素材选择对话框是否显示 */
   const showMaterialSelectionDialog = ref(false)
   /** 预览的素材对象 */
@@ -412,12 +378,6 @@
     return []
   })
 
-  /** 渲染可编辑简报内容（Markdown转HTML） */
-  const renderedEditableBriefing = computed(() => {
-    if (!requirementsState.briefingDialogVisible || !requirementsState.editableBriefing) return ''
-    return marked(requirementsState.editableBriefing)
-  })
-
   // ====== 事件处理方法 ======
 
   /** 添加自定义关键词 */
@@ -443,6 +403,16 @@
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const getTitleSuggestions = (_title: Title): string[] => {
     return ['更具吸引力', '更简洁明了', '更专业', '更具创意性']
+  }
+
+  /** 打开编辑简报对话框 */
+  const openBriefingDialog = () => {
+    briefingDialogVisible.value = true
+  }
+
+  /** 处理简报保存 */
+  const handleSaveBriefing = (briefing: string) => {
+    saveBriefingToStore(briefing)
   }
 
   /** 打开素材选择对话框 */
@@ -755,51 +725,6 @@
     justify-content: center;
     padding: 20px;
     border-top: 1px solid var(--el-border-color);
-  }
-
-  .briefing-content {
-    ::v-deep(.markdown-body) {
-      h1,
-      h2,
-      h3,
-      h4 {
-        margin-top: 1.5em;
-        margin-bottom: 0.5em;
-        font-weight: 600;
-      }
-
-      h1 {
-        font-size: 1.5em;
-        color: var(--el-color-primary);
-      }
-
-      p {
-        margin-bottom: 1em;
-        line-height: 1.7;
-      }
-
-      ul,
-      ol {
-        padding-left: 2em;
-        margin-bottom: 1em;
-      }
-
-      li {
-        margin-bottom: 0.5em;
-        line-height: 1.6;
-      }
-
-      strong {
-        font-weight: 600;
-        color: var(--el-color-warning);
-      }
-    }
-  }
-
-  .briefing-preview {
-    background: var(--el-fill-color-lighter);
-    border: 1px solid var(--el-border-color);
-    border-radius: 4px;
   }
 
   @media (width <= 768px) {

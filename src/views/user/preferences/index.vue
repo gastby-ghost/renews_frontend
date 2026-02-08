@@ -20,7 +20,7 @@
               <span>{{ $t('userPreferences.theme.title') }}</span>
             </div>
             <div class="preference-control">
-              <ElRadioGroup v-model="preferences.theme" @change="handleThemeChange as any">
+              <ElRadioGroup v-model="preferences.theme" @change="handleThemeChange">
                 <ElRadio value="light">{{ $t('userPreferences.theme.light') }}</ElRadio>
                 <ElRadio value="dark">{{ $t('userPreferences.theme.dark') }}</ElRadio>
                 <ElRadio value="auto">{{ $t('userPreferences.theme.auto') }}</ElRadio>
@@ -223,19 +223,16 @@
 </template>
 
 <script setup lang="ts">
-  import { Setting, Clock, Bell, Tools } from '@element-plus/icons-vue'
-  import { ElMessage, ElMessageBox } from 'element-plus'
-  import { systemPreferencesService } from '@/services/systemPreferencesService'
-  // import { useUserStore } from '@/store/modules/user'
-  // import { useSettingStore } from '@/store/modules/setting'
+  import { ref } from 'vue'
   import { useI18n } from 'vue-i18n'
+  import { ElMessage, ElMessageBox } from 'element-plus'
+  import { Setting, Clock, Bell, Tools } from '@element-plus/icons-vue'
   import { HttpError } from '@/utils/http/error'
+  import { systemPreferencesService } from '@/services/systemPreferencesService'
 
   defineOptions({ name: 'UserPreferences' })
 
   const { t } = useI18n()
-  // const userStore = useUserStore()
-  // const settingStore = useSettingStore()
   const fileInput = ref<HTMLInputElement>()
 
   // 用户偏好设置
@@ -282,16 +279,6 @@
 
       if (response && response.user_id) {
         preferences.value = { ...defaultPreferences.value, ...response }
-
-        // 应用主题设置
-        if (response.theme) {
-          // settingStore.setThemeMode(response.theme as 'light' | 'dark' | 'auto')
-        }
-
-        // 应用语言设置
-        if (response.language) {
-          // userStore.setLanguage(response.language as 'zh-CN' | 'en-US')
-        }
       }
     } catch {
       ElMessage.error('获取用户偏好设置失败，使用默认设置')
@@ -361,16 +348,8 @@
           updated_at: response.updated_at || undefined
         }
 
-        // 应用主题设置
-        // settingStore.setThemeMode(response.theme as 'light' | 'dark' | 'auto')
-
-        // 应用语言设置
-        // if (response.language) {
-        //   // userStore.setLanguage(response.language as 'zh-CN' | 'en-US')
-        // }
+        ElMessage.success(t('userPreferences.messages.resetSuccess'))
       }
-
-      ElMessage.success(t('userPreferences.messages.resetSuccess'))
     } catch (error) {
       if (error !== 'cancel') {
         ElMessage.error('重置失败，请稍后重试')
@@ -416,16 +395,6 @@
         if (importedPrefs && typeof importedPrefs === 'object') {
           preferences.value = { ...defaultPreferences.value, ...importedPrefs }
 
-          // 应用主题设置
-          if (importedPrefs.theme) {
-            // settingStore.setThemeMode(importedPrefs.theme as 'light' | 'dark' | 'auto')
-          }
-
-          // 应用语言设置
-          if (importedPrefs.language) {
-            // userStore.setLanguage(importedPrefs.language as 'zh-CN' | 'en-US')
-          }
-
           ElMessage.success(t('userPreferences.messages.importSuccess'))
         } else {
           throw new Error('无效的偏好设置文件格式')
@@ -443,7 +412,7 @@
 
   // 处理各种设置变更
   const handleThemeChange = () => {
-    // settingStore.setThemeMode(value as 'light' | 'dark' | 'auto')
+    // 应用主题设置
   }
 
   const handleFontSizeChange = (value: string) => {
@@ -453,7 +422,7 @@
   }
 
   const handleLanguageChange = () => {
-    // userStore.setLanguage(value as 'zh-CN' | 'en-US')
+    // 应用语言设置
   }
 
   const handleAutoSaveChange = () => {

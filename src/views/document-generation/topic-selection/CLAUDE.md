@@ -4,9 +4,12 @@
 
 ## Files
 
-| File        | Description      |
-| ----------- | ---------------- |
-| `index.vue` | 主题选择页面入口 |
+| File                      | Description        |
+| ------------------------- | ------------------ |
+| `index.vue`               | 主题选择页面入口   |
+| `RequirementsSection.vue` | 需求定义区域组件   |
+| `TitleGenerationSection.vue` | 标题生成区域组件 |
+| `BriefingEditDialog.vue`  | AI简报编辑对话框   |
 
 ## Related Composables
 
